@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>食用菌工厂化农业数据管理平台 - 管理后台</title>
+    <script>
+        // ========== 登录守卫（L-2）==========
+        // 后台壳页必须登录后才可访问：未登录立即跳回登录页，避免直接输入 index.html 绕过鉴权。
+        // 登录成功后 login.html 会写入 sessionStorage['snzg_logged_in']。
+        (function () {
+            try {
+                if (sessionStorage.getItem('snzg_logged_in') !== '1') {
+                    window.location.replace('login.html');
+                }
+            } catch (e) {
+                // sessionStorage 不可用（极端隐私模式）时跳登录页，避免无鉴权直入
+                window.location.replace('login.html');
+            }
+        })();
+    </script>
+    <script src="vendor/tailwind.min.js"></script>
+    <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+    <script src="js/shared/fungi-alert-data.js"></script>
+    <style>
+        * { font-family:-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+        .menu-arrow { transition:transform 0.2s ease; display:inline-block; }
+        .menu-arrow.expanded { transform:rotate(90deg); }
+        /* 系统名称 12 字：shell-nav 的 18px 会挤掉 logo，降为 14px 保证 256px 侧栏单行放下 */
+        #sidebar #brandText { font-size:14px !important; letter-spacing:0.02em !important; }
+        /* 侧边栏菜单 active 状态（index.html 不引用 design-system.css，
+           变量不存在会导致颜色声明失效，必须用字面量色值）
+           参考稿：实底蓝胶囊（Ant 深色侧栏 active 造型）——实底蓝底、白字白图标、圆角、无右侧指示条 */
+        .sidebar-nav a.menu-item-active,
+        .sidebar-nav a.menu-item-active:hover {
+            background:#1890ff !important;
+            color:#ffffff !important;
+            border-radius:10px;
+            border-right:none;
+            box-shadow:0 2px 8px rgba(24,144,255,0.35);
+        }
+        .sidebar-nav a.menu-item-active .iconify,
+        .sidebar-nav a.menu-item-active:hover .iconify {
+            color:#ffffff !important;
+        }
+        /* 侧边栏滚动条 */
+        .sidebar-nav::-webkit-scrollbar { width:4px; }
+        .sidebar-nav::-webkit-scrollbar-track { background:transparent; }
+        .sidebar-nav::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
+        .sidebar-nav::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.20); }
+    </style>
+    <link rel="stylesheet" href="css/shell-nav.css">
+</head>
+<body class="h-screen flex overflow-hidden bg-[#F0F2F5]">
+    <!-- ========== 侧边栏 ========== -->
+    <aside id="sidebar" class="w-64 bg-[#001529] flex flex-col flex-shrink-0 h-screen transition-all duration-300">
+        <!-- 品牌区 -->
+        <div class="h-16 flex items-center px-6 gap-3 border-b border-white/10 flex-shrink-0">
+            <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                <img src="../common/images/logo_mushroom.svg" class="w-6 h-6 object-contain" alt="食用菌平台logo">
+            </div>
+            <span id="brandText" class="text-white font-bold text-sm whitespace-nowrap">工厂化农业数据管理系统</span>
+        </div>
+        <!-- 菜单区 -->
+        <nav class="sidebar-nav flex-1 overflow-y-auto py-4 px-3 space-y-1">
+            <!-- 系统首页（一级菜单） -->
+            <a href="home.html" target="mainFrame" onclick="openPage('home.html','系统首页')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                <span class="iconify mr-3 text-lg" data-icon="ri:home-4-line"></span><span class="menu-text">系统首页</span>
+            </a>
+            <!-- 企业管理 -->
+            <div class="menu-group">
+                <button class="menu-toggle w-full flex items-center justify-between px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                    <div class="flex items-center"><span class="iconify mr-3 text-lg text-gray-300" data-icon="ri:building-2-line"></span><span class="menu-text">企业管理</span></div>
+                    <span class="menu-arrow text-gray-400">›</span>
+                </button>
+                <div class="menu-items pl-6" style="display:none;">
+                    <a href="enterprise_info.html" target="mainFrame" onclick="openPage('enterprise_info.html','企业信息')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:information-line"></span><span>企业信息</span>
+                    </a>
+                    <a href="enterprise_base.html" target="mainFrame" onclick="openPage('enterprise_base.html','厂区档案')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:building-line"></span><span>厂区档案</span>
+                    </a>
+                    <a href="material_info.html" target="mainFrame" onclick="openPage('material_info.html','物料种质')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:flask-line"></span><span>物料种质</span>
+                    </a>
+                    <a href="team_manage.html" target="mainFrame" onclick="openPage('team_manage.html','人员班组')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:team-line"></span><span>人员班组</span>
+                    </a>
+                    <a href="guide_standard.html" target="mainFrame" onclick="openPage('guide_standard.html','工艺标准')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:book-marked-line"></span><span>工艺标准</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 生产管理 -->
+            <div class="menu-group">
+                <button class="menu-toggle w-full flex items-center justify-between px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                    <div class="flex items-center"><span class="iconify mr-3 text-lg text-gray-300" data-icon="ri:seedling-line"></span><span class="menu-text">生产管理</span></div>
+                    <span class="menu-arrow text-gray-400">›</span>
+                </button>
+                <div class="menu-items pl-6" style="display:none;">
+                    <a href="material_io.html" target="mainFrame" onclick="openPage('material_io.html','菌包制备管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:box-1-line"></span><span>菌包制备管理</span>
+                    </a>
+                    <a href="harvest_report.html" target="mainFrame" onclick="openPage('harvest_report.html','高压灭菌管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:temp-hot-line"></span><span>高压灭菌管理</span>
+                    </a>
+                    <a href="farming_record.html" target="mainFrame" onclick="openPage('farming_record.html','无菌接种管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:syringe-line"></span><span>无菌接种管理</span>
+                    </a>
+                    <a href="harvest_record.html" target="mainFrame" onclick="openPage('harvest_record.html','菌丝培养管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:plant-line"></span><span>菌丝培养管理</span>
+                    </a>
+                    <a href="harvest_plan.html" target="mainFrame" onclick="openPage('harvest_plan.html','出菇培育管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:leaf-line"></span><span>出菇培育管理</span>
+                    </a>
+                    <a href="harvest_process.html" target="mainFrame" onclick="openPage('harvest_process.html','采收分拣管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:scales-3-line"></span><span>采收分拣管理</span>
+                    </a>
+                    <a href="harvest_storage.html" target="mainFrame" onclick="openPage('harvest_storage.html','仓储冷链管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:snowflake-line"></span><span>仓储冷链管理</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 设备管理 -->
+            <div class="menu-group">
+                <button class="menu-toggle w-full flex items-center justify-between px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                    <div class="flex items-center"><span class="iconify mr-3 text-lg text-gray-300" data-icon="ri:cpu-line"></span><span class="menu-text">设备管理</span></div>
+                    <span class="menu-arrow text-gray-400">›</span>
+                </button>
+                <div class="menu-items pl-6" style="display:none;">
+                    <a href="device_info.html" target="mainFrame" onclick="openPage('device_info.html','设备管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:database-2-line"></span><span>设备管理</span>
+                    </a>
+                    <a href="env_monitor.html" target="mainFrame" onclick="openPage('env_monitor.html','设备环境数据')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:pulse-line"></span><span>设备环境数据</span>
+                    </a>
+                    <a href="device_control.html" target="mainFrame" onclick="openPage('device_control.html','设备运行监控')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:remote-control-line"></span><span>设备运行监控</span>
+                    </a>
+                    <a href="device_maintain.html" target="mainFrame" onclick="openPage('device_maintain.html','设备运维工单')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:tools-line"></span><span>设备运维工单</span>
+                    </a>
+                    <a href="device_spare.html" target="mainFrame" onclick="openPage('device_spare.html','备品备件')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:archive-drawer-line"></span><span>备品备件</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 预警管理 -->
+            <div class="menu-group">
+                <button class="menu-toggle w-full flex items-center justify-between px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                    <div class="flex items-center"><span class="iconify mr-3 text-lg text-gray-300" data-icon="ri:alarm-warning-line"></span><span class="menu-text">预警管理</span></div>
+                    <span class="menu-arrow text-gray-400">›</span>
+                </button>
+                <div class="menu-items pl-6" style="display:none;">
+                    <a href="alert_overview.html" target="mainFrame" onclick="openPage('alert_overview.html','预警管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:dashboard-3-line"></span><span>预警管理</span>
+                    </a>
+                    <a href="alert_settings.html" target="mainFrame" onclick="openPage('alert_settings.html','预警设置')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:settings-4-line"></span><span>预警设置</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 追溯管理 -->
+            <div class="menu-group">
+                <button class="menu-toggle w-full flex items-center justify-between px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                    <div class="flex items-center"><span class="iconify mr-3 text-lg text-gray-300" data-icon="ri:shield-check-line"></span><span class="menu-text">追溯管理</span></div>
+                    <span class="menu-arrow text-gray-400">›</span>
+                </button>
+                <div class="menu-items pl-6" style="display:none;">
+                    <a href="trace_code.html" target="mainFrame" onclick="openPage('trace_code.html','追溯码管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:qr-code-line"></span><span>追溯码管理</span>
+                    </a>
+                    <a href="trace_batch.html" target="mainFrame" onclick="openPage('trace_batch.html','全链条录入')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:stack-line"></span><span>全链条录入</span>
+                    </a>
+                    <a href="trace_blockchain.html" target="mainFrame" onclick="openPage('trace_blockchain.html','区块链存证')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:links-line"></span><span>区块链存证</span>
+                    </a>
+                    <a href="trace_query.html" target="mainFrame" onclick="openPage('trace_query.html','产品召回')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:search-eye-line"></span><span>产品召回</span>
+                    </a>
+                    <a href="data_source.html" target="mainFrame" onclick="openPage('data_source.html','监管对接')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:upload-cloud-2-line"></span><span>监管对接</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 系统管理 -->
+            <div class="menu-group">
+                <button class="menu-toggle w-full flex items-center justify-between px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                    <div class="flex items-center"><span class="iconify mr-3 text-lg text-gray-300" data-icon="ri:settings-3-line"></span><span class="menu-text">系统管理</span></div>
+                    <span class="menu-arrow text-gray-400">›</span>
+                </button>
+                <div class="menu-items pl-6" style="display:none;">
+                    <a href="system_settings.html" target="mainFrame" onclick="openPage('system_settings.html','系统设置')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:settings-3-line"></span><span>系统设置</span>
+                    </a>
+                    <a href="menu_settings.html" target="mainFrame" onclick="openPage('menu_settings.html','菜单设置')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:menu-fold-line"></span><span>菜单设置</span>
+                    </a>
+                    <a href="user_settings.html" target="mainFrame" onclick="openPage('user_settings.html','用户设置')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:user-settings-line"></span><span>用户设置</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- ========== 右侧主区域 ========== -->
+    <div class="flex-1 flex flex-col min-w-0 h-screen">
+        <!-- 顶栏（参考 demo/index.html：折叠 + 面包屑 | 通知 + 搜索 + 日期） -->
+        <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-5 flex-shrink-0">
+            <div class="flex items-center gap-4 min-w-0">
+                <button id="sidebarToggle" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0" title="折叠/展开侧边栏">
+                    <span class="iconify text-xl" data-icon="ri:menu-fold-line"></span>
+                </button>
+                <nav aria-label="Breadcrumb" class="flex items-center gap-2 text-sm min-w-0">
+                    <span class="text-gray-500 flex-shrink-0">首页</span>
+                    <span id="crumbGroup" class="text-gray-500 flex-shrink-0"></span>
+                    <span id="crumbSep" class="flex items-center text-gray-400">
+                        <span class="iconify text-xs" data-icon="ri:arrow-right-s-line"></span>
+                    </span>
+                    <span id="crumbGroupSep" class="flex items-center text-gray-400">
+                        <span class="iconify text-xs" data-icon="ri:arrow-right-s-line"></span>
+                    </span>
+                    <span id="crumbCurrent" class="text-gray-900 font-medium truncate">系统首页</span>
+                </nav>
+            </div>
+            <div class="flex items-center gap-5 flex-shrink-0 ml-4">
+                <!-- 站内搜索：点击展开输入框，回车跳转搜索页 -->
+                <div class="relative flex items-center" id="topSearchWrap">
+                    <input id="topSearchInput" type="search" autocomplete="off" placeholder="搜索菜单 / 页面"
+                           aria-label="站内搜索"
+                           class="hidden w-56 h-8 pl-8 pr-3 text-sm rounded-lg border border-gray-300 bg-white
+                                  focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
+                    <button id="topSearchBtn" type="button" title="搜索" aria-label="搜索" aria-expanded="false"
+                            class="p-1 text-gray-500 hover:text-gray-700 transition-colors">
+                        <span class="iconify text-xl" data-icon="ri:search-line"></span>
+                    </button>
+                </div>
+                <!-- 通知：点击展开未读预警面板 -->
+                <div class="relative flex items-center" id="topNotifyWrap">
+                    <button id="topNotifyBtn" type="button" title="通知" aria-label="通知中心" aria-expanded="false"
+                            class="relative p-1 text-gray-500 hover:text-gray-700 transition-colors">
+                        <span class="iconify text-xl" data-icon="ri:notification-3-line"></span>
+                        <span id="topNotifyDot" class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <div id="topNotifyPanel" role="dialog" aria-label="预警通知"
+                         class="hidden absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-white
+                                border border-gray-200 rounded-xl shadow-xl z-50">
+                        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                            <span class="text-sm font-semibold text-gray-800">预警通知
+                                <span id="topNotifyCount" class="ml-1 text-xs font-normal text-gray-400"></span>
+                            </span>
+                            <button type="button" onclick="openPage('alert_overview.html','预警管理')"
+                                    class="text-xs text-blue-600 hover:underline">全部</button>
+                        </div>
+                        <div id="topNotifySources" class="px-3 py-2 flex flex-wrap gap-1.5 border-b border-gray-100"></div>
+                        <ul id="topNotifyList" class="divide-y divide-gray-100"></ul>
+                    </div>
+                </div>
+                <!-- 用户：头像下拉（角色信息 / 修改密码 / 退出登录） -->
+                <div class="relative flex items-center" id="topUserWrap">
+                    <button id="topUserBtn" type="button" title="账号" aria-label="账号菜单" aria-expanded="false"
+                            class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors flex items-center justify-center">
+                        <span class="iconify text-xl" data-icon="ri:user-3-line"></span>
+                    </button>
+                    <div id="topUserPanel" role="menu" aria-label="账号菜单"
+                         class="hidden absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                        <div class="px-4 py-3 border-b border-gray-100">
+                            <div id="topUserName" class="text-sm font-semibold text-gray-800 truncate">系统管理员</div>
+                            <div id="topUserRole" class="text-xs text-gray-400 mt-0.5 truncate">超级管理员</div>
+                        </div>
+                        <button type="button" onclick="topOpenChangePwd()"
+                                class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <span class="iconify text-base" data-icon="ri:lock-password-line"></span>修改密码
+                        </button>
+                        <button type="button" onclick="topDoLogout()"
+                                class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <span class="iconify text-base" data-icon="ri:logout-box-r-line"></span>退出登录
+                        </button>
+                    </div>
+                </div>
+                <div class="h-4 w-px bg-gray-200"></div>
+                <span id="topDate" class="text-sm font-medium text-gray-700">--</span>
+            </div>
+        </header>
+        <!-- iframe 内容区 -->
+        <main class="flex-1 overflow-hidden bg-[#F0F2F5]">
+            <iframe name="mainFrame" id="mainFrame" src="home.html" class="w-full h-full border-none"></iframe>
+        </main>
+    </div>
+
+
+    <!-- 顶栏头像菜单：修改密码弹窗 -->
+    <div id="topPwdModal" class="hidden fixed inset-0 z-[1200] bg-black/45 flex items-center justify-center p-4">
+        <div class="w-full max-w-sm bg-white rounded-xl shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+                <span class="text-base font-semibold text-gray-800">修改密码</span>
+                <button type="button" onclick="document.getElementById('topPwdModal').classList.add('hidden')"
+                        aria-label="关闭"
+                        class="w-7 h-7 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors text-lg leading-none">×</button>
+            </div>
+            <div class="px-5 py-4">
+                <div class="mb-3">
+                    <label class="block text-[13px] text-gray-600 mb-1.5">原密码</label>
+                    <input id="topPwdOld" type="password" maxlength="30" placeholder="请输入原密码"
+                           class="w-full h-10 px-3 text-sm border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 box-border">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-[13px] text-gray-600 mb-1.5">新密码</label>
+                    <input id="topPwdNew" type="password" maxlength="30" placeholder="6 位以上新密码"
+                           class="w-full h-10 px-3 text-sm border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 box-border">
+                </div>
+                <div>
+                    <label class="block text-[13px] text-gray-600 mb-1.5">确认新密码</label>
+                    <input id="topPwdConfirm" type="password" maxlength="30" placeholder="请再次输入新密码"
+                           class="w-full h-10 px-3 text-sm border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 box-border">
+                </div>
+                <p id="topPwdError" class="hidden mt-2 text-xs text-red-500"></p>
+            </div>
+            <div class="flex justify-end gap-2.5 px-5 py-3.5 border-t border-gray-100">
+                <button type="button" onclick="document.getElementById('topPwdModal').classList.add('hidden')"
+                        class="h-9 px-4 text-sm rounded-lg border border-gray-300 text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors">取消</button>
+                <button type="button" onclick="topSubmitChangePwd()"
+                        class="h-9 px-4 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">确定</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // ========== 菜单展开/收起 ==========
+        document.querySelectorAll('.menu-toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const menuItems = this.nextElementSibling;
+                const arrow = this.querySelector('.menu-arrow');
+                if (menuItems.style.display === 'none' || menuItems.style.display === '') {
+                    menuItems.style.display = 'block';
+                    arrow.classList.add('expanded');
+                } else {
+                    menuItems.style.display = 'none';
+                    arrow.classList.remove('expanded');
+                }
+            });
+        });
+
+        // ========== 页面导航（多标签栏已按需求移除，2026-09-22） ==========
+        const mainFrame = document.getElementById('mainFrame');
+
+        function openPage(url, title) {
+            mainFrame.src = url;
+            highlightMenu(url);
+            setCrumb(title, url);
+        }
+
+        // ========== 顶栏面包屑 ==========
+        const crumbGroup = document.getElementById('crumbGroup');
+        const crumbSep = document.getElementById('crumbSep');
+        const crumbGroupSep = document.getElementById('crumbGroupSep');
+        const crumbCurrent = document.getElementById('crumbCurrent');
+
+        // 页面文件 → 所属一级菜单（用于三级面包屑）
+        const MENU_GROUP_MAP = {
+            'enterprise_info.html': '企业管理',
+            'enterprise_base.html': '企业管理',
+            'material_info.html': '企业管理',
+            'team_manage.html': '企业管理',
+            'guide_standard.html': '企业管理',
+
+            'material_io.html': '生产管理',
+            'harvest_report.html': '生产管理',
+            'farming_record.html': '生产管理',
+            'harvest_record.html': '生产管理',
+            'harvest_plan.html': '生产管理',
+            'harvest_process.html': '生产管理',
+            'harvest_storage.html': '生产管理',
+
+            'device_info.html': '设备管理',
+            'env_monitor.html': '设备管理',
+            'device_control.html': '设备管理',
+            'device_maintain.html': '设备管理',
+            'device_spare.html': '设备管理',
+
+            'alert_overview.html': '预警管理',
+            'alert_settings.html': '预警管理',
+
+            'trace_code.html': '追溯管理',
+            'trace_batch.html': '追溯管理',
+            'trace_blockchain.html': '追溯管理',
+            'trace_query.html': '追溯管理',
+            'data_source.html': '追溯管理',
+
+            'system_settings.html': '系统管理',
+            'menu_settings.html': '系统管理',
+            'user_settings.html': '系统管理',
+
+            'home.html': '系统首页'
+        };
+
+        function setCrumb(title, url) {
+            if (!title || title === '首页' || url === 'home.html') {   // 系统首页自身只显示一级面包屑
+                crumbSep.style.display = 'none';
+                crumbGroupSep.style.display = 'none';
+                crumbGroup.style.display = 'none';
+                crumbCurrent.style.display = 'none';
+                return;
+            }
+            const group = MENU_GROUP_MAP[url];
+            crumbSep.style.display = '';
+            crumbCurrent.style.display = '';
+            crumbCurrent.textContent = title;
+            if (group) {                        // 首页 › 一级菜单 › 当前页
+                crumbGroup.style.display = '';
+                crumbGroupSep.style.display = '';
+                crumbGroup.textContent = group;
+            } else {                            // 首页 › 当前页
+                crumbGroup.style.display = 'none';
+                crumbGroupSep.style.display = 'none';
+                crumbGroup.textContent = '';
+            }
+        }
+
+        // ========== 顶栏日期 ==========
+        (function () {
+            var d = new Date();
+            var p = function (n) { return (n < 10 ? '0' : '') + n; };
+            document.getElementById('topDate').textContent =
+                d.getFullYear() + '年' + p(d.getMonth() + 1) + '月' + p(d.getDate()) + '日';
+        })();
+
+        // ========== 顶栏站内搜索（菜单项索引 + 跳转） ==========
+        (function () {
+            var btn = document.getElementById('topSearchBtn');
+            var input = document.getElementById('topSearchInput');
+            if (!btn || !input) return;
+            var pages = [];
+            document.querySelectorAll('.sidebar-nav a[href]').forEach(function (a) {
+                var url = a.getAttribute('href');
+                var name = (a.querySelector('span:last-child') || a).textContent.trim();
+                if (url && name && pages.every(function (p) { return p.url !== url; })) {
+                    pages.push({ url: url, name: name, group: MENU_GROUP_MAP[url] || '系统首页' });
+                }
+            });
+            function toggle(open) {
+                input.classList.toggle('hidden', !open);
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (open) input.focus();
+            }
+            btn.addEventListener('click', function () { toggle(input.classList.contains('hidden')); });
+            input.addEventListener('keydown', function (e) {
+                if (e.key !== 'Enter') return;
+                var kw = input.value.trim().toLowerCase();
+                if (!kw) return;
+                var hit = pages.filter(function (p) {
+                    return p.name.toLowerCase().indexOf(kw) >= 0 || p.url.toLowerCase().indexOf(kw) >= 0;
+                });
+                if (!hit.length) { alert('未找到匹配的页面：' + input.value.trim()); return; }
+                openPage(hit[0].url, hit[0].name);
+                input.value = '';
+                toggle(false);
+            });
+            document.addEventListener('click', function (e) {
+                var wrap = document.getElementById('topSearchWrap');
+                if (wrap && !wrap.contains(e.target)) toggle(false);
+            });
+        })();
+
+        // ========== 顶栏预警通知（读取菌菇演示预警数据源，按来源分流） ==========
+        (function () {
+            var btn = document.getElementById('topNotifyBtn');
+            var panel = document.getElementById('topNotifyPanel');
+            var list = document.getElementById('topNotifyList');
+            var dot = document.getElementById('topNotifyDot');
+            var chipBox = document.getElementById('topNotifySources');
+            var countEl = document.getElementById('topNotifyCount');
+            if (!btn || !panel || !list) return;
+
+            var LEVEL_CLS = { urgent: 'bg-red-500', important: 'bg-amber-500', reminder: 'bg-blue-500', notice: 'bg-gray-400' };
+            var LEVEL_W = { urgent: 0, important: 1, reminder: 2, notice: 3 };
+            var SOURCE_CLS = {
+                env: 'text-cyan-600 bg-cyan-50',
+                device: 'text-blue-600 bg-blue-50',
+                pollution: 'text-orange-600 bg-orange-50',
+                system: 'text-gray-600 bg-gray-100'
+            };
+            var SOURCE_TEXT = {};
+            try {
+                (FungiAlertData.SOURCES || []).forEach(function (s) { SOURCE_TEXT[s.key] = s.text; });
+            } catch (e) { /* 字典缺失时回退原始值 */ }
+
+            // 打开含查询参数的页面时，用无参 URL 做菜单高亮与面包屑
+            window.openAlertPage = function (url, title) {
+                var base = String(url).split('?')[0];
+                mainFrame.src = url;
+                highlightMenu(base);
+                setCrumb(title, base);
+                closeNotifyPanel();
+            };
+
+            function targetOf(a) {
+                if (a.source) return 'alert_overview.html?source=' + encodeURIComponent(a.source);
+                return 'alert_overview.html';
+            }
+
+            function renderChips(items) {
+                if (!chipBox) return;
+                var counts = {};
+                items.forEach(function (a) {
+                    if (!a.source) return;
+                    counts[a.source] = (counts[a.source] || 0) + 1;
+                });
+                var keys = Object.keys(counts);
+                if (!keys.length) { chipBox.innerHTML = ''; return; }
+                chipBox.innerHTML = keys.map(function (k) {
+                    var cls = SOURCE_CLS[k] || 'text-gray-600 bg-gray-100';
+                    return '<button type="button" data-src="' + k + '" title="只看该来源" ' +
+                        'class="px-2 py-0.5 rounded text-[11px] ' + cls + ' hover:opacity-80 transition-opacity">' +
+                        (SOURCE_TEXT[k] || k) + ' ' + counts[k] + '</button>';
+                }).join('');
+                chipBox.querySelectorAll('button[data-src]').forEach(function (b) {
+                    b.addEventListener('click', function () {
+                        openAlertPage('alert_overview.html?source=' + encodeURIComponent(b.dataset.src), '预警管理');
+                    });
+                });
+            }
+
+            function render() {
+                var items = [];
+                if (window.FungiAlertData) {
+                    try {
+                        items = FungiAlertData.byStatus(['pending', 'processing']) || [];
+                    } catch (e) { items = []; }
+                }
+                items.sort(function (a, b) {
+                    var wa = LEVEL_W[a.level] === undefined ? 9 : LEVEL_W[a.level];
+                    var wb = LEVEL_W[b.level] === undefined ? 9 : LEVEL_W[b.level];
+                    if (wa !== wb) return wa - wb;
+                    return String(b.time || '').localeCompare(String(a.time || ''));
+                });
+
+                dot.classList.toggle('hidden', items.length === 0);
+                if (countEl) countEl.textContent = items.length ? '（' + items.length + '）' : '';
+                renderChips(items);
+
+                if (!items.length) {
+                    list.innerHTML = '<li class="px-4 py-6 text-center text-xs text-gray-400">暂无待处理预警</li>';
+                    return;
+                }
+                list.innerHTML = items.slice(0, 20).map(function (a) {
+                    var src = a.source || '';
+                    var srcCls = SOURCE_CLS[src] || 'text-gray-500 bg-gray-100';
+                    var dotCls = LEVEL_CLS[a.level] || 'bg-gray-400';
+                    return '<li class="px-4 py-2.5 hover:bg-gray-50 cursor-pointer" ' +
+                        'onclick="openAlertPage(\'' + targetOf(a) + '\',\'预警管理\')">' +
+                        '<div class="flex items-start gap-2">' +
+                        '<span class="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0 ' + dotCls + '"></span>' +
+                        '<span class="text-xs text-gray-800 leading-5 flex-1">' + (a.title || '预警') + '</span>' +
+                        '</div><div class="flex items-center gap-1.5 mt-1 pl-3.5">' +
+                        (src ? '<span class="px-1.5 py-0.5 rounded text-[10px] ' + srcCls + '">' +
+                            (SOURCE_TEXT[src] || src) + '</span>' : '') +
+                        '<span class="text-[11px] text-gray-400 truncate">' +
+                        (a.location || '—') + ' · ' + (a.time || '') + '</span>' +
+                        '</div></li>';
+                }).join('');
+            }
+            window.closeNotifyPanel = function () {
+                panel.classList.add('hidden');
+                btn.setAttribute('aria-expanded', 'false');
+            };
+            btn.addEventListener('click', function () {
+                var open = panel.classList.contains('hidden');
+                render();
+                panel.classList.toggle('hidden', !open);
+                btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            });
+            document.addEventListener('click', function (e) {
+                var wrap = document.getElementById('topNotifyWrap');
+                if (wrap && !wrap.contains(e.target)) window.closeNotifyPanel();
+            });
+            document.addEventListener('DOMContentLoaded', render);
+        })();
+
+        // ========== 顶栏用户菜单（头像：角色信息 / 修改密码 / 退出登录） ==========
+        const TOP_ACCOUNTS = {
+            admin:      { password: 'admin123',      realName: '系统管理员', role: '超级管理员' },
+            supervisor: { password: 'supervisor123', realName: '惠加宁',     role: '生产主管' },
+            operator:   { password: 'operator123',   realName: '黄忠坚',     role: '接种操作工' },
+            maintainer: { password: 'maintainer123', realName: '张才孙',     role: '设备运维工程师' },
+            inspector:  { password: 'inspector123',  realName: '周明轩',     role: '质检员' },
+            demo:       { password: 'demo123',       realName: '演示用户',   role: '演示账号' }
+        };
+        const topUserBtn = document.getElementById('topUserBtn');
+        const topUserPanel = document.getElementById('topUserPanel');
+
+        function topCloseUserPanel() {
+            topUserPanel.classList.add('hidden');
+            topUserBtn.setAttribute('aria-expanded', 'false');
+        }
+        topUserBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var open = topUserPanel.classList.contains('hidden');
+            if (open) window.closeNotifyPanel();
+            topUserPanel.classList.toggle('hidden', !open);
+            topUserBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        document.addEventListener('click', function (e) {
+            var wrap = document.getElementById('topUserWrap');
+            if (wrap && !wrap.contains(e.target)) topCloseUserPanel();
+        });
+
+        function topCurrentUser() {
+            try {
+                const u = JSON.parse(sessionStorage.getItem('snzg_user') || 'null');
+                if (u && u.username) return u;
+            } catch (e) {}
+            return { username: 'admin', realName: '系统管理员', role: '超级管理员' };
+        }
+        function topCurrentPassword(username) {
+            let ov = {};
+            try { ov = JSON.parse(localStorage.getItem('snzg_user_accounts') || '{}') || {}; } catch (e) {}
+            if (ov[username] && ov[username].password !== undefined) return ov[username].password;
+            return TOP_ACCOUNTS[username] ? TOP_ACCOUNTS[username].password : '';
+        }
+
+        function topDoLogout() {
+            sessionStorage.removeItem('snzg_logged_in');
+            sessionStorage.removeItem('snzg_user');
+            window.location.href = 'login.html';
+        }
+
+        function topSubmitChangePwd() {
+            const username = topCurrentUser().username;
+            const oldPwd = document.getElementById('topPwdOld').value.trim();
+            const newPwd = document.getElementById('topPwdNew').value.trim();
+            const confirmPwd = document.getElementById('topPwdConfirm').value.trim();
+            const errEl = document.getElementById('topPwdError');
+            const showErr = (msg) => { errEl.textContent = msg; errEl.classList.remove('hidden'); };
+            errEl.classList.add('hidden');
+            if (!oldPwd) return showErr('请输入原密码');
+            if (oldPwd !== topCurrentPassword(username)) return showErr('原密码错误');
+            if (!newPwd || newPwd.length < 6) return showErr('新密码至少 6 位');
+            if (newPwd !== confirmPwd) return showErr('两次输入的新密码不一致');
+
+            let ov = {};
+            try { ov = JSON.parse(localStorage.getItem('snzg_user_accounts') || '{}') || {}; } catch (e) {}
+            const prev = ov[username] || {};
+            const base = TOP_ACCOUNTS[username] || {};
+            ov[username] = {
+                password: newPwd,
+                realName: prev.realName || base.realName || username,
+                role: prev.role || base.role || '操作工',
+                phone: prev.phone || '',
+                disabled: !!prev.disabled
+            };
+            try { localStorage.setItem('snzg_user_accounts', JSON.stringify(ov)); } catch (e) {}
+            document.getElementById('topPwdModal').classList.add('hidden');
+            topToast('密码修改成功，请牢记新密码');
+        }
+
+        function topOpenChangePwd() {
+            topCloseUserPanel();
+            ['topPwdOld', 'topPwdNew', 'topPwdConfirm'].forEach(function (id) { document.getElementById(id).value = ''; });
+            document.getElementById('topPwdError').classList.add('hidden');
+            document.getElementById('topPwdModal').classList.remove('hidden');
+            setTimeout(function () { document.getElementById('topPwdOld').focus(); }, 50);
+        }
+
+        function topToast(message) {
+            let box = document.getElementById('topToast');
+            if (!box) {
+                box = document.createElement('div');
+                box.id = 'topToast';
+                box.className = 'fixed bottom-6 right-6 z-[1300] px-4 py-2.5 rounded-lg bg-gray-900/90 text-white text-sm shadow-lg transition-opacity duration-300';
+                document.body.appendChild(box);
+            }
+            box.textContent = message;
+            box.style.opacity = '1';
+            setTimeout(function () { box.style.opacity = '0'; }, 2400);
+        }
+
+        (function initTopUser() {
+            const u = topCurrentUser();
+            document.getElementById('topUserName').textContent = u.realName || u.username;
+            document.getElementById('topUserRole').textContent = u.role || '—';
+        })();
+
+        document.getElementById('topPwdModal').addEventListener('click', function (e) {
+            if (e.target === this) this.classList.add('hidden');
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                topCloseUserPanel();
+                document.getElementById('topPwdModal').classList.add('hidden');
+            }
+        });
+
+        // 角色菜单权限过滤（消费 system_settings 保存的 snzg_permissions）
+        (function applyMenuPermission() {
+            var user = null;
+            try { user = JSON.parse(sessionStorage.getItem('snzg_user') || 'null'); } catch (e) {}
+            var roleCode = (user && (user.roleCode || user.role)) || 'admin';
+            var saved;
+            try { saved = JSON.parse(localStorage.getItem('snzg_permissions') || 'null'); } catch (e) {}
+            if (!saved || roleCode === 'admin') return;   // 无配置或超管：不做过滤
+
+            /* 该角色是否已有任何配置项：
+               有配置 → 白名单模式（未列出的一律隐藏，避免「漏配即放行」）
+               无配置 → 不过滤（保持默认全可见，便于未配置权限的角色正常使用） */
+            var hasConfig = Object.keys(saved).some(function (k) {
+                return k.split(':')[0] === roleCode && saved[k] === true;
+            });
+            if (!hasConfig) {
+                console.info('[权限] 角色 ' + roleCode + ' 尚无权限配置，暂不隐藏任何菜单');
+                return;
+            }
+
+            var menus = document.querySelectorAll('.sidebar-nav a[href]');
+            var hiddenMenus = 0, hiddenGroups = 0;
+            menus.forEach(function (a) {
+                var url = a.getAttribute('href');
+                var name = (a.querySelector('span:last-child') || a).textContent.trim();
+                var group = MENU_GROUP_MAP[url] || '';
+                var key = roleCode + ':' + group + ':' + name;
+                var menuKey = roleCode + ':' + group;
+                var allowed = (key in saved) ? !!saved[key] : ((menuKey in saved) ? !!saved[menuKey] : false);
+                if (!allowed) {
+                    a.style.display = 'none';
+                    hiddenMenus++;
+                }
+            });
+
+            /* 逐个分组检查：若该分组下已无任何可见子项，则连分组标题一起隐藏 */
+            document.querySelectorAll('.sidebar-nav .menu-items').forEach(function (box) {
+                var visible = Array.prototype.filter.call(box.querySelectorAll('a[href]'), function (x) {
+                    return x.style.display !== 'none';
+                });
+                if (visible.length) return;
+                var head = box.previousElementSibling;
+                if (head) { head.style.display = 'none'; hiddenGroups++; }
+                box.style.display = 'none';
+            });
+
+            console.info('[权限] 角色 ' + roleCode + '：已隐藏 ' + hiddenMenus +
+                         ' 个菜单项、' + hiddenGroups + ' 个分组');
+        })();
+
+        // ========== 菜单高亮 ==========
+        function highlightMenu(url) {
+            // 清除所有高亮
+            document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('menu-item-active'));
+            // 找到匹配的 a 标签并高亮
+            const target = document.querySelector('.sidebar-nav a[href="' + url + '"]');
+            if (target) {
+                target.classList.add('menu-item-active');
+                // 确保父菜单展开
+                const parentItems = target.closest('.menu-items');
+                if (parentItems && parentItems.style.display === 'none') {
+                    parentItems.style.display = 'block';
+                    const toggle = parentItems.previousElementSibling;
+                    if (toggle) {
+                        const arrow = toggle.querySelector('.menu-arrow');
+                        if (arrow) arrow.classList.add('expanded');
+                    }
+                }
+            }
+        }
+
+        // ========== 侧边栏折叠 ==========
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const brandText = document.getElementById('brandText');
+        let sidebarCollapsed = false;
+        sidebarToggle.addEventListener('click', () => {
+            sidebarCollapsed = !sidebarCollapsed;
+            if (sidebarCollapsed) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-16');
+                brandText.style.display = 'none';
+                document.querySelectorAll('.menu-text, .menu-arrow').forEach(el => el.style.display = 'none');
+                document.querySelectorAll('.menu-items').forEach(item => item.style.display = 'none');
+                sidebarToggle.querySelector('.iconify').setAttribute('data-icon', 'ri:menu-unfold-line');
+            } else {
+                sidebar.classList.remove('w-16');
+                sidebar.classList.add('w-64');
+                brandText.style.display = '';
+                document.querySelectorAll('.menu-text, .menu-arrow').forEach(el => el.style.display = '');
+                sidebarToggle.querySelector('.iconify').setAttribute('data-icon', 'ri:menu-fold-line');
+            }
+        });
+
+        // ========== 默认高亮首页 ==========
+        highlightMenu('home.html');
+        setCrumb('首页');   // 默认面包屑只显示一级「首页」
+    </script>
+
+</body>
+</html>

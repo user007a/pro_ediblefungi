@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 报表总览</title>
+<!-- 使用设计系统: Design System v2.0 + sidebar-layout -->
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+  <link rel="stylesheet" href="css/page-content.css">
+<style>
+  /* 模块卡片 hover 效果 */
+  .module-card {
+    transition:all 0.2s ease;
+  }
+  .module-card:hover {
+    background:var(--bg-hover);
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-md);
+  }
+
+  /* 弹窗遮罩层 */
+  .modal-overlay {
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background:rgba(0, 0, 0, 0.5);
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+  }
+  .modal-overlay.show {
+    display:flex;
+  }
+
+  /* 弹窗内容 */
+  .modal-content {
+    background:var(--bg-card);
+    border-radius:16px;
+    width:90%;
+    max-width:600px;
+    max-height:80vh;
+    overflow-y:auto;
+    box-shadow:0 20px 60px rgba(0, 0, 0, 0.2);
+    animation:modalFadeIn 0.3s ease;
+  }
+
+  @keyframes modalFadeIn {
+    from {
+      opacity:0;
+      transform:scale(0.95);
+    }
+    to {
+      opacity:1;
+      transform:scale(1);
+    }
+  }
+
+  /* 弹窗头部 */
+  .modal-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 24px;
+    border-bottom:1px solid var(--border-light);
+    position:sticky;
+    top:0;
+    background:var(--bg-card);
+  }
+  .modal-title {
+    font-size:18px;
+    font-weight:600;
+    color:var(--text-primary);
+  }
+  .modal-close {
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    border:none;
+    background:var(--gray-100);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all 0.2s ease;
+  }
+  .modal-close:hover {
+    background:var(--gray-200);
+  }
+
+  /* 弹窗主体 */
+  .modal-body {
+    padding:24px;
+  }
+
+  /* 详情信息卡片 */
+  .detail-grid {
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:16px;
+  }
+  .detail-item {
+    background:var(--gray-50);
+    padding:14px 16px;
+    border-radius:10px;
+  }
+  .detail-label {
+    font-size:12px;
+    color:var(--text-tertiary);
+    margin-bottom:4px;
+  }
+  .detail-value {
+    font-size:16px;
+    font-weight:600;
+    color:var(--text-primary);
+  }
+
+  /* 详情按钮 */
+  .detail-btn {
+    color:var(--primary-500);
+    text-decoration:none;
+    font-size:13px;
+    padding:4px 10px;
+    border-radius:6px;
+    transition:background 0.2s ease;
+    cursor:pointer;
+  }
+  .detail-btn:hover {
+    background:var(--primary-50);
+  }
+
+  /* 排行榜名次徽标：金/银/铜三档（沿用 design-system 的 warning / gray 色阶） */
+  .rank-badge {
+    display:inline-block;
+    padding:2px 8px;
+    border-radius:12px;
+    font-size:12px;
+    font-weight:700;
+  }
+  .rank-badge.gold   { background:var(--warning-light); color:#ad8b00; border:1px solid var(--warning-border); }
+  .rank-badge.silver { background:var(--gray-100); color:var(--gray-700); border:1px solid var(--gray-300); }
+  .rank-badge.bronze { background:var(--gray-50); color:#8c5a2b; border:1px solid var(--gray-300); }
+
+  /* 利润率：达标绿色、临界橙色 */
+  .rate-good { color:var(--success); }
+  .rate-warn { color:var(--warning); }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="report" data-active-submenu="report-overview">
+
+<!-- ===== 整体布局容器 ===== -->
+<div class="app-layout">
+
+  <!-- ===== 侧边栏 ===== -->
+  <!-- 移动端遮罩层 -->
+  <!-- ===== 主内容区 ===== -->
+  <div class="main-wrapper">
+
+    <!-- 顶栏 -->
+    <!-- Tab 标签栏 -->
+    <div class="tab-bar">
+      <!-- Tab 标签由 JS 动态渲染 -->
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+<!-- 顶部导航 -->
+
+<!-- 页面内容 -->
+<div class="page-container">
+  <!-- 统计卡片 - 年度累计口径（与下方「地块效益排行（年度累计）」合计一致） -->
+  <div class="patrol-stats">
+    <div class="patrol-stat-card green">
+      <div class="stat-value">¥ 7,530,960</div>
+      <div class="stat-label">年度总收入</div>
+      <div class="stat-trend" style="font-size:12px; color:var(--success);">↑ 12.5% 同比</div>
+    </div>
+    <div class="patrol-stat-card orange">
+      <div class="stat-value">¥ 4,399,350</div>
+      <div class="stat-label">年度总成本</div>
+      <div class="stat-trend" style="font-size:12px; color:var(--success);">↓ 3.2% 同比</div>
+    </div>
+    <div class="patrol-stat-card blue">
+      <div class="stat-value">¥ 3,131,610</div>
+      <div class="stat-label">年度净利润</div>
+      <div class="stat-trend" style="font-size:12px; color:var(--success);">↑ 28.7% 同比</div>
+    </div>
+    <div class="patrol-stat-card purple">
+      <div class="stat-value">41.6%</div>
+      <div class="stat-label">利润率</div>
+      <div class="stat-trend" style="font-size:12px; color:var(--success);">↑ 4.2% 同比</div>
+    </div>
+  </div>
+
+  <!-- 三个图表并排 - 收入趋势分析、成本构成分析、收入构成分析 -->
+  <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:20px;">
+    <div class="chart-section" style="margin-bottom:0;">
+      <h2 class="section-title">收入趋势分析</h2>
+      <div id="chart-revenue-trend" class="chart-container" style="height:260px;"></div>
+    </div>
+    <div class="chart-section" style="margin-bottom:0;">
+      <h2 class="section-title">成本构成分析</h2>
+      <div id="chart-cost-pie" class="chart-container" style="height:260px;"></div>
+    </div>
+    <div class="chart-section" style="margin-bottom:0;">
+      <h2 class="section-title">收入构成分析</h2>
+      <div id="chart-revenue-bar" class="chart-container" style="height:260px;"></div>
+    </div>
+  </div>
+
+  <!-- 地块效益排行（年度累计口径，与顶部 KPI 合计一致） -->
+  <div class="table-container">
+    <h2 class="section-title">地块效益排行（年度累计）</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>排名</th>
+          <th>地块编号</th>
+          <th>地块名称</th>
+          <th>品种</th>
+          <th>面积(亩)</th>
+          <th>树木数量(棵)</th>
+          <th>产量(吨)</th>
+          <th>收入(元)</th>
+          <th>成本(元)</th>
+          <th>利润(元)</th>
+          <th>利润率</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="rank-badge gold">1</span></td>
+          <td>D-011</td>
+          <td>南区3号地</td>
+          <td>花牛苹果</td>
+          <td>105</td>
+          <td>7,560</td>
+          <td>278.3</td>
+          <td>1,363,670</td>
+          <td>695,750</td>
+          <td>667,920</td>
+          <td><span class="rate-good">49.0%</span></td>
+          <td><span class="detail-btn" onclick="showDetail('D-011 · 南区3号地')">详情</span></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge silver">2</span></td>
+          <td>D-020</td>
+          <td>东区5号地</td>
+          <td>秦冠</td>
+          <td>102</td>
+          <td>8,670</td>
+          <td>224.4</td>
+          <td>920,040</td>
+          <td>515,800</td>
+          <td>404,240</td>
+          <td><span class="rate-good">43.9%</span></td>
+          <td><span class="detail-btn" onclick="showDetail('D-020 · 东区5号地')">详情</span></td>
+        </tr>
+        <tr>
+          <td><span class="rank-badge bronze">3</span></td>
+          <td>D-014</td>
+          <td>中区2号地</td>
+          <td>花牛苹果</td>
+          <td>98</td>
+          <td>6,664</td>
+          <td>245.0</td>
+          <td>1,176,000</td>
+          <td>686,000</td>
+          <td>490,000</td>
+          <td><span class="rate-good">41.7%</span></td>
+          <td><span class="detail-btn" onclick="showDetail('D-014 · 中区2号地')">详情</span></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>D-007</td>
+          <td>南区2号地</td>
+          <td>花牛苹果</td>
+          <td>88</td>
+          <td>6,864</td>
+          <td>220.0</td>
+          <td>1,056,000</td>
+          <td>616,000</td>
+          <td>440,000</td>
+          <td><span class="rate-good">41.7%</span></td>
+          <td><span class="detail-btn" onclick="showDetail('D-007 · 南区2号地')">详情</span></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>D-009</td>
+          <td>北区2号地</td>
+          <td>花牛苹果</td>
+          <td>92</td>
+          <td>5,704</td>
+          <td>225.4</td>
+          <td>1,070,650</td>
+          <td>649,200</td>
+          <td>421,450</td>
+          <td><span class="rate-good">39.4%</span></td>
+          <td><span class="detail-btn" onclick="showDetail('D-009 · 北区2号地')">详情</span></td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td>D-017</td>
+          <td>西区4号地</td>
+          <td>花牛苹果</td>
+          <td>89</td>
+          <td>6,675</td>
+          <td>213.6</td>
+          <td>1,014,600</td>
+          <td>634,600</td>
+          <td>380,000</td>
+          <td><span class="rate-warn">37.5%</span></td>
+          <td><span class="detail-btn" onclick="showDetail('D-017 · 西区4号地')">详情</span></td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td>D-021</td>
+          <td>南区5号地</td>
+          <td>花牛苹果</td>
+          <td>86</td>
+          <td>5,590</td>
+          <td>197.8</td>
+          <td>930,000</td>
+          <td>602,000</td>
+          <td>328,000</td>
+          <td><span class="rate-warn">35.3%</span></td>
+          <td><span class="detail-btn" onclick="showDetail('D-021 · 南区5号地')">详情</span></td>
+        </tr>
+        <tr style="background:var(--gray-50);font-weight:600;">
+          <td colspan="6">合计（7 个地块 / 47,727 棵）</td>
+          <td>1,604.5</td>
+          <td>7,530,960</td>
+          <td>4,399,350</td>
+          <td>3,131,610</td>
+          <td>41.6%</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+</main>
+  </div>
+
+</div>
+
+<!-- 引入交互脚本 -->
+<script src="js/components/chart.js"></script>
+
+<script>
+// 地块详情数据（与地块管理数据源对齐）
+const plotDetailData = {
+  'D-011 · 南区3号地': {
+    name: 'D-011 · 南区3号地',
+    variety: '花牛苹果',
+    area: '105亩',
+    yield: '278.3吨',
+    cost: '695,750元',
+    revenue: '1,363,670元',
+    profit: '667,920元',
+    profitRate: '49.0%',
+    unitPrice: '4,900元/吨',
+    plantingYear: '2019年',
+    treeCount: '7,560棵',
+    averageAge: '7年',
+    manager: '李建国',
+    base: '甘肃麦积区苹果园'
+  },
+  'D-020 · 东区5号地': {
+    name: 'D-020 · 东区5号地',
+    variety: '秦冠',
+    area: '102亩',
+    yield: '224.4吨',
+    cost: '515,800元',
+    revenue: '920,040元',
+    profit: '404,240元',
+    profitRate: '43.9%',
+    unitPrice: '4,100元/吨',
+    plantingYear: '2016年',
+    treeCount: '8,670棵',
+    averageAge: '10年',
+    manager: '王福生',
+    base: '天水麦积区苹果基地'
+  },
+  'D-014 · 中区2号地': {
+    name: 'D-014 · 中区2号地',
+    variety: '花牛苹果',
+    area: '98亩',
+    yield: '245.0吨',
+    cost: '686,000元',
+    revenue: '1,176,000元',
+    profit: '490,000元',
+    profitRate: '41.7%',
+    unitPrice: '4,800元/吨',
+    plantingYear: '2017年',
+    treeCount: '6,664棵',
+    averageAge: '9年',
+    manager: '张志远',
+    base: '甘肃吉县苹果园'
+  },
+  'D-007 · 南区2号地': {
+    name: 'D-007 · 南区2号地',
+    variety: '花牛苹果',
+    area: '88亩',
+    yield: '220.0吨',
+    cost: '616,000元',
+    revenue: '1,056,000元',
+    profit: '440,000元',
+    profitRate: '41.7%',
+    unitPrice: '4,800元/吨',
+    plantingYear: '2018年',
+    treeCount: '6,864棵',
+    averageAge: '8年',
+    manager: '赵明亮',
+    base: '甘肃麦积区苹果园'
+  },
+  'D-009 · 北区2号地': {
+    name: 'D-009 · 北区2号地',
+    variety: '花牛苹果',
+    area: '92亩',
+    yield: '225.4吨',
+    cost: '649,200元',
+    revenue: '1,070,650元',
+    profit: '421,450元',
+    profitRate: '39.4%',
+    unitPrice: '4,750元/吨',
+    plantingYear: '2016年',
+    treeCount: '5,704棵',
+    averageAge: '10年',
+    manager: '陈大壮',
+    base: '甘肃麦积区苹果基地'
+  },
+  'D-017 · 西区4号地': {
+    name: 'D-017 · 西区4号地',
+    variety: '花牛苹果',
+    area: '89亩',
+    yield: '213.6吨',
+    cost: '634,600元',
+    revenue: '1,014,600元',
+    profit: '380,000元',
+    profitRate: '37.5%',
+    unitPrice: '4,750元/吨',
+    plantingYear: '2019年',
+    treeCount: '6,675棵',
+    averageAge: '7年',
+    manager: '刘海涛',
+    base: '天水麦积区苹果基地'
+  },
+  'D-021 · 南区5号地': {
+    name: 'D-021 · 南区5号地',
+    variety: '花牛苹果',
+    area: '86亩',
+    yield: '197.8吨',
+    cost: '602,000元',
+    revenue: '930,000元',
+    profit: '328,000元',
+    profitRate: '35.3%',
+    unitPrice: '4,700元/吨',
+    plantingYear: '2022年',
+    treeCount: '5,590棵',
+    averageAge: '4年',
+    manager: '孙明德',
+    base: '甘肃麦积区苹果园'
+  }
+};
+
+function showDetail(plotName) {
+  const data = plotDetailData[plotName];
+  if (!data) return;
+  
+  document.getElementById('modal-title').textContent = data.name + ' - 效益详情';
+  document.getElementById('detail-variety').textContent = data.variety;
+  document.getElementById('detail-area').textContent = data.area;
+  document.getElementById('detail-yield').textContent = data.yield;
+  document.getElementById('detail-cost').textContent = data.cost;
+  document.getElementById('detail-revenue').textContent = data.revenue;
+  document.getElementById('detail-profit').textContent = data.profit;
+  document.getElementById('detail-profit-rate').textContent = data.profitRate;
+  document.getElementById('detail-unit-price').textContent = data.unitPrice;
+  document.getElementById('detail-planting-year').textContent = data.plantingYear;
+  document.getElementById('detail-tree-count').textContent = data.treeCount;
+  document.getElementById('detail-average-age').textContent = data.averageAge;
+  document.getElementById('detail-manager').textContent = data.manager;
+  
+  document.getElementById('detail-modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('detail-modal').classList.remove('show');
+}
+
+// 报表采集联动：从 enterprise / 订单 / 农资使用 综合计算（PC-B-051）
+function loadReportData() {
+  var farmIncome = 2512; // 万元（与 enterprise_info 一致）
+  var orders = (JSON.parse(localStorage.getItem('h5_orders') || '[]')).length;
+  var adoptIncome = (JSON.parse(localStorage.getItem('snzg_adoption_income') || '[]')).reduce(function(s,a){ return s + (a.amount || 0); }, 0);
+  var total = farmIncome + adoptIncome;
+  var elTotal = document.getElementById('reportTotal');
+  if (elTotal) elTotal.textContent = total.toFixed(2) + ' 万元';
+  var elOrders = document.getElementById('reportOrders');
+  if (elOrders) elOrders.textContent = orders + ' 笔';
+}
+function exportReport(format) {
+  // 联动采集：导出汇总 CSV
+  var farms = JSON.parse(localStorage.getItem('snzg_adoption_income') || '[]');
+  var orders = JSON.parse(localStorage.getItem('h5_orders') || '[]');
+  var csv = '类型,数量,金额\n企业产值(万元),1,2512\n认养收入笔数,' + farms.length + ',' + farms.reduce(function(s,a){return s+(a.amount||0)},0) + '\n订单笔数,' + orders.length + ',' + orders.reduce(function(s,o){return s+(o.total||0)},0);
+  var blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `报表总览_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  if (typeof Toast !== 'undefined') Toast.success('报表已导出（' + format + '）');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // 收入趋势数据（全年合计 = 地块收入合计 ¥7,530,960）
+  const revenueTrendData = {
+    categories: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    series: [{
+      name: '收入',
+      data: [505340, 540746, 601902, 669066, 750607, 812621, 743526, 682370, 734299, 622931, 471651, 395901],
+      color: '#1890ff',
+      area: true
+    }]
+  };
+  Chart.line('#chart-revenue-trend', revenueTrendData);
+
+  // 成本构成饼图（年度累计口径，合计 = 地块成本合计 ¥4,399,350）
+  const COST_TOTAL = 4399350;
+  const costBreakdown = [
+    { name: '农资成本', pct: 0.285 },
+    { name: '人工成本', pct: 0.262 },
+    { name: '设备维护', pct: 0.238 },
+    { name: '采收物流', pct: 0.128 },
+    { name: '其他成本', pct: 0.087 }
+  ];
+  const costPieData = { series: [] };
+  let costAcc = 0;
+  costBreakdown.forEach(function(x, i){
+    // 末项用余额补差，保证各项之和精确等于地块成本合计
+    const value = (i === costBreakdown.length - 1)
+      ? COST_TOTAL - costAcc
+      : Math.round(COST_TOTAL * x.pct);
+    costAcc += value;
+    costPieData.series.push({ name: x.name, value: value });
+  });
+  Chart.donut('#chart-cost-pie', costPieData);
+
+  // 收入构成柱状图（年度累计口径，单位：万元；合计 = 地块收入合计 753.10 万元）
+  const revenueBarData = {
+    categories: ['认养收入', '批发收入', '零售收入', '观光采摘', '其他收入'],
+    series: [{
+      name: '收入(万元)',
+      data: [291.58, 256.45, 107.29, 65.76, 32.02],
+      color: '#1890ff'
+    }]
+  };
+  Chart.bar('#chart-revenue-bar', revenueBarData);
+
+  // 联动采集 + 报表初始化
+  loadReportData();
+
+  // 点击遮罩层关闭弹窗
+  document.getElementById('detail-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      closeModal();
+    }
+  });
+});
+</script>
+
+<!-- 详情弹窗 -->
+<div id="detail-modal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modal-title" class="modal-title">地块效益详情</h3>
+      <button class="modal-close" onclick="closeModal()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px;">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-label">品种</div>
+          <div class="detail-value" id="detail-variety"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">面积</div>
+          <div class="detail-value" id="detail-area"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">产量</div>
+          <div class="detail-value" id="detail-yield"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">成本</div>
+          <div class="detail-value" id="detail-cost"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">收入</div>
+          <div class="detail-value" id="detail-revenue"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">利润</div>
+          <div class="detail-value" id="detail-profit"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">利润率</div>
+          <div class="detail-value" id="detail-profit-rate"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">单价</div>
+          <div class="detail-value" id="detail-unit-price"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">种植年份</div>
+          <div class="detail-value" id="detail-planting-year"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">树木数量</div>
+          <div class="detail-value" id="detail-tree-count"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">平均树龄</div>
+          <div class="detail-value" id="detail-average-age"></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">负责人</div>
+          <div class="detail-value" id="detail-manager"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 已通过质量审查（第2轮修正）- 严过审 2026-09-18 -->
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/common-functions.js"></script>
+  <script src="js/typography.js"></script>
+</body>
+</html>

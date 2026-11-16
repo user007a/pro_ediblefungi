@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食用菌工厂化农业数据管理平台 - 登录</title>
+<link rel="stylesheet" href="css/design-system.css">
+<style>
+  :root {
+    --login-accent-gradient:linear-gradient(135deg, var(--primary-700) 0%, var(--primary-500) 100%);
+    --login-serif:'STKaiti','KaiTi','楷体',serif;
+    --login-glass:rgba(255,255,255,0.86);
+    --login-glass-border:rgba(255,255,255,0.65);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:var(--font-family);
+    height:100vh;
+    overflow:hidden;
+    background:#001529;
+    background-image:url('images/fungi_house_oyster.png');
+    background-size:cover;
+    background-position:center;
+    color:var(--text-primary);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    animation:pageIn var(--transition-normal) ease;
+  }
+  body::after {
+    content:'';
+    position:absolute;
+    inset:0;
+    z-index:0;
+  }
+
+  @keyframes pageIn {
+    from { opacity:0; }
+    to { opacity:1; }
+  }
+
+  /* ===== 背景装饰 ===== */
+  .bg-layer {
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+    pointer-events:none;
+    z-index:1;
+  }
+  .bg-circle {
+    position:absolute;
+    border-radius:50%;
+    opacity:0.06;
+    background:var(--bg-card);
+  }
+  .bg-circle:nth-child(1) { width:600px; height:600px; top:-200px; left:-150px; }
+  .bg-circle:nth-child(2) { width:400px; height:400px; bottom:-120px; right:-80px; }
+  .bg-circle:nth-child(3) { width:250px; height:250px; top:40%; right:15%; opacity:0.04; }
+  .bg-circle:nth-child(4) { width:180px; height:180px; bottom:20%; left:10%; opacity:0.05; }
+
+  /* 背景网格纹理 */
+  .bg-grid {
+    position:absolute;
+    inset:0;
+    background-image:linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size:60px 60px;
+  }
+
+  /* 登录卡片：浅色毛玻璃 */
+  .login-card {
+    position:relative;
+    z-index:3;
+    width:420px;
+    background:var(--login-glass);
+    border:1px solid var(--login-glass-border);
+    -webkit-backdrop-filter:blur(16px) saturate(170%);
+    backdrop-filter:blur(16px) saturate(170%);
+    border-radius:var(--radius-xl);
+    box-shadow:0 20px 50px rgba(0,0,0,0.22);
+    padding:var(--space-3xl) var(--space-2xl) var(--space-2xl);
+    /* 靠右对齐，距窗口右侧 300px */
+    margin-left:auto;
+    margin-right:300px;
+  }
+
+  /* 品牌标识：logo 图 + 楷体主副标题 */
+  .login-header {
+    text-align:center;
+    margin-bottom:var(--space-2xl);
+  }
+  .login-header h2 {
+    font-family:var(--login-serif);
+    font-size:46px;
+    font-weight:400;
+    color:var(--primary-600);
+    letter-spacing:6px;
+    line-height:1.15;
+  }
+  .login-header .login-sub {
+    margin-top:10px;
+    font-family:var(--login-serif);
+    font-size:28px;
+    color:var(--text-secondary);
+    letter-spacing:9px;
+  }
+  .login-header .accent-line {
+    height:2px;
+    margin:22px 0 18px;
+    background:linear-gradient(90deg, transparent 0%, var(--primary-500) 22%, var(--primary-500) 78%, transparent 100%);
+  }
+  .login-header .entry-label {
+    font-family:var(--login-serif);
+    font-size:24px;
+    color:var(--gray-600);
+    letter-spacing:4px;
+  }
+
+  /* 表单（加 .login-card 前缀 + !important，避免被全局主题样式覆盖） */
+  .form-group {
+    margin-bottom:var(--space-xl);
+    position:relative;
+  }
+  .login-card .form-group label {
+    display:block;
+    font-size:var(--font-size-base) !important;
+    font-weight:var(--font-weight-semibold) !important;
+    color:var(--text-secondary) !important;
+    margin-bottom:var(--space-sm);
+  }
+  /* 去掉全局主题加在标签前的蓝色小竖条 */
+  .login-card .form-group label::before { display:none; }
+  .input-wrap {
+    position:relative;
+    display:flex;
+    align-items:center;
+  }
+  .input-wrap .input-icon {
+    position:absolute;
+    left:14px;
+    color:var(--gray-400);
+    font-size:16px;
+    pointer-events:none;
+    transition:color var(--transition-fast);
+    display:flex;
+    align-items:center;
+    z-index:1;
+  }
+  .login-card .input-wrap input {
+    width:100%;
+    height:46px !important;
+    min-height:46px !important;
+    padding:0 42px 0 48px !important;
+    border:1.5px solid var(--border-default) !important;
+    border-radius:var(--radius-md) !important;
+    font-size:var(--font-size-lg) !important;
+    font-family:inherit;
+    color:var(--text-primary) !important;
+    outline:none;
+    transition:all var(--transition-normal);
+    background:var(--gray-50) !important;
+    position:relative;
+    z-index:0;
+  }
+  .login-card .input-wrap input::placeholder {
+    color:var(--gray-400) !important;
+    font-size:var(--font-size-lg) !important;
+  }
+  .login-card .input-wrap input:focus {
+    border-color:var(--primary-500) !important;
+    background:var(--bg-card) !important;
+    box-shadow:0 0 0 3px rgba(24,144,255,0.12) !important;
+  }
+  .login-card .input-wrap input:focus ~ .input-icon {
+    color:var(--primary-500);
+  }
+  /* 密码可见切换 */
+  .pwd-toggle {
+    position:absolute;
+    right:14px;
+    cursor:pointer;
+    color:var(--gray-400);
+    font-size:16px;
+    user-select:none;
+    transition:color var(--transition-fast);
+    padding:4px;
+    z-index:1;
+  }
+  .pwd-toggle:hover { color:var(--gray-600); }
+
+  /* 记住密码 & 忘记密码 */
+  .form-options {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:var(--space-2xl);
+    font-size:var(--font-size-base);
+  }
+  .remember-me {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    color:var(--text-secondary);
+    user-select:none;
+  }
+  .remember-me input[type="checkbox"] {
+    display:none;
+  }
+  .remember-me .checkbox-custom {
+    width:16px; height:16px;
+    border:1.5px solid var(--gray-400);
+    border-radius:var(--radius-sm);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all var(--transition-fast);
+    flex-shrink:0;
+  }
+  .remember-me input:checked + .checkbox-custom {
+    background:var(--primary-500);
+    border-color:var(--primary-500);
+  }
+  .remember-me input:checked + .checkbox-custom::after {
+    content:'✓';
+    color:var(--text-inverse);
+    font-size:11px;
+    font-weight:700;
+  }
+  .forgot-link {
+    color:var(--primary-500);
+    text-decoration:none;
+    cursor:pointer;
+    transition:color var(--transition-fast);
+  }
+  .forgot-link:hover { color:var(--primary-600); text-decoration:underline; }
+
+  /* 登录按钮 */
+  .login-btn {
+    width:100%;
+    height:48px;
+    background:var(--login-accent-gradient);
+    color:var(--text-inverse);
+    border:none;
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-xl) !important;
+    font-weight:var(--font-weight-semibold) !important;
+    letter-spacing:4px !important;
+    cursor:pointer;
+    transition:all var(--transition-normal);
+    position:relative;
+    overflow:hidden;
+  }
+  .login-btn:hover {
+    background:linear-gradient(135deg, var(--primary-600) 0%, var(--primary-500) 100%);
+    box-shadow:0 12px 24px rgba(24,144,255,0.28);
+    transform:translateY(-1px);
+  }
+  .login-btn:active {
+    transform:translateY(0);
+    box-shadow:0 6px 14px rgba(24,144,255,0.24);
+  }
+  .login-btn.loading {
+    pointer-events:none;
+    opacity:0.85;
+  }
+  .login-btn .btn-text { transition:opacity 0.2s; }
+
+  /* 错误提示 */
+  .error-msg {
+    font-size:var(--font-size-xs);
+    color:var(--error);
+    margin-top:6px;
+    display:none;
+    align-items:center;
+    gap:4px;
+  }
+  .error-msg.show { display:flex; }
+
+  /* 底部 */
+  .login-footer {
+    text-align:center;
+    margin-top:var(--space-2xl);
+    font-size:var(--font-size-xs);
+    color:var(--gray-600);
+    line-height:1.6;
+  }
+
+  /* 浮动装饰粒子 */
+  .particle {
+    position:absolute;
+    background:rgba(255,255,255,0.08);
+    border-radius:50%;
+    animation:float linear infinite;
+  }
+  @keyframes float {
+    0% { transform:translateY(0) rotate(0deg); opacity:0; }
+    10% { opacity:1; }
+    90% { opacity:1; }
+    100% { transform:translateY(-100vh) rotate(720deg); opacity:0; }
+  }
+
+  /* 底部版权 */
+  .copyright {
+    position:absolute;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%);
+    color:rgba(255,255,255,0.92);
+    font-size:12px;
+    white-space:nowrap;
+    text-shadow:0 1px 4px rgba(0,0,0,0.55);
+    z-index:2;
+  }
+
+  /* ===== 统一 Toast ===== */
+  .jg-toast {
+    position:fixed;
+    top:24px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:10px 24px;
+    border-radius:999px;
+    font-size:14px;
+    font-family:inherit;
+    z-index:9999;
+    animation:jgToastFadeInOut 2.5s forwards;
+    pointer-events:none;
+    white-space:nowrap;
+    max-width:calc(100vw - 48px);
+    text-overflow:ellipsis;
+    overflow:hidden;
+    line-height:1.4;
+  }
+  .jg-toast.jg-toast-success { background:var(--success-bg); color:#166534; border:1px solid #bbf7d0; }
+  .jg-toast.jg-toast-warning { background:#fefce8; color:#854d0e; border:1px solid #fef08a; }
+  .jg-toast.jg-toast-error   { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
+  .jg-toast.jg-toast-info    { background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; }
+
+  @keyframes jgToastFadeInOut {
+    0%   { opacity:0; transform:translateX(-50%) translateY(-10px); }
+    15%  { opacity:1; transform:translateX(-50%) translateY(0); }
+    80%  { opacity:1; transform:translateX(-50%) translateY(0); }
+    100% { opacity:0; transform:translateX(-50%) translateY(-10px); }
+  }
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body>
+
+<!-- 背景装饰层 -->
+<div class="bg-layer">
+  <div class="bg-circle"></div>
+  <div class="bg-circle"></div>
+  <div class="bg-circle"></div>
+  <div class="bg-circle"></div>
+  <div class="bg-grid"></div>
+</div>
+
+<!-- 浮动粒子 -->
+<div id="particles"></div>
+
+<!-- 登录卡片 -->
+<div class="login-card">
+  <div class="login-header">
+    <h2>食用菌</h2>
+    <div class="login-sub">工厂化管理平台</div>
+    <div class="accent-line"></div>
+    <div class="entry-label">登录入口</div>
+  </div>
+
+  <form id="loginForm" autocomplete="off" onsubmit="return false;">
+    <div class="form-group">
+      <label for="username">用户名</label>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <input type="text" id="username" placeholder="请输入用户名" maxlength="30" aria-label="用户名" autofocus>
+      </div>
+      <div class="error-msg" id="usernameError">请输入用户名</div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">密码</label>
+      <div class="input-wrap">
+        <span class="input-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <input type="password" id="password" placeholder="请输入密码" maxlength="30" aria-label="密码">
+        <span class="pwd-toggle" id="pwdToggle" title="显示/隐藏密码" role="button" tabindex="0" aria-label="切换密码可见">👁</span>
+      </div>
+      <div class="error-msg" id="passwordError">请输入密码</div>
+    </div>
+
+    <div class="form-options">
+      <label class="remember-me">
+        <input type="checkbox" id="rememberMe">
+        <span class="checkbox-custom"></span>
+        记住密码
+      </label>
+      <a class="forgot-link" onclick="showToast('请联系管理员重置密码', 'warning')">忘记密码？</a>
+    </div>
+
+    <button type="button" class="login-btn" id="loginBtn" onclick="handleLogin()" aria-label="登录">
+      <span class="btn-text">登 录</span>
+    </button>
+  </form>
+
+  <div class="login-footer">
+    食用菌工厂化农业数据管理平台<br>
+    技术支持：湖南智农数果科技有限公司<br>
+    <span style="color:var(--gray-400);">演示账号：admin / admin123</span>
+  </div>
+</div>
+
+<!-- 底部版权 -->
+<div class="copyright">© 2023-2026 湖南智农数果科技有限公司  All Rights Reserved</div>
+
+<script>
+  // ===== 浮动粒子 =====
+  (function initParticles() {
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 12; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = Math.random() * 6 + 3;
+      p.style.width = size + 'px';
+      p.style.height = size + 'px';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.bottom = '-20px';
+      p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+      p.style.animationDelay = (Math.random() * 10) + 's';
+      container.appendChild(p);
+    }
+  })();
+
+  // ===== 密码可见切换 =====
+  const pwdToggle = document.getElementById('pwdToggle');
+  const pwdInput = document.getElementById('password');
+  let pwdVisible = false;
+
+  pwdToggle.addEventListener('click', togglePwd);
+  pwdToggle.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePwd(); }
+  });
+
+  function togglePwd() {
+    pwdVisible = !pwdVisible;
+    pwdInput.type = pwdVisible ? 'text' : 'password';
+    pwdToggle.textContent = pwdVisible ? '🙈' : '👁';
+  }
+
+  // ===== 表单校验 & 登录 =====
+  const usernameInput = document.getElementById('username');
+  const usernameError = document.getElementById('usernameError');
+  const passwordError = document.getElementById('passwordError');
+  const loginBtn = document.getElementById('loginBtn');
+
+  // ===== 账号库（演示用；生产环境应由后端 API 提供） =====
+  const USERS = [
+    { username: 'admin',      password: 'admin123',      role: '超级管理员',     realName: '系统管理员' },
+    { username: 'supervisor', password: 'supervisor123', role: '生产主管',       realName: '惠加宁' },
+    { username: 'operator',   password: 'operator123',   role: '接种操作工',     realName: '黄忠坚' },
+    { username: 'maintainer', password: 'maintainer123', role: '设备运维工程师', realName: '张才孙' },
+    { username: 'inspector',  password: 'inspector123',  role: '质检员',         realName: '周明轩' },
+    { username: 'demo',       password: 'demo123',       role: '演示账号',       realName: '演示用户', disabled: true }
+  ];
+
+  // ===== 账号覆盖表（来自用户设置页修改密码/停用账号；localStorage） =====
+  const USER_ACCOUNTS_KEY = 'snzg_user_accounts';
+  const REMEMBER_KEY = 'snzg_remember';
+  const REMEMBER_DAYS = 7;
+
+  function encodeB64(str) {
+    try { return btoa(unescape(encodeURIComponent(String(str)))); } catch (e) { return String(str); }
+  }
+  function decodeB64(str) {
+    try { return decodeURIComponent(escape(atob(String(str)))); } catch (e) { return ''; }
+  }
+  // 合并内置账号库与 localStorage 覆盖表，返回 username -> {password,realName,role,phone,disabled}
+  function getAccountMap() {
+    const map = {};
+    USERS.forEach(function(u) {
+      map[u.username] = {
+        password: u.password, realName: u.realName, role: u.role,
+        phone: u.phone || '', disabled: !!u.disabled
+      };
+    });
+    try {
+      const raw = localStorage.getItem(USER_ACCOUNTS_KEY);
+      if (raw) {
+        const ov = JSON.parse(raw) || {};
+        Object.keys(ov).forEach(function(k) {
+          const base = map[k] || { password: '', realName: k, role: '操作工', phone: '', disabled: false };
+          const o = ov[k] || {};
+          map[k] = {
+            password: o.password !== undefined ? o.password : base.password,
+            realName: o.realName || base.realName,
+            role: o.role || base.role,
+            phone: o.phone !== undefined ? o.phone : base.phone,
+            disabled: o.disabled !== undefined ? !!o.disabled : base.disabled
+          };
+        });
+      }
+    } catch (e) {}
+    return map;
+  }
+
+  // 锁定状态（用户名 -> { until, count }）
+  const LOCK_KEY = 'snzg_login_lock';
+  const SESSION_KEY = 'snzg_logged_in';
+  const USER_KEY = 'snzg_user';
+  const MAX_ATTEMPTS = 5;
+  const LOCK_MINUTES = 15;
+  function getLockMap() {
+    try { return JSON.parse(localStorage.getItem(LOCK_KEY) || '{}'); } catch(e){ return {}; }
+  }
+  function saveLockMap(map) {
+    try { localStorage.setItem(LOCK_KEY, JSON.stringify(map)); } catch(e){}
+  }
+  function isLocked(username) {
+    const map = getLockMap();
+    const rec = map[username];
+    if (!rec) return false;
+    if (Date.now() < rec.until) return true;
+    // 已过期，清除
+    delete map[username];
+    saveLockMap(map);
+    return false;
+  }
+  function bumpFail(username) {
+    const map = getLockMap();
+    const rec = map[username] || { count: 0, until: 0 };
+    rec.count += 1;
+    if (rec.count >= MAX_ATTEMPTS) {
+      rec.until = Date.now() + LOCK_MINUTES * 60 * 1000;
+    }
+    map[username] = rec;
+    saveLockMap(map);
+    return rec;
+  }
+  function clearFail(username) {
+    const map = getLockMap();
+    delete map[username];
+    saveLockMap(map);
+  }
+
+  function setError(msg) {
+    passwordError.textContent = msg;
+    passwordError.classList.add('show');
+  }
+
+  // 输入时清除错误
+  usernameInput.addEventListener('input', () => {
+    usernameError.classList.remove('show');
+  });
+  pwdInput.addEventListener('input', () => {
+    passwordError.classList.remove('show');
+  });
+
+  // 回车登录
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') handleLogin();
+  });
+
+  function handleLogin() {
+    let valid = true;
+    const username = usernameInput.value.trim();
+    const password = pwdInput.value.trim();
+
+    if (!username) {
+      usernameError.classList.remove('show');
+      setError('请输入用户名');
+      usernameInput.focus();
+      valid = false;
+    }
+    if (!password) {
+      if (valid) {
+        usernameError.classList.remove('show');
+        setError('请输入密码');
+        pwdInput.focus();
+      }
+      valid = false;
+    }
+    if (!valid) return;
+
+    // 锁定检查
+    if (isLocked(username)) {
+      usernameError.classList.remove('show');
+      const map = getLockMap();
+      const remainMin = Math.max(1, Math.ceil((map[username].until - Date.now()) / 60000));
+      setError('账号已锁定，请 ' + remainMin + ' 分钟后再试');
+      return;
+    }
+
+    // 显示加载状态
+    loginBtn.classList.add('loading');
+
+    // 模拟登录请求（1.2 秒）
+    setTimeout(function() {
+      loginBtn.classList.remove('loading');
+
+      // 鉴权：账号是否存在（内置账号库 + 用户设置覆盖表）
+      const accounts = getAccountMap();
+      const user = accounts[username];
+      if (!user) {
+        usernameError.textContent = '账号不存在，请检查后重试';
+        usernameError.classList.add('show');
+        passwordError.classList.remove('show');
+        return;
+      }
+      // 账号是否停用
+      if (user.disabled) {
+        usernameError.classList.remove('show');
+        setError('账号已停用，请联系管理员');
+        return;
+      }
+      // 密码校验
+      if (user.password !== password) {
+        const rec = bumpFail(username);
+        usernameError.classList.remove('show');
+        const left = MAX_ATTEMPTS - rec.count;
+        if (left > 0) {
+          setError('密码错误，还剩 ' + left + ' 次尝试机会');
+        } else {
+          setError('账号已锁定 15 分钟');
+        }
+        return;
+      }
+
+      // 登录成功
+      clearFail(username);
+      // 记住密码：写入用户名 + 密码(Base64) + 7 天免登录有效期
+      if (document.getElementById('rememberMe').checked) {
+        localStorage.setItem(REMEMBER_KEY, JSON.stringify({
+          username: username,
+          password: encodeB64(password),
+          expireAt: Date.now() + REMEMBER_DAYS * 24 * 60 * 60 * 1000
+        }));
+      } else {
+        localStorage.removeItem(REMEMBER_KEY);
+      }
+
+      // 记录登录状态（含真实姓名与角色）
+      sessionStorage.setItem(SESSION_KEY, '1');
+      sessionStorage.setItem(USER_KEY, JSON.stringify({
+        username: username,
+        realName: user.realName,
+        role: user.role,
+        loginAt: Date.now()
+      }));
+
+      // 登录成功，直接进入系统首页
+      window.location.href = 'index.html';
+    }, 1200);
+  }
+
+  // ===== 页面加载：7 天免登录 / 回填记住的账号密码 =====
+  (function autoFill() {
+    var saved = null;
+    try { saved = JSON.parse(localStorage.getItem(REMEMBER_KEY)); } catch (e) {}
+    if (!saved || !saved.username) return;
+
+    // 7 天免登录：未过期且账号密码仍有效，直接进入系统首页
+    if (saved.expireAt && Date.now() < saved.expireAt) {
+      var acc = getAccountMap()[saved.username];
+      var pwd = saved.password ? decodeB64(saved.password) : '';
+      if (acc && !acc.disabled && acc.password === pwd) {
+        sessionStorage.setItem(SESSION_KEY, '1');
+        sessionStorage.setItem(USER_KEY, JSON.stringify({
+          username: saved.username,
+          realName: acc.realName,
+          role: acc.role,
+          loginAt: Date.now()
+        }));
+        window.location.href = 'index.html';
+        return;
+      }
+    }
+
+    // 回填用户名 + 密码
+    usernameInput.value = saved.username;
+    if (saved.password) pwdInput.value = decodeB64(saved.password);
+    document.getElementById('rememberMe').checked = true;
+    setTimeout(function() { pwdInput.focus(); }, 100);
+  })();
+
+  // ===== 统一 Toast =====
+  function showToast(msg, type) {
+    type = type || 'info';
+    var toast = document.createElement('div');
+    toast.className = 'jg-toast jg-toast-' + type;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 2600);
+  }
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/common-functions.js"></script>
+  <script src="js/typography.js"></script>
+</body>
+</html>

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌环境监测系统 - 杂菌识别</title>
+  <!-- H5设计系统 -->
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <!-- 共享数据层（toast） -->
+  <script src="js/mobile-store.js"></script>
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+
+    body { background: var(--bg); }
+    .mb-app { padding-bottom: calc(var(--space-8) + var(--safe-bottom)); }
+
+    /* --- 卡片 --- */
+    .card {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--font-md);
+      font-weight: var(--font-semibold);
+      color: var(--text);
+      margin-bottom: var(--space-3);
+    }
+    .card-head-note {
+      margin-left: auto;
+      font-size: var(--font-xs);
+      font-weight: var(--font-regular);
+      color: var(--text-tertiary);
+    }
+
+    /* --- 上传区 --- */
+    .upload-area {
+      position: relative;
+      width: 100%;
+      height: 190px;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--primary-50);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color var(--transition-fast), background var(--transition-fast);
+    }
+    .upload-area:active { border-color: var(--primary-400); background: var(--primary-100); }
+    .upload-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-full);
+      background: var(--bg-white);
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+    }
+    .upload-icon svg { width: 26px; height: 26px; }
+    .upload-text { font-size: var(--font-base); font-weight: var(--font-medium); color: var(--text); }
+    .upload-hint { font-size: var(--font-xs); color: var(--text-tertiary); }
+    .preview-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .preview-hint {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 24px 12px 8px;
+      text-align: center;
+      font-size: var(--font-xs);
+      color: var(--text-on-primary);
+      background: linear-gradient(180deg, transparent 0%, var(--primary-900) 78%);
+    }
+    /* 扫描光带 */
+    .scan-band {
+      display: none;
+      position: absolute;
+      left: 0; right: 0;
+      height: 46px;
+      opacity: 0.55;
+      background: linear-gradient(180deg, transparent, var(--primary-400), transparent);
+      border-top: 1px solid var(--primary-300);
+      pointer-events: none;
+    }
+    .upload-area.scanning .scan-band { display: block; animation: bandMove 1.5s linear infinite; }
+    @keyframes bandMove {
+      0% { top: -46px; }
+      100% { top: 100%; }
+    }
+
+    /* --- 扫描中面板 --- */
+    .scan-panel { padding: var(--space-4) 0 var(--space-1); text-align: center; }
+    .scan-ring {
+      width: 70px; height: 70px;
+      margin: 0 auto var(--space-3);
+      border-radius: 50%;
+      border: 3px solid var(--primary-100);
+      border-top-color: var(--primary-600);
+      border-right-color: var(--primary-400);
+      animation: ringSpin 0.9s linear infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .scan-ring svg { width: 26px; height: 26px; color: var(--primary-600); animation: none; }
+    @keyframes ringSpin { to { transform: rotate(360deg); } }
+    .scan-text { font-size: var(--font-sm); color: var(--text-secondary); }
+    .progress-track {
+      height: 6px;
+      background: var(--primary-100);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin: var(--space-3) 0 var(--space-1);
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      border-radius: var(--radius-full);
+      background: var(--gradient-primary);
+      animation: barGrow 2s linear forwards;
+    }
+    @keyframes barGrow { from { width: 0; } to { width: 100%; } }
+
+    .identify-btn { margin-top: var(--space-4); }
+
+    /* --- 识别结果 --- */
+    .result-top {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+    .result-icon {
+      width: 52px; height: 52px;
+      border-radius: var(--radius-lg);
+      background: var(--error-light);
+      color: var(--error-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .result-icon svg { width: 26px; height: 26px; }
+    .result-info { flex: 1; min-width: 0; }
+    .result-name { font-size: var(--font-lg); font-weight: var(--font-bold); color: var(--text); }
+    .result-sub { font-size: var(--font-xs); color: var(--text-tertiary); margin-top: 2px; }
+    .result-top .mb-tag { margin-top: 2px; }
+
+    .result-grid { display: flex; align-items: center; gap: var(--space-4); }
+    .conf-ring {
+      --pct: 96.8;
+      width: 78px; height: 78px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: conic-gradient(var(--error) calc(var(--pct) * 1%), var(--border-light) 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .conf-ring-inner {
+      width: 62px; height: 62px;
+      border-radius: 50%;
+      background: var(--bg-white);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.15;
+    }
+    .conf-ring-inner b { font-size: var(--font-md); color: var(--error-dark); }
+    .conf-ring-inner span { font-size: var(--font-2xs); color: var(--text-tertiary); }
+    .result-fields { flex: 1; min-width: 0; }
+    .field-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--space-3);
+      font-size: var(--font-sm);
+      padding: 5px 0;
+    }
+    .field-row .k { color: var(--text-secondary); flex-shrink: 0; }
+    .field-row .v { color: var(--text); font-weight: var(--font-medium); text-align: right; word-break: break-all; }
+    .field-row .v.danger { color: var(--error-dark); }
+
+    .advice-box {
+      margin-top: var(--space-4);
+      padding: var(--space-3);
+      background: var(--warning-light);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--warning-dark);
+    }
+    .advice-title {
+      font-size: var(--font-sm);
+      font-weight: var(--font-semibold);
+      color: var(--warning-dark);
+      margin-bottom: var(--space-2);
+    }
+    .advice-list { margin: 0; padding: 0; list-style: none; }
+    .advice-list li {
+      display: flex;
+      gap: var(--space-2);
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      line-height: 1.6;
+      padding: 3px 0;
+    }
+    .advice-no {
+      flex-shrink: 0;
+      width: 18px; height: 18px;
+      margin-top: 2px;
+      border-radius: 50%;
+      background: var(--bg-white);
+      color: var(--warning-dark);
+      font-size: var(--font-2xs);
+      font-weight: var(--font-bold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result-actions { display: flex; gap: var(--space-3); margin-top: var(--space-4); }
+    .result-actions .mb-btn { flex: 1; }
+    .reported-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: var(--space-3);
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      background: var(--success-light);
+      color: var(--success-dark);
+      font-size: var(--font-xs);
+    }
+    .reported-chip svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* --- 历史 --- */
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .history-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .history-thumb {
+      width: 52px; height: 52px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      flex-shrink: 0;
+      background: var(--primary-50);
+      border: 1px solid var(--border);
+    }
+    .history-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .history-main { flex: 1; min-width: 0; }
+    .history-title {
+      font-size: var(--font-base);
+      font-weight: var(--font-medium);
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .history-desc { font-size: var(--font-xs); color: var(--text-tertiary); margin-top: 2px; }
+    .empty-box {
+      padding: var(--space-6) var(--space-3);
+      text-align: center;
+      font-size: var(--font-sm);
+      color: var(--text-tertiary);
+      line-height: 1.7;
+    }
+
+    /* --- 弹窗 --- */
+    .sheet-sub { font-size: var(--font-xs); color: var(--text-tertiary); text-align: center; margin: -8px 0 var(--space-4); }
+    .sample-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-bottom: var(--space-4); }
+    .sample-item {
+      padding: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      overflow: hidden;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color var(--transition-fast);
+    }
+    .sample-item:active { border-color: var(--primary-400); }
+    .sample-item img { width: 100%; height: 84px; object-fit: cover; display: block; }
+    .sample-name { padding: 7px 9px; font-size: var(--font-xs); color: var(--text); font-weight: var(--font-medium); }
+    .confirm-list {
+      background: var(--primary-50);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      margin-bottom: var(--space-2);
+    }
+    .confirm-list .field-row { font-size: var(--font-sm); }
+    .detail-modal { max-height: 82vh; overflow-y: auto; text-align: left; }
+    .detail-modal .mb-modal-title { text-align: left; margin-bottom: var(--space-3); }
+    .detail-advice { margin: var(--space-2) 0 0; padding-left: 18px; color: var(--text-secondary); font-size: var(--font-sm); line-height: 1.7; }
+    .detail-advice li { margin-bottom: 4px; }
+    .detail-close { margin-top: var(--space-4); }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <!-- 返回栏 -->
+    <div class="mb-back-bar">
+      <button class="mb-back-arrow" type="button" onclick="goHome()" aria-label="返回首页">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <div class="mb-back-title">杂菌识别</div>
+      <span class="mb-tag info">AI 视觉</span>
+    </div>
+
+    <div class="mb-section">
+      <!-- 样本上传 -->
+      <div class="card">
+        <div class="card-head">
+          <span class="mb-section-dot"></span>样本采集
+          <span class="card-head-note">培养料 / 菌丝 / 菇体</span>
+        </div>
+        <div class="upload-area" id="uploadArea" onclick="openPicker()">
+          <div class="upload-icon" id="uploadEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+          <div class="upload-text">拍照或从相册选择 · 支持 JPG/PNG</div>
+          <div class="upload-hint">距菌袋 20cm 内拍摄更准确</div>
+          <img class="preview-img" id="previewImg" alt="样本预览" style="display:none;">
+          <div class="preview-hint" id="previewHint" style="display:none;"></div>
+          <div class="scan-band"></div>
+        </div>
+
+        <button class="mb-btn mb-btn-primary mb-btn-block identify-btn" id="identifyBtn" type="button" onclick="startIdentify()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;">
+            <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/>
+          </svg>
+          开始识别
+        </button>
+
+        <div class="scan-panel" id="scanPanel" style="display:none;">
+          <div class="scan-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>
+              <circle cx="12" cy="12" r="3.2"/>
+            </svg>
+          </div>
+          <div class="scan-text">AI 正在识别，通常需要 2-5 秒</div>
+          <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        </div>
+      </div>
+
+      <!-- 识别结果 -->
+      <div class="card" id="resultCard" style="display:none;">
+        <div class="card-head">
+          <span class="mb-section-dot"></span>识别结果
+          <span class="card-head-note" id="resultTime"></span>
+        </div>
+
+        <div class="result-top">
+          <div class="result-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div class="result-info">
+            <div class="result-name">杏鲍菇（菌丝/菇体）</div>
+            <div class="result-sub" id="resultSource">示例样本 · 培养菌丝</div>
+          </div>
+          <span class="mb-tag error mb-tag-lg">高风险</span>
+        </div>
+
+        <div class="result-grid">
+          <div class="conf-ring" id="confRing">
+            <div class="conf-ring-inner"><b>96.8%</b><span>置信度</span></div>
+          </div>
+          <div class="result-fields">
+            <div class="field-row"><span class="k">杂菌类型</span><span class="v danger">绿霉（Trichoderma）</span></div>
+            <div class="field-row"><span class="k">关联批次</span><span class="v" id="resultBatch">JB-20261112-05</span></div>
+            <div class="field-row"><span class="k">采样位置</span><span class="v" id="resultHouse">培养房 A-03</span></div>
+          </div>
+        </div>
+
+        <div class="advice-box">
+          <div class="advice-title">处置建议</div>
+          <ul class="advice-list" id="adviceList"></ul>
+        </div>
+
+        <div class="result-actions" id="resultActions">
+          <button class="mb-btn mb-btn-secondary" type="button" onclick="openDetail()">查看详情</button>
+          <button class="mb-btn mb-btn-primary" type="button" onclick="openReport()">立即上报</button>
+        </div>
+        <div class="reported-chip" id="reportedChip" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span id="reportedText"></span>
+        </div>
+      </div>
+
+      <!-- 识别历史 -->
+      <div class="card">
+        <div class="card-head">
+          <span class="mb-section-dot"></span>识别历史
+          <span class="card-head-note">最多展示 10 条</span>
+        </div>
+        <div id="historyList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 选择示例图片 -->
+  <div class="mb-modal-overlay is-sheet" id="pickerModal">
+    <div class="mb-modal is-sheet">
+      <div class="mb-modal-title">选择示例图片</div>
+      <div class="sheet-sub">演示数据 · 选择后将载入对应样本</div>
+      <div class="sample-grid">
+        <button class="sample-item" type="button" onclick="chooseSample('incubate')">
+          <img src="../applefarm_h5/images/trace_incubate.jpg" alt="培养菌丝样本">
+          <div class="sample-name">培养菌丝</div>
+        </button>
+        <button class="sample-item" type="button" onclick="chooseSample('substrate')">
+          <img src="../applefarm_h5/images/trace_substrate.jpg" alt="培养料样本">
+          <div class="sample-name">培养料</div>
+        </button>
+        <button class="sample-item" type="button" onclick="chooseSample('material')">
+          <img src="../applefarm_h5/images/trace_material.jpg" alt="原料样本">
+          <div class="sample-name">原料</div>
+        </button>
+        <button class="sample-item" type="button" onclick="chooseSample('fruiting')">
+          <img src="../applefarm_h5/images/trace_fruiting.jpg" alt="出菇房样本">
+          <div class="sample-name">出菇房菇体</div>
+        </button>
+      </div>
+      <button class="mb-btn mb-btn-secondary mb-btn-block" type="button" onclick="closeModal('pickerModal')">取消</button>
+    </div>
+  </div>
+
+  <!-- 上报确认 -->
+  <div class="mb-modal-overlay" id="reportModal">
+    <div class="mb-modal">
+      <div class="mb-modal-icon error">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div class="mb-modal-title">确认污染上报</div>
+      <div class="mb-modal-body">将生成污染上报工单并通知质检员，请确认识别信息。</div>
+      <div class="confirm-list">
+        <div class="field-row"><span class="k">识别对象</span><span class="v">杏鲍菇（菌丝/菇体）</span></div>
+        <div class="field-row"><span class="k">杂菌类型</span><span class="v danger">绿霉（Trichoderma）</span></div>
+        <div class="field-row"><span class="k">风险等级</span><span class="v danger">高风险 · 96.8%</span></div>
+        <div class="field-row"><span class="k">关联批次</span><span class="v" id="reportBatch">JB-20261112-05</span></div>
+      </div>
+      <div class="mb-modal-actions">
+        <button class="mb-btn mb-btn-secondary" type="button" onclick="closeModal('reportModal')">取消</button>
+        <button class="mb-btn mb-btn-primary" type="button" onclick="submitReport()">确认上报</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 识别详情 -->
+  <div class="mb-modal-overlay" id="detailModal">
+    <div class="mb-modal detail-modal">
+      <div class="mb-modal-title">识别详情</div>
+      <div class="field-row"><span class="k">识别对象</span><span class="v">杏鲍菇（菌丝/菇体）</span></div>
+      <div class="field-row"><span class="k">杂菌类型</span><span class="v danger">绿霉（Trichoderma）</span></div>
+      <div class="field-row"><span class="k">置信度</span><span class="v danger">96.8%</span></div>
+      <div class="field-row"><span class="k">风险等级</span><span class="v danger">高风险</span></div>
+      <div class="field-row"><span class="k">关联批次</span><span class="v" id="detailBatch">JB-20261112-05</span></div>
+      <div class="field-row"><span class="k">采样位置</span><span class="v" id="detailHouse">培养房 A-03</span></div>
+      <div class="field-row"><span class="k">识别时间</span><span class="v" id="detailTime">-</span></div>
+      <div class="field-row"><span class="k">识别模型</span><span class="v">MushroomVision v2.3</span></div>
+      <div style="font-size:var(--font-sm);font-weight:var(--font-semibold);color:var(--text);margin-top:var(--space-4);">处置建议</div>
+      <ol class="detail-advice" id="detailAdvice"></ol>
+      <button class="mb-btn mb-btn-secondary mb-btn-block detail-close" type="button" onclick="closeModal('detailModal')">关闭</button>
+    </div>
+  </div>
+
+  <script>
+    var STORE_KEY = 'mushroom_contamination_reports';
+    var HISTORY_KEY = 'mushroom_disease_history';
+    var MAX_HISTORY = 10;
+
+    var ADVICE = [
+      '立即隔离该培养架并停止该区域循环风',
+      '对污染菌包做无害化处理，禁止出库',
+      '加强接种室与培养房消毒，记录消毒批次',
+      '48 小时内复检相邻批次'
+    ];
+
+    var SAMPLES = {
+      incubate: {
+        img: '../applefarm_h5/images/trace_incubate.jpg',
+        name: '培养菌丝',
+        batch: 'JB-20261112-05',
+        house: '培养房 A-03'
+      },
+      substrate: {
+        img: '../applefarm_h5/images/trace_substrate.jpg',
+        name: '培养料',
+        batch: 'JB-20261110-02',
+        house: '培养房 B-02'
+      },
+      material: {
+        img: '../applefarm_h5/images/trace_material.jpg',
+        name: '原料',
+        batch: 'JB-20261108-07',
+        house: '拌料间 C-01'
+      },
+      fruiting: {
+        img: '../applefarm_h5/images/trace_fruiting.jpg',
+        name: '出菇房菇体',
+        batch: 'JB-20261114-03',
+        house: '出菇房 A-05'
+      }
+    };
+
+    var state = {
+      sampleKey: '',
+      scanning: false,
+      result: null,
+      reportedId: ''
+    };
+
+    function currentUser() {
+      try { return sessionStorage.getItem('loginUser') || '李国强'; } catch (e) { return '李国强'; }
+    }
+
+    function goHome() {
+      window.location.href = 'mb_home.html';
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function readList(key) {
+      try {
+        var v = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(v) ? v : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function writeList(key, list) {
+      try {
+        localStorage.setItem(key, JSON.stringify(list));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function pad2(n) { return n < 10 ? '0' + n : String(n); }
+
+    function dateParts(ts) {
+      var d = ts instanceof Date ? ts : new Date(ts);
+      if (isNaN(d.getTime())) d = new Date();
+      var p = function (n) { return n < 10 ? '0' + n : n; };
+      return {
+        ymd: String(d.getFullYear()) + p(d.getMonth() + 1) + p(d.getDate()),
+        text: d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes())
+      };
+    }
+
+    /* ---------- 选图 ---------- */
+    function openPicker() {
+      if (state.scanning) {
+        MobileStore.toast('正在识别，请稍候', 'warning');
+        return;
+      }
+      document.getElementById('pickerModal').classList.add('show');
+    }
+
+    function chooseSample(key) {
+      var s = SAMPLES[key];
+      if (!s) return;
+      state.sampleKey = key;
+      state.result = null;
+      state.reportedId = '';
+      document.getElementById('resultCard').style.display = 'none';
+      var img = document.getElementById('previewImg');
+      img.src = s.img;
+      img.style.display = 'block';
+      document.getElementById('uploadEmpty').style.display = 'none';
+      document.getElementById('previewHint').style.display = 'block';
+      document.getElementById('previewHint').textContent = s.name + ' · 点击可重新选择';
+      closeModal('pickerModal');
+      MobileStore.toast('已载入示例图片', 'success');
+    }
+
+    /* ---------- 识别 ---------- */
+    function startIdentify() {
+      var s = SAMPLES[state.sampleKey];
+      if (!s) {
+        MobileStore.toast('请先拍照或选择一张图片', 'warning');
+        return;
+      }
+      if (state.scanning) return;
+
+      state.scanning = true;
+      document.getElementById('resultCard').style.display = 'none';
+      document.getElementById('identifyBtn').style.display = 'none';
+      document.getElementById('scanPanel').style.display = 'block';
+      document.getElementById('uploadArea').classList.add('scanning');
+
+      var bar = document.getElementById('progressBar');
+      bar.style.animation = 'none';
+      void bar.offsetWidth;
+      bar.style.animation = '';
+
+      setTimeout(function () {
+        state.scanning = false;
+        document.getElementById('uploadArea').classList.remove('scanning');
+        document.getElementById('scanPanel').style.display = 'none';
+        document.getElementById('identifyBtn').style.display = 'flex';
+        finishIdentify(s);
+      }, 2000);
+    }
+
+    function finishIdentify(s) {
+      var now = new Date();
+      var dp = dateParts(now);
+      state.result = {
+        sample: s.name,
+        image: s.img,
+        batch: s.batch,
+        house: s.house,
+        object: '杏鲍菇（菌丝/菇体）',
+        type: '绿霉（Trichoderma）',
+        confidence: 96.8,
+        risk: '高风险',
+        time: dp.text
+      };
+      state.reportedId = '';
+
+      renderResult();
+      saveHistory();
+      document.getElementById('resultCard').style.display = 'block';
+      document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      MobileStore.toast('识别完成：发现高风险杂菌', 'error');
+    }
+
+    function renderResult() {
+      var r = state.result;
+      if (!r) return;
+      document.getElementById('resultSource').textContent = '示例样本 · ' + r.sample;
+      document.getElementById('resultBatch').textContent = r.batch;
+      document.getElementById('resultHouse').textContent = r.house;
+      document.getElementById('resultTime').textContent = r.time;
+      document.getElementById('confRing').style.setProperty('--pct', r.confidence);
+
+      document.getElementById('adviceList').innerHTML = ADVICE.map(function (a, i) {
+        return '<li><span class="advice-no">' + (i + 1) + '</span><span>' + esc(a) + '</span></li>';
+      }).join('');
+
+      document.getElementById('reportedChip').style.display = state.reportedId ? 'flex' : 'none';
+      document.getElementById('reportedText').textContent = state.reportedId
+        ? '已生成污染上报工单 ' + state.reportedId + '，等待质检员处理'
+        : '';
+      document.getElementById('resultActions').style.display = state.reportedId ? 'none' : 'flex';
+    }
+
+    /* ---------- 历史 ---------- */
+    function saveHistory() {
+      var r = state.result;
+      if (!r) return;
+      var list = readList(HISTORY_KEY);
+      list.unshift({
+        id: 'dh_' + Date.now(),
+        image: r.image,
+        sample: r.sample,
+        object: r.object,
+        type: r.type,
+        confidence: r.confidence,
+        risk: r.risk,
+        batch: r.batch,
+        house: r.house,
+        time: r.time
+      });
+      writeList(HISTORY_KEY, list.slice(0, MAX_HISTORY));
+      renderHistory();
+    }
+
+    function renderHistory() {
+      var box = document.getElementById('historyList');
+      var list = readList(HISTORY_KEY).slice(0, MAX_HISTORY);
+      if (!list.length) {
+        box.innerHTML = '<div class="empty-box">暂无识别记录<br>上传样本并完成识别后自动留存</div>';
+        return;
+      }
+      box.innerHTML = list.map(function (h) {
+        var riskCls = h.risk === '高风险' ? 'error' : (h.risk === '中风险' ? 'warning' : 'success');
+        return '<div class="history-item">' +
+          '<div class="history-thumb"><img src="' + esc(h.image) + '" alt="识别缩略图"></div>' +
+          '<div class="history-main">' +
+            '<div class="history-title">' + esc(h.type) + '</div>' +
+            '<div class="history-desc">' + esc(h.object) + ' · ' + esc(h.confidence) + '%</div>' +
+            '<div class="history-desc">' + esc(h.time) + '</div>' +
+          '</div>' +
+          '<span class="mb-tag ' + riskCls + '">' + esc(h.risk) + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    /* ---------- 上报 ---------- */
+    function openReport() {
+      if (!state.result) {
+        MobileStore.toast('请先完成识别', 'warning');
+        return;
+      }
+      if (state.reportedId) {
+        MobileStore.toast('该批次已上报，工单号 ' + state.reportedId, 'info');
+        return;
+      }
+      document.getElementById('reportBatch').textContent = state.result.batch;
+      document.getElementById('reportModal').classList.add('show');
+    }
+
+    function nextReportId() {
+      var ymd = dateParts(new Date()).ymd;
+      var prefix = 'WR-' + ymd + '-';
+      var max = 0;
+      readList(STORE_KEY).forEach(function (x) {
+        var id = String((x && x.id) || '');
+        if (id.indexOf(prefix) === 0) {
+          var n = parseInt(id.slice(prefix.length), 10);
+          if (!isNaN(n) && n > max) max = n;
+        }
+      });
+      return prefix + pad2(max + 1);
+    }
+
+    function submitReport() {
+      if (!state.result) return;
+      var id = nextReportId();
+      var r = state.result;
+      var list = readList(STORE_KEY);
+      list.unshift({
+        id: id,
+        batch: r.batch,
+        house: r.house,
+        type: r.type,
+        confidence: r.confidence,
+        risk: r.risk,
+        advice: ADVICE.slice(),
+        reporter: currentUser(),
+        time: r.time,
+        status: 'pending'
+      });
+      if (!writeList(STORE_KEY, list)) {
+        MobileStore.toast('工单保存失败，请检查存储空间', 'error');
+        return;
+      }
+      state.reportedId = id;
+      closeModal('reportModal');
+      renderResult();
+      MobileStore.toast('已生成污染上报工单 ' + id, 'success');
+    }
+
+    /* ---------- 详情 ---------- */
+    function openDetail() {
+      if (!state.result) {
+        MobileStore.toast('请先完成识别', 'warning');
+        return;
+      }
+      var r = state.result;
+      document.getElementById('detailBatch').textContent = r.batch;
+      document.getElementById('detailHouse').textContent = r.house;
+      document.getElementById('detailTime').textContent = r.time;
+      document.getElementById('detailAdvice').innerHTML = ADVICE.map(function (a) {
+        return '<li>' + esc(a) + '</li>';
+      }).join('');
+      document.getElementById('detailModal').classList.add('show');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      renderHistory();
+    });
+  </script>
+</body>
+</html>

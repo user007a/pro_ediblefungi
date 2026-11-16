@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 采收计划</title>
+<!-- 使用设计系统: Design System v2.0 + sidebar-layout -->
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+  <link rel="stylesheet" href="css/page-content.css">
+<style>
+  /* 模块卡片 hover 效果 */
+  .module-card {
+    transition:all 0.2s ease;
+  }
+  .module-card:hover {
+    background:var(--bg-hover);
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-md);
+  }
+  /* 分页栏样式（与农事计划一致） */
+  #pagination-container { padding:12px 16px; }
+  /* 顶部统计卡 */
+  .stat-grid {
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+    margin-bottom:16px;
+  }
+  .stat-card {
+    background:var(--bg-card, #fff);
+    border:1px solid var(--border-color, #e8ece8);
+    border-radius:var(--radius-card, 12px);
+    padding:16px 18px;
+  }
+  .stat-label { font-size:12px; color:var(--text-tertiary); margin-bottom:6px; }
+  .stat-value { font-size:22px; font-weight:600; line-height:1.2; }
+  .stat-value small { font-size:12px; font-weight:400; color:var(--text-tertiary); margin-left:4px; }
+  .stat-sub { margin-top:6px; font-size:12px; color:var(--text-tertiary); }
+  @media (max-width: 1100px) { .stat-grid { grid-template-columns:repeat(2, 1fr); } }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="harvest" data-active-submenu="harvest-plan">
+
+<!-- ===== 整体布局容器 ===== -->
+<div class="app-layout">
+
+  <!-- ===== 侧边栏 ===== -->
+  <!-- 移动端遮罩层 -->
+  <!-- ===== 主内容区 ===== -->
+  <div class="main-wrapper">
+
+    <!-- 顶栏 -->
+    <!-- Tab 标签栏 -->
+    <div class="tab-bar">
+      <!-- Tab 标签由 JS 动态渲染 -->
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <div class="content-wrapper">
+        <!-- 统计卡片区 -->
+        <div class="stat-grid" id="statGrid"></div>
+
+        <!-- 搜索栏区 -->
+        <div class="page-section search-section">
+          <div class="search-bar">
+            <select class="search-select" id="baseSelect">
+              <option value="">全部基地</option>
+            </select>
+            <select class="search-select" id="statusSelect">
+              <option value="">全部状态</option>
+              <option value="pending">待执行</option>
+              <option value="executing">执行中</option>
+              <option value="completed">已完成</option>
+              <option value="cancelled">已取消</option>
+            </select>
+            <input type="date" class="search-input date-input" id="startDate" placeholder="开始日期">
+            <span class="date-separator">至</span>
+            <input type="date" class="search-input date-input" id="endDate" placeholder="结束日期">
+            <input type="text" class="search-input" placeholder="搜索计划名称/编号/批次号..." id="searchInput">
+
+          <div class="search-actions"><button class="jg-btn jg-btn-primary" onclick="handleSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button><button class="jg-btn" onclick="smartReset()">重置</button></div>
+          </div>
+        </div>
+
+        <!-- 操作按钮区 -->
+        <div class="page-section action-bar">
+          <button class="jg-btn jg-btn-primary" onclick="Modal.show('modal-add-plan')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+              <path d="M8 3V13M3 8H13"/>
+            </svg>
+            新建计划
+          </button>
+          <button class="jg-btn" onclick="Modal.show('modal-export')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+              <path d="M3 10L8 15L13 10"/><path d="M8 15V3"/>
+            </svg>
+            导出计划
+          </button>
+          <button class="jg-btn jg-btn-danger" onclick="batchDelete()">批量删除</button>
+        </div>
+
+        <!-- 数据列表区 -->
+        <div class="page-section data-section">
+          <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:44px;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)" title="全选本页"></th>
+                <th class="checkbox-col" style="width:60px;">序号</th>
+                <th>计划编号</th>
+                <th>批次号</th>
+                <th>计划名称</th>
+                <th>基地</th>
+                <th>地块</th>
+                <th>品种</th>
+                <th>预计采收量</th>
+                <th>实采量</th>
+                <th>负责人</th>
+                <th>计划开始时间</th>
+                <th>计划结束时间</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody">
+            </tbody>
+          </table>
+          </div>
+          <div id="pagination-container">
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+  <!-- 新建计划模态框 -->
+  <div id="modal-add-plan" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">新建采收计划</h3>
+        <button class="modal-close">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L12 12M12 4L4 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="form-add-plan" class="modal-form">
+          <div class="form-group">
+            <label>计划名称</label>
+            <input type="text" class="form-control" id="add-name" placeholder="请输入计划名称">
+          </div>
+          <div class="form-group">
+            <label>采收地块</label>
+            <select class="form-control" id="add-plot">
+              <option value="">请选择地块</option>
+            </select>
+            <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;">选择地块后自动带出所属基地与品种</div>
+          </div>
+          <div class="form-group">
+            <label>预计采收量(kg)</label>
+            <input type="number" class="form-control" id="add-quantity" placeholder="请输入预计采收量" min="1">
+          </div>
+          <div class="form-group">
+            <label>批次号</label>
+            <input type="text" class="form-control" id="add-batch" readonly placeholder="保存时按计划开始日期自动生成">
+          </div>
+          <div class="form-group">
+            <label>计划开始时间</label>
+            <input type="datetime-local" class="form-control" id="add-start">
+          </div>
+          <div class="form-group">
+            <label>计划结束时间</label>
+            <input type="datetime-local" class="form-control" id="add-end">
+          </div>
+          <div class="form-group">
+            <label>负责人</label>
+            <select class="form-control" id="add-manager">
+              <option value="">请选择负责人</option>
+              <option value="惠加宁">惠加宁</option>
+              <option value="黄忠坚">黄忠坚</option>
+              <option value="徐水应">徐水应</option>
+              <option value="朱泉龙">朱泉龙</option>
+              <option value="陈小忠">陈小忠</option>
+              <option value="廖春亮">廖春亮</option>
+              <option value="李建明">李建明</option>
+              <option value="李根">李根</option>
+              <option value="张才孙">张才孙</option>
+              <option value="刘全国">刘全国</option>
+              <option value="毛定卫">毛定卫</option>
+              <option value="叶三东">叶三东</option>
+              <option value="周才贵">周才贵</option>
+              <option value="程名高">程名高</option>
+              <option value="邓小华">邓小华</option>
+              <option value="周成友">周成友</option>
+              <option value="危红卫">危红卫</option>
+              <option value="方超">方超</option>
+              <option value="曹红英">曹红英</option>
+              <option value="崔新根">崔新根</option>
+              <option value="超级用户">超级用户</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <textarea class="form-control" rows="3" id="add-remark" placeholder="请输入备注信息"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="jg-btn" onclick="Modal.hide('modal-add-plan')">取消</button>
+        <button class="jg-btn jg-btn-primary" onclick="submitAddPlan()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导出计划模态框 -->
+  <div id="modal-export" class="modal-overlay">
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-header">
+        <h3 class="modal-title">导出采收计划</h3>
+        <button class="modal-close">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L12 12M12 4L4 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-item">
+            <label>选择导出格式</label>
+            <select class="form-select" id="exportFormat">
+              <option value="excel">Excel (.xlsx)</option>
+              <option value="csv">CSV (.csv)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-item">
+            <label>导出范围</label>
+            <div style="display:flex;gap:16px;">
+              <label class="checkbox-label">
+                <input type="radio" name="exportScope" value="all" checked>
+                <span>全部数据</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="radio" name="exportScope" value="filtered">
+                <span>当前筛选结果</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="jg-btn" onclick="Modal.hide('modal-export')">取消</button>
+        <button class="jg-btn jg-btn-primary" onclick="exportPlan()">导出</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 详情模态框 -->
+  <div id="modal-detail" class="modal-overlay">
+    <div class="modal-box" style="max-width:640px;">
+      <div class="modal-header">
+        <h3 class="modal-title">采收计划详情</h3>
+        <button class="modal-close">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L12 12M12 4L4 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="detail-content">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">计划编号</div>
+              <div id="detail-id" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">批次号</div>
+              <div id="detail-batch" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">计划名称</div>
+              <div id="detail-name" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">所属基地</div>
+              <div id="detail-base" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">采收地块</div>
+              <div id="detail-plot" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">品种</div>
+              <div id="detail-variety" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">预计采收量</div>
+              <div id="detail-amount" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">实采量</div>
+              <div id="detail-actual" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">计划开始时间</div>
+              <div id="detail-start" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">计划结束时间</div>
+              <div id="detail-end" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">负责人</div>
+              <div id="detail-manager" style="font-weight:600;"></div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">状态</div>
+              <div id="detail-status" style="font-weight:600;"></div>
+            </div>
+          </div>
+          <div style="margin-top:16px; padding:12px; background:var(--gray-50); border-radius:8px;">
+            <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">备注</div>
+            <div id="detail-remark" style="font-weight:500;">-</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="jg-btn" onclick="Modal.hide('modal-detail')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑模态框 -->
+  <div id="modal-edit" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">编辑采收计划</h3>
+        <button class="modal-close">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L12 12M12 4L4 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="form-edit-plan" class="modal-form">
+          <div class="form-group">
+            <label>计划名称</label>
+            <input type="text" class="form-control" id="edit-name">
+          </div>
+          <div class="form-group">
+            <label>批次号</label>
+            <input type="text" class="form-control" id="edit-batch" readonly>
+          </div>
+          <div class="form-group">
+            <label>采收地块</label>
+            <select class="form-control" id="edit-plot"></select>
+          </div>
+          <div class="form-group">
+            <label>预计采收量(kg)</label>
+            <input type="number" class="form-control" id="edit-quantity" min="1">
+          </div>
+          <div class="form-group">
+            <label>计划开始时间</label>
+            <input type="datetime-local" class="form-control" id="edit-start">
+          </div>
+          <div class="form-group">
+            <label>计划结束时间</label>
+            <input type="datetime-local" class="form-control" id="edit-end">
+          </div>
+          <div class="form-group">
+            <label>负责人</label>
+            <select class="form-control" id="edit-manager">
+              <option value="">请选择负责人</option>
+              <option value="惠加宁">惠加宁</option>
+              <option value="黄忠坚">黄忠坚</option>
+              <option value="徐水应">徐水应</option>
+              <option value="朱泉龙">朱泉龙</option>
+              <option value="陈小忠">陈小忠</option>
+              <option value="廖春亮">廖春亮</option>
+              <option value="李建明">李建明</option>
+              <option value="李根">李根</option>
+              <option value="张才孙">张才孙</option>
+              <option value="刘全国">刘全国</option>
+              <option value="毛定卫">毛定卫</option>
+              <option value="叶三东">叶三东</option>
+              <option value="周才贵">周才贵</option>
+              <option value="程名高">程名高</option>
+              <option value="邓小华">邓小华</option>
+              <option value="周成友">周成友</option>
+              <option value="危红卫">危红卫</option>
+              <option value="方超">方超</option>
+              <option value="曹红英">曹红英</option>
+              <option value="崔新根">崔新根</option>
+              <option value="超级用户">超级用户</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>备注</label>
+            <textarea class="form-control" rows="3" id="edit-remark"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="jg-btn" onclick="Modal.hide('modal-edit')">取消</button>
+        <button class="jg-btn jg-btn-primary" onclick="submitEditPlan()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认模态框 -->
+  <div id="modal-delete" class="modal-overlay">
+    <div class="modal-box" style="max-width:400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">确认删除</h3>
+        <button class="modal-close">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L12 12M12 4L4 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>确定要删除这条采收计划吗？此操作不可撤销。</p>
+      </div>
+      <div class="modal-footer">
+        <button class="jg-btn" onclick="Modal.hide('modal-delete')">取消</button>
+        <button class="jg-btn jg-btn-danger" onclick="confirmDelete()">删除</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 引入交互脚本 -->
+<script src="js/common-functions.js"></script>
+<script src="js/export-helper.js"></script>
+<script src="js/shared/harvest-store.js"></script>
+<script>
+// 当前计划ID
+var currentPlanId = '';
+// 当前删除的计划ID
+var deletingPlanId = '';
+
+// 状态标签（由共享数据源统一口径）
+function getStatusTag(status) {
+  return '<span class="status-tag ' + HarvestStore.statusTag('plans', status) + '">' +
+    HarvestStore.statusText('plans', status) + '</span>';
+}
+
+// 格式化数量：数字 + 单位
+function fmtQty(v) {
+  var n = Number(v) || 0;
+  return n.toLocaleString() + ' kg';
+}
+
+// 地块标签：编号 + 名称
+function plotLabel(code, name) {
+  if (!code) return '-';
+  return name ? (code + ' · ' + name) : code;
+}
+
+// 渲染表格行（操作按钮按状态流转显示）
+function renderRow(item, index) {
+  var actions = '<button class="action-btn detail" onclick="showDetail(\'' + item.id + '\')">详情</button>'
+    + '<button class="action-btn edit" onclick="showEdit(\'' + item.id + '\')">编辑</button>';
+  if (item.status === 'pending') {
+    actions += '<button class="action-btn edit" onclick="advanceStatus(\'' + item.id + '\',\'executing\')">开始执行</button>';
+  } else if (item.status === 'executing') {
+    actions += '<button class="action-btn edit" onclick="advanceStatus(\'' + item.id + '\',\'completed\')">完成计划</button>';
+  }
+  actions += '<button class="action-btn delete" onclick="showDeleteConfirm(\'' + item.id + '\')">删除</button>';
+
+  return '<tr>'
+    + '<td><input type="checkbox" class="row-check" value="' + item.id + '" onclick="syncCheckAll()"></td>'
+    + '<td class="checkbox-col">' + (index + 1) + '</td>'
+    + '<td><strong>' + item.id + '</strong></td>'
+    + '<td>' + (item.batchNo || '-') + '</td>'
+    + '<td>' + item.name + '</td>'
+    + '<td>' + (item.base || '-') + '</td>'
+    + '<td>' + plotLabel(item.plot, item.plotName) + '</td>'
+    + '<td>' + (item.variety || '-') + '</td>'
+    + '<td class="text-right">' + fmtQty(item.plannedQty) + '</td>'
+    + '<td class="text-right">' + fmtQty(item.actualQty) + '</td>'
+    + '<td>' + (item.manager || '-') + '</td>'
+    + '<td>' + (item.startTime || '-') + '</td>'
+    + '<td>' + (item.endTime || '-') + '</td>'
+    + '<td>' + getStatusTag(item.status) + '</td>'
+    + '<td><div class="action-btns">' + actions + '</div></td>'
+    + '</tr>';
+}
+
+// 全选 / 反选（仅作用当前页）
+function toggleAll(box) {
+  document.querySelectorAll('.row-check').forEach(c => { c.checked = box.checked; });
+}
+
+function syncCheckAll() {
+  var boxes = Array.from(document.querySelectorAll('.row-check'));
+  var all = document.getElementById('checkAll');
+  if (all) all.checked = boxes.length > 0 && boxes.every(c => c.checked);
+}
+
+function selectedPlanIds() {
+  return Array.from(document.querySelectorAll('.row-check:checked')).map(c => c.value);
+}
+
+function showDeleteConfirm(id) {
+  deletingPlanId = id;
+  Modal.show('modal-delete');
+}
+
+function confirmDelete() {
+  var res = HarvestStore.remove('plans', deletingPlanId);
+  Modal.hide('modal-delete');
+  if (!res.ok) {
+    Toast.warning(res.message);
+    return;
+  }
+  handleSearch();
+  Toast.success('删除成功');
+}
+
+// 批量删除（已勾选记录）
+function batchDelete() {
+  var ids = selectedPlanIds();
+  if (ids.length === 0) {
+    Toast.warning('请先勾选要删除的计划');
+    return;
+  }
+  var failed = [];
+  ids.forEach(id => {
+    var res = HarvestStore.remove('plans', id);
+    if (!res.ok) failed.push(id + '：' + res.message);
+  });
+  var all = document.getElementById('checkAll');
+  if (all) all.checked = false;
+  handleSearch();
+  if (failed.length) {
+    Toast.warning('已删除 ' + (ids.length - failed.length) + ' 条，' + failed.length + ' 条未删除（' + failed[0] + '）');
+  } else {
+    Toast.success('已删除 ' + ids.length + ' 条计划');
+  }
+}
+
+// 搜索功能：基地 + 状态 + 日期范围 + 关键词
+function handleSearch() {
+  var keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+  var base = document.getElementById('baseSelect').value;
+  var status = document.getElementById('statusSelect').value;
+  var startDate = document.getElementById('startDate').value;
+  var endDate = document.getElementById('endDate').value;
+
+  var plans = HarvestStore.plans();
+  var filteredData = plans.filter(item => {
+    if (keyword) {
+      var hay = (item.id + ' ' + item.name + ' ' + (item.batchNo || '') + ' ' + (item.plotName || '')).toLowerCase();
+      if (hay.indexOf(keyword) < 0) return false;
+    }
+    if (base && item.base !== base) return false;
+    if (status && item.status !== status) return false;
+    var planDate = String(item.startTime || '').slice(0, 10);
+    if (startDate && planDate < startDate) return false;
+    if (endDate && planDate > endDate) return false;
+    return true;
+  });
+
+  var all = document.getElementById('checkAll');
+  if (all) all.checked = false;
+  Pagination.updateData(filteredData);
+  renderStats();
+  Toast.info('找到 ' + filteredData.length + ' 条记录');
+}
+
+function findPlan(id) {
+  return HarvestStore.get('plans', id);
+}
+
+// 顶部统计卡
+function renderStats() {
+  var plans = HarvestStore.plans();
+  var pending = plans.filter(p => p.status === 'pending').length;
+  var executing = plans.filter(p => p.status === 'executing').length;
+  var completed = plans.filter(p => p.status === 'completed').length;
+  var planned = plans.reduce((s, p) => s + (Number(p.plannedQty) || 0), 0);
+  var actual = plans.reduce((s, p) => s + (Number(p.actualQty) || 0), 0);
+  var rate = planned > 0 ? Math.round(actual / planned * 100) : 0;
+
+  var cards = [
+    { label: '计划总数', value: plans.length, unit: '条', sub: '已完成 ' + completed + ' 条' },
+    { label: '待执行计划', value: pending, unit: '条', sub: '执行中 ' + executing + ' 条' },
+    { label: '预计采收量', value: planned.toLocaleString(), unit: 'kg', sub: '实采 ' + actual.toLocaleString() + ' kg' },
+    { label: '计划完成率', value: rate, unit: '%', sub: actual > planned ? '实采已超计划量' : '按已完成采收记录统计' }
+  ];
+  document.getElementById('statGrid').innerHTML = cards.map(c =>
+    '<div class="stat-card">'
+    + '<div class="stat-label">' + c.label + '</div>'
+    + '<div class="stat-value">' + c.value + '<small>' + c.unit + '</small></div>'
+    + '<div class="stat-sub">' + c.sub + '</div>'
+    + '</div>'
+  ).join('');
+}
+
+// 显示详情（按行回填）
+function showDetail(id) {
+  var item = findPlan(id);
+  if (!item) return;
+  currentPlanId = id;
+  document.getElementById('detail-id').textContent = item.id;
+  document.getElementById('detail-batch').textContent = item.batchNo || '-';
+  document.getElementById('detail-name').textContent = item.name;
+  document.getElementById('detail-base').textContent = item.base || '-';
+  document.getElementById('detail-plot').textContent = plotLabel(item.plot, item.plotName);
+  document.getElementById('detail-variety').textContent = item.variety || '-';
+  document.getElementById('detail-amount').textContent = fmtQty(item.plannedQty);
+  document.getElementById('detail-actual').textContent = fmtQty(item.actualQty);
+  document.getElementById('detail-start').textContent = item.startTime || '-';
+  document.getElementById('detail-end').textContent = item.endTime || '-';
+  document.getElementById('detail-manager').textContent = item.manager || '-';
+  document.getElementById('detail-status').innerHTML = getStatusTag(item.status);
+  document.getElementById('detail-remark').textContent = item.remark || '-';
+  Modal.show('modal-detail');
+}
+
+// 显示编辑（按行回填）
+function showEdit(id) {
+  var item = findPlan(id);
+  if (!item) return;
+  currentPlanId = id;
+  document.getElementById('edit-name').value = item.name;
+  document.getElementById('edit-batch').value = item.batchNo || '';
+  document.getElementById('edit-plot').value = item.plot || '';
+  document.getElementById('edit-quantity').value = item.plannedQty || '';
+  document.getElementById('edit-start').value = (item.startTime || '').replace(' ', 'T');
+  document.getElementById('edit-end').value = (item.endTime || '').replace(' ', 'T');
+  var mgrSel = document.getElementById('edit-manager');
+  if (mgrSel && item.manager) {
+    var opts = mgrSel.options;
+    for (var i = 0; i < opts.length; i++) {
+      if (opts[i].value === item.manager) { opts[i].selected = true; break; }
+    }
+  }
+  document.getElementById('edit-remark').value = item.remark || '';
+  Modal.show('modal-edit');
+}
+
+// 提交新建计划
+function submitAddPlan() {
+  var res = HarvestStore.savePlan({
+    name: document.getElementById('add-name').value.trim(),
+    plot: document.getElementById('add-plot').value,
+    plannedQty: document.getElementById('add-quantity').value,
+    startTime: document.getElementById('add-start').value,
+    endTime: document.getElementById('add-end').value,
+    manager: document.getElementById('add-manager').value.trim(),
+    remark: document.getElementById('add-remark').value.trim()
+  });
+  if (!res.ok) {
+    Toast.warning(res.message);
+    return;
+  }
+  document.getElementById('form-add-plan').reset();
+  document.getElementById('add-batch').value = '';
+  Modal.hide('modal-add-plan');
+  handleSearch();
+  Toast.success('采收计划创建成功，批次号 ' + res.item.batchNo);
+}
+
+// 提交编辑计划
+function submitEditPlan() {
+  var res = HarvestStore.savePlan({
+    id: currentPlanId,
+    name: document.getElementById('edit-name').value.trim(),
+    plot: document.getElementById('edit-plot').value,
+    plannedQty: document.getElementById('edit-quantity').value,
+    startTime: document.getElementById('edit-start').value,
+    endTime: document.getElementById('edit-end').value,
+    manager: document.getElementById('edit-manager').value.trim(),
+    remark: document.getElementById('edit-remark').value.trim()
+  });
+  if (!res.ok) {
+    Toast.warning(res.message);
+    return;
+  }
+  Modal.hide('modal-edit');
+  handleSearch();
+  Toast.success('采收计划 "' + res.item.id + '" 已更新');
+}
+
+// 状态流转：唯一入口 HarvestStore.advance（内置流程表与守卫）
+function advanceStatus(id, to) {
+  var res = HarvestStore.advance('plans', id, to);
+  if (!res.ok) {
+    Toast.warning(res.message);
+    return;
+  }
+  handleSearch();
+  Toast.success('计划 "' + res.item.id + '" 已更新为「' + HarvestStore.statusText('plans', res.item.status) + '」');
+}
+
+// 真实导出（Excel / CSV）
+async function exportPlan() {
+  var scope = document.querySelector('input[name="exportScope"]:checked').value;
+  var rows = (scope === 'filtered' ? Pagination.filteredData : HarvestStore.plans());
+  var result = await ExportHelper.exportData({
+    filename: '采收计划_' + ExportHelper.stamp(),
+    format: document.getElementById('exportFormat').value,
+    headers: ['计划编号', '批次号', '计划名称', '基地', '地块', '品种', '预计采收量(kg)', '实采量(kg)', '负责人', '计划开始时间', '计划结束时间', '状态', '备注'],
+    rows: rows.map(p => [p.id, p.batchNo || '', p.name, p.base || '', plotLabel(p.plot, p.plotName), p.variety || '',
+      p.plannedQty, p.actualQty || 0, p.manager || '', p.startTime || '', p.endTime || '',
+      HarvestStore.statusText('plans', p.status), p.remark || ''])
+  });
+  Modal.hide('modal-export');
+  Toast.success(result === 'csv-fallback' ? 'Excel 组件加载失败，已导出为 CSV' : '导出成功，文件已下载');
+}
+
+/* ---------- 下拉数据填充 ---------- */
+
+function fillBases() {
+  var sel = document.getElementById('baseSelect');
+  var current = sel.value;
+  var bases = HarvestStore.bases();
+  sel.innerHTML = '<option value="">全部基地</option>' +
+    bases.map(b => '<option value="' + b + '">' + b + '</option>').join('');
+  sel.value = current;
+}
+
+function fillPlots(select, selected) {
+  select.innerHTML = '<option value="">请选择地块</option>' +
+    HarvestStore.plots().map(p =>
+      '<option value="' + p.code + '"' + (p.code === selected ? ' selected' : '') + '>' +
+      p.code + ' · ' + p.name + '（' + p.base + '）</option>'
+    ).join('');
+}
+
+/* ---------- 初始化 ---------- */
+document.addEventListener('DOMContentLoaded', function() {
+  fillBases();
+  fillPlots(document.getElementById('add-plot'), '');
+  fillPlots(document.getElementById('edit-plot'), '');
+
+  // 选择地块后带出批次号预览（批次号在保存时按开始日期最终生成）
+  var addPlot = document.getElementById('add-plot');
+  var addStart = document.getElementById('add-start');
+  function refreshBatchPreview() {
+    var v = addStart.value || '';
+    document.getElementById('add-batch').value = v ? HarvestStore.nextBatchNo(v.replace('T', ' ')) : '';
+  }
+  if (addPlot) addPlot.addEventListener('change', refreshBatchPreview);
+  if (addStart) addStart.addEventListener('change', refreshBatchPreview);
+
+  Pagination.init({
+    currentPage: 1,
+    pageSize: 10,
+    data: HarvestStore.plans(),
+    containerId: 'pagination-container',
+    tbodyId: 'dataTableBody',
+    renderRow: renderRow
+  });
+
+  renderStats();
+
+  // 其他页（如采收记录）写入共享数据源后，本页同步刷新
+  HarvestStore.subscribe(function(reason) {
+    renderStats();
+    if (reason === 'init') return;
+    var all = document.getElementById('checkAll');
+    if (all) all.checked = false;
+    Pagination.updateData(HarvestStore.plans());
+    renderStats();
+  });
+});
+</script>
+<!-- 已通过质量审查（第2轮修正）- 严过审 2026-09-18 -->
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+  <script src="js/search-helper.js"></script>
+  <script src="js/typography.js"></script>
+</body>
+</html>

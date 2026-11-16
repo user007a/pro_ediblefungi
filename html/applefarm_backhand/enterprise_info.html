@@ -1,0 +1,343 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工厂化农业数据管理系统 - 企业信息</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .page-head{margin-bottom:16px;}
+  .page-head h1{font-size:18px;font-weight:700;margin:0;color:var(--text-primary);}
+  .page-head .crumb{font-size:12px;color:var(--text-tertiary);margin-top:4px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;}
+  .stat-card{background:var(--bg-card,#fff);border:1px solid var(--border-color,#e8ece8);border-radius:12px;padding:16px 18px;border-left:4px solid #1890ff;}
+  .stat-card.green{border-left-color:#52c41a;}
+  .stat-card.orange{border-left-color:#fa8c16;}
+  .stat-card.red{border-left-color:#ff4d4f;}
+  .stat-label{font-size:12px;color:var(--text-tertiary);margin-bottom:6px;}
+  .stat-value{font-size:22px;font-weight:600;line-height:1.2;}
+  .stat-value small{font-size:12px;font-weight:400;color:var(--text-tertiary);margin-left:4px;}
+  .stat-sub{margin-top:6px;font-size:12px;color:var(--text-tertiary);}
+  @media(max-width:1100px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .info-section{background:var(--bg-card,#fff);border-radius:12px;border:1px solid var(--border-color,#e8ece8);margin-bottom:16px;overflow:hidden;}
+  .section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #eef1ef;}
+  .section-header .sh-left{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--text-primary);}
+  .section-header .dot{width:4px;height:16px;border-radius:2px;background:#1890ff;}
+  .section-body{padding:20px;}
+  .info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px 40px;}
+  .info-item{display:flex;gap:10px;}
+  .info-item.full{grid-column:1/-1;}
+  .info-item .label{font-size:13px;color:var(--text-tertiary);min-width:130px;white-space:nowrap;}
+  .info-item .value{font-size:13px;color:var(--text-primary);font-weight:500;word-break:break-all;}
+  @media(max-width:900px){.info-grid{grid-template-columns:1fr;}}
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+  th.sortable:hover{color:#1890ff;}
+  .sort-arrow{font-size:10px;margin-left:3px;color:#1890ff;}
+  .empty-cell{text-align:center;color:var(--text-tertiary);padding:32px 0!important;}
+  .row-btn{padding:3px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-default,#d9d9d9);background:#fff;color:var(--text-secondary,#555);cursor:pointer;margin-right:6px;white-space:nowrap;}
+  .row-btn:hover{border-color:#1890ff;color:#1890ff;}
+  .row-btn.danger{color:#ff4d4f;border-color:#ffccc7;}
+  .row-btn.danger:hover{background:#fff2f0;}
+  .drawer-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;}
+  .drawer-mask.show{display:block;}
+  .drawer{position:fixed;top:0;right:-580px;width:560px;max-width:94vw;height:100vh;background:#fff;z-index:9999;box-shadow:-8px 0 32px rgba(0,0,0,.15);transition:right .25s ease;display:flex;flex-direction:column;}
+  .drawer.open{right:0;}
+  .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .drawer-header h3{margin:0;font-size:16px;font-weight:600;color:var(--text-primary);}
+  .drawer-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .drawer-close:hover{background:#f5f5f5;color:#333;}
+  .drawer-body{padding:20px 24px;overflow-y:auto;flex:1;}
+  .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 20px;margin-bottom:16px;}
+  .detail-item.full{grid-column:1/-1;}
+  .detail-item .dl{font-size:12px;color:var(--text-tertiary);margin-bottom:2px;}
+  .detail-item .dv{font-size:14px;color:var(--text-primary);font-weight:500;word-break:break-all;}
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{width:560px;max-width:92vw;max-height:86vh;background:#fff;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .modal-header h3{font-size:16px;font-weight:600;margin:0;}
+  .modal-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .modal-body{padding:20px 24px;overflow-y:auto;}
+  .form-group{margin-bottom:14px;}
+  .form-group.full{grid-column:1/-1;}
+  .form-group label{display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;}
+  .form-group label .req{color:#ff4d4f;margin-left:2px;}
+  #modal .modal-body input,#modal .modal-body select,#modal .modal-body textarea,
+  #confirmModal .modal-body input{width:100%;padding:9px 12px;border:1.5px solid #d9d9d9;border-radius:8px;font-size:13px!important;background:#fff;outline:none;font-family:inherit;box-sizing:border-box;}
+  #modal .modal-body input:focus,#modal .modal-body select:focus{border-color:#1890ff;box-shadow:0 0 0 3px rgba(24,144,255,.1);}
+  .modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:14px 24px;border-top:1px solid #eef1ef;flex:none;}
+  .toast-undo{display:none;padding:3px 12px;border-radius:6px;border:1px solid currentColor;background:rgba(255,255,255,.6);font-size:12px;font-weight:600;cursor:pointer;color:inherit;}
+</style>
+<style id="standalone-fix">.main-wrapper{margin-left:0!important;width:100%!important;}</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="enterprise" data-active-submenu="enterprise-info">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar"><div class="tab-bar-actions"><button class="tab-close-all" title="关闭全部标签"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg></button></div></div>
+    <main class="main-content"><div class="content-wrapper">
+
+      <div class="page-head">
+        <h1>企业信息</h1>
+        <div class="crumb">企业管理 / 企业信息 · 食用菌工厂化生产企业档案与认证资质</div>
+      </div>
+
+      <!-- 企业基本信息卡 -->
+      <div class="info-section">
+        <div class="section-header">
+          <div class="sh-left"><span class="dot"></span>企业基本信息</div>
+          <button class="jg-btn" id="editEnterpriseBtn" onclick="editEnterprise()">编辑</button>
+        </div>
+        <div class="section-body"><div class="info-grid" id="enterpriseGrid"></div></div>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="stat-grid" id="statGrid"></div>
+
+      <!-- 认证证书筛选 -->
+      <div class="page-section search-section">
+        <div class="search-bar">
+          <select class="search-select" id="filterSelect" onchange="renderTable()">
+            <option value="">全部状态</option>
+            <option value="有效">有效</option>
+            <option value="即将到期">即将到期（≤30天）</option>
+            <option value="已过期">已过期</option>
+          </select>
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索证书名称、编号..." oninput="renderTable()">
+          <div class="search-actions">
+            <button class="jg-btn" onclick="resetFilters()">重置</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作按钮区 -->
+      <div class="page-section action-bar">
+        <div class="action-left">
+          <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openCertForm()">+ 新建证书</button>
+          <button class="jg-btn" id="exportBtn" onclick="exportCerts()">导出CSV</button>
+          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete('certs','证书')">批量删除</button>
+          <span class="selected-info" id="selInfo"></span>
+        </div>
+      </div>
+
+      <!-- 证书列表 -->
+      <div class="page-section data-section">
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+                <th class="sortable" data-key="name" onclick="sortBy('name')">证书名称<span class="sort-arrow"></span></th>
+                <th>证书编号</th>
+                <th class="sortable" data-key="expire" onclick="sortBy('expire')">到期日期<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="left" onclick="sortBy('left')">剩余天数<span class="sort-arrow"></span></th>
+                <th>状态</th>
+                <th style="width:130px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div></main>
+  </div>
+</div>
+
+<!-- 详情抽屉 -->
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header"><h3 id="drawerTitle">详情</h3><button class="drawer-close" id="drawerClose" onclick="closeDrawer()">×</button></div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header"><h3 id="modalTitle">编辑</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeModal()">取消</button><button class="jg-btn jg-btn-primary" id="modalSave" onclick="saveModal()">保存</button></div>
+  </div>
+</div>
+
+<!-- 删除确认弹窗 -->
+<div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal-box" style="width:420px;">
+    <div class="modal-header"><h3>删除确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
+    <div class="modal-body"><p id="confirmText" style="margin:0;font-size:14px;color:var(--text-primary);"></p></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="doConfirm()">确认删除</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="toast-message" id="toastMessage"></span><button class="toast-undo" id="toastUndo">撤销</button></div>
+
+<script src="js/shared/fungi-store.js"></script>
+<script>
+var FS = window.FungiStore;
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function today(){return FS.dayKey(0);}
+function nav(url,title){try{if(window.parent&&window.parent!==window&&typeof window.parent.openPage==='function'){window.parent.openPage(url,title);return;}}catch(e){}location.href=url;}
+var toastTimer=null;
+function showToast(msg,type,undoFn){var t=document.getElementById('toast');document.getElementById('toastMessage').textContent=msg;t.className='toast toast-'+(type||'success')+' show';var ub=document.getElementById('toastUndo');if(undoFn){ub.style.display='inline-block';ub.onclick=function(){hideToast();undoFn();};}else{ub.style.display='none';ub.onclick=null;}clearTimeout(toastTimer);toastTimer=setTimeout(hideToast,undoFn?6000:2600);}
+function hideToast(){document.getElementById('toast').classList.remove('show');}
+function openModal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.add('show');}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+var confirmCb=null;
+function askConfirm(msg,cb){document.getElementById('confirmText').textContent=msg;confirmCb=cb;document.getElementById('confirmModal').classList.add('show');}
+function doConfirm(){var cb=confirmCb;closeConfirm();if(cb)cb();}
+function closeConfirm(){confirmCb=null;document.getElementById('confirmModal').classList.remove('show');}
+function openDrawer(title,html){document.getElementById('drawerTitle').textContent=title;document.getElementById('drawerBody').innerHTML=html;document.getElementById('drawer').classList.add('open');document.getElementById('drawerMask').classList.add('show');}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawerMask').classList.remove('show');}
+function rowClick(e,id){if(e.target.closest('button,input,select,a,label'))return;openDetail(id);}
+function val(id){var el=document.getElementById(id);return el?el.value.trim():'';}
+function reqOK(){var ok=true;document.querySelectorAll('#modalBody [data-req]').forEach(function(el){if(!String(el.value).trim()){el.style.borderColor='#ff4d4f';ok=false;}else{el.style.borderColor='';}});if(!ok)showToast('请填写完整必填项（红框）','error');return ok;}
+function fg(label,html,req,full){return '<div class="form-group'+(full?' full':'')+'"><label>'+label+(req?'<span class="req">*</span>':'')+'</label>'+html+'</div>';}
+function inp(id,v,type,req){return '<input id="'+id+'" type="'+(type||'text')+'" value="'+esc(v==null?'':v)+'"'+(req?' data-req="1"':'')+'>';}
+var selected={};
+function toggleAll(cb){document.querySelectorAll('#tableBody .row-check').forEach(function(c){c.checked=cb.checked;selected[c.dataset.id]=cb.checked;});updateSelInfo();}
+function toggleRow(cb){selected[cb.dataset.id]=cb.checked;updateSelInfo();}
+function updateSelInfo(){var n=Object.keys(selected).filter(function(k){return selected[k];}).length;var el=document.getElementById('selInfo');if(el)el.textContent=n?('已选 '+n+' 条'):'';var all=document.getElementById('selectAll');if(all){var boxes=document.querySelectorAll('#tableBody .row-check');all.checked=boxes.length>0&&n===boxes.length;}}
+function removeRow(col,id,label){var idx=FS.list(col).findIndex(function(x){return x.id===id;});askConfirm('确认删除「'+label+'」？删除后可撤销。',function(){var gone=FS.remove(col,id);delete selected[id];renderAll();showToast('已删除「'+label+'」','success',function(){FS.restore(col,gone,idx);renderAll();showToast('已撤销删除','success');});});}
+function batchDelete(col,label){var ids=Object.keys(selected).filter(function(k){return selected[k];});if(!ids.length){showToast('请先勾选要删除的记录','warning');return;}askConfirm('确认删除选中的 '+ids.length+' 条'+label+'？删除后可撤销。',function(){var list=FS.list(col);var removed=ids.map(function(id){return {obj:FS.get(col,id),idx:list.findIndex(function(x){return x.id===id;})};}).filter(function(r){return r.obj;}).sort(function(a,b){return a.idx-b.idx;});ids.forEach(function(id){FS.remove(col,id);});selected={};renderAll();showToast('已删除 '+removed.length+' 条'+label,'success',function(){removed.forEach(function(r){FS.restore(col,r.obj,r.idx);});renderAll();showToast('已撤销批量删除','success');});});}
+function exportCSV(name,headers,rows){if(!rows.length){showToast('当前视图暂无可导出数据','warning');return;}var csv='﻿'+[headers].concat(rows).map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'_'+today()+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);showToast('导出成功，文件已下载','success');}
+var sortKey='',sortDir=1;
+function sortBy(k){if(sortKey===k){sortDir=-sortDir;}else{sortKey=k;sortDir=1;}renderTable();}
+function applySort(rows){if(!sortKey)return rows;return rows.slice().sort(function(a,b){var x=a[sortKey],y=b[sortKey];if(typeof x==='number'&&typeof y==='number')return (x-y)*sortDir;return String(x==null?'':x).localeCompare(String(y==null?'':y),'zh')*sortDir;});}
+function paintArrows(){document.querySelectorAll('th.sortable').forEach(function(th){var a=th.querySelector('.sort-arrow');if(a)a.textContent=th.dataset.key===sortKey?(sortDir>0?'▲':'▼'):'';});}
+function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('filterSelect').value='';renderAll();}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeConfirm();closeDrawer();}});
+
+/* ===== 企业基本信息（FungiStore enterprise 九字段） ===== */
+function renderEnterprise(){
+  var list=FS.list('enterprise');
+  document.getElementById('enterpriseGrid').innerHTML=list.map(function(f){
+    var full=(f.field==='厂区地址');
+    return '<div class="info-item'+(full?' full':'')+'"><span class="label">'+esc(f.field)+'</span><span class="value">'+esc(f.value)+'</span></div>';
+  }).join('');
+}
+function editEnterprise(){
+  var list=FS.list('enterprise');
+  var html=list.map(function(f){
+    return fg(esc(f.field),inp('en_'+f.id,f.value,'text',true),true,f.field==='厂区地址');
+  }).join('');
+  modalMode='enterprise';
+  openModal('编辑企业基本信息',html);
+}
+
+/* ===== 认证证书 ===== */
+function certLeft(expire){
+  var t=new Date(String(expire).slice(0,10)+'T23:59:59').getTime();
+  if(isNaN(t))return null;
+  return Math.ceil((t-Date.now())/86400000);
+}
+function certStatus(expire){
+  var left=certLeft(expire);
+  if(left===null)return {text:'有效',cls:'normal',left:0};
+  if(left<0)return {text:'已过期',cls:'danger',left:left};
+  if(left<=30)return {text:'即将到期',cls:'warning',left:left};
+  return {text:'有效',cls:'normal',left:left};
+}
+function certRows(){
+  var kw=document.getElementById('searchInput').value.trim().toLowerCase();
+  var st=document.getElementById('filterSelect').value;
+  return FS.list('certs').map(function(c){
+    var s=certStatus(c.expire);
+    return Object.assign({},c,{left:s.left,stText:s.text,stCls:s.cls});
+  }).filter(function(c){
+    if(st&&c.stText!==st)return false;
+    if(kw&&(c.name+' '+c.no).toLowerCase().indexOf(kw)===-1)return false;
+    return true;
+  });
+}
+function renderStats(){
+  var all=FS.list('certs').map(function(c){return certStatus(c.expire);});
+  var expiring=all.filter(function(s){return s.text==='即将到期';}).length;
+  var expired=all.filter(function(s){return s.text==='已过期';}).length;
+  var cap=FS.get('enterprise','EN-07');
+  var cards=[
+    {label:'认证总数',value:all.length,unit:'项',sub:'含食品生产许可与体系认证',cls:''},
+    {label:'即将到期',value:expiring,unit:'项',sub:'30 天内到期，请及时续证',cls:'orange'},
+    {label:'已过期',value:expired,unit:'项',sub:expired?'存在过期认证，需处理':'无过期认证',cls:'red'},
+    {label:'年菌包产能',value:cap?cap.value:'—',unit:'',sub:'年产鲜菇 '+(FS.get('enterprise','EN-08')||{value:'—'}).value,cls:'green'}
+  ];
+  document.getElementById('statGrid').innerHTML=cards.map(function(c){
+    return '<div class="stat-card '+c.cls+'"><div class="stat-label">'+c.label+'</div><div class="stat-value">'+esc(c.value)+(c.unit?'<small>'+c.unit+'</small>':'')+'</div><div class="stat-sub">'+esc(c.sub)+'</div></div>';
+  }).join('');
+}
+function renderTable(){
+  var rows=applySort(certRows());
+  var body=document.getElementById('tableBody');
+  if(!rows.length){body.innerHTML='<tr><td colspan="7" class="empty-cell">暂无符合条件的认证证书，点击「新建证书」添加</td></tr>';updateSelInfo();paintArrows();return;}
+  body.innerHTML=rows.map(function(c){
+    return '<tr onclick="rowClick(event,\''+c.id+'\')" style="cursor:pointer;">'+
+      '<td><input type="checkbox" class="row-check" data-id="'+c.id+'" '+(selected[c.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+      '<td><strong>'+esc(c.name)+'</strong></td>'+
+      '<td>'+esc(c.no)+'</td>'+
+      '<td>'+esc(String(c.expire).slice(0,10))+'</td>'+
+      '<td class="text-right">'+(c.left<0?'已过期 '+Math.abs(c.left)+' 天':c.left+' 天')+'</td>'+
+      '<td><span class="status-tag '+c.stCls+'">'+c.stText+'</span></td>'+
+      '<td><button class="row-btn row-edit" onclick="openCertForm(\''+c.id+'\')">编辑</button><button class="row-btn danger row-del" onclick="removeRow(\'certs\',\''+c.id+'\',\''+esc(c.name)+'\')">删除</button></td>'+
+    '</tr>';
+  }).join('');
+  updateSelInfo();paintArrows();
+}
+function renderAll(){renderEnterprise();renderStats();renderTable();}
+
+var modalMode='',editingId='';
+function openCertForm(id){
+  editingId=id||'';
+  var c=id?FS.get('certs',id):null;
+  modalMode='cert';
+  openModal(c?'编辑证书':'新建证书',
+    fg('证书名称',inp('f_name',c?c.name:'','text',true),true,true)+
+    fg('证书编号',inp('f_no',c?c.no:'','text',true),true)+
+    fg('到期日期',inp('f_expire',c?String(c.expire).slice(0,10):'','date',true),true)
+  );
+}
+function saveModal(){
+  if(modalMode==='enterprise'){
+    if(!reqOK())return;
+    FS.list('enterprise').forEach(function(f){
+      var v=val('en_'+f.id);
+      if(v!==f.value)FS.update('enterprise',f.id,{value:v});
+    });
+    closeModal();renderAll();showToast('企业基本信息已保存','success');return;
+  }
+  if(modalMode==='cert'){
+    if(!reqOK())return;
+    var patch={name:val('f_name'),no:val('f_no'),expire:val('f_expire')+' 00:00'};
+    patch.status=certStatus(patch.expire).text;
+    if(editingId){FS.update('certs',editingId,patch);showToast('证书已更新','success');}
+    else{FS.add('certs',patch);showToast('证书已创建','success');}
+    closeModal();renderAll();
+  }
+}
+function openDetail(id){
+  var c=FS.get('certs',id);if(!c)return;
+  var s=certStatus(c.expire);
+  openDrawer('证书详情 · '+c.name,
+    '<div class="detail-grid">'+
+    '<div class="detail-item full"><div class="dl">证书名称</div><div class="dv">'+esc(c.name)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">证书编号</div><div class="dv">'+esc(c.no)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">到期日期</div><div class="dv">'+esc(String(c.expire).slice(0,10))+'</div></div>'+
+    '<div class="detail-item"><div class="dl">剩余天数</div><div class="dv">'+(s.left<0?'已过期 '+Math.abs(s.left)+' 天':s.left+' 天')+'</div></div>'+
+    '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+s.cls+'">'+s.text+'</span></div></div>'+
+    '</div>'+
+    '<p style="font-size:12px;color:var(--text-tertiary);">提示：即将到期的证书请在有效期前完成续证；已过期证书不得用于产品宣称。</p>'+
+    '<div style="margin-top:12px;"><button class="jg-btn" onclick="nav(\'cert_manage.html\',\'证书管理\')">前往证书管理</button></div>'
+  );
+}
+function exportCerts(){
+  var rows=applySort(certRows());
+  exportCSV('认证证书',['证书名称','证书编号','到期日期','剩余天数','状态'],rows.map(function(c){
+    return [c.name,c.no,String(c.expire).slice(0,10),c.left,c.stText];
+  }));
+}
+renderAll();
+</script>
+</body>
+</html>

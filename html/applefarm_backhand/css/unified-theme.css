@@ -1,0 +1,889 @@
+/* ==========================================================================
+ * unified-theme.css — 全站视觉统一层（对齐 demo/ 设计规范）
+ *
+ * 设计来源：html/applefarm_backhand/demo/*.html（18 个示例页提炼）
+ * 加载顺序：必须放在 design-system.css / page-content.css 之后，用于最终覆盖
+ *
+ * 规范速览（来自 demo）：
+ *   页面底 #F0F2F5 ｜ 卡片 白底 + 1px #f0f0f0 + 12px 圆角 + shadow-sm
+ *   主色 #1890FF（hover #096dd9） ｜ 侧栏 #001529
+ *   正文 14px #262626 ｜ 次要 12px #8c8c8c ｜ 卡片标题 16px ｜ 页标题 20px
+ *   区块间距 24px ｜ 卡片内边距 24px ｜ 元素间距 12/16px
+ *   图标 iconify Remix Icon（ri:*）
+ * ========================================================================== */
+
+:root {
+  /* ---- demo 视觉令牌（统一层权威值）---- */
+  --u-page-bg: #f0f2f5;
+  --u-card-bg: #ffffff;
+  --u-card-radius: 12px;          /* demo: rounded-xl */
+  --u-card-border: 1px solid #f0f0f0;
+  --u-card-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);   /* demo: shadow-sm */
+  --u-card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08); /* demo: hover:shadow-md */
+  --u-card-padding: 24px;         /* demo: p-6 */
+
+  --u-primary: #1890ff;
+  --u-primary-hover: #096dd9;
+  --u-primary-bg: #e6f4ff;
+  --u-primary-bg-soft: rgba(24, 144, 255, 0.06);  /* demo: hover:bg-blue-50/30 */
+
+  --u-radius-sm: 4px;             /* demo: rounded（标签） */
+  --u-radius-md: 6px;             /* demo: rounded-md（输入/按钮） */
+  --u-radius-lg: 8px;             /* demo: rounded-lg（按钮/图标块） */
+  --u-radius-full: 999px;         /* demo: rounded-full（徽标/头像） */
+
+  --u-text-1: #262626;            /* 主文本  gray-800 */
+  --u-text-2: #595959;            /* 次要    gray-600 */
+  --u-text-3: #8c8c8c;            /* 弱      gray-500 */
+  --u-text-4: #bfbfbf;            /* 更弱    gray-400 */
+
+  --u-font-sm: 12px;              /* demo: text-xs */
+  --u-font-base: 14px;            /* demo: text-sm */
+  --u-font-lg: 16px;              /* demo: text-base */
+  --u-font-title: 20px;           /* demo: text-xl */
+  --u-font-metric: 24px;          /* demo: text-2xl */
+
+  --u-gap-xs: 8px;
+  --u-gap-sm: 12px;
+  --u-gap-md: 16px;
+  --u-gap-lg: 24px;               /* demo: p-6 / gap-6 / space-y-6 */
+
+  --u-border: #f0f0f0;
+  --u-border-strong: #e8e8e8;
+  --u-divider: #f5f5f5;
+  --u-thead-bg: #fafafa;
+}
+
+/* ==========================================================================
+ * 01. 页面容器
+ * ========================================================================== */
+.content-wrapper,
+.page-container,
+.main-content {
+  padding: var(--u-gap-lg);
+}
+
+/* ==========================================================================
+ * 02. 卡片 / 区块（demo: bg-white rounded-xl border shadow-sm）
+ * ========================================================================== */
+.page-section,
+.data-section,
+.search-section,
+.chart-section,
+.snzg-panel,
+.panel,
+.stat-card,
+.patrol-stat-card,
+.snzg-stat-card,
+.module-card,
+.device-card,
+.card,
+.form-section,
+.detail-section {
+  background: var(--u-card-bg);
+  border: var(--u-card-border);
+  border-radius: var(--u-card-radius);
+  box-shadow: var(--u-card-shadow);
+  transition: box-shadow 0.2s ease;
+}
+
+.page-section:hover,
+.data-section:hover,
+.stat-card:hover,
+.patrol-stat-card:hover,
+.module-card:hover,
+.card:hover {
+  box-shadow: var(--u-card-shadow-hover);
+}
+
+/* 卡片内边距统一（表格型区块由自身控制，不强制） */
+.search-section,
+.stat-card,
+.patrol-stat-card,
+.module-card,
+.card,
+.form-section {
+  padding: var(--u-card-padding);
+}
+
+/* 区块纵向节奏（demo: space-y-6） */
+.page-section + .page-section,
+.data-section + .data-section,
+.search-section + .data-section,
+.search-section + .page-section,
+.stat-card + .stat-card {
+  margin-top: var(--u-gap-lg);
+}
+
+/* 卡片标题（demo: font-bold text-gray-800） */
+.section-title,
+.panel-title,
+.snzg-panel-title,
+.card-title {
+  font-size: var(--u-font-lg);
+  font-weight: 600;
+  color: var(--u-text-1);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+ * 03. 页头（demo: 标题 text-xl font-bold，副标题 text-sm text-gray-500）
+ * ========================================================================== */
+.page-header {
+  padding: var(--u-gap-md) var(--u-gap-lg);
+  margin-bottom: var(--u-gap-lg);
+  border: var(--u-card-border);
+  border-radius: var(--u-card-radius);
+  box-shadow: var(--u-card-shadow);
+}
+
+.page-title {
+  font-size: var(--u-font-title);
+  font-weight: 600;
+  color: var(--u-text-1);
+  line-height: 1.4;
+}
+
+.page-subtitle {
+  font-size: var(--u-font-base);
+  color: var(--u-text-3);
+  margin-top: 4px;
+}
+
+/* ==========================================================================
+ * 04. 表格（demo: thead 灰底 12px 大写，th px-6 py-4，行 hover 蓝底）
+ * ========================================================================== */
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--u-font-base);
+  background: transparent;
+}
+
+.data-table thead th,
+.data-table th {
+  padding: 16px 24px;
+  font-size: var(--u-font-sm);
+  font-weight: 600;
+  color: var(--u-text-3);
+  background: var(--u-thead-bg);
+  border-bottom: 1px solid var(--u-border);
+  white-space: nowrap;
+  text-align: left;
+}
+
+.data-table tbody td {
+  padding: 16px 24px;
+  font-size: var(--u-font-base);
+  color: var(--u-text-2);
+  border-bottom: 1px solid var(--u-divider);
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.data-table tbody tr:hover,
+.data-table tbody tr:hover > td {
+  background: var(--u-primary-bg-soft);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 表格容器 */
+/* 横向需保留滚动能力（page-content.css 的 .data-table-wrapper { overflow-x: auto }）：
+   宽表（如设备接入配置 12 列、监控通道 9 列）的操作列会被裁出容器，导致按钮无法鼠标点击。
+   纵向继续裁切以保留圆角视觉，故显式写 overflow-y: hidden 而非 overflow: hidden。 */
+.data-table-wrapper,
+.table-wrapper {
+  background: var(--u-card-bg);
+  border-radius: var(--u-card-radius);
+  border: var(--u-card-border);
+  box-shadow: var(--u-card-shadow);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* 数字列（demo: font-mono） */
+.data-table td.num,
+.data-table td.mono,
+.data-table .font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+ * 05. 按钮（demo: primary bg-blue-600 rounded-lg，次按钮 白底灰边）
+ * ========================================================================== */
+.jg-btn,
+.action-btn,
+.btn,
+.primary-btn,
+.btn-primary,
+.btn-secondary,
+.btn-cancel,
+.btn-export {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--u-gap-xs);
+  height: 34px;
+  padding: 0 16px;
+  border-radius: var(--u-radius-lg);
+  font-size: var(--u-font-base);
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: 1px solid var(--u-border-strong);
+  background: var(--u-card-bg);
+  color: var(--u-text-2);
+}
+
+.jg-btn:hover,
+.action-btn:hover,
+.btn:hover,
+.btn-secondary:hover,
+.btn-cancel:hover {
+  background: #f5f5f5;
+  border-color: var(--u-border-strong);
+  color: var(--u-text-1);
+}
+
+.jg-btn-primary,
+.btn-primary,
+.primary-btn {
+  background: var(--u-primary);
+  border-color: var(--u-primary);
+  color: #fff;
+}
+
+.jg-btn-primary:hover,
+.btn-primary:hover,
+.primary-btn:hover {
+  background: var(--u-primary-hover);
+  border-color: var(--u-primary-hover);
+  color: #fff;
+}
+
+.jg-btn-outline,
+.btn-export {
+  background: var(--u-card-bg);
+  border-color: var(--u-border-strong);
+  color: var(--u-text-2);
+}
+
+.jg-btn-outline:hover {
+  color: var(--u-primary);
+  border-color: var(--u-primary);
+  background: var(--u-primary-bg);
+}
+
+/* 文字型操作按钮（demo: text-blue-600 underline） */
+.action-btns a,
+.action-btns .link-btn,
+.table-action,
+.link-action {
+  color: var(--u-primary);
+  font-size: var(--u-font-base);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.action-btns a:hover,
+.table-action:hover,
+.link-action:hover {
+  color: var(--u-primary-hover);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* 危险操作 */
+.jg-btn-danger,
+.btn-danger {
+  background: #ff4d4f;
+  border-color: #ff4d4f;
+  color: #fff;
+}
+
+.jg-btn-danger:hover {
+  background: #d9363e;
+  border-color: #d9363e;
+}
+
+/* ==========================================================================
+ * 06. 状态标签 / 徽标（demo: px-2 py-1 rounded text-xs）
+ * ========================================================================== */
+.status-tag,
+.status-badge,
+.type-tag,
+.tag,
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--u-radius-sm);
+  font-size: var(--u-font-sm);
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* 预警级别标签（全局统一，避免各页各自定义导致不一致） */
+.status-tag.urgent { background: var(--error-bg); color: var(--error); border: 1px solid var(--error-border); }
+.status-tag.important { background: #fff7e6; color: #d46b08; border: 1px solid #ffd591; }
+.status-tag.reminder { background: var(--warning-bg); color: #ad8b00; border: 1px solid var(--warning-border); }
+.status-tag.notice { background: var(--info-bg); color: var(--info); border: 1px solid var(--info-border); }
+
+/* ==========================================================================
+ * 06.1 预警三类语义标签（级别 / 来源 / 业务分类）—— 与 status-tag 严格分离
+ *     目的：status-tag 只表示"状态"，级别用 .level-tag，来源用 .source-tag，
+ *          业务分类用 .category-tag，避免同一标签类承载多套语义导致串色。
+ * ========================================================================== */
+.level-tag,
+.source-tag,
+.category-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--u-radius-sm);
+  font-size: var(--u-font-sm);
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+/* -- 级别：紧急 / 重要 / 提醒 / 通知 -- */
+.level-tag.level-urgent    { background: var(--error-bg);  color: var(--error);  border-color: var(--error-border); }
+.level-tag.level-important { background: #fff7e6;        color: #d46b08;      border-color: #ffd591; }
+.level-tag.level-reminder  { background: var(--warning-bg);color: #ad8b00;      border-color: var(--warning-border); }
+.level-tag.level-notice    { background: var(--info-bg);   color: var(--info);   border-color: var(--info-border); }
+
+/* -- 来源：设备 / 人工上报 / 模型 / 库存 / 系统 -- */
+.source-tag.src-device    { background: #e6f4ff;      color: #0958d9; border-color: #91caff; }
+.source-tag.src-manual    { background: #f9f0ff;      color: #531dab; border-color: #d3adf7; }
+.source-tag.src-model     { background: #e6fffb;      color: #08979c; border-color: #87e8de; }
+.source-tag.src-inventory { background: #fff7e6;      color: #d46b08; border-color: #ffd591; }
+.source-tag.src-system    { background: var(--gray-100);color: var(--text-tertiary); border-color: var(--gray-200); }
+
+/* -- 业务分类：病虫害 / 气象 / 土壤 / 生长 / 环境 / 产量 / 库存 / 质量 -- */
+.category-tag.cat-pest        { background: #fff1f0; color: #cf1322; border-color: #ffa39e; }
+.category-tag.cat-weather     { background: #e6f4ff; color: #0958d9; border-color: #91caff; }
+.category-tag.cat-soil        { background: #f9f0ff; color: #531dab; border-color: #d3adf7; }
+.category-tag.cat-growth      { background: #f6ffed; color: #389e0d; border-color: #b7eb8f; }
+.category-tag.cat-environment { background: #e6fffb; color: #08979c; border-color: #87e8de; }
+.category-tag.cat-yield       { background: #fff7e6; color: #d46b08; border-color: #ffd591; }
+.category-tag.cat-inventory   { background: #f0f5ff; color: #2f54eb; border-color: #adc6ff; }
+.category-tag.cat-quality     { background: var(--gray-100); color: var(--text-secondary); border-color: var(--gray-200); }
+.category-tag.cat-device      { background: var(--gray-100); color: var(--text-secondary); border-color: var(--gray-200); }
+
+/* 预警六态状态标签（与 AlertStore.STATUS_TEXT 对齐） */
+.status-tag.st-pending     { background: var(--warning-bg); color: #9a6700;     border-color: var(--warning-border); }
+.status-tag.st-processing  { background: var(--info-bg);    color: var(--info);    border-color: var(--info-border); }
+.status-tag.st-closed      { background: var(--success-bg); color: var(--success); border-color: var(--success-border); }
+.status-tag.st-ignored     { background: var(--gray-100);  color: var(--text-tertiary); border-color: var(--gray-200); }
+.status-tag.st-transferred { background: #f0f5ff;         color: #2f54eb;      border-color: #adc6ff; }
+.status-tag.st-voided      { background: var(--gray-100);  color: var(--text-tertiary); border-color: var(--gray-200); text-decoration: line-through; }
+
+/* 计数徽标（demo: rounded-full bg-blue-100 text-blue-600） */
+.count-badge,
+.badge-count {
+  border-radius: var(--u-radius-full);
+  background: var(--u-primary-bg);
+  color: var(--u-primary);
+  padding: 2px 8px;
+  font-size: var(--u-font-sm);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+ * 07. 表单控件（demo: border rounded-md focus:ring-1 focus:ring-blue-500）
+ * ========================================================================== */
+.form-control,
+.form-input,
+.input,
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="search"],
+select,
+textarea {
+  height: auto;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--u-border-strong);
+  border-radius: var(--u-radius-md);
+  font-size: var(--u-font-base);
+  color: var(--u-text-1);
+  background: var(--u-card-bg);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+textarea {
+  height: auto;
+  padding: 8px 12px;
+  line-height: 1.6;
+}
+
+.form-control:focus,
+.form-input:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--u-primary);
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.15);
+}
+
+.form-label,
+.field-label {
+  font-size: var(--u-font-sm);
+  font-weight: 500;
+  color: var(--u-text-3);
+  margin-bottom: var(--u-gap-xs);
+}
+
+/* ==========================================================================
+ * 08. 分页（demo: 简洁方块按钮，激活态主色）
+ * ========================================================================== */
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--u-gap-xs);
+  padding: var(--u-gap-md) var(--u-gap-lg);
+}
+
+.page-btn,
+.pagination button {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--u-border-strong);
+  border-radius: var(--u-radius-lg);
+  background: var(--u-card-bg);
+  color: var(--u-text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-btn:hover,
+.pagination button:hover {
+  color: var(--u-primary);
+  border-color: var(--u-primary);
+}
+
+.page-btn.active,
+.page-btn.current,
+.pagination button.active {
+  background: var(--u-primary);
+  border-color: var(--u-primary);
+  color: #fff;
+}
+
+.pagination-info,
+.pagination .total {
+  font-size: var(--u-font-sm);
+  color: var(--u-text-3);
+}
+
+/* ==========================================================================
+ * 09. 统计数值（demo: text-2xl font-semibold）
+ * ========================================================================== */
+.stat-value,
+.patrol-stat-value,
+.metric-value {
+  font-size: var(--u-font-metric);
+  font-weight: 600;
+  color: var(--u-text-1);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label,
+.patrol-stat-label {
+  font-size: var(--u-font-base);
+  color: var(--u-text-3);
+}
+
+/* ==========================================================================
+ * 10. 通用工具类（对齐 demo 命名习惯）
+ * ========================================================================== */
+.u-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--u-gap-lg); }
+.u-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--u-gap-lg); }
+.u-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--u-gap-lg); }
+
+@media (max-width: 1200px) {
+  .u-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .u-grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .u-grid-2, .u-grid-3, .u-grid-4 { grid-template-columns: 1fr; }
+  .content-wrapper, .page-container, .main-content { padding: var(--u-gap-md); }
+}
+
+/* 空状态 */
+.empty-state,
+.no-data {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--u-text-3);
+  font-size: var(--u-font-base);
+}
+
+/* ==========================================================================
+ * 07. 全站统一整改（顶部间距 / 区块节奏 / 搜索栏 / 弹窗收口）
+ * ========================================================================== */
+
+/* -- 7.1 顶部留白收紧：iframe 内嵌页面顶到最上 -- */
+.main-content {
+  padding: 12px 16px 20px !important;
+  height: 100vh !important;
+}
+.content-wrapper,
+.page-container {
+  padding: 0 !important;
+}
+
+/* -- 7.2 页头与区块纵向节奏（原 24px 级 → 12px 级）-- */
+.page-header {
+  padding: 12px 20px !important;
+  margin-bottom: 12px !important;
+}
+.page-section {
+  margin-bottom: 12px;
+}
+.page-section + .page-section,
+.data-section + .data-section,
+.search-section + .data-section,
+.search-section + .page-section,
+.action-bar + .data-section,
+.action-bar + .page-section {
+  margin-top: 12px !important;
+}
+
+/* -- 7.3 搜索栏：单行不换行、控件文字完整、按钮右置 -- */
+.search-bar,
+.search-section .search-bar {
+  flex-wrap: nowrap !important;
+  overflow-x: auto;
+  gap: 10px;
+  padding-bottom: 2px;
+}
+.search-bar::-webkit-scrollbar { height: 4px; }
+.search-bar::-webkit-scrollbar-thumb { background: #d9d9d9; border-radius: 2px; }
+
+/* 下拉框：宽度自适应内容，右侧预留箭头空间（修复"全部基地"被箭头盖住） */
+.search-bar select,
+.search-section select.search-select,
+.search-section select.filter-select {
+  width: auto !important;
+  min-width: 96px;
+  max-width: 240px;
+  padding: 0 30px 0 12px !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.search-bar input.search-input,
+.search-bar input.filter-input,
+.search-section input.search-input,
+.search-section input.filter-input {
+  width: auto;
+  min-width: 150px;
+  max-width: 240px;
+}
+.search-section .search-item { flex-shrink: 0; }
+.search-section .search-label { min-width: 0; white-space: nowrap; }
+
+/* 搜索/重置按钮组：固定在右侧 */
+.search-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+  align-items: center;
+}
+.search-actions .jg-btn-primary,
+.search-actions .jg-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* -- 7.4 弹窗视觉统一（基准 = 任务分配 编辑/详情弹窗）
+   仅收口视觉，不改各页面的显示/隐藏与开合逻辑 -- */
+
+/* 遮罩层：仅统一底色与层级，display/opacity/visibility 保持各页原逻辑 */
+.modal-overlay,
+.detail-overlay,
+.edit-overlay,
+.data-overlay,
+.add-overlay {
+  background: rgba(0, 0, 0, 0.5) !important;
+  z-index: 1000;
+}
+
+/* 弹窗容器：统一圆角与投影（宽度/高度保留各页及行内 max-width 设置） */
+.modal,
+.modal-box,
+.modal-content,
+.modal-container,
+.detail-modal,
+.edit-modal,
+.data-modal,
+.add-modal,
+.confirm-modal {
+  background: var(--bg-card) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* 设备模块的弹窗容器自带 24px 内边距，会让标题栏无法出血；
+   这里归零容器内边距，改由内部区块各自承担，与任务分配弹窗结构一致 */
+.modal-content,
+.detail-modal,
+.edit-modal,
+.data-modal,
+.add-modal {
+  padding: 0 !important;
+}
+.modal-content > *:not(.modal-header):not(.modal-body):not(.modal-footer),
+.detail-modal > *:not(.modal-header):not(.modal-body):not(.modal-footer),
+.edit-modal > *:not(.modal-header):not(.modal-body):not(.modal-footer),
+.data-modal > *:not(.modal-header):not(.modal-body):not(.modal-footer),
+.add-modal > *:not(.modal-header):not(.modal-body):not(.modal-footer) {
+  margin: 20px 24px;
+}
+
+/* 头部：蓝绿渐变底 + 白色标题（去掉白底时代的装饰条与圆点） */
+.modal-header {
+  padding: 20px 24px !important;
+  border-bottom: 1px solid var(--border-default) !important;
+  background: linear-gradient(135deg, #1890ff 0%, #1a8a3a 100%) !important;
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-header::before,
+.modal-title::before {
+  display: none !important;
+}
+.modal-title,
+.modal-header h3,
+.modal-header h2 {
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #fff !important;
+  margin: 0;
+  text-shadow: none;
+}
+
+/* 关闭按钮：半透明白色圆形 */
+.modal-close {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: none !important;
+  color: #fff !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: none !important;
+  transition: background 0.2s;
+}
+.modal-close::after { display: none !important; }
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+}
+
+/* 正文与底部 */
+.modal-body {
+  padding: 24px !important;
+}
+.modal-footer {
+  padding: 16px 24px !important;
+  border-top: 1px solid var(--border-default) !important;
+  background: transparent !important;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+.modal-form .form-group label,
+.form-group label {
+  font-size: 13px;
+  color: #4a4a4a;
+  font-weight: 500;
+}
+
+/* -- 7.5 表单弹窗：加宽 + 双列，消除纵向滚动条 -- */
+
+/* 含表单的弹窗统一加宽到 760px（覆盖各页行内 max-width；纯详情/确认弹窗不受影响） */
+:is(.modal, .modal-box, .modal-content, .modal-container,
+    .detail-modal, .edit-modal, .data-modal, .add-modal, .confirm-modal):has(.form-group) {
+  width: min(760px, calc(100vw - 64px)) !important;
+  max-width: 760px !important;
+}
+
+/* 表单容器改为两列栅格（兼容 form.modal-form / .form-container / .modal-body 三种结构） */
+:is(.modal-overlay, .detail-overlay, .edit-overlay, .data-overlay, .add-overlay)
+  :is(.modal-form, .form-container, .modal-body, form):has(> .form-group) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  align-content: start;
+}
+
+/* 非表单项（提示条、分区标题、既有 .form-row 等）默认占满整行 */
+:is(.modal-overlay, .detail-overlay, .edit-overlay, .data-overlay, .add-overlay)
+  :is(.modal-form, .form-container, .modal-body, form):has(> .form-group) > * {
+  grid-column: 1 / -1;
+}
+
+/* 常规表单项各占一列，行距由栅格 gap 控制 */
+:is(.modal-overlay, .detail-overlay, .edit-overlay, .data-overlay, .add-overlay)
+  :is(.modal-form, .form-container, .modal-body, form):has(> .form-group) > .form-group {
+  grid-column: auto;
+  margin-bottom: 0 !important;
+}
+
+/* 多选框、文本域、显式 .full 的表单项跨两列 */
+:is(.modal-overlay, .detail-overlay, .edit-overlay, .data-overlay, .add-overlay)
+  :is(.modal-form, .form-container, .modal-body, form):has(> .form-group) > .form-group.full,
+:is(.modal-overlay, .detail-overlay, .edit-overlay, .data-overlay, .add-overlay)
+  :is(.modal-form, .form-container, .modal-body, form):has(> .form-group) > .form-group:has(select[multiple]),
+:is(.modal-overlay, .detail-overlay, .edit-overlay, .data-overlay, .add-overlay)
+  :is(.modal-form, .form-container, .modal-body, form):has(> .form-group) > .form-group:has(textarea),
+:is(.modal-overlay, .detail-overlay, .edit-overlay, .data-overlay, .add-overlay)
+  :is(.modal-form, .form-container, .modal-body, form):has(> .form-group) > .form-group:has(.form-custom) {
+  grid-column: 1 / -1;
+}
+
+/* 多选列表压缩高度，为双列布局腾出纵向空间 */
+:is(.modal-overlay, .detail-overlay, .edit-overlay, .data-overlay, .add-overlay)
+  select[multiple] {
+  min-height: 100px !important;
+}
+
+/* 去掉表单自带的 8px 上下内边距，避免双列后仍差几像素出滚动条 */
+:is(.modal-overlay, .detail-overlay, .edit-overlay, .data-overlay, .add-overlay)
+  .modal-form {
+  padding: 0 !important;
+}
+
+/* -- 7.6 详情弹窗：与编辑弹窗同宽同构，只读展示 -- */
+
+/* 详情弹窗统一加宽到 760px（纯确认类弹窗不含详情结构，不受影响） */
+:is(.modal-overlay, .detail-overlay)
+  :is(.modal-box, .modal, .modal-content, .modal-container, .detail-modal, .data-modal):has(.detail-grid, .detail-info, .detail-content) {
+  width: min(760px, calc(100vw - 64px)) !important;
+  max-width: 760px !important;
+}
+
+/* 详情容器统一为两列栅格：detail-grid 卡片组 / detail-info 行组 / detail-content 行组 */
+:is(.modal-overlay, .detail-overlay) .detail-grid:has(> .detail-item),
+:is(.modal-overlay, .detail-overlay) .detail-info:has(> .detail-row),
+:is(.modal-overlay, .detail-overlay) .detail-content:has(> .detail-row) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px 16px !important;
+  align-content: start;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  overflow: visible !important;
+}
+
+/* 行式详情（每行本身就是一个 .detail-grid / .detail-info）由其父容器栅格化 */
+:is(.modal-overlay, .detail-overlay)
+  .modal-body:has(> .detail-grid:not(:has(> .detail-item)):not(:has(> .detail-row))),
+:is(.modal-overlay, .detail-overlay)
+  .modal-body:has(> .detail-info:not(:has(> .detail-row))),
+:is(.modal-overlay, .detail-overlay)
+  .detail-content:has(> .detail-info:not(:has(> .detail-row))) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px 16px !important;
+  align-content: start;
+}
+
+/* 容器内的非详情块（标题、提示、时间轴等）占满整行 */
+:is(.modal-overlay, .detail-overlay)
+  :is(.detail-grid:has(> .detail-item), .detail-info:has(> .detail-row), .detail-content:has(> .detail-row),
+      .modal-body:has(> .detail-grid:not(:has(> .detail-item)):not(:has(> .detail-row))),
+      .modal-body:has(> .detail-info:not(:has(> .detail-row)))) > * {
+  grid-column: 1 / -1;
+}
+
+/* 详情行项：一列一项，标签在上、只读值在下 */
+:is(.modal-overlay, .detail-overlay) .detail-grid > .detail-item,
+:is(.modal-overlay, .detail-overlay) .detail-info > .detail-row,
+:is(.modal-overlay, .detail-overlay) .detail-content > .detail-row,
+:is(.modal-overlay, .detail-overlay) .modal-body > .detail-grid:not(:has(> .detail-item)):not(:has(> .detail-row)),
+:is(.modal-overlay, .detail-overlay) .modal-body > .detail-info:not(:has(> .detail-row)),
+:is(.modal-overlay, .detail-overlay) .detail-content > .detail-info:not(:has(> .detail-row)) {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  grid-column: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+/* 标签：与表单项 label 保持一致 */
+:is(.modal-overlay, .detail-overlay)
+  :is(.detail-item, .detail-row) > :first-child,
+:is(.modal-overlay, .detail-overlay)
+  :is(.detail-grid, .detail-info) > .detail-label {
+  width: auto !important;
+  min-width: 0 !important;
+  flex: none !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.5;
+  color: #4a4a4a !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  text-align: left;
+}
+
+/* 值：只读输入框外观（灰底 + 浅边框），不可编辑 */
+:is(.modal-overlay, .detail-overlay)
+  :is(.detail-item, .detail-row) > :last-child,
+:is(.modal-overlay, .detail-overlay)
+  :is(.detail-grid, .detail-info) > .detail-value {
+  flex: none !important;
+  display: flex;
+  align-items: center;
+  min-height: 43px;
+  padding: 10px 14px;
+  background: #f5f7f5;
+  border: 1.5px solid #e8ede8;
+  border-radius: 8px;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.5;
+  color: var(--text-primary) !important;
+  text-align: left !important;
+  word-break: break-word;
+}

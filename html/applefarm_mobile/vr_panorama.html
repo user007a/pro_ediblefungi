@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#8C6244">
+  <title>食用菌环境监测系统 - 视频监控</title>
+  <!-- H5设计系统 -->
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+
+    body { background: var(--bg); }
+
+    /* --- 顶部 Header（主 Tab 页，无返回箭头） --- */
+    .vm-header {
+      padding: calc(var(--safe-top) + 18px) 20px 22px;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 4px 24px rgba(69, 48, 35, 0.26), 0 1px 3px rgba(0, 0, 0, 0.08);
+      color: var(--text-on-primary);
+    }
+
+    .vm-head-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .vm-title {
+      font-size: var(--font-2xl);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
+    }
+
+    .vm-sub {
+      font-size: var(--font-xs);
+      opacity: 0.86;
+      margin-top: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .vm-refresh {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.18);
+      color: var(--text-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .vm-refresh:active {
+      background: rgba(255, 255, 255, 0.30);
+      transform: scale(0.94);
+    }
+
+    .vm-refresh svg { width: 20px; height: 20px; }
+
+    .vm-refresh.is-spin svg { animation: vmSpin 0.6s ease; }
+
+    @keyframes vmSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* --- 实时 / 回放 / 抓拍 分段切换 --- */
+    .vm-seg {
+      display: flex;
+      gap: 4px;
+      margin: 14px 16px 0;
+      padding: 4px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      box-shadow: var(--shadow-card);
+    }
+
+    .vm-seg-btn {
+      flex: 1;
+      min-height: 36px;
+      border: none;
+      border-radius: var(--radius-full);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: var(--font-sm);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .vm-seg-btn.active {
+      background: var(--gradient-primary);
+      color: var(--text-on-primary);
+      box-shadow: 0 2px 8px rgba(140, 98, 68, 0.28);
+    }
+
+    /* --- 面板 --- */
+    .vm-panel { display: none; }
+    .vm-panel.active { display: block; }
+
+    .vm-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .vm-toolbar-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-md);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.3px;
+    }
+
+    .vm-layout {
+      display: flex;
+      gap: 3px;
+      padding: 3px;
+      background: var(--primary-50);
+      border: 1px solid var(--primary-100);
+      border-radius: var(--radius-md);
+    }
+
+    .vm-layout-btn {
+      min-height: 28px;
+      padding: 4px 9px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: var(--font-2xs);
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+
+    .vm-layout-btn.active {
+      background: var(--bg-white);
+      color: var(--primary-700);
+      box-shadow: var(--shadow-xs);
+    }
+
+    /* --- 通道宫格 --- */
+    .vm-grid { display: grid; gap: 10px; }
+    .vm-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .vm-grid.cols-3 { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+    .vm-ch {
+      position: relative;
+      aspect-ratio: 4 / 3;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--primary-900);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+      transition: transform var(--transition-fast);
+    }
+
+    .vm-grid.cols-3 .vm-ch { aspect-ratio: 1 / 1; }
+
+    .vm-ch:active { transform: scale(0.98); }
+
+    .vm-ch.is-alert {
+      box-shadow: 0 0 0 2px rgba(207, 19, 34, 0.62), var(--shadow-card);
+    }
+
+    .vm-ch img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .vm-ch.is-offline img {
+      filter: grayscale(1) brightness(0.66);
+    }
+
+    .vm-ch-grad {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background: linear-gradient(180deg, rgba(20, 14, 10, 0.46) 0%, rgba(20, 14, 10, 0) 36%, rgba(20, 14, 10, 0) 50%, rgba(20, 14, 10, 0.80) 100%);
+      pointer-events: none;
+    }
+
+    .vm-ch-top {
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      right: 7px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .vm-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: var(--radius-full);
+      background: rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      color: var(--text-on-primary);
+      font-size: var(--font-2xs);
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    .vm-status .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #67e08b;
+      flex-shrink: 0;
+    }
+
+    .vm-status.alert {
+      background: var(--error);
+      color: #fff;
+    }
+
+    .vm-status.alert .dot {
+      background: #fff;
+      animation: vmBlink 1s ease-in-out infinite;
+    }
+
+    .vm-status.offline {
+      background: rgba(0, 0, 0, 0.48);
+      color: #e3d6c6;
+    }
+
+    .vm-status.offline .dot { background: #9c9c9c; }
+
+    @keyframes vmBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    .vm-ch-bottom {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 7px;
+    }
+
+    .vm-ch-name {
+      font-size: var(--font-sm);
+      font-weight: 600;
+      color: var(--text-on-primary);
+      line-height: 1.3;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .vm-ch-time {
+      margin-top: 2px;
+      font-family: var(--font-family-mono);
+      font-size: var(--font-2xs);
+      color: rgba(251, 244, 232, 0.82);
+      letter-spacing: 0.4px;
+    }
+
+    .vm-ch.is-offline .vm-ch-time { color: rgba(251, 244, 232, 0.5); }
+
+    .vm-grid.cols-3 .vm-ch-top { top: 5px; left: 5px; right: 5px; }
+    .vm-grid.cols-3 .vm-status { font-size: 9px; padding: 1px 5px; }
+    .vm-grid.cols-3 .vm-status .dot { width: 5px; height: 5px; }
+    .vm-grid.cols-3 .vm-ch-bottom { left: 6px; right: 6px; bottom: 5px; }
+    .vm-grid.cols-3 .vm-ch-name { font-size: 10px; }
+    .vm-grid.cols-3 .vm-ch-time { font-size: 9px; }
+
+    /* --- 通用卡片 --- */
+    .vm-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-card);
+      padding: 14px 16px;
+    }
+
+    .vm-card + .vm-card { margin-top: 10px; }
+
+    .vm-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .vm-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-md);
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .vm-time-label {
+      font-family: var(--font-family-number);
+      font-size: var(--font-sm);
+      font-weight: 600;
+      color: var(--primary-700);
+      letter-spacing: 0.4px;
+    }
+
+    .vm-field-label {
+      margin-top: 14px;
+      margin-bottom: 7px;
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      letter-spacing: 0.3px;
+    }
+
+    .vm-input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-warm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: var(--font-base);
+      outline: none;
+    }
+
+    .vm-input:focus { border-color: var(--primary-300); }
+
+    .vm-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .vm-chip {
+      min-height: 32px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      background: var(--bg-white);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: var(--font-xs);
+      font-weight: 500;
+      cursor: pointer;
+      transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+    }
+
+    .vm-chip.active {
+      background: var(--primary-50);
+      border-color: var(--primary-300);
+      color: var(--primary-700);
+      font-weight: 600;
+    }
+
+    /* --- 回放时间轴 --- */
+    .vm-timeline {
+      position: relative;
+      height: 36px;
+      margin-top: 10px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      background: var(--primary-50);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .vm-timeline::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.38) 0 1px, transparent 1px 10%);
+      pointer-events: none;
+    }
+
+    .vm-tl-seg {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+    }
+
+    .vm-tl-seg.normal {
+      background: linear-gradient(180deg, #9BC0DA 0%, #7FA8C9 100%);
+    }
+
+    .vm-tl-seg.alarm {
+      background: linear-gradient(180deg, #E0424F 0%, #CF1322 100%);
+    }
+
+    .vm-tl-playhead {
+      position: absolute;
+      top: -2px;
+      bottom: -2px;
+      left: 0;
+      width: 2px;
+      margin-left: -1px;
+      background: var(--primary-900);
+      box-shadow: 0 0 0 2px rgba(140, 98, 68, 0.18);
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .vm-tl-legend {
+      display: flex;
+      gap: 14px;
+      margin-top: 8px;
+      font-size: var(--font-2xs);
+      color: var(--text-tertiary);
+    }
+
+    .vm-tl-legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .vm-tl-legend i {
+      width: 12px;
+      height: 6px;
+      border-radius: 2px;
+    }
+
+    .vm-tl-legend i.normal { background: #7FA8C9; }
+    .vm-tl-legend i.alarm { background: #CF1322; }
+
+    .vm-player-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .vm-icon-btn {
+      min-width: 38px;
+      height: 40px;
+      padding: 0 6px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+
+    .vm-icon-btn:active { background: var(--primary-50); }
+
+    .vm-play-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      color: var(--text-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(140, 98, 68, 0.30);
+    }
+
+    .vm-play-btn:active { transform: scale(0.94); }
+
+    .vm-play-btn svg { width: 20px; height: 20px; }
+
+    .vm-speed {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+    }
+
+    .vm-speed .vm-chip {
+      min-height: 30px;
+      padding: 5px 10px;
+    }
+
+    .vm-pb-note {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      background: var(--bg-warm);
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* --- AI 事件抓拍 --- */
+    .vm-snap-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .vm-snap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+      transition: transform var(--transition-fast);
+    }
+
+    .vm-snap:active { transform: scale(0.99); }
+
+    .vm-snap-thumb {
+      width: 86px;
+      height: 64px;
+      flex-shrink: 0;
+      border-radius: var(--radius-md);
+      object-fit: cover;
+    }
+
+    .vm-snap-info { flex: 1; min-width: 0; }
+
+    .vm-snap-type {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--font-base);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .vm-snap-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .vm-snap-dot.error { background: var(--error); }
+    .vm-snap-dot.warning { background: var(--warning); }
+    .vm-snap-dot.info { background: var(--info); }
+
+    .vm-snap-meta {
+      margin-top: 4px;
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .vm-snap-sub {
+      margin-top: 3px;
+      font-size: var(--font-2xs);
+      color: var(--text-tertiary);
+    }
+
+    .vm-snap-arrow {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: var(--text-tertiary);
+    }
+
+    .vm-sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .vm-snap-big {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: var(--radius-lg);
+      margin-bottom: 12px;
+      background: var(--primary-900);
+    }
+
+    .vm-kv-list {
+      padding: 4px 12px;
+      background: var(--bg-warm);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+    }
+
+    .vm-kv-list .kv {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: var(--font-sm);
+    }
+
+    .vm-kv-list .kv:last-child { border-bottom: none; }
+    .vm-kv-list .kv span { color: var(--text-tertiary); flex-shrink: 0; }
+    .vm-kv-list .kv b { color: var(--text); font-weight: 500; text-align: right; }
+
+    /* --- 全屏实时画面 --- */
+    .vm-live-overlay { background: rgba(12, 8, 6, 0.94); }
+
+    .vm-live-player {
+      width: 100%;
+      max-width: 750px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #140F0B;
+      color: var(--text-on-primary);
+    }
+
+    .vm-live-player.is-faux-full {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 10;
+      max-width: none;
+      height: 100vh;
+    }
+
+    .vm-live-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: calc(var(--safe-top) + 12px) 16px 12px;
+    }
+
+    .vm-live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(255, 255, 255, 0.12);
+      font-size: var(--font-2xs);
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .vm-live-badge i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--error);
+      animation: vmBlink 1.2s ease-in-out infinite;
+    }
+
+    .vm-live-close {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.14);
+      color: var(--text-on-primary);
+      font-size: 15px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .vm-live-stage {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      margin: 0 16px;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      background: #000;
+    }
+
+    .vm-live-stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .vm-scanline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 64px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.55);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(180, 220, 255, 0.14) 60%, rgba(255, 255, 255, 0.40) 100%);
+      animation: vmScan 3.2s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes vmScan {
+      0% { top: -64px; }
+      100% { top: 100%; }
+    }
+
+    .vm-live-osd {
+      position: absolute;
+      top: 10px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: var(--font-xs);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+      pointer-events: none;
+    }
+
+    .vm-live-osd-time {
+      font-family: var(--font-family-mono);
+      letter-spacing: 0.5px;
+      opacity: 0.9;
+    }
+
+    .vm-live-info {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px 4px;
+    }
+
+    .vm-li span {
+      display: block;
+      font-size: var(--font-2xs);
+      color: rgba(251, 244, 232, 0.55);
+    }
+
+    .vm-li b {
+      display: block;
+      margin-top: 3px;
+      font-size: var(--font-sm);
+      font-weight: 600;
+      color: var(--text-on-primary);
+    }
+
+    .vm-li b.is-alert { color: #ff7875; }
+
+    .vm-live-actions {
+      display: flex;
+      gap: 12px;
+      padding: 12px 16px calc(16px + var(--safe-bottom));
+    }
+
+    .vm-live-actions .mb-btn { flex: 1; }
+
+    .vm-live-actions .mb-btn-secondary {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.22);
+      color: var(--text-on-primary);
+    }
+
+    .vm-live-actions .mb-btn-secondary:active { background: rgba(255, 255, 255, 0.2); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .vm-scanline, .vm-status.alert .dot, .vm-live-badge i { animation: none; }
+    }
+
+    @media (max-width: 374px) {
+      .vm-title { font-size: var(--font-xl); }
+      .vm-snap-thumb { width: 72px; height: 56px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <!-- ===================== 顶部 Header ===================== -->
+    <div class="mb-header-home vm-header">
+      <div class="vm-head-row">
+        <div>
+          <div class="vm-title">视频监控</div>
+          <div class="vm-sub">8 路通道 · 在线 6 · 告警 1</div>
+        </div>
+        <button class="vm-refresh" type="button" id="refreshBtn" onclick="refreshAll(this)" aria-label="刷新画面">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===================== 分段切换 ===================== -->
+    <div class="vm-seg" role="tablist" aria-label="监控视图">
+      <button class="vm-seg-btn active" type="button" role="tab" aria-selected="true" onclick="switchPanel('live', this)">实时</button>
+      <button class="vm-seg-btn" type="button" role="tab" aria-selected="false" onclick="switchPanel('playback', this)">回放</button>
+      <button class="vm-seg-btn" type="button" role="tab" aria-selected="false" onclick="switchPanel('snap', this)">抓拍</button>
+    </div>
+
+    <!-- ===================== 实时面板 ===================== -->
+    <div class="vm-panel mb-section active" id="panel-live">
+      <div class="vm-toolbar">
+        <div class="vm-toolbar-title"><span class="mb-section-dot"></span>实时画面</div>
+        <div class="vm-layout" role="group" aria-label="宫格布局">
+          <button class="vm-layout-btn active" type="button" onclick="setLayout(2, this)">2×2</button>
+          <button class="vm-layout-btn" type="button" onclick="setLayout(3, this)">3×3</button>
+        </div>
+      </div>
+      <div class="vm-grid cols-2" id="liveGrid"></div>
+    </div>
+
+    <!-- ===================== 回放面板 ===================== -->
+    <div class="vm-panel mb-section" id="panel-playback">
+      <div class="vm-card">
+        <div class="vm-card-head">
+          <div class="vm-card-title"><span class="mb-section-dot"></span>录像回放</div>
+          <span class="mb-tag default">本地存储 30 天</span>
+        </div>
+
+        <div class="vm-field-label">日期</div>
+        <input type="date" class="vm-input" id="pbDate" onchange="onDateChange()">
+
+        <div class="vm-field-label">回放时长</div>
+        <div class="vm-chips" id="durChips">
+          <button class="vm-chip" type="button" onclick="setDuration(1, this)">1 小时</button>
+          <button class="vm-chip" type="button" onclick="setDuration(6, this)">6 小时</button>
+          <button class="vm-chip" type="button" onclick="setDuration(12, this)">12 小时</button>
+          <button class="vm-chip active" type="button" onclick="setDuration(24, this)">24 小时</button>
+        </div>
+
+        <div class="vm-field-label">事件类型</div>
+        <div class="vm-chips" id="evtChips">
+          <button class="vm-chip active" type="button" onclick="setEventType('设备报警', this)">设备报警</button>
+          <button class="vm-chip" type="button" onclick="setEventType('手动报警', this)">手动报警</button>
+          <button class="vm-chip" type="button" onclick="setEventType('智能分析', this)">智能分析</button>
+          <button class="vm-chip" type="button" onclick="setEventType('平台报警', this)">平台报警</button>
+        </div>
+      </div>
+
+      <div class="vm-card">
+        <div class="vm-card-head">
+          <div class="vm-card-title"><span class="mb-section-dot"></span>时间轴</div>
+          <span class="vm-time-label" id="pbTimeLabel">00:00:00</span>
+        </div>
+
+        <div class="vm-timeline" id="pbTimeline" onclick="seekTimeline(event)" role="slider" aria-label="回放时间轴" aria-valuemin="0" aria-valuemax="86400" aria-valuenow="0">
+          <span class="vm-tl-seg normal" style="left:0%;width:18%"></span>
+          <span class="vm-tl-seg alarm" style="left:18%;width:4%"></span>
+          <span class="vm-tl-seg normal" style="left:22%;width:33%"></span>
+          <span class="vm-tl-seg alarm" style="left:55%;width:3%"></span>
+          <span class="vm-tl-seg normal" style="left:58%;width:24%"></span>
+          <span class="vm-tl-seg alarm" style="left:82%;width:3%"></span>
+          <span class="vm-tl-seg normal" style="left:85%;width:15%"></span>
+          <span class="vm-tl-playhead" id="pbPlayhead"></span>
+        </div>
+
+        <div class="vm-tl-legend">
+          <span><i class="normal"></i>正常录像</span>
+          <span><i class="alarm"></i>报警录像</span>
+        </div>
+
+        <div class="vm-player-bar">
+          <button class="vm-icon-btn" type="button" onclick="stepFrame(-1)" aria-label="上一帧">−1 帧</button>
+          <button class="vm-play-btn" type="button" id="pbPlayBtn" onclick="togglePlay()" aria-label="播放">
+            <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="8 5 19 12 8 19 8 5"/></svg>
+          </button>
+          <button class="vm-icon-btn" type="button" onclick="stepFrame(1)" aria-label="下一帧">+1 帧</button>
+          <div class="vm-speed">
+            <button class="vm-chip active" type="button" onclick="setSpeed(1, this)">1x</button>
+            <button class="vm-chip" type="button" onclick="setSpeed(2, this)">2x</button>
+            <button class="vm-chip" type="button" onclick="setSpeed(4, this)">4x</button>
+          </div>
+        </div>
+
+        <div class="vm-pb-note" id="pbNote">定位时间 00:00:00 · 事件筛选：设备报警 · 1x</div>
+      </div>
+    </div>
+
+    <!-- ===================== 抓拍面板 ===================== -->
+    <div class="vm-panel mb-section" id="panel-snap">
+      <div class="vm-toolbar">
+        <div class="vm-toolbar-title"><span class="mb-section-dot"></span>AI 事件抓拍</div>
+        <span class="text-xs text-secondary">近 24 小时 · 6 条</span>
+      </div>
+      <div class="vm-snap-list" id="snapList"></div>
+    </div>
+
+    <!-- ===================== 全屏实时画面 ===================== -->
+    <div class="mb-modal-overlay vm-live-overlay" id="liveOverlay">
+      <div class="vm-live-player" id="livePlayer">
+        <div class="vm-live-top">
+          <span class="vm-live-badge"><i></i>LIVE</span>
+          <button class="vm-live-close" type="button" onclick="closeLive()" aria-label="关闭">✕</button>
+        </div>
+
+        <div class="vm-live-stage">
+          <img id="liveImg" src="../applefarm_h5/images/trace_fruiting.jpg" alt="实时画面">
+          <div class="vm-scanline"></div>
+          <div class="vm-live-osd">
+            <span id="liveChName">一号出菇房 GF-01</span>
+            <span class="vm-live-osd-time" id="liveTime">--:--:--</span>
+          </div>
+        </div>
+
+        <div class="vm-live-info">
+          <div class="vm-li">
+            <span>通道状态</span>
+            <b id="liveState">实时画面 · AI 分析中</b>
+          </div>
+          <div class="vm-li" style="text-align:right;">
+            <span>码率 / 分辨率</span>
+            <b id="liveMeta">4.0 Mbps · 1080P</b>
+          </div>
+        </div>
+
+        <div class="vm-live-actions">
+          <button class="mb-btn mb-btn-secondary" type="button" onclick="captureShot()">截图</button>
+          <button class="mb-btn mb-btn-primary" type="button" onclick="togglePlayerFull()">全屏</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== 抓拍详情抽屉 ===================== -->
+    <div class="mb-modal-overlay is-sheet" id="snapOverlay">
+      <div class="mb-modal is-sheet">
+        <div class="vm-sheet-head">
+          <span class="mb-tag error" id="snapTag">人员闯入</span>
+          <span class="text-xs text-tertiary" id="snapConf">置信度 96%</span>
+        </div>
+        <div class="mb-modal-title" id="snapTitle" style="text-align:left;margin-bottom:10px;">一号出菇房 GF-01 · 人员闯入事件</div>
+        <img class="vm-snap-big" id="snapImg" src="../applefarm_h5/images/trace_fruiting.jpg" alt="事件抓拍">
+        <div class="mb-modal-body" id="snapDesc" style="margin-bottom:12px;"></div>
+        <div class="vm-kv-list">
+          <div class="kv"><span>事件时间</span><b id="snapTime">—</b></div>
+          <div class="kv"><span>所属通道</span><b id="snapCh">—</b></div>
+          <div class="kv"><span>置信度</span><b id="snapConf2">—</b></div>
+        </div>
+        <div class="mb-modal-actions">
+          <button class="mb-btn mb-btn-secondary" type="button" onclick="closeSnap()">关闭</button>
+          <button class="mb-btn mb-btn-primary" type="button" onclick="goAlert()">现场处置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== 底部导航 ===================== -->
+    <div class="mb-tab-bar">
+      <div class="mb-tab-item" onclick="navigateTo('mb_home.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>首页</span>
+      </div>
+      <div class="mb-tab-item" onclick="navigateTo('mb_device.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>监测</span>
+      </div>
+      <div class="mb-tab-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><polygon points="16 10 22 7 22 17 16 14"/></svg>
+        <span>监控</span>
+      </div>
+      <div class="mb-tab-item" onclick="navigateTo('mb_mine.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>我的</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function fmtClock(d) {
+      return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+    }
+
+    function fmtSec(total) {
+      total = Math.max(0, Math.floor(total));
+      return pad2(Math.floor(total / 3600)) + ':' + pad2(Math.floor((total % 3600) / 60)) + ':' + pad2(total % 60);
+    }
+
+    function todayStr() {
+      var d = new Date();
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+
+    function navigateTo(page) { window.location.href = page; }
+
+    function toast(msg, type) {
+      var cls = type === 'success' ? 'success' : type === 'warning' ? 'warning' : type === 'error' ? 'error' : 'info';
+      var box = document.createElement('div');
+      box.className = 'mb-toast mb-toast-' + cls;
+      box.textContent = msg;
+      box.setAttribute('role', 'status');
+      document.body.appendChild(box);
+      requestAnimationFrame(function () { box.classList.add('show'); });
+      setTimeout(function () {
+        box.classList.remove('show');
+        setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 260);
+      }, 1800);
+    }
+
+    /* ---------------- 通道数据 ---------------- */
+    var CHANNELS = [
+      { name: '一号出菇房 GF-01', img: '../applefarm_h5/images/trace_fruiting.jpg', status: 'online', bitrate: '4.0 Mbps' },
+      { name: '二号出菇房 GF-02', img: '../applefarm_h5/images/trace_incubate.jpg', status: 'online', bitrate: '4.0 Mbps' },
+      { name: '三号出菇房 GF-03', img: '../applefarm_h5/images/trace_sterilize.jpg', status: 'alert', bitrate: '4.0 Mbps', alarm: '识别到菌包异常移动' },
+      { name: '接种室 A', img: '../applefarm_h5/images/trace_grading.jpg', status: 'online', bitrate: '3.2 Mbps' },
+      { name: '培养房 B2', img: '../applefarm_h5/images/trace_coldchain.jpg', status: 'online', bitrate: '3.2 Mbps' },
+      { name: '分级包装区', img: '../applefarm_h5/images/trace_material.jpg', status: 'online', bitrate: '4.0 Mbps' },
+      { name: '冷链暂存区', img: '../applefarm_h5/images/trace_substrate.jpg', status: 'offline', bitrate: '—' },
+      { name: '灭菌中心', img: '../applefarm_h5/images/trace_monitor.jpg', status: 'online', bitrate: '3.6 Mbps' }
+    ];
+
+    function statusMarkup(status) {
+      if (status === 'alert') return '<span class="vm-status alert"><i class="dot"></i>告警</span>';
+      if (status === 'offline') return '<span class="vm-status offline"><i class="dot"></i>离线</span>';
+      return '<span class="vm-status"><i class="dot"></i>在线</span>';
+    }
+
+    function renderLive() {
+      var grid = document.getElementById('liveGrid');
+      grid.innerHTML = CHANNELS.map(function (ch, i) {
+        var cls = 'vm-ch' + (ch.status === 'alert' ? ' is-alert' : ch.status === 'offline' ? ' is-offline' : '');
+        return '<div class="' + cls + '" onclick="openLive(' + i + ')">' +
+          '<img src="' + ch.img + '" alt="' + ch.name + '">' +
+          '<div class="vm-ch-grad"></div>' +
+          '<div class="vm-ch-top">' + statusMarkup(ch.status) + '</div>' +
+          '<div class="vm-ch-bottom">' +
+            '<div class="vm-ch-name">' + ch.name + '</div>' +
+            '<div class="vm-ch-time" data-clock>' + fmtClock(new Date()) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function refreshAll(btn) {
+      var now = fmtClock(new Date());
+      btn.classList.add('is-spin');
+      setTimeout(function () { btn.classList.remove('is-spin'); }, 620);
+      document.querySelectorAll('[data-clock]').forEach(function (el) { el.textContent = now; });
+      document.getElementById('liveTime').textContent = now;
+      toast('画面已刷新 · ' + now, 'success');
+    }
+
+    function setLayout(cols, btn) {
+      var grid = document.getElementById('liveGrid');
+      grid.classList.remove('cols-2', 'cols-3');
+      grid.classList.add('cols-' + cols);
+      document.querySelectorAll('.vm-layout-btn').forEach(function (b) { b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      toast('已切换 ' + cols + '×' + cols + ' 宫格', 'info');
+    }
+
+    function switchPanel(name, btn) {
+      document.querySelectorAll('.vm-panel').forEach(function (p) {
+        p.classList.toggle('active', p.id === 'panel-' + name);
+      });
+      document.querySelectorAll('.vm-seg-btn').forEach(function (b) {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      if (btn) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+      }
+    }
+
+    /* ---------------- 全屏实时画面 ---------------- */
+    var liveIndex = 0;
+
+    function openLive(index) {
+      var ch = CHANNELS[index];
+      if (!ch) return;
+      liveIndex = index;
+      document.getElementById('liveImg').src = ch.img;
+      document.getElementById('liveImg').alt = ch.name + ' 实时画面';
+      document.getElementById('liveChName').textContent = ch.name;
+      document.getElementById('liveTime').textContent = fmtClock(new Date());
+      var stateEl = document.getElementById('liveState');
+      var metaEl = document.getElementById('liveMeta');
+      stateEl.classList.remove('is-alert');
+      if (ch.status === 'alert') {
+        stateEl.textContent = '告警 · ' + ch.alarm;
+        stateEl.classList.add('is-alert');
+        metaEl.textContent = ch.bitrate + ' · 1080P';
+      } else if (ch.status === 'offline') {
+        stateEl.textContent = '通道离线 · 无实时画面';
+        metaEl.textContent = '—';
+      } else {
+        stateEl.textContent = '实时画面 · AI 分析中';
+        metaEl.textContent = ch.bitrate + ' · 1080P';
+      }
+      document.getElementById('liveOverlay').classList.add('show');
+    }
+
+    function closeLive() {
+      var overlay = document.getElementById('liveOverlay');
+      overlay.classList.remove('show');
+      var player = document.getElementById('livePlayer');
+      player.classList.remove('is-faux-full');
+      if (document.fullscreenElement && document.exitFullscreen) {
+        try { document.exitFullscreen(); } catch (e) { /* 忽略 */ }
+      }
+    }
+
+    function captureShot() {
+      toast('已保存截图', 'success');
+    }
+
+    function togglePlayerFull() {
+      var player = document.getElementById('livePlayer');
+      if (!document.fullscreenElement) {
+        var req = player.requestFullscreen || player.webkitRequestFullscreen;
+        if (req) {
+          try {
+            var ret = req.call(player);
+            if (ret && ret.catch) {
+              ret.catch(function () { player.classList.add('is-faux-full'); });
+            }
+            toast('已进入全屏预览', 'info');
+            return;
+          } catch (e) { /* 回退到页面内全屏 */ }
+        }
+        player.classList.add('is-faux-full');
+        toast('已切换全屏预览', 'info');
+      } else {
+        var exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) {
+          try { exit.call(document); } catch (e) { /* 忽略 */ }
+        }
+        player.classList.remove('is-faux-full');
+        toast('已退出全屏预览', 'info');
+      }
+    }
+
+    /* ---------------- 回放 ---------------- */
+    var pbDuration = 24;
+    var pbCurrent = 0;
+    var pbSpeed = 1;
+    var pbPlaying = false;
+    var pbTimer = null;
+    var pbEvent = '设备报警';
+
+    var ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="8 5 19 12 8 19 8 5"/></svg>';
+    var ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+
+    function pbTotal() { return pbDuration * 3600; }
+
+    function renderPlayhead() {
+      var total = pbTotal();
+      var pct = total ? (pbCurrent / total * 100) : 0;
+      pct = Math.max(0, Math.min(100, pct));
+      document.getElementById('pbPlayhead').style.left = pct + '%';
+      var time = fmtSec(pbCurrent);
+      document.getElementById('pbTimeLabel').textContent = time;
+      document.getElementById('pbNote').textContent = '定位时间 ' + time + ' · 事件筛选：' + pbEvent + ' · ' + pbSpeed + 'x';
+      var timeline = document.getElementById('pbTimeline');
+      timeline.setAttribute('aria-valuemax', String(total));
+      timeline.setAttribute('aria-valuenow', String(Math.floor(pbCurrent)));
+    }
+
+    function updatePlayBtn() {
+      var btn = document.getElementById('pbPlayBtn');
+      btn.innerHTML = pbPlaying ? ICON_PAUSE : ICON_PLAY;
+      btn.setAttribute('aria-label', pbPlaying ? '暂停' : '播放');
+    }
+
+    function pausePlayback() {
+      if (pbTimer) {
+        clearInterval(pbTimer);
+        pbTimer = null;
+      }
+      pbPlaying = false;
+      updatePlayBtn();
+    }
+
+    function togglePlay() {
+      if (pbPlaying) {
+        pausePlayback();
+        toast('已暂停回放', 'info');
+        return;
+      }
+      if (pbCurrent >= pbTotal()) pbCurrent = 0;
+      pbPlaying = true;
+      updatePlayBtn();
+      toast('开始回放', 'success');
+      pbTimer = setInterval(function () {
+        pbCurrent += 0.5 * pbSpeed;
+        if (pbCurrent >= pbTotal()) {
+          pbCurrent = pbTotal();
+          pausePlayback();
+          toast('回放已结束', 'info');
+        }
+        renderPlayhead();
+      }, 500);
+    }
+
+    function stepFrame(dir) {
+      pausePlayback();
+      pbCurrent = Math.max(0, Math.min(pbTotal(), pbCurrent + dir));
+      renderPlayhead();
+      toast(dir > 0 ? '下一帧' : '上一帧', 'info');
+    }
+
+    function setSpeed(value, btn) {
+      pbSpeed = value;
+      document.querySelectorAll('.vm-speed .vm-chip').forEach(function (b) { b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      renderPlayhead();
+      toast('已切换 ' + value + 'x 倍速', 'info');
+    }
+
+    function setDuration(hours, btn) {
+      pbDuration = hours;
+      pbCurrent = 0;
+      pausePlayback();
+      document.querySelectorAll('#durChips .vm-chip').forEach(function (b) { b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      renderPlayhead();
+      toast('回放时长已切换为 ' + hours + ' 小时', 'info');
+    }
+
+    function setEventType(name, btn) {
+      pbEvent = name;
+      document.querySelectorAll('#evtChips .vm-chip').forEach(function (b) { b.classList.remove('active'); });
+      if (btn) btn.classList.add('active');
+      renderPlayhead();
+      toast('已筛选事件类型：' + name, 'info');
+    }
+
+    function onDateChange() {
+      pbCurrent = 0;
+      pausePlayback();
+      renderPlayhead();
+      toast('已加载 ' + document.getElementById('pbDate').value + ' 的录像', 'success');
+    }
+
+    function seekTimeline(e) {
+      var rect = e.currentTarget.getBoundingClientRect();
+      var ratio = rect.width ? (e.clientX - rect.left) / rect.width : 0;
+      ratio = Math.max(0, Math.min(1, ratio));
+      pbCurrent = ratio * pbTotal();
+      renderPlayhead();
+      toast('已定位到 ' + fmtSec(pbCurrent), 'info');
+    }
+
+    /* ---------------- AI 事件抓拍 ---------------- */
+    var SNAPS = [
+      { type: '人员闯入', level: 'error', time: '今天 14:32:10', channel: '一号出菇房 GF-01', conf: '96%', img: '../applefarm_h5/images/trace_fruiting.jpg', desc: 'AI 识别到非授权人员进入出菇房通道，停留约 12 秒，建议现场核实并登记。' },
+      { type: '设备报警', level: 'warning', time: '今天 14:02:35', channel: '二号出菇房 GF-02', conf: '99%', img: '../applefarm_h5/images/trace_incubate.jpg', desc: '循环风机运行时振动异常，电流波动超过阈值 15%，已关联设备告警工单。' },
+      { type: '温湿度越限', level: 'warning', time: '今天 13:48:02', channel: '培养房 B2', conf: '92%', img: '../applefarm_h5/images/trace_coldchain.jpg', desc: '培养房温度升至 24.6℃，高于菌丝培养上限 24℃，已持续 6 分钟。' },
+      { type: '菌包异常', level: 'error', time: '今天 12:20:17', channel: '三号出菇房 GF-03', conf: '88%', img: '../applefarm_h5/images/trace_sterilize.jpg', desc: '识别到菌包表面异常色斑与疑似污染，建议隔离该区域并安排送检。' },
+      { type: '门禁异常', level: 'info', time: '今天 11:05:44', channel: '接种室 A', conf: '95%', img: '../applefarm_h5/images/trace_grading.jpg', desc: '接种室门禁在非作业时段开启 3 分钟，未匹配到授权工号。' },
+      { type: '设备报警', level: 'warning', time: '今天 09:36:08', channel: '灭菌中心', conf: '97%', img: '../applefarm_h5/images/trace_monitor.jpg', desc: '灭菌柜压力曲线未按配方上升，疑似蒸汽阀门开度异常，请巡检。' }
+    ];
+
+    function renderSnaps() {
+      document.getElementById('snapList').innerHTML = SNAPS.map(function (s, i) {
+        return '<div class="vm-snap" onclick="openSnap(' + i + ')">' +
+          '<img class="vm-snap-thumb" src="' + s.img + '" alt="' + s.type + '抓拍">' +
+          '<div class="vm-snap-info">' +
+            '<div class="vm-snap-type"><i class="vm-snap-dot ' + s.level + '"></i>' + s.type + '</div>' +
+            '<div class="vm-snap-meta">' + s.time + ' · ' + s.channel + '</div>' +
+            '<div class="vm-snap-sub">AI 置信度 ' + s.conf + '</div>' +
+          '</div>' +
+          '<svg class="vm-snap-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>' +
+        '</div>';
+      }).join('');
+    }
+
+    function openSnap(index) {
+      var s = SNAPS[index];
+      if (!s) return;
+      var tag = document.getElementById('snapTag');
+      tag.className = 'mb-tag ' + (s.level === 'error' ? 'error' : s.level === 'warning' ? 'warning' : 'info');
+      tag.textContent = s.type;
+      document.getElementById('snapConf').textContent = '置信度 ' + s.conf;
+      document.getElementById('snapTitle').textContent = s.channel + ' · ' + s.type + '事件';
+      document.getElementById('snapImg').src = s.img;
+      document.getElementById('snapImg').alt = s.type + '抓拍画面';
+      document.getElementById('snapDesc').textContent = s.desc;
+      document.getElementById('snapTime').textContent = s.time;
+      document.getElementById('snapCh').textContent = s.channel;
+      document.getElementById('snapConf2').textContent = s.conf;
+      document.getElementById('snapOverlay').classList.add('show');
+    }
+
+    function closeSnap() {
+      document.getElementById('snapOverlay').classList.remove('show');
+    }
+
+    function goAlert() {
+      window.location.href = 'mb_alert.html';
+    }
+
+    document.getElementById('snapOverlay').addEventListener('click', function (e) {
+      if (e.target === this) closeSnap();
+    });
+
+    document.getElementById('liveOverlay').addEventListener('click', function (e) {
+      if (e.target === this) closeLive();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeLive();
+        closeSnap();
+      }
+    });
+
+    /* ---------------- 初始化 ---------------- */
+    renderLive();
+    renderSnaps();
+    document.getElementById('pbDate').value = todayStr();
+    renderPlayhead();
+
+    setInterval(function () {
+      var t = fmtClock(new Date());
+      document.querySelectorAll('[data-clock]').forEach(function (el) { el.textContent = t; });
+      document.getElementById('liveTime').textContent = t;
+    }, 1000);
+  </script>
+</body>
+</html>

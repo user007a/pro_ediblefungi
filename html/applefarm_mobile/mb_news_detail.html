@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌环境监测系统 - 消息详情</title>
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <script src="js/mobile-store.js"></script>
+  <script src="js/mobile-messages.js"></script>
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+
+    body { background: var(--bg); }
+
+    /* --- 提示条 --- */
+    .md-tip {
+      margin: 12px 16px 0;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--warning-light);
+      color: var(--warning-dark);
+      font-size: var(--font-xs);
+      line-height: 1.5;
+      display: none;
+    }
+
+    /* --- 消息头卡 --- */
+    .md-head {
+      margin: 12px 16px 0;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--shadow-card);
+    }
+    .md-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+    .md-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+    .md-badge.cat { background: var(--primary-50); color: var(--primary-700); }
+    .md-badge.lv-red    { background: var(--error-light); color: var(--error-dark); }
+    .md-badge.lv-orange { background: #FBEADB; color: #B4611F; }
+    .md-badge.lv-yellow { background: var(--warning-light); color: var(--warning-dark); }
+    .md-badge.lv-blue   { background: var(--info-light); color: var(--info-dark); }
+    .md-badge.st-pending { background: var(--warning-light); color: var(--warning-dark); }
+    .md-badge.st-processing, .md-badge.st-repairing { background: var(--info-light); color: var(--info-dark); }
+    .md-badge.st-done { background: var(--success-light); color: var(--success-dark); }
+    .md-badge.urg-stop { background: var(--error-light); color: var(--error-dark); }
+    .md-badge.urg-urgent { background: var(--warning-light); color: var(--warning-dark); }
+
+    .md-title {
+      font-size: var(--font-xl);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    .md-meta {
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* --- 内容卡 --- */
+    .md-card {
+      margin: 12px 16px 0;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      box-shadow: var(--shadow-card);
+    }
+    .md-card-title {
+      font-size: var(--font-base);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .md-card-title::before {
+      content: '';
+      width: 4px;
+      height: 14px;
+      border-radius: 2px;
+      background: var(--gradient-primary);
+    }
+    .md-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 7px 0;
+      font-size: var(--font-sm);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .md-row:last-child { border-bottom: none; }
+    .md-row .k { color: var(--text-tertiary); flex-shrink: 0; }
+    .md-row .v { color: var(--text); text-align: right; word-break: break-all; }
+    .md-content {
+      font-size: var(--font-base);
+      color: var(--text);
+      line-height: 1.85;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .md-photo {
+      width: 100%;
+      border-radius: var(--radius-md);
+      margin-top: 10px;
+      display: block;
+    }
+
+    /* --- 底部动作 --- */
+    .md-actions {
+      display: flex;
+      gap: 10px;
+      margin: 18px 16px 28px;
+    }
+    .md-actions .mb-btn { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <div class="mb-back-bar">
+      <button class="mb-back-arrow" type="button" onclick="goBack()" aria-label="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="mb-back-title">消息详情</div>
+    </div>
+
+    <div class="md-tip" id="tipBar"></div>
+
+    <div class="md-head" id="headCard">
+      <div class="md-badges" id="mdBadges"></div>
+      <h1 class="md-title" id="mdTitle">消息详情</h1>
+      <div class="md-meta" id="mdMeta"></div>
+    </div>
+
+    <div id="bodyBox"></div>
+
+    <div class="md-actions" id="actionBar"></div>
+  </div>
+
+  <script>
+    /* ============================================================
+     * 消息详情页（移动端）
+     * 按 ?id= 定位 MobileMessages 聚合消息，进入即标记已读。
+     * 预警 → 预警字段 + 处置留痕；设备 → 工单字段；
+     * 任务 → 开工信息 + 带参跳工序填报；系统 → 公告正文。
+     * ============================================================ */
+
+    var MM = window.MobileMessages;
+    var currentMsg = null;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function goBack() {
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = 'mb_news.html';
+    }
+
+    function navigateTo(url) { window.location.href = url; }
+
+    function showTip(text) {
+      var tip = document.getElementById('tipBar');
+      tip.textContent = text;
+      tip.style.display = 'block';
+    }
+
+    function row(k, v) {
+      return '<div class="md-row"><span class="k">' + esc(k) + '</span><span class="v">' + esc(v == null || v === '' ? '—' : v) + '</span></div>';
+    }
+
+    function card(title, inner) {
+      return '<div class="md-card"><div class="md-card-title">' + esc(title) + '</div>' + inner + '</div>';
+    }
+
+    /* ---------- 各类消息正文 ---------- */
+
+    function renderAlertBody(m) {
+      var a = m.raw;
+      var html = card('预警信息',
+        row('预警编号', a.id) +
+        row('菇房', a.house) +
+        row('指标', a.metric) +
+        row('当前值', a.current) +
+        row('阈值', a.threshold) +
+        row('持续时长', a.duration) +
+        row('预警来源', a.source));
+      if (a.status === 'done') {
+        html += card('处置留痕',
+          row('处置措施', a.measure) +
+          row('处置结果', MM.RESULT_TEXT[a.result] || a.result) +
+          row('处置人', a.handledBy) +
+          row('处置时间', a.handledAt) +
+          (a.remark ? row('处置说明', a.remark) : '') +
+          (a.repairOrderNo ? row('关联工单', a.repairOrderNo) : ''));
+      }
+      return html;
+    }
+
+    function renderDeviceBody(m) {
+      var o = m.raw;
+      var html = card('工单信息',
+        row('工单编号', o.id) +
+        row('设备', o.device) +
+        row('回路号', o.circuit) +
+        row('紧急程度', MM.URGENCY_TEXT[o.urgency] || o.urgency) +
+        row('当前状态', MM.ORDER_STATUS_TEXT[o.status] || o.status) +
+        row('报修人', o.reporter) +
+        row('联系电话', o.phone) +
+        row('报修时间', o.time) +
+        (o.repairTime ? row('完成时间', o.repairTime) : '') +
+        (o.fromAlert ? row('来源预警', o.fromAlert) : ''));
+      html += card('故障描述', '<div class="md-content">' + esc(o.desc || '—') + '</div>' +
+        (o.photo ? '<img class="md-photo" src="' + esc(o.photo) + '" alt="故障照片">' : ''));
+      return html;
+    }
+
+    function renderTaskBody(m) {
+      var j = m.raw;
+      return card('开工信息',
+        row('菌包批次', j.batch) +
+        row('工序', j.stage) +
+        row('作业地点', j.house) +
+        row('操作人', j.operator) +
+        row('开工时间', j.startTime) +
+        (j.remark ? row('开工备注', j.remark) : '')) +
+        card('任务说明', '<div class="md-content">' +
+          esc('该批次已完成扫码开工登记，请尽快完成「' + (j.stage || '对应工序') + '」电子台账填报，避免追溯链断链。填报时批次号自动带入。') +
+        '</div>');
+    }
+
+    function renderSystemBody(m) {
+      var s = m.raw;
+      return card('公告正文', '<div class="md-content">' + esc(s.content || s.summary || '—') + '</div>');
+    }
+
+    /* ---------- 动作按钮 ---------- */
+
+    function renderActions(m) {
+      var bar = document.getElementById('actionBar');
+      var ghost = '<button class="mb-btn" type="button" style="border:1px solid var(--border);color:var(--text-secondary);" onclick="navigateTo(\'mb_news.html\')">返回消息列表</button>';
+      var html = ghost;
+      if (m.cat === 'alert') {
+        html += m.raw.status === 'done'
+          ? '<button class="mb-btn mb-btn-primary" type="button" onclick="navigateTo(\'mb_alert.html\')">查看预警处置</button>'
+          : '<button class="mb-btn mb-btn-primary" type="button" onclick="navigateTo(\'mb_alert.html\')">去处置</button>';
+      } else if (m.cat === 'device') {
+        html += '<button class="mb-btn mb-btn-primary" type="button" onclick="navigateTo(\'mb_troubleshoot.html\')">查看报修工单</button>';
+      } else if (m.cat === 'task') {
+        var url = 'mb_record_task.html?batch=' + encodeURIComponent(m.raw.batch || '') +
+          '&stage=' + encodeURIComponent(m.raw.stage || '');
+        html += '<button class="mb-btn mb-btn-primary" type="button" onclick="navigateTo(\'' + url + '\')">去填报工序</button>';
+      }
+      bar.innerHTML = html;
+    }
+
+    /* ---------- 渲染 ---------- */
+
+    function render(m) {
+      currentMsg = m;
+      document.title = (m.title || '消息详情') + ' - 食用菌环境监测系统';
+      document.getElementById('mdTitle').textContent = m.title || '';
+
+      var badges = '<span class="md-badge cat">' + esc(MM.CAT_TEXT[m.cat] || '消息') + '</span>';
+      if (m.cat === 'alert') {
+        badges += '<span class="md-badge lv-' + esc(m.level) + '">' + esc(MM.LEVEL_TEXT[m.level] || m.level) + '预警</span>' +
+          '<span class="md-badge st-' + esc(m.status) + '">' + esc(MM.ALERT_STATUS_TEXT[m.status] || m.status) + '</span>';
+      } else if (m.cat === 'device') {
+        badges += '<span class="md-badge st-' + esc(m.status) + '">' + esc(MM.ORDER_STATUS_TEXT[m.status] || m.status) + '</span>';
+        if (m.urgency === 'stop' || m.urgency === 'urgent') {
+          badges += '<span class="md-badge urg-' + esc(m.urgency) + '">' + esc(MM.URGENCY_TEXT[m.urgency]) + '</span>';
+        }
+      }
+      document.getElementById('mdBadges').innerHTML = badges;
+
+      var meta = '<span>' + esc(m.time || '') + '</span><span>' + esc(MM.relTime(m.time)) + '</span>';
+      if (m.cat === 'system' && m.raw.author) meta += '<span>发布：' + esc(m.raw.author) + '</span>';
+      document.getElementById('mdMeta').innerHTML = meta;
+
+      var body = '';
+      if (m.cat === 'alert') body = renderAlertBody(m);
+      else if (m.cat === 'device') body = renderDeviceBody(m);
+      else if (m.cat === 'task') body = renderTaskBody(m);
+      else body = renderSystemBody(m);
+      document.getElementById('bodyBox').innerHTML = body;
+
+      renderActions(m);
+    }
+
+    /* ---------- 初始化 ---------- */
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var params = new URLSearchParams(window.location.search || '');
+      var id = params.get('id') || '';
+      var m = id ? MM.get(id) : null;
+
+      if (!m) {
+        document.getElementById('mdTitle').textContent = '未找到该消息';
+        document.getElementById('mdBadges').innerHTML = '';
+        document.getElementById('mdMeta').innerHTML = '';
+        showTip('消息不存在或已失效，请返回消息列表查看最新消息。');
+        document.getElementById('actionBar').innerHTML =
+          '<button class="mb-btn mb-btn-primary" type="button" onclick="navigateTo(\'mb_news.html\')">返回消息列表</button>';
+        return;
+      }
+
+      MM.markRead(m.id);
+      render(m);
+    });
+  </script>
+</body>
+</html>

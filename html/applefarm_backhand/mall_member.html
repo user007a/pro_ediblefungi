@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 会员管理</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/page-content.css">
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<style>
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+  }
+  .stat-label { font-size: var(--font-size-sm); color: var(--text-tertiary); margin-bottom: var(--space-xs); }
+  .stat-value {
+    font-size: 26px; font-weight: var(--font-weight-bold);
+    color: var(--text-primary); line-height: 1.2; font-variant-numeric: tabular-nums;
+  }
+  .notice-bar {
+    display: flex; align-items: flex-start; gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--warning-bg); border: 1px solid var(--warning-border);
+    border-radius: var(--radius-lg); font-size: var(--font-size-sm);
+    color: var(--text-secondary); margin-bottom: var(--space-lg);
+  }
+  .notice-bar svg { flex-shrink: 0; margin-top: 2px; color: var(--warning); }
+  .level-tag {
+    display: inline-block; padding: 3px 10px; border-radius: var(--radius-full);
+    font-size: var(--font-size-xs); font-weight: var(--weight-medium, 500); white-space: nowrap;
+  }
+  .level-tag.vip { background: linear-gradient(135deg, #f5c542, #e8a33d); color: #6b4a00; }
+  .level-tag.gold { background: var(--warning-bg); color: var(--warning); }
+  .level-tag.normal { background: var(--gray-100); color: var(--text-secondary); }
+  .cell-name { font-weight: var(--font-weight-semibold, 600); color: var(--text-primary); }
+  .cell-sub { font-size: var(--font-size-xs); color: var(--text-tertiary); }
+  .metric-cell { font-variant-numeric: tabular-nums; }
+  .metric-cell strong { color: var(--text-primary); font-weight: var(--weight-semibold, 600); }
+  .empty-state { padding: var(--space-2xl) 0; text-align: center; color: var(--text-tertiary); font-size: var(--font-size-sm); }
+  .status-tag { display:inline-block;padding:3px 10px;border-radius:var(--radius-full);font-size:var(--font-size-xs); }
+  .status-tag.active { background:var(--success-bg);color:var(--success); }
+  .status-tag.disabled { background:var(--gray-100);color:var(--text-secondary); }
+  .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;justify-content:center;align-items:center;backdrop-filter:blur(4px); }
+  .modal-overlay.show { display:flex; }
+  .modal-box { background:var(--bg-card);border-radius:12px;width:92%;max-width:640px;max-height:86vh;overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,.2); }
+  .modal-header { display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border-default); }
+  .modal-title { font-size:16px;font-weight:600;color:#1f1f1f; }
+  .modal-close { background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-tertiary); }
+  .modal-body { padding:20px;overflow-y:auto;max-height:calc(86vh - 132px); }
+  .modal-footer { display:flex;justify-content:flex-end;gap:12px;padding:16px 20px;border-top:1px solid var(--border-default); }
+  .form-row { display:flex;gap:var(--space-md);margin-bottom:var(--space-lg); }
+  .form-field { flex:1; }
+  .form-field label { display:block;font-size:var(--font-size-sm);font-weight:500;color:var(--text-primary);margin-bottom:var(--space-sm); }
+  .form-field input,.form-field select,.form-field textarea { width:100%;padding:10px 14px;border:1.5px solid var(--border-default);border-radius:var(--radius-lg);font-size:var(--font-size-base);font-family:inherit;background:var(--bg-card);box-sizing:border-box; }
+  .detail-grid { display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px; }
+  .detail-item { background:var(--bg-secondary);border-radius:8px;padding:10px 12px; }
+  .detail-item .k { font-size:var(--font-size-xs);color:var(--text-tertiary);margin-bottom:2px; }
+  .detail-item .v { font-size:var(--font-size-sm);color:var(--text-primary);font-weight:600; }
+  .order-mini { border:1px solid var(--border-light);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:var(--font-size-sm); }
+  .order-mini .no { font-family:monospace;color:var(--text-tertiary);font-size:var(--font-size-xs); }
+  .order-mini .row { display:flex;justify-content:space-between;margin-top:4px; }
+</style>
+</head>
+<body data-active-menu="mall" data-active-submenu="mall-member">
+
+<div class="main-wrapper">
+  <div class="tab-bar">
+    <div class="tab-bar-actions">
+      <button class="tab-close-all" title="关闭全部标签">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3L11 11M11 3L3 11"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <div class="page-title">会员管理</div>
+        <div class="page-subtitle">归集消费者 H5 端的订单、认养、收藏与积分数据，用于会员运营</div>
+      </div>
+      <div class="page-actions">
+        <button class="jg-btn" onclick="renderTable()">刷新</button>
+        <button class="jg-btn jg-btn-primary" onclick="openEdit()">新增会员</button>
+      </div>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">会员档案</div>
+        <div class="stat-value" id="statMembers">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">累计订单</div>
+        <div class="stat-value" id="statOrders">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">消费总额</div>
+        <div class="stat-value" id="statAmount">¥0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">发放积分</div>
+        <div class="stat-value" id="statPoints">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">复购会员</div>
+        <div class="stat-value" id="statRepeat">0</div>
+      </div>
+    </div>
+
+    <div class="page-section search-section">
+      <div class="search-bar">
+        <select class="search-select" id="levelSelect">
+          <option value="">全部等级</option>
+          <option value="vip">VIP会员</option>
+          <option value="gold">金卡会员</option>
+          <option value="normal">普通会员</option>
+        </select>
+        <input type="text" class="search-input" placeholder="搜索昵称 / 手机号 / 会员ID..." id="searchInput">
+        <div class="search-actions">
+          <button class="jg-btn jg-btn-primary" onclick="renderTable()">搜索</button>
+          <button class="jg-btn" onclick="resetFilter()">重置</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="page-section data-section">
+      <div class="data-table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="checkbox-col" style="width:60px;">序号</th>
+              <th>会员</th>
+              <th style="width:110px;">等级</th>
+              <th style="width:80px;">订单数</th>
+              <th style="width:110px;">消费总额</th>
+              <th style="width:90px;">积分</th>
+              <th style="width:120px;">最近下单</th>
+              <th style="width:110px;">注册时间</th>
+              <th style="width:90px;">状态</th>
+              <th style="width:180px;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="memberBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyHint" class="empty-state" style="display:none;">暂无会员数据</div>
+    </div>
+  </main>
+</div>
+
+<!-- 会员编辑 -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title" id="editModalTitle">新增会员</h3>
+      <button class="modal-close" onclick="closeEditModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-field">
+          <label>会员昵称<span style="color:var(--error);">*</span></label>
+          <input type="text" id="editNickname" placeholder="如 李女士">
+        </div>
+        <div class="form-field">
+          <label>手机号</label>
+          <input type="text" id="editPhone" placeholder="用于与 H5 订单自动关联">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>会员等级</label>
+          <select id="editLevel">
+            <option value="normal">普通会员</option>
+            <option value="gold">金卡会员</option>
+            <option value="vip">VIP会员</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>积分</label>
+          <input type="number" id="editPoints" min="0" step="1" placeholder="0">
+        </div>
+        <div class="form-field">
+          <label>来源渠道</label>
+          <select id="editSource">
+            <option value="H5商城">H5 商城</option>
+            <option value="认养">认养</option>
+            <option value="线下">线下导入</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>所在地区</label>
+          <input type="text" id="editRegion" placeholder="如 甘肃省天水市">
+        </div>
+        <div class="form-field">
+          <label>状态</label>
+          <select id="editStatus">
+            <option value="active">正常</option>
+            <option value="disabled">已禁用</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field" style="margin-bottom:var(--space-lg);">
+        <label>会员标签</label>
+        <input type="text" id="editTags" placeholder="多个标签用逗号分隔，如 高复购,礼盒客户">
+      </div>
+      <div class="form-field">
+        <label>收货地址</label>
+        <input type="text" id="editAddress" placeholder="默认收货地址">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeEditModal()">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="submitEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 会员详情 -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title" id="detailTitle">会员详情</h3>
+      <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeDetailModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/common-functions.js"></script>
+<script src="js/shared/mall-store.js"></script>
+<script src="js/shared/demo-seed.js"></script>
+<script>
+/* ============================================================
+ * 会员管理（商城管理）
+ * 数据源（均为 H5 端 localStorage）：
+ *   h5_orders      订单（含 total 金额）
+ *   h5_points      积分流水（amount 求和）
+ *   h5_favorites   收藏商品
+ *   snzg_adoptions 认养果树
+ *   h5_addresses   收货地址
+ * ============================================================ */
+var LEVEL_TEXT = { vip: 'VIP会员', gold: '金卡会员', normal: '普通会员' };
+var editingId = null;
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function readMembers() {
+  return typeof MallStore !== 'undefined' ? MallStore.members() : [];
+}
+
+function levelRules() {
+  var s = typeof MallStore !== 'undefined' ? MallStore.settings() : null;
+  return (s && s.levelRules) || [
+    { level: 'vip', name: 'VIP会员', min: 3000 },
+    { level: 'gold', name: '金卡会员', min: 1000 },
+    { level: 'normal', name: '普通会员', min: 0 }
+  ];
+}
+
+function autoLevel(amount) {
+  var rules = levelRules().slice().sort(function (a, b) { return b.min - a.min; });
+  for (var i = 0; i < rules.length; i++) { if (amount >= rules[i].min) return rules[i].level; }
+  return 'normal';
+}
+
+function buildRows() {
+  return readMembers().map(function (m) {
+    var stats = MallStore.memberStats(m);
+    var level = m.level === 'vip' || m.level === 'gold' ? m.level : autoLevel(stats.totalSpend);
+    var claims = MallStore.claims().filter(function (c) {
+      return c.memberKey === m.id || (m.phone && c.memberKey === m.phone);
+    });
+    return {
+      id: m.id,
+      nickname: m.nickname,
+      phone: m.phone,
+      address: m.address,
+      region: m.region,
+      regDate: m.regDate,
+      source: m.source,
+      status: m.status,
+      tags: m.tags,
+      level: level,
+      orders: stats.orderCount,
+      amount: stats.totalSpend,
+      points: m.points || 0,
+      lastOrderAt: stats.lastOrderAt,
+      coupons: claims.length
+    };
+  });
+}
+
+function renderStats(rows) {
+  var orders = 0, amount = 0, points = 0, repeat = 0;
+  rows.forEach(function (r) {
+    orders += r.orders;
+    amount += r.amount;
+    points += r.points;
+    if (r.orders >= 2) repeat++;
+  });
+  document.getElementById('statMembers').textContent = rows.length;
+  document.getElementById('statOrders').textContent = orders;
+  document.getElementById('statAmount').textContent = '¥' + amount.toLocaleString('zh-CN');
+  document.getElementById('statPoints').textContent = points;
+  document.getElementById('statRepeat').textContent = repeat;
+}
+
+function filteredRows() {
+  var level = document.getElementById('levelSelect').value;
+  var kw = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  return buildRows().filter(function (r) {
+    if (level && r.level !== level) return false;
+    if (kw) {
+      var hay = ((r.nickname || '') + ' ' + (r.phone || '') + ' ' + (r.id || '')).toLowerCase();
+      if (hay.indexOf(kw) === -1) return false;
+    }
+    return true;
+  });
+}
+
+function renderTable() {
+  var rows = filteredRows();
+  renderStats(buildRows());
+
+  var body = document.getElementById('memberBody');
+  var emptyHint = document.getElementById('emptyHint');
+
+  if (!rows.length) {
+    body.innerHTML = '';
+    emptyHint.style.display = 'block';
+    return;
+  }
+  emptyHint.style.display = 'none';
+
+  body.innerHTML = rows.map(function (r, i) {
+    return '<tr>' +
+      '<td class="checkbox-col">' + (i + 1) + '</td>' +
+      '<td><div class="cell-name">' + esc(r.nickname) + '</div>' +
+          '<div class="cell-sub text-mono">' + esc(r.id) + ' · ' + esc(r.phone || '未留手机号') + '</div>' +
+          '<div class="cell-sub">' + esc(r.source || 'H5商城') + (r.tags && r.tags.length ? ' · ' + esc(r.tags.join('/')) : '') + '</div></td>' +
+      '<td><span class="level-tag ' + esc(r.level) + '">' + (LEVEL_TEXT[r.level] || r.level) + '</span></td>' +
+      '<td class="metric-cell"><strong>' + r.orders + '</strong> 单</td>' +
+      '<td class="metric-cell"><strong>¥' + r.amount.toLocaleString('zh-CN') + '</strong></td>' +
+      '<td class="metric-cell"><strong>' + r.points + '</strong> 分</td>' +
+      '<td class="text-mono" style="font-size:var(--font-size-xs);">' + (r.lastOrderAt ? esc(r.lastOrderAt.slice(0, 10)) : '—') + '</td>' +
+      '<td class="text-mono">' + esc(r.regDate) + '</td>' +
+      '<td><span class="status-tag ' + (r.status === 'disabled' ? 'disabled' : 'active') + '">' + (r.status === 'disabled' ? '已禁用' : '正常') + '</span></td>' +
+      '<td><div class="action-btns">' +
+        '<button class="action-btn detail" onclick="openDetail(\'' + esc(r.id) + '\')">详情</button>' +
+        '<button class="action-btn download" onclick="openEdit(\'' + esc(r.id) + '\')">编辑</button>' +
+        '<button class="action-btn ' + (r.status === 'disabled' ? 'download' : 'delete') + '" onclick="toggleStatus(\'' + esc(r.id) + '\')">' +
+          (r.status === 'disabled' ? '启用' : '禁用') + '</button>' +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function resetFilter() {
+  document.getElementById('levelSelect').value = '';
+  document.getElementById('searchInput').value = '';
+  renderTable();
+}
+
+function openEdit(id) {
+  editingId = id || null;
+  var m = null;
+  if (id) {
+    var list = readMembers();
+    for (var i = 0; i < list.length; i++) { if (list[i].id === id) { m = list[i]; break; } }
+    if (!m) { Toast.error('未找到该会员'); return; }
+  }
+  document.getElementById('editModalTitle').textContent = m ? '编辑会员' : '新增会员';
+  document.getElementById('editNickname').value = m ? m.nickname : '';
+  document.getElementById('editPhone').value = m ? (m.phone || '') : '';
+  document.getElementById('editLevel').value = m ? (m.level || 'normal') : 'normal';
+  document.getElementById('editPoints').value = m ? (m.points || 0) : 0;
+  document.getElementById('editSource').value = m ? (m.source || 'H5商城') : 'H5商城';
+  document.getElementById('editRegion').value = m ? (m.region || '') : '';
+  document.getElementById('editStatus').value = m ? (m.status || 'active') : 'active';
+  document.getElementById('editTags').value = m && Array.isArray(m.tags) ? m.tags.join(',') : '';
+  document.getElementById('editAddress').value = m ? (m.address || '') : '';
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('show');
+  editingId = null;
+}
+
+function submitEdit() {
+  var wasEditing = !!editingId;
+  var nickname = document.getElementById('editNickname').value.trim();
+  if (!nickname) { Toast.warning('请填写会员昵称'); return; }
+  var payload = {
+    id: editingId || undefined,
+    nickname: nickname,
+    phone: document.getElementById('editPhone').value.trim(),
+    level: document.getElementById('editLevel').value,
+    points: Number(document.getElementById('editPoints').value) || 0,
+    source: document.getElementById('editSource').value,
+    region: document.getElementById('editRegion').value.trim(),
+    status: document.getElementById('editStatus').value,
+    tags: document.getElementById('editTags').value.split(/[,，]/).map(function (s) { return s.trim(); }).filter(Boolean),
+    address: document.getElementById('editAddress').value.trim()
+  };
+  var r = MallStore.saveMember(payload);
+  if (!r.ok) { Toast.warning(r.error || '会员保存失败'); return; }
+  closeEditModal();
+  renderTable();
+  Toast.success(wasEditing ? '会员已更新' : '会员已新增');
+}
+
+function toggleStatus(id) {
+  var list = readMembers();
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].id === id) {
+      var next = list[i].status === 'disabled' ? 'active' : 'disabled';
+      var r = MallStore.saveMember(Object.assign({}, list[i], { status: next }));
+      if (!r.ok) { Toast.error(r.error || '操作失败'); return; }
+      renderTable();
+      Toast.success(next === 'active' ? '会员已启用' : '会员已禁用');
+      return;
+    }
+  }
+}
+
+function openDetail(id) {
+  var m = null;
+  var list = readMembers();
+  for (var i = 0; i < list.length; i++) { if (list[i].id === id) { m = list[i]; break; } }
+  if (!m) { Toast.error('未找到该会员'); return; }
+  var stats = MallStore.memberStats(m);
+  var orders = MallStore.memberOrders(m).slice(0, 5);
+  var claims = MallStore.claims().filter(function (c) { return c.memberKey === m.id || (m.phone && c.memberKey === m.phone); });
+  var html =
+    '<div class="detail-grid">' +
+      '<div class="detail-item"><div class="k">会员 ID</div><div class="v">' + esc(m.id) + '</div></div>' +
+      '<div class="detail-item"><div class="k">昵称</div><div class="v">' + esc(m.nickname) + '</div></div>' +
+      '<div class="detail-item"><div class="k">手机号</div><div class="v">' + esc(m.phone || '—') + '</div></div>' +
+      '<div class="detail-item"><div class="k">H5 用户标识</div><div class="v">' + esc(m.userId || '未绑定') + '</div></div>' +
+      '<div class="detail-item"><div class="k">等级 / 状态</div><div class="v">' + (LEVEL_TEXT[m.level] || m.level) + ' · ' + (m.status === 'disabled' ? '已禁用' : '正常') + '</div></div>' +
+      '<div class="detail-item"><div class="k">累计消费</div><div class="v">¥' + stats.totalSpend.toLocaleString('zh-CN') + '（' + stats.orderCount + ' 单）</div></div>' +
+      '<div class="detail-item"><div class="k">积分 / 持券</div><div class="v">' + (m.points || 0) + ' 分 · ' + claims.length + ' 张</div></div>' +
+      '<div class="detail-item"><div class="k">注册 / 最近下单</div><div class="v">' + esc(m.regDate) + ' / ' + (stats.lastOrderAt ? esc(stats.lastOrderAt.slice(0, 10)) : '—') + '</div></div>' +
+      '<div class="detail-item"><div class="k">所在地区</div><div class="v">' + esc(m.region || '—') + '</div></div>' +
+      '<div class="detail-item"><div class="k">会员标签</div><div class="v">' + (m.tags && m.tags.length ? esc(m.tags.join(' / ')) : '—') + '</div></div>' +
+    '</div>' +
+    '<div style="font-weight:600;margin:16px 0 8px;">最近订单</div>' +
+    (orders.length ? orders.map(function (o) {
+      return '<div class="order-mini"><div class="no">' + esc(o.no) + ' · ' + esc(String(o.createdAt).slice(0, 10)) + '</div>' +
+        '<div class="row"><span>' + esc((o.items && o.items[0] && o.items[0].name) || '商品') + ' 等</span><span>¥' + o.total + '</span></div>' +
+        '<div class="row"><span>' + esc(o.status) + '</span><span>' + esc(o.payment || '—') + '</span></div></div>';
+    }).join('') : '<div class="cell-sub">该会员暂无已归属订单</div>');
+  document.getElementById('detailTitle').textContent = m.nickname + ' · 会员详情';
+  document.getElementById('detailBody').innerHTML = html;
+  document.getElementById('detailModal').classList.add('show');
+}
+
+function closeDetailModal() {
+  document.getElementById('detailModal').classList.remove('show');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  DemoSeed.ensure(['members', 'c-orders']);
+  if (typeof MallStore !== 'undefined') MallStore.migrate();
+  document.getElementById('searchInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') renderTable();
+  });
+  renderTable();
+});
+</script>
+</body>
+</html>

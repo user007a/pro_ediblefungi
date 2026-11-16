@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌环境监测系统 - 我的</title>
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <script src="js/mobile-store.js"></script>
+  <script src="js/mobile-messages.js"></script>
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+
+    body { background: var(--bg); }
+
+    /* --- 个人信息头部 --- */
+    .profile-section {
+      background: var(--gradient-header);
+      padding: calc(var(--safe-top) + 16px) var(--space-4) var(--space-6);
+      color: var(--text-on-primary);
+      border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+      box-shadow: 0 4px 24px rgba(69, 48, 35, 0.26);
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-section::before {
+      content: '';
+      position: absolute;
+      top: -50%; right: -30%;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      position: relative;
+      z-index: 1;
+    }
+    .avatar {
+      width: 72px; height: 72px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      border: 3px solid rgba(255,255,255,0.3);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .avatar svg { width: 36px; height: 36px; color: var(--text-on-primary); }
+    .profile-info { flex: 1; }
+    .profile-name-row { display: flex; align-items: center; gap: var(--space-2); }
+    .profile-name { font-size: var(--font-xl); font-weight: var(--font-bold); }
+    .role-tag {
+      font-size: var(--font-xs);
+      background: rgba(255,255,255,0.25);
+      padding: var(--space-0.5) var(--space-2);
+      border-radius: var(--radius-full);
+    }
+    .profile-area { font-size: var(--font-sm); opacity: 0.85; margin-top: var(--space-1); }
+
+    .profile-stats {
+      display: flex; justify-content: space-around;
+      margin-top: var(--space-5);
+      padding: var(--space-4) var(--space-2);
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius-xl);
+      position: relative; z-index: 1;
+    }
+    .stat-item { flex: 1; text-align: center; }
+    .stat-num {
+      font-size: var(--font-2xl);
+      font-weight: var(--font-extrabold);
+      font-family: var(--font-family-number);
+      color: var(--text-on-primary);
+    }
+    .stat-label { font-size: var(--font-xs); opacity: 0.8; margin-top: var(--space-0.5); }
+
+    /* --- 菜单 --- */
+    .menu-icon.green  { background: var(--primary-50); color: var(--primary-700); }
+    .menu-icon.blue   { background: var(--info-light); color: var(--info-dark); }
+    .menu-icon.orange { background: var(--warning-light); color: var(--warning-dark); }
+    .menu-icon.red    { background: var(--error-light); color: var(--error-dark); }
+    .menu-icon.gray   { background: var(--gray-100); color: var(--gray-500); }
+    .menu-icon.gold   { background: var(--primary-100); color: var(--primary-800); }
+
+    .menu-badge {
+      min-width: 22px; height: 22px;
+      background: var(--error); color: #fff;
+      border-radius: var(--radius-full);
+      font-size: var(--font-xs);
+      font-weight: var(--font-bold);
+      display: flex; align-items: center; justify-content: center;
+      padding: 0 6px;
+      margin-right: var(--space-2);
+    }
+    .menu-badge.warning { background: var(--warning); }
+
+    /* --- 全屏子页面 --- */
+    .detail-modal {
+      width: 100%; max-width: 750px;
+      height: 100%; background: var(--bg);
+      overflow-y: auto;
+    }
+    .detail-content { padding: var(--space-4); }
+
+    /* --- 作业记录 --- */
+    .stage-chips {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 10px;
+      margin-bottom: 6px;
+    }
+    .stage-chips::-webkit-scrollbar { display: none; }
+    .stage-chip {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-white);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      font-family: var(--font-family);
+      cursor: pointer;
+      min-height: 32px;
+    }
+    .stage-chip.active {
+      background: var(--primary-500);
+      border-color: var(--primary-500);
+      color: var(--text-on-primary);
+      font-weight: 500;
+    }
+
+    .rec-card {
+      position: relative;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px 12px 17px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+    .rec-card:active { transform: scale(0.985); }
+    .rec-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--rec-color, var(--primary));
+    }
+    .rec-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+    .rec-title { flex: 1; font-size: var(--font-base); font-weight: 600; color: var(--text); }
+    .rec-desc {
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 7px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .rec-foot {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      flex-wrap: wrap;
+    }
+    .rec-foot .rec-time { margin-left: auto; }
+
+    .rec-empty {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: var(--font-sm);
+    }
+
+    /* --- 记录详情弹窗 --- */
+    .rd-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 7px 0;
+      font-size: var(--font-sm);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .rd-row:last-child { border-bottom: none; }
+    .rd-row .k { color: var(--text-tertiary); flex-shrink: 0; }
+    .rd-row .v { color: var(--text); text-align: right; word-break: break-all; }
+    .rd-photo {
+      width: 100%;
+      border-radius: var(--radius-md);
+      margin-top: 10px;
+      display: block;
+    }
+    .rd-sub {
+      font-size: var(--font-sm);
+      font-weight: 600;
+      color: var(--text);
+      margin: 12px 0 4px;
+    }
+
+    /* --- 个人信息 / 设置 --- */
+    .profile-form-card, .settings-card {
+      background: var(--bg-white);
+      border-radius: var(--radius-xl);
+      padding: var(--space-5);
+      border: 1px solid var(--border);
+    }
+    .settings-card + .settings-card { margin-top: var(--space-4); }
+    .form-group { margin-top: var(--space-4); }
+    .form-label { font-size: var(--font-sm); color: var(--text-secondary); margin-bottom: var(--space-2); }
+    .form-input {
+      width: 100%; height: 48px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0 var(--space-3);
+      font-size: var(--font-base);
+      font-family: var(--font-family);
+      color: var(--text);
+      background: var(--bg-white);
+    }
+    .form-input:read-only { background: var(--gray-50); color: var(--text-secondary); }
+
+    .settings-section-title {
+      font-size: var(--font-base);
+      font-weight: var(--font-semibold);
+      color: var(--text);
+      margin-bottom: var(--space-2);
+    }
+    .settings-row {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px;
+      padding: var(--space-3) 0;
+      min-height: 44px;
+    }
+    .settings-row + .settings-row { border-top: 1px solid var(--border-light); }
+    .settings-row.clickable { cursor: pointer; }
+    .settings-label { font-size: var(--font-base); color: var(--text); }
+    .settings-desc { font-size: var(--font-sm); color: var(--text-tertiary); margin-top: var(--space-1); }
+    .settings-value { font-size: var(--font-sm); color: var(--text-tertiary); flex-shrink: 0; }
+    .settings-arrow { width: 16px; height: 16px; color: var(--text-tertiary); flex-shrink: 0; }
+
+    .toggle-switch {
+      position: relative; width: 48px; height: 28px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: var(--primary);
+      border-radius: 14px;
+      transition: background 0.2s ease;
+    }
+    .toggle-thumb {
+      position: absolute; width: 22px; height: 22px;
+      background: #fff; border-radius: var(--radius-full);
+      top: 3px; right: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: right 0.2s ease;
+    }
+    .toggle-switch.off .toggle-track { background: var(--gray-300, #D8CBB8); }
+    .toggle-switch.off .toggle-thumb { right: 23px; }
+
+    .about-text {
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+
+    /* --- 退出确认弹窗 --- */
+    .modal-title {
+      font-size: var(--font-lg); font-weight: var(--font-bold);
+      text-align: center; margin-bottom: var(--space-3);
+    }
+    .modal-content {
+      font-size: var(--font-base); color: var(--text-secondary);
+      text-align: center; margin-bottom: var(--space-6);
+    }
+    .modal-btn-group { display: flex; gap: var(--space-3); }
+    .modal-btn {
+      flex: 1; height: 44px;
+      border-radius: var(--radius-full);
+      font-size: var(--font-base); font-weight: var(--font-semibold);
+      font-family: var(--font-family);
+      cursor: pointer;
+      border: none;
+    }
+    .modal-btn.cancel { background: var(--gray-100); color: var(--text-secondary); }
+    .modal-btn.confirm { background: var(--gradient-primary); color: var(--text-on-primary); }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <!-- 个人信息头部 -->
+    <header class="profile-section">
+      <div class="profile-header">
+        <div class="avatar" onclick="openProfile()" role="button" aria-label="个人信息">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div class="profile-info">
+          <div class="profile-name-row">
+            <span class="profile-name" id="pName">李国强</span>
+            <span class="role-tag" id="pRole">车间操作工</span>
+          </div>
+          <div class="profile-area">工号 C-023 · 一号出菇房 GF-01 · 出菇班组</div>
+        </div>
+      </div>
+
+      <div class="profile-stats">
+        <div class="stat-item">
+          <div class="stat-num" id="statToday">0</div>
+          <div class="stat-label">今日上报</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-label">累计上报</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statScan">0</div>
+          <div class="stat-label">扫码开工</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num" id="statSync">0</div>
+          <div class="stat-label">待同步</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- 离线同步状态栏 -->
+      <div id="syncBar"></div>
+
+      <!-- 作业与消息 -->
+      <div class="mb-list" style="margin: var(--space-4) 0;">
+        <div class="mb-list-item" onclick="navigateTo('mb_news.html')">
+          <div class="mb-list-icon menu-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+          </div>
+          <div class="mb-list-content">
+            <div class="mb-list-title">消息通知</div>
+            <div class="mb-list-desc">预警 · 设备故障 · 任务 · 系统</div>
+          </div>
+          <span class="menu-badge" id="msgBadge">0</span>
+          <div class="mb-list-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+
+        <div class="mb-list-item" onclick="openWorkRecords()">
+          <div class="mb-list-icon menu-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+              <rect x="9" y="3" width="6" height="4" rx="1"/>
+              <path d="M9 14l2 2 4-4"/>
+            </svg>
+          </div>
+          <div class="mb-list-content">
+            <div class="mb-list-title">作业记录</div>
+            <div class="mb-list-desc">拌料装袋 / 灭菌 / 接种 / 培养 / 出菇 / 采收</div>
+          </div>
+          <div class="mb-list-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+
+        <div class="mb-list-item" onclick="openHarvestRecords()">
+          <div class="mb-list-icon menu-icon gold">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+              <path d="M3 6h18"/>
+              <path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </div>
+          <div class="mb-list-content">
+            <div class="mb-list-title">采收记录</div>
+            <div class="mb-list-desc">过磅单 · 分级统计 · CS 单号</div>
+          </div>
+          <div class="mb-list-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+
+        <div class="mb-list-item" onclick="openRepairOrders()">
+          <div class="mb-list-icon menu-icon red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+          </div>
+          <div class="mb-list-content">
+            <div class="mb-list-title">报修工单</div>
+            <div class="mb-list-desc">我提交的设备维修工单与进度</div>
+          </div>
+          <span class="menu-badge warning" id="orderBadge">0</span>
+          <div class="mb-list-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- 个人与设置 -->
+      <div class="mb-list" style="margin: var(--space-4) 0;">
+        <div class="mb-list-item" onclick="openProfile()">
+          <div class="mb-list-icon menu-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="mb-list-content">
+            <div class="mb-list-title">个人信息</div>
+          </div>
+          <div class="mb-list-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+
+        <div class="mb-list-item" onclick="openSettings()">
+          <div class="mb-list-icon menu-icon gray">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </div>
+          <div class="mb-list-content">
+            <div class="mb-list-title">设置</div>
+          </div>
+          <div class="mb-list-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <button class="mb-btn mb-btn-block" style="margin: var(--space-4) 0; border: 1px solid var(--border); color: var(--text-secondary);" onclick="confirmLogout()">退出登录</button>
+    </div>
+
+    <!-- 底部主 Tab：首页 / 监测 / 监控 / 我的 -->
+    <nav class="mb-tab-bar">
+      <div class="mb-tab-item" onclick="navigateTo('mb_home.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>首页</span>
+      </div>
+      <div class="mb-tab-item" onclick="navigateTo('mb_device.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        <span>监测</span>
+      </div>
+      <div class="mb-tab-item" onclick="navigateTo('vr_panorama.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="23 7 16 12 23 17 23 7"/>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+        </svg>
+        <span>监控</span>
+      </div>
+      <div class="mb-tab-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>我的</span>
+        <span class="mb-tab-badge" id="tabBadge">0</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- 退出确认 -->
+  <div class="mb-modal-overlay" id="logoutModal">
+    <div class="mb-modal">
+      <div class="modal-title">退出登录</div>
+      <div class="modal-content">确定要退出登录吗？未同步的离线记录将保留在本机。</div>
+      <div class="modal-btn-group">
+        <button class="modal-btn cancel" onclick="closeLogout()">取消</button>
+        <button class="modal-btn confirm" onclick="doLogout()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全屏子页面 -->
+  <div class="mb-modal-overlay" id="detailModal">
+    <div class="detail-modal">
+      <header class="mb-header-detail">
+        <div class="header-nav">
+          <div class="header-back" onclick="closeDetail()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </div>
+          <div class="header-title" id="detailTitle">详情</div>
+        </div>
+      </header>
+      <div id="detailContent" class="detail-content"></div>
+    </div>
+  </div>
+
+  <!-- 单条记录详情 -->
+  <div class="mb-modal-overlay" id="recModal">
+    <div class="mb-modal" style="max-height:82vh;overflow-y:auto;">
+      <div id="recModalBody"></div>
+      <div class="modal-btn-group" style="margin-top:14px;">
+        <button class="modal-btn cancel" onclick="closeRecModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+     * 我的（个人中心）
+     * 作业统计与列表直接读取业务存储：
+     *   mushroom_process_records / mushroom_scan_jobs /
+     *   mushroom_harvest_records / mushroom_repair_orders
+     * 消息未读数来自 MobileMessages 聚合层。
+     * ============================================================ */
+
+    var RECORD_KEY = 'mushroom_process_records';
+    var SCAN_KEY = 'mushroom_scan_jobs';
+    var HARVEST_KEY = 'mushroom_harvest_records';
+    var ORDER_KEY = 'mushroom_repair_orders';
+    var PREF_KEY = 'mushroom_notify_prefs';
+    var MM = window.MobileMessages;
+
+    var STAGE_LIST = [
+      { name: '拌料装袋', color: 'var(--primary)' },
+      { name: '灭菌', color: 'var(--warning-dark)' },
+      { name: '接种', color: 'var(--info-dark)' },
+      { name: '培养', color: 'var(--success-dark)' },
+      { name: '出菇', color: 'var(--primary-300)' },
+      { name: '采收', color: 'var(--primary-700)' }
+    ];
+    var FIELD_LABELS = {
+      formula: '配方号', feedKg: '投料量（kg）', bagCount: '装袋数（袋）', moisture: '含水率（%）',
+      potNo: '灭菌锅号', temp: '温度（℃）', holdMin: '保温时长（min）',
+      strainBatch: '菌种批次', inocCount: '接种数量（袋）', roomTemp: '接种室温度（℃）', disinfection: '消毒记录',
+      room: '房间', humidity: '湿度（%）', fullBagRate: '满袋率（%）', contamRate: '污染率（%）',
+      co2: 'CO₂（ppm）', light: '光照（lux）',
+      weight: '采收重量（kg）', gradeA: 'A级（kg）', gradeB: 'B级（kg）'
+    };
+    var ORDER_STATUS_TEXT = { pending: '待受理', repairing: '维修中', done: '已完成' };
+    var URGENCY_TEXT = { normal: '一般', urgent: '紧急', stop: '停机' };
+
+    var workStageFilter = '';
+
+    function navigateTo(page) { window.location.href = page; }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function dateStr(d) {
+      d = d || new Date();
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    }
+    function readList(key) {
+      try {
+        var raw = localStorage.getItem(key);
+        var v = raw ? JSON.parse(raw) : [];
+        return Array.isArray(v) ? v : [];
+      } catch (e) { return []; }
+    }
+    function getUser() {
+      try { return sessionStorage.getItem('loginUser') || '李国强'; }
+      catch (e) { return '李国强'; }
+    }
+    function getRole() {
+      try { return sessionStorage.getItem('loginRole') || '车间操作工'; }
+      catch (e) { return '车间操作工'; }
+    }
+    function toast(msg, type) {
+      if (window.MobileStore && typeof MobileStore.toast === 'function') {
+        MobileStore.toast(msg, type || 'info');
+      }
+    }
+    function stageColor(name) {
+      for (var i = 0; i < STAGE_LIST.length; i++) {
+        if (STAGE_LIST[i].name === name) return STAGE_LIST[i].color;
+      }
+      return 'var(--primary)';
+    }
+    function statusTag(status) {
+      if (status === 'pending') return '<span class="mb-tag warning">待同步</span>';
+      return '<span class="mb-tag success">已提交</span>';
+    }
+
+    /* ---------- 头部与统计 ---------- */
+
+    function renderProfile() {
+      document.getElementById('pName').textContent = getUser();
+      document.getElementById('pRole').textContent = getRole();
+
+      var records = readList(RECORD_KEY);
+      var today = dateStr();
+      var todayCount = records.filter(function (r) {
+        return String(r.time || '').indexOf(today) === 0;
+      }).length;
+      document.getElementById('statToday').textContent = todayCount;
+      document.getElementById('statTotal').textContent = records.length;
+      document.getElementById('statScan').textContent = readList(SCAN_KEY).length;
+    }
+
+    function renderBadges() {
+      var unread = MM ? MM.unreadCount() : 0;
+      var msgBadge = document.getElementById('msgBadge');
+      var tabBadge = document.getElementById('tabBadge');
+      msgBadge.textContent = unread > 99 ? '99+' : unread;
+      msgBadge.style.display = unread ? '' : 'none';
+      tabBadge.textContent = unread > 99 ? '99+' : unread;
+      tabBadge.style.display = unread ? '' : 'none';
+
+      var pendingOrders = readList(ORDER_KEY).filter(function (o) {
+        return o.status === 'pending' || o.status === 'repairing';
+      }).length;
+      var orderBadge = document.getElementById('orderBadge');
+      orderBadge.textContent = pendingOrders;
+      orderBadge.style.display = pendingOrders ? '' : 'none';
+    }
+
+    /* ---------- 全屏子页面 ---------- */
+
+    function openDetail(title, content) {
+      document.getElementById('detailTitle').textContent = title;
+      document.getElementById('detailContent').innerHTML = content;
+      document.getElementById('detailModal').classList.add('show');
+    }
+    function closeDetail() {
+      document.getElementById('detailModal').classList.remove('show');
+      closeRecModal();
+    }
+
+    function openRecModal(html) {
+      document.getElementById('recModalBody').innerHTML = html;
+      document.getElementById('recModal').classList.add('show');
+    }
+    function closeRecModal() {
+      document.getElementById('recModal').classList.remove('show');
+    }
+
+    function rdRow(k, v) {
+      return '<div class="rd-row"><span class="k">' + esc(k) + '</span><span class="v">' + esc(v == null || v === '' ? '—' : v) + '</span></div>';
+    }
+
+    /* ---------- 作业记录（6 工序 Tab） ---------- */
+
+    function openWorkRecords() {
+      workStageFilter = '';
+      var chips = '<div class="stage-chips" id="stageChips">' +
+        '<button class="stage-chip active" type="button" data-stage="" onclick="setWorkStage(\'\')">全部</button>' +
+        STAGE_LIST.map(function (s) {
+          return '<button class="stage-chip" type="button" data-stage="' + esc(s.name) + '" onclick="setWorkStage(\'' + esc(s.name) + '\')">' + esc(s.name) + '</button>';
+        }).join('') +
+      '</div><div id="workListBox"></div>';
+      openDetail('作业记录', chips);
+      renderWorkList();
+    }
+
+    function setWorkStage(name) {
+      workStageFilter = name;
+      document.querySelectorAll('#stageChips .stage-chip').forEach(function (c) {
+        c.classList.toggle('active', c.getAttribute('data-stage') === name);
+      });
+      renderWorkList();
+    }
+
+    function renderWorkList() {
+      var box = document.getElementById('workListBox');
+      if (!box) return;
+      var list = readList(RECORD_KEY).filter(function (r) {
+        return !workStageFilter || r.stage === workStageFilter;
+      });
+      if (!list.length) {
+        box.innerHTML = '<div class="rec-empty">暂无' + (workStageFilter ? '「' + esc(workStageFilter) + '」' : '') + '作业记录<br>可在首页「工序填报」中提交台账</div>';
+        return;
+      }
+      box.innerHTML = list.map(function (r) {
+        return '<div class="rec-card" style="--rec-color:' + stageColor(r.stage) + ';" onclick="showWorkRecord(\'' + esc(r.id) + '\')">' +
+          '<div class="rec-head">' +
+            '<div class="rec-title">' + esc(r.stage || '工序') + ' · ' + esc(r.batch || '') + '</div>' +
+            statusTag(r.status) +
+          '</div>' +
+          '<div class="rec-desc">' + esc(r.desc || '') + '</div>' +
+          '<div class="rec-foot">' +
+            '<span>' + esc(r.house || '') + '</span>' +
+            '<span>' + esc(r.operator || '') + '</span>' +
+            '<span class="rec-time">' + esc(r.time || '') + '</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function showWorkRecord(id) {
+      var list = readList(RECORD_KEY);
+      var r = null;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id === id) { r = list[i]; break; }
+      }
+      if (!r) { toast('记录不存在', 'warning'); return; }
+      var html = '<div class="modal-title" style="text-align:left;">' + esc(r.stage || '工序') + '台账</div>' +
+        rdRow('批次号', r.batch) +
+        rdRow('作业地点', r.house) +
+        rdRow('操作人', r.operator) +
+        rdRow('填报时间', r.time) +
+        rdRow('状态', r.status === 'pending' ? '待同步（离线提交）' : '已提交');
+      if (r.fields && typeof r.fields === 'object') {
+        html += '<div class="rd-sub">工序参数</div>';
+        Object.keys(r.fields).forEach(function (k) {
+          html += rdRow(FIELD_LABELS[k] || k, r.fields[k]);
+        });
+      }
+      if (r.photo) {
+        html += '<div class="rd-sub">照片凭证</div><img class="rd-photo" src="' + esc(r.photo) + '" alt="照片凭证">';
+      }
+      openRecModal(html);
+    }
+
+    /* ---------- 采收记录 ---------- */
+
+    function openHarvestRecords() {
+      var list = readList(HARVEST_KEY);
+      var html;
+      if (!list.length) {
+        html = '<div class="rec-empty">暂无采收过磅记录<br>可在首页「采收过磅」中提交</div>';
+      } else {
+        html = list.map(function (r) {
+          return '<div class="rec-card" style="--rec-color:var(--primary-700);" onclick="showHarvestRecord(\'' + esc(r.id) + '\')">' +
+            '<div class="rec-head">' +
+              '<div class="rec-title">' + esc(r.id) + '</div>' +
+              statusTag(r.status) +
+            '</div>' +
+            '<div class="rec-desc">批次 ' + esc(r.batch || '') + ' · 总重 ' + esc(r.total) + 'kg · 一级 ' + esc(r.gradeA) + 'kg · 一级率 ' + esc(r.rateA) + '%</div>' +
+            '<div class="rec-foot">' +
+              '<span>' + esc(r.house || '') + '</span>' +
+              '<span>' + esc(r.variety || '') + '</span>' +
+              '<span class="rec-time">' + esc(r.time || '') + '</span>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+      openDetail('采收记录', html);
+    }
+
+    function showHarvestRecord(id) {
+      var list = readList(HARVEST_KEY);
+      var r = null;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id === id) { r = list[i]; break; }
+      }
+      if (!r) { toast('记录不存在', 'warning'); return; }
+      var html = '<div class="modal-title" style="text-align:left;">采收过磅单</div>' +
+        rdRow('磅单编号', r.id) +
+        rdRow('批次号', r.batch) +
+        rdRow('菇房', r.house) +
+        rdRow('品种', r.variety) +
+        rdRow('总重量（kg）', r.total) +
+        rdRow('一级（kg）', r.gradeA) +
+        rdRow('二级（kg）', r.gradeB) +
+        rdRow('等外（kg）', r.gradeC) +
+        rdRow('一级率（%）', r.rateA) +
+        rdRow('操作人', r.operator) +
+        rdRow('过磅时间', r.time) +
+        rdRow('状态', r.status === 'pending' ? '待同步（离线提交）' : '已提交') +
+        (r.note ? rdRow('备注', r.note) : '');
+      if (r.photo) {
+        html += '<div class="rd-sub">照片凭证</div><img class="rd-photo" src="' + esc(r.photo) + '" alt="照片凭证">';
+      }
+      openRecModal(html);
+    }
+
+    /* ---------- 报修工单 ---------- */
+
+    function openRepairOrders() {
+      var list = readList(ORDER_KEY);
+      var html;
+      if (!list.length) {
+        html = '<div class="rec-empty">暂无报修工单<br>可在首页「设备报修」中提交</div>';
+      } else {
+        html = list.map(function (o) {
+          var stTag = o.status === 'done'
+            ? '<span class="mb-tag success">' + esc(ORDER_STATUS_TEXT[o.status]) + '</span>'
+            : (o.status === 'repairing'
+              ? '<span class="mb-tag info">' + esc(ORDER_STATUS_TEXT[o.status]) + '</span>'
+              : '<span class="mb-tag warning">' + esc(ORDER_STATUS_TEXT[o.status] || o.status) + '</span>');
+          return '<div class="rec-card" style="--rec-color:var(--warning-dark);" onclick="showRepairOrder(\'' + esc(o.id) + '\')">' +
+            '<div class="rec-head">' +
+              '<div class="rec-title">' + esc(o.id) + ' · ' + esc(o.device || '') + '</div>' +
+              stTag +
+            '</div>' +
+            '<div class="rec-desc">' + esc(o.desc || '') + '</div>' +
+            '<div class="rec-foot">' +
+              '<span>回路 ' + esc(o.circuit || '—') + '</span>' +
+              '<span>' + esc(URGENCY_TEXT[o.urgency] || o.urgency || '') + '</span>' +
+              '<span class="rec-time">' + esc(o.time || '') + '</span>' +
+            '</div>' +
+          '</div>';
+        }).join('') +
+        '<button class="mb-btn mb-btn-primary mb-btn-block" style="margin-top:12px;" onclick="navigateTo(\'mb_troubleshoot.html\')">去设备报修页</button>';
+      }
+      openDetail('报修工单', html);
+    }
+
+    function showRepairOrder(id) {
+      var list = readList(ORDER_KEY);
+      var o = null;
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id === id) { o = list[i]; break; }
+      }
+      if (!o) { toast('工单不存在', 'warning'); return; }
+      var html = '<div class="modal-title" style="text-align:left;">维修工单</div>' +
+        rdRow('工单编号', o.id) +
+        rdRow('设备', o.device) +
+        rdRow('回路号', o.circuit) +
+        rdRow('紧急程度', URGENCY_TEXT[o.urgency] || o.urgency) +
+        rdRow('当前状态', ORDER_STATUS_TEXT[o.status] || o.status) +
+        rdRow('报修人', o.reporter) +
+        rdRow('联系电话', o.phone) +
+        rdRow('报修时间', o.time) +
+        (o.repairTime ? rdRow('完成时间', o.repairTime) : '') +
+        (o.fromAlert ? rdRow('来源预警', o.fromAlert) : '') +
+        '<div class="rd-sub">故障描述</div>' +
+        '<div style="font-size:var(--font-sm);color:var(--text);line-height:1.7;">' + esc(o.desc || '—') + '</div>';
+      if (o.photo) {
+        html += '<div class="rd-sub">故障照片</div><img class="rd-photo" src="' + esc(o.photo) + '" alt="故障照片">';
+      }
+      openRecModal(html);
+    }
+
+    /* ---------- 个人信息 ---------- */
+
+    function openProfile() {
+      var html = '<div class="profile-form-card">' +
+        '<div class="form-group" style="margin-top:0;"><div class="form-label">姓名</div><input class="form-input" type="text" value="' + esc(getUser()) + '" readonly></div>' +
+        '<div class="form-group"><div class="form-label">工号</div><input class="form-input" type="text" value="C-023" readonly></div>' +
+        '<div class="form-group"><div class="form-label">岗位</div><input class="form-input" type="text" value="' + esc(getRole()) + '" readonly></div>' +
+        '<div class="form-group"><div class="form-label">所属车间</div><input class="form-input" type="text" value="出菇车间" readonly></div>' +
+        '<div class="form-group"><div class="form-label">负责菇房</div><input class="form-input" type="text" value="一号出菇房 GF-01" readonly></div>' +
+        '<div class="form-group"><div class="form-label">手机号</div><input class="form-input" type="text" value="138****0002" readonly></div>' +
+        '<div style="font-size:var(--font-xs);color:var(--text-tertiary);margin-top:12px;">姓名、岗位与菇房归属由后台「人员班组」维护，如需变更请联系车间主管。</div>' +
+      '</div>' +
+      '<div class="settings-card" style="margin-top:16px;">' +
+        '<div class="settings-section-title">修改密码</div>' +
+        '<div class="form-group" style="margin-top:8px;"><div class="form-label">原密码</div><input class="form-input" type="password" id="pwdOld" autocomplete="current-password"></div>' +
+        '<div class="form-group"><div class="form-label">新密码（至少 6 位）</div><input class="form-input" type="password" id="pwdNew" autocomplete="new-password"></div>' +
+        '<div class="form-group"><div class="form-label">确认新密码</div><input class="form-input" type="password" id="pwdConfirm" autocomplete="new-password"></div>' +
+        '<button class="mb-btn mb-btn-primary mb-btn-block" style="margin-top:16px;" onclick="submitPwd()">提交修改</button>' +
+      '</div>';
+      openDetail('个人信息', html);
+    }
+
+    function submitPwd() {
+      var oldPwd = document.getElementById('pwdOld').value;
+      var newPwd = document.getElementById('pwdNew').value;
+      var confirmPwd = document.getElementById('pwdConfirm').value;
+      if (!oldPwd) { toast('请输入原密码', 'warning'); return; }
+      if (newPwd.length < 6) { toast('新密码至少 6 位', 'warning'); return; }
+      if (newPwd !== confirmPwd) { toast('两次输入的新密码不一致', 'warning'); return; }
+      if (newPwd === oldPwd) { toast('新密码不能与原密码相同', 'warning'); return; }
+      toast('密码修改已提交（原型演示，未接后端）', 'success');
+      document.getElementById('pwdOld').value = '';
+      document.getElementById('pwdNew').value = '';
+      document.getElementById('pwdConfirm').value = '';
+    }
+
+    /* ---------- 设置 ---------- */
+
+    function readPrefs() {
+      try {
+        var raw = localStorage.getItem(PREF_KEY);
+        var v = raw ? JSON.parse(raw) : {};
+        return { alert: v.alert !== false, task: v.task !== false };
+      } catch (e) { return { alert: true, task: true }; }
+    }
+    function savePrefs(p) {
+      try { localStorage.setItem(PREF_KEY, JSON.stringify(p)); } catch (e) { /* 存储失败忽略 */ }
+    }
+
+    function togglePref(key, el) {
+      var p = readPrefs();
+      p[key] = !p[key];
+      savePrefs(p);
+      el.classList.toggle('off', !p[key]);
+      toast((key === 'alert' ? '预警通知' : '任务提醒') + (p[key] ? '已开启' : '已关闭'), 'info');
+    }
+
+    function syncNow() {
+      if (!window.MobileStore) return;
+      if (!MobileStore.pending()) { toast('没有待同步记录', 'info'); return; }
+      MobileStore.flush().then(function (res) {
+        if (res.ok) toast('同步完成，共 ' + res.count + ' 条', 'success');
+        else if (res.reason === 'offline') toast('当前离线，恢复网络后自动补传', 'warning');
+        else toast('同步失败，请稍后重试', 'error');
+        renderProfile();
+        openSettings();
+      });
+    }
+
+    function clearCache() {
+      if (!window.confirm('确定清除本地缓存吗？\n\n将清除消息已读标记与通知偏好；作业台账、采收、工单等业务记录不会被删除。')) return;
+      try {
+        localStorage.removeItem('mushroom_msg_read');
+        localStorage.removeItem(PREF_KEY);
+      } catch (e) { /* 忽略 */ }
+      renderBadges();
+      openSettings();
+      toast('缓存已清除', 'success');
+    }
+
+    function openSettings() {
+      var p = readPrefs();
+      var pending = window.MobileStore ? MobileStore.pending() : 0;
+      var arrow = '<svg class="settings-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
+      var html = '<div class="settings-card">' +
+        '<div class="settings-section-title">通知设置</div>' +
+        '<div class="settings-row">' +
+          '<div><div class="settings-label">预警通知</div><div class="settings-desc">环境越限、设备故障等预警推送</div></div>' +
+          '<div class="toggle-switch' + (p.alert ? '' : ' off') + '" onclick="togglePref(\'alert\', this)" role="switch" aria-checked="' + p.alert + '"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>' +
+        '</div>' +
+        '<div class="settings-row">' +
+          '<div><div class="settings-label">任务提醒</div><div class="settings-desc">扫码开工后的工序填报提醒</div></div>' +
+          '<div class="toggle-switch' + (p.task ? '' : ' off') + '" onclick="togglePref(\'task\', this)" role="switch" aria-checked="' + p.task + '"><div class="toggle-track"></div><div class="toggle-thumb"></div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="settings-card">' +
+        '<div class="settings-section-title">离线与存储</div>' +
+        '<div class="settings-row">' +
+          '<div><div class="settings-label">离线同步</div><div class="settings-desc">待同步 ' + pending + ' 条，网络恢复后自动补传</div></div>' +
+          '<button class="mb-btn mb-btn-sm mb-btn-secondary" type="button" onclick="syncNow()">立即同步</button>' +
+        '</div>' +
+        '<div class="settings-row clickable" onclick="clearCache()">' +
+          '<div><div class="settings-label">清除缓存</div><div class="settings-desc">仅清除已读标记与偏好，不删业务台账</div></div>' +
+          arrow +
+        '</div>' +
+      '</div>' +
+      '<div class="settings-card">' +
+        '<div class="settings-section-title">关于</div>' +
+        '<div class="settings-row clickable" onclick="openAbout()"><div class="settings-label">关于我们</div>' + arrow + '</div>' +
+        '<div class="settings-row clickable" onclick="openPolicy(\'privacy\')"><div class="settings-label">隐私政策</div>' + arrow + '</div>' +
+        '<div class="settings-row clickable" onclick="openPolicy(\'terms\')"><div class="settings-label">用户协议</div>' + arrow + '</div>' +
+        '<div class="settings-row"><div class="settings-label">版本号</div><div class="settings-value">v3.1.0</div></div>' +
+      '</div>';
+      openDetail('设置', html);
+    }
+
+    function openAbout() {
+      openDetail('关于我们', '<div class="settings-card"><div class="about-text">' +
+        esc('食用菌工厂化农业数据管理平台 · 移动端\n\n面向食用菌工厂化车间的现场作业与环境监测终端，覆盖菌包制备、灭菌、接种、培养、出菇、采收、冷链七道工序的电子台账，以及菇房环境监控、设备控制、视频监控与预警处置。\n\n项目：托克逊县 2026 年科技兴农项目\n版本：v3.1.0（HTML 原型演示）') +
+      '</div></div>');
+    }
+
+    function openPolicy(kind) {
+      var text = kind === 'privacy'
+        ? '隐私政策（原型演示文本）\n\n1. 本应用采集的账号、作业记录与照片仅用于生产台账与追溯管理；\n2. 手机号等个人信息在展示时脱敏处理；\n3. 定位信息仅用于现场作业打卡，不会用于其他用途；\n4. 原型阶段数据仅保存在本机浏览器，不会上传至任何服务器。'
+        : '用户协议（原型演示文本）\n\n1. 账号由企业统一分配，请勿转借他人使用；\n2. 作业台账须如实填报，提交后作为追溯链数据留存，不可随意删改；\n3. 设备启停、阈值修改等操作须遵守车间安全规程，危险操作需二次确认；\n4. 离线记录请在网络恢复后及时同步，避免追溯链断链。';
+      openDetail(kind === 'privacy' ? '隐私政策' : '用户协议',
+        '<div class="settings-card"><div class="about-text">' + esc(text) + '</div></div>');
+    }
+
+    /* ---------- 退出登录 ---------- */
+
+    function confirmLogout() {
+      document.getElementById('logoutModal').classList.add('show');
+    }
+    function closeLogout() {
+      document.getElementById('logoutModal').classList.remove('show');
+    }
+    function doLogout() {
+      try {
+        sessionStorage.removeItem('isLoggedIn');
+        sessionStorage.removeItem('loginUser');
+        sessionStorage.removeItem('loginRole');
+      } catch (e) { /* 忽略 */ }
+      window.location.href = 'mb_login.html';
+    }
+
+    /* ---------- 初始化 ---------- */
+
+    renderProfile();
+    renderBadges();
+    if (window.MobileStore) {
+      MobileStore.renderSyncBar(document.getElementById('syncBar'));
+      MobileStore.onQueueChange(function (n) {
+        document.getElementById('statSync').textContent = n;
+      });
+    }
+
+    /* 业务数据变化后刷新统计与角标 */
+    window.addEventListener('storage', function (e) {
+      if (!e.key || e.key.indexOf('mushroom_') !== 0) return;
+      renderProfile();
+      renderBadges();
+    });
+    /* 从子页面返回时刷新（bfcache 场景） */
+    window.addEventListener('pageshow', function () {
+      renderProfile();
+      renderBadges();
+    });
+  </script>
+</body>
+</html>

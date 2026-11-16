@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 认养采收</title>
+<!-- 使用设计系统: Design System v2.0 + sidebar-layout -->
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  /* 统计卡片 */
+  .stats-cards {
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:var(--space-lg);
+    margin-bottom:var(--space-xl);
+  }
+
+  .stat-card {
+    background:var(--bg-card);
+    border-radius:var(--radius-lg);
+    padding:var(--space-xl);
+    box-shadow:var(--shadow-card);
+    border:1px solid var(--border-light);
+    position:relative;
+    overflow:hidden;
+    transition:all var(--transition-bounce);
+    cursor:pointer;
+  }
+
+  .stat-card::before {
+    content:'';
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:4px;
+    background:var(--gradient-primary);
+  }
+
+  .stat-card:hover {
+    transform:translateY(-4px);
+    box-shadow:var(--shadow-card-hover);
+  }
+
+  .stat-card.green::before { background:linear-gradient(90deg, var(--primary-500), var(--primary-300)); }
+  .stat-card.blue::before { background:linear-gradient(90deg, var(--info), #40a9ff); }
+  .stat-card.orange::before { background:linear-gradient(90deg, var(--accent-500), #ffc53d); }
+  .stat-card.purple::before { background:linear-gradient(90deg, #722ed1, #9254de); }
+
+  .stat-card .stat-label {
+    font-size:var(--font-size-sm);
+    color:var(--text-tertiary);
+    margin-bottom:var(--space-sm);
+    font-weight:var(--font-weight-medium);
+  }
+
+  .stat-card .stat-value {
+    font-size:28px;
+    font-weight:var(--font-weight-bold);
+    line-height:1.2;
+    margin-bottom:var(--space-sm);
+    background:linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+
+  .stat-card.blue .stat-value {
+    background:linear-gradient(135deg, var(--info), #096dd9);
+    -webkit-background-clip:text;
+    background-clip:text;
+  }
+
+  .stat-card.orange .stat-value {
+    background:linear-gradient(135deg, var(--accent-500), var(--accent-600));
+    -webkit-background-clip:text;
+    background-clip:text;
+  }
+
+  .stat-card.purple .stat-value {
+    background:linear-gradient(135deg, #722ed1, #531dab);
+    -webkit-background-clip:text;
+    background-clip:text;
+  }
+
+  /* 数据表格 */
+  .data-table-wrapper {
+    overflow-x:auto;
+    border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);
+    margin-bottom:var(--space-lg);
+  }
+
+  .data-table th,
+  .data-table td {
+    padding:12px 14px;
+    text-align:left;
+    border-bottom:1px solid var(--border-light);
+    transition:background var(--transition-fast);
+  }
+
+  /* 操作按钮组 */
+  .action-btns {
+    display:flex;
+    gap:6px;
+    flex-wrap:nowrap;
+    white-space:nowrap;
+  }
+
+  .action-btn {
+    padding:5px 10px;
+    font-size:var(--font-size-xs);
+    border-radius:var(--radius-sm);
+    border:1px solid var(--border-default);
+    background:var(--bg-card);
+    color:var(--text-secondary);
+    cursor:pointer;
+    transition:all var(--transition-fast);
+    white-space:nowrap;
+  }
+
+  .action-btn:hover {
+    border-color:var(--primary-500);
+    color:var(--primary-500);
+  }
+
+  .action-btn.detail { color:var(--info); border-color:var(--info-border); }
+  .action-btn.detail:hover { background:var(--info-bg); }
+  .action-btn.harvest { color:var(--primary-500); border-color:var(--primary-500); }
+  .action-btn.harvest:hover { background:var(--primary-50); }
+
+  /* 状态标签 */
+  .status-tag {
+    display:inline-flex;
+    align-items:center;
+    padding:3px 8px;
+    border-radius:var(--radius-full);
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
+    line-height:1.4;
+    white-space:nowrap;
+    border:1px solid transparent;
+  }
+
+  .status-tag.pending {
+    background:var(--warning-bg);
+    color:#9a6700;
+    border-color:var(--warning-border);
+  }
+
+  .status-tag.completed {
+    background:var(--success-bg);
+    color:var(--success);
+    border-color:var(--success-border);
+  }
+
+  .status-tag.cancelled {
+    background:var(--error-bg);
+    color:var(--error);
+    border-color:var(--error-border);
+  }
+
+  /* 搜索栏 */
+  .search-section {
+    margin-bottom:var(--space-lg);
+  }
+
+  .search-bar {
+    display:flex;
+    gap:var(--space-lg);
+    align-items:center;
+    flex-wrap:wrap;
+    padding:var(--space-lg);
+    background:var(--bg-card);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    border:1px solid var(--border-light);
+  }
+
+  .search-input {
+    padding:10px 14px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    width:200px;
+    transition:all var(--transition-fast);
+    background:var(--bg-card);
+    outline:none;
+  }
+
+  .search-select {
+    padding:10px 32px 10px 12px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    cursor:pointer;
+    background:var(--bg-card);
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c8c8c' stroke-width='2'%3E%3Cpath d='m6,9 6,6 6,-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 10px center;
+    outline:none;
+    transition:all var(--transition-fast);
+    min-width:120px;
+  }
+
+  .search-date {
+    padding:10px 14px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    cursor:pointer;
+    background:var(--bg-card);
+    outline:none;
+    transition:all var(--transition-fast);
+  }
+
+  .search-date:focus {
+    border-color:var(--primary-500);
+    box-shadow:0 0 0 3px rgba(24, 144, 255, 0.1);
+  }
+
+  .date-separator {
+    color:var(--text-tertiary);
+    margin:0 4px;
+  }
+
+  /* 操作栏 */
+  .action-bar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:var(--space-lg);
+    background:var(--bg-card);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    border:1px solid var(--border-light);
+    margin-bottom:var(--space-lg);
+  }
+
+  .action-left {
+    display:flex;
+    gap:var(--space-md);
+  }
+
+  .action-right {
+    display:flex;
+    gap:var(--space-md);
+  }
+
+  .selected-info {
+    font-size:var(--font-size-sm);
+    color:var(--text-tertiary);
+  }
+
+  .selected-info strong {
+    color:var(--primary-500);
+  }
+
+  /* 分页 */
+  .pagination {
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:4px;
+    margin-top:20px;
+    padding-top:16px;
+    border-top:1px solid #f4f6f4;
+  }
+
+  .page-btn {
+    width:36px;
+    height:36px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    background:var(--bg-card);
+    font-size:var(--font-size-sm);
+    color:var(--text-secondary);
+    cursor:pointer;
+    transition:all var(--transition-fast);
+  }
+
+  /* 弹窗样式 */
+  .modal-overlay {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background:rgba(0, 0, 0, 0.5);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:1000;
+    backdrop-filter:blur(4px);
+  }
+
+  .modal-overlay.show {
+    display:flex;
+  }
+
+  .modal {
+    background:var(--bg-card);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+    width:90%;
+    max-width:500px;
+    max-height:80vh;
+    overflow:hidden;
+    animation:modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity:0; transform:scale(0.95); }
+    to { opacity:1; transform:scale(1); }
+  }
+
+  .modal-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:var(--space-lg);
+    border-bottom:1px solid var(--border-light);
+    background:linear-gradient(135deg, var(--gray-50), var(--gray-100));
+  }
+
+  .modal-title {
+    font-size:var(--font-size-lg);
+    font-weight:var(--font-weight-semibold);
+    color:var(--text-primary);
+  }
+
+  .modal-close {
+    width:32px;
+    height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:none;
+    background:transparent;
+    border-radius:var(--radius-md);
+    cursor:pointer;
+    transition:all var(--transition-fast);
+    color:var(--text-tertiary);
+  }
+
+  .modal-close:hover {
+    background:var(--bg-hover);
+    color:var(--text-secondary);
+  }
+
+  .modal-body {
+    padding:var(--space-lg);
+    overflow-y:auto;
+    max-height:calc(80vh - 140px);
+  }
+
+  .modal-footer {
+    display:flex;
+    justify-content:flex-end;
+    gap:var(--space-md);
+    padding:var(--space-lg);
+    border-top:1px solid var(--border-light);
+  }
+
+  /* 表单样式 */
+  .form-group {
+    margin-bottom:var(--space-lg);
+  }
+
+  .form-label {
+    display:block;
+    font-size:var(--font-size-sm);
+    font-weight:var(--font-weight-medium);
+    color:var(--text-secondary);
+    margin-bottom:var(--space-sm);
+  }
+
+  .form-input {
+    width:100%;
+    padding:10px 14px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    background:var(--bg-card);
+    outline:none;
+    transition:all var(--transition-fast);
+    box-sizing:border-box;
+  }
+
+  .form-input:focus {
+    border-color:var(--primary-500);
+    box-shadow:0 0 0 3px rgba(24, 144, 255, 0.1);
+  }
+
+  .form-select {
+    width:100%;
+    padding:10px 32px 10px 14px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    cursor:pointer;
+    background:var(--bg-card);
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c8c8c' stroke-width='2'%3E%3Cpath d='m6,9 6,6 6,-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 10px center;
+    outline:none;
+    transition:all var(--transition-fast);
+  }
+
+  /* 详情信息 */
+  .detail-row {
+    display:flex;
+    padding:var(--space-md) 0;
+    border-bottom:1px solid var(--border-light);
+  }
+
+  .detail-label {
+    width:100px;
+    font-weight:var(--font-weight-medium);
+    color:var(--text-tertiary);
+    flex-shrink:0;
+  }
+
+  .detail-value {
+    flex:1;
+    color:var(--text-primary);
+  }
+
+  /* 警告提示 */
+  .alert-warning {
+    padding:var(--space-md);
+    background:var(--warning-bg);
+    border-radius:var(--radius-md);
+    color:#9a6700;
+    font-size:var(--font-size-sm);
+    margin-bottom:var(--space-lg);
+  }
+
+  /* 表格行悬停动画 */
+  .data-table tbody tr {
+    transition:transform var(--transition-fast);
+  }
+
+  .data-table tbody tr:hover {
+    transform:scale(1.002);
+  }
+
+  /* 按钮点击效果 */
+  .jg-btn:active {
+    transform:scale(0.98);
+  }
+
+  /* 页面加载动画 */
+  .content-wrapper {
+    animation:pageIn var(--transition-slow) ease;
+  }
+
+  @keyframes pageIn {
+    from { opacity:0; transform:translateY(10px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
+  /* 等宽字体 */
+  .text-mono {
+    font-family:'SF Mono', Monaco, 'Courier New', monospace;
+  }
+
+  /* 金额样式 */
+  .text-right {
+    text-align:right;
+  }
+
+  /* 响应式布局 */
+  @media (max-width:768px) {
+    .stats-cards {
+      grid-template-columns:repeat(2, 1fr);
+    }
+    .search-bar {
+      flex-direction:column;
+      align-items:stretch;
+    }
+    .search-input, .search-select, .search-date {
+      width:100%;
+    }
+    .action-bar {
+      flex-direction:column;
+      gap:var(--space-md);
+    }
+  }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="adoption" data-active-submenu="adoption-harvest">
+
+<!-- ===== 整体布局容器 ===== -->
+<div class="app-layout">
+
+  <!-- ===== 侧边栏 ===== -->
+  <!-- 移动端遮罩层 -->
+  <!-- ===== 主内容区 ===== -->
+  <div class="main-wrapper">
+
+    <!-- 顶栏 -->
+    <!-- Tab 标签栏 -->
+    <div class="tab-bar">
+      <!-- Tab 标签由 JS 动态渲染 -->
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <div class="content-wrapper">
+        <!-- 统计卡片 -->
+        <!-- 统计卡条已按统一规范移除 (原class=stats-cards) -->
+
+        <!-- 搜索栏区 -->
+        <div class="page-section search-section">
+          <div class="search-bar">
+            <select class="search-select" id="baseSelect">
+              <option value="">全部基地</option>
+              <option value="麦积区基地">麦积区基地</option>
+              <option value="白水基地">白水基地</option>
+              <option value="宜川基地">宜川基地</option>
+            </select>
+            <input type="text" class="search-input" placeholder="搜索认养人..." id="searchInput">
+            <select class="search-select" id="statusSelect">
+              <option value="">全部状态</option>
+              <option value="pending">待采收</option>
+              <option value="completed">已采收</option>
+              <option value="cancelled">已取消</option>
+            </select>
+            <input type="date" class="search-date" id="startDate">
+            <span class="date-separator">至</span>
+            <input type="date" class="search-date" id="endDate">
+            
+          <div class="search-actions"><button class="jg-btn jg-btn-primary" onclick="handleSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button><button class="jg-btn" onclick="smartReset()">重置</button></div>
+          </div>
+        </div>
+
+        <!-- 操作按钮区 -->
+        <div class="page-section action-bar">
+          <div class="action-left">
+            <button class="jg-btn jg-btn-primary" onclick="showAddModal()">新建采收记录</button>
+            <button class="jg-btn" onclick="showExportModal()">导出采收</button>
+          </div>
+          <div class="action-right">
+</div>
+        </div>
+
+        <!-- 数据列表区 -->
+        <div class="page-section data-section">
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:60px;">序号</th>
+                  <th style="width:120px;">记录编号</th>
+                  <th style="width:150px;">认养果树</th>
+                  <th style="width:120px;">认养人</th>
+                  <th style="width:100px;" class="text-right">采收量</th>
+                  <th style="width:100px;">采收日期</th>
+                  <th style="width:80px;">状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="harvestList">
+              </tbody>
+            </table>
+          </div>
+          <!-- 分页器（页码由数据量动态生成） -->
+          <div class="pagination">
+            <button class="page-btn disabled" id="prevPage">‹</button>
+            <span id="pageNumbers" style="display:inline-flex;gap:4px;"></span>
+            <button class="page-btn" id="nextPage">›</button>
+            <span id="paginationInfo" style="margin-left:16px;font-size:13px;color:var(--text-tertiary);">共 0 条记录</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<!-- 详情弹窗 -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">采收记录详情</h3>
+      <button class="modal-close" onclick="closeModal('detailModal')">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 1l8 8M9 9l8-8M9 9l-8 8M9 9l8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body" id="detailContent">
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('detailModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 采收弹窗 -->
+<div class="modal-overlay" id="harvestModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">确认采收</h3>
+      <button class="modal-close" onclick="closeModal('harvestModal')">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 1l8 8M9 9l8-8M9 9l-8 8M9 9l8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="alert-warning">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;float:left;margin-right:8px;">
+          <path d="M12 9v2m0 4h.01"/>
+          <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/>
+        </svg>
+        <span>确定要进行采收操作吗？</span>
+      </div>
+      <p id="harvestInfo" style="margin-top:var(--space-md);color:var(--text-secondary);font-size:var(--font-size-sm);"></p>
+      <div class="form-group">
+        <label class="form-label">实际采收量（斤）</label>
+        <input type="number" class="form-input" id="harvestAmount" placeholder="请输入实际采收量">
+      </div>
+      <div class="form-group">
+        <label class="form-label">备注</label>
+        <textarea class="form-input form-textarea" id="harvestRemark" placeholder="请输入备注信息"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('harvestModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="confirmHarvest()">确认采收</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增采收记录弹窗 -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">新建采收记录</h3>
+      <button class="modal-close" onclick="closeModal('addModal')">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 1l8 8M9 9l8-8M9 9l-8 8M9 9l8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">认养果树</label>
+        <select class="form-select" id="addTree">
+          <option value="A001">花牛苹果 #A001 - 惠加宁</option>
+          <option value="A002">花牛苹果 #A002 - 黄忠坚</option>
+          <option value="B001">花牛苹果 #B001 - 徐水应</option>
+          <option value="B004">花牛苹果 #B004 - 朱泉龙</option>
+          <option value="C003">秦冠 #C003 - 陈小忠</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">预计采收量（斤）</label>
+        <input type="number" class="form-input" id="addAmount" placeholder="请输入预计采收量">
+      </div>
+      <div class="form-group">
+        <label class="form-label">采收日期</label>
+        <input type="date" class="form-input" id="addDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">备注</label>
+        <textarea class="form-input form-textarea" id="addRemark" placeholder="请输入备注信息"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('addModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="saveAdd()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导出采收弹窗 -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <h3 class="modal-title">导出采收记录</h3>
+      <button class="modal-close" onclick="closeModal('exportModal')">
+        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 1l8 8M9 9l8-8M9 9l-8 8M9 9l8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-secondary); margin-bottom:16px;">请选择导出格式：</p>
+      <div style="display:flex; gap:12px;">
+        <button class="jg-btn jg-btn-primary" onclick="doExport('excel')">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;">
+            <path d="M10 2H2v16h16V8l-6-6z"/>
+            <path d="M14 2v6h6M13 9H7M13 13H7M13 17H7"/>
+          </svg>
+          Excel格式
+        </button>
+        <button class="jg-btn" onclick="doExport('pdf')">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;">
+            <path d="M10 2H2v16h16V8l-6-6z"/>
+            <path d="M14 2v6h6M13 9H7M13 13H7M13 17H7"/>
+          </svg>
+          PDF格式
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('exportModal')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 引入交互脚本 -->
+<script src="js/shared/adoption-store.js"></script>
+<script src="js/shared/harvest-store.js"></script>
+<script>
+  /* ============================================================
+   * 数据来源：统一数据层 AdoptionStore（禁止页面内维护 mock）
+   * ============================================================ */
+  const S = window.AdoptionStore;
+
+  // 页面级提示：复用 common-functions.js 的全局 Toast
+  function toast(message, type) {
+    if (window.Toast && typeof window.Toast.show === 'function') {
+      window.Toast.show(message, type === 'error' ? 'error' : 'success');
+    }
+  }
+
+  const pageSize = 8;
+  let currentPage = 1;
+  let filteredData = [];
+
+  function displayBase(name) {
+    const s = String(name || '');
+    if (!s) return '-';
+    return /基地$/.test(s) ? s : s + '基地';
+  }
+
+  function fmtDate(v) {
+    return v ? String(v).slice(0, 10) : '';
+  }
+
+  /* 后台采收记录 → 行模型 */
+  function harvestToRow(h) {
+    const tree = S.findTree(h.treeCode);
+    return {
+      id: h.id,
+      code: h.id,
+      treeCode: h.treeCode,
+      treeName: h.treeName || (tree ? tree.treeName : h.treeCode),
+      adopter: h.adopter || (tree ? tree.adopter : '—'),
+      phone: h.phone || (tree ? tree.adopterPhone : ''),
+      amount: h.qty != null ? h.qty : '—',
+      date: fmtDate(h.date),
+      status: h.status || 'pending',
+      base: displayBase(tree ? tree.baseName : ''),
+      method: h.method || '到园采摘',
+      orderNo: h.orderNo || '',
+      remark: h.remark || '',
+      source: 'harvest'
+    };
+  }
+
+  /* 移动端预约 → 行模型（编号统一走 S.normalizeCode，不再各自猜测） */
+  function reservationToRow(r) {
+    const code = S.normalizeCode(r.treeId || r.treeName);
+    const tree = code ? S.findTree(code) : null;
+    return {
+      id: 'RSV-' + (r.id || r.reservationId || (r.date || '') + (r.time || '')),
+      code: 'RSV' + String(r.date || '').replace(/-/g, '') + String(r.time || '').slice(0, 2),
+      reservationId: r.id || r.reservationId || '',
+      treeCode: code || r.treeId || '',
+      treeName: r.treeName || (tree ? tree.treeName : (code || '—')),
+      adopter: r.adopter || (tree ? tree.adopter : '移动端预约'),
+      phone: r.phone || (tree ? tree.adopterPhone : ''),
+      amount: r.amount || '—',
+      date: r.date || '',
+      time: r.time || '',
+      status: r.status === 'done' || r.status === 'completed' ? 'completed' : 'pending',
+      base: displayBase(tree ? tree.baseName : r.base),
+      people: r.people || 1,
+      method: r.method || '现场采摘',
+      source: 'mobile'
+    };
+  }
+
+  /* 汇总：后台采收记录 + 尚未关联采收单的移动端预约 */
+  function allRows() {
+    const harvestRows = S.harvests().map(harvestToRow);
+    const linked = {};
+    S.harvests().forEach(function (h) { if (h.reservationId) linked[h.reservationId] = 1; });
+    const reserveRows = S.reservations()
+      .filter(function (r) { return !linked[r.id || r.reservationId]; })
+      .map(reservationToRow);
+    return harvestRows.concat(reserveRows).sort(function (a, b) {
+      return String(b.date).localeCompare(String(a.date));
+    });
+  }
+
+  // 渲染表格
+  function statusText(s) {
+    return s === 'pending' ? '待采收' : s === 'completed' ? '已采收' : s === 'cancelled' ? '已取消' : s;
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById('harvestList');
+    tbody.innerHTML = '';
+
+    if (!data.length) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-tertiary);">暂无符合条件的采收记录</td></tr>';
+      return;
+    }
+
+    data.forEach((item, __seq) => {
+      const stText = statusText(item.status);
+      const statusClass = item.status;
+      
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${__seq + 1}</td>
+        <td class="text-mono"><strong>${item.code}</strong></td>
+        <td>
+          <div style="font-weight:var(--font-weight-medium);">${item.treeName}</div>
+          <div style="font-size:var(--font-size-xs);color:var(--text-tertiary);">${item.base}</div>
+        </td>
+        <td>
+          <div style="font-weight:var(--font-weight-medium);">${item.adopter}</div>
+          <div style="font-size:var(--font-size-xs);color:var(--text-tertiary);">${item.phone || (item.people ? item.people + ' 人 · ' + item.method : '')}</div>
+        </td>
+        <td class="text-right" style="font-weight:var(--font-weight-semibold);color:var(--primary-500);">${item.amount}斤</td>
+        <td style="font-size:var(--font-size-sm);">${item.date}${item.time ? ' ' + item.time : ''}</td>
+        <td><span class="status-tag ${statusClass}">${stText}</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn detail" onclick="showDetail('${item.id}')">详情</button>
+            ${item.status === 'pending' ? `<button class="action-btn harvest" onclick="showHarvest('${item.id}')">采收</button>` : ''}
+          </div>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  // 分页（保持当前筛选结果，不再重置筛选）
+  function goToPage(page) {
+    currentPage = page;
+    const start = (page - 1) * pageSize;
+    renderTable(filteredData.slice(start, start + pageSize));
+    updatePagination();
+  }
+
+  // 更新分页状态
+  function updatePagination() {
+    const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+    if (currentPage > totalPages) currentPage = totalPages;
+    document.getElementById('paginationInfo').textContent = `共 ${filteredData.length} 条记录`;
+    
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+    
+    prevBtn.classList.toggle('disabled', currentPage === 1);
+    nextBtn.classList.toggle('disabled', currentPage === totalPages);
+    
+    prevBtn.onclick = currentPage > 1 ? () => goToPage(currentPage - 1) : null;
+    nextBtn.onclick = currentPage < totalPages ? () => goToPage(currentPage + 1) : null;
+    
+    // 页码按实际数据量动态生成
+    const box = document.getElementById('pageNumbers');
+    if (box) {
+      box.innerHTML = '';
+      for (let p = 1; p <= totalPages; p++) {
+        const b = document.createElement('button');
+        b.className = 'page-btn' + (p === currentPage ? ' active' : '');
+        b.textContent = String(p);
+        b.onclick = () => goToPage(p);
+        box.appendChild(b);
+      }
+    }
+  }
+
+  // 搜索功能
+  function handleSearch() {
+    const keyword = document.getElementById('searchInput').value.toLowerCase();
+    const base = document.getElementById('baseSelect').value;
+    const status = document.getElementById('statusSelect').value;
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    
+    filteredData = allRows().filter(item => {
+      const hay = (item.adopter + ' ' + item.treeName + ' ' + item.code + ' ' + (item.phone || '')).toLowerCase();
+      const matchKeyword = !keyword || hay.includes(keyword);
+      const matchBase = !base || (item.base || '').includes(base);
+      const matchStatus = !status || item.status === status;
+      const matchDate = (!startDate && !endDate) || 
+                       (startDate ? item.date >= startDate : true) && 
+                       (endDate ? item.date <= endDate : true);
+      return matchKeyword && matchBase && matchStatus && matchDate;
+    });
+
+    currentPage = 1;
+    goToPage(1);
+  }
+
+  // 弹窗操作
+  function showModal(modalId) {
+    document.getElementById(modalId).classList.add('show');
+  }
+
+  function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('show');
+  }
+
+  // 详情弹窗
+  function showDetail(id) {
+    const item = allRows().find(d => d.id === id);
+    if (!item) return;
+    const stText = statusText(item.status);
+    const srcText = item.source === 'mobile' ? '移动端预约' : '后台采收';
+    document.getElementById('detailContent').innerHTML = `
+      <div class="detail-row"><div class="detail-label">记录编号</div><div class="detail-value text-mono">${item.code}</div></div>
+      <div class="detail-row"><div class="detail-label">数据来源</div><div class="detail-value">${srcText}</div></div>
+      ${item.orderNo ? `<div class="detail-row"><div class="detail-label">关联订单</div><div class="detail-value text-mono">${item.orderNo}</div></div>` : ''}
+      <div class="detail-row"><div class="detail-label">认养果树</div><div class="detail-value">${item.treeName}</div></div>
+      <div class="detail-row"><div class="detail-label">所属基地</div><div class="detail-value">${item.base}</div></div>
+      <div class="detail-row"><div class="detail-label">认养人</div><div class="detail-value">${item.adopter}</div></div>
+      <div class="detail-row"><div class="detail-label">联系电话</div><div class="detail-value">${item.phone || '—'}</div></div>
+      ${item.people ? `<div class="detail-row"><div class="detail-label">预约人数</div><div class="detail-value">${item.people} 人</div></div>` : ''}
+      <div class="detail-row"><div class="detail-label">采收方式</div><div class="detail-value">${item.method}</div></div>
+      <div class="detail-row"><div class="detail-label">采收量</div><div class="detail-value">${item.amount}斤</div></div>
+      <div class="detail-row"><div class="detail-label">采收日期</div><div class="detail-value">${item.date}${item.time ? ' ' + item.time : ''}</div></div>
+      ${item.remark ? `<div class="detail-row"><div class="detail-label">备注</div><div class="detail-value">${item.remark}</div></div>` : ''}
+      <div class="detail-row"><div class="detail-label">状态</div><div class="detail-value"><span class="status-tag ${item.status}">${stText}</span></div></div>
+    `;
+    showModal('detailModal');
+  }
+
+  // 采收弹窗
+  function showHarvest(id) {
+    const item = allRows().find(d => d.id === id);
+    if (!item) return;
+    window.__currentHarvestRow = item;
+    document.getElementById('harvestInfo').textContent = `将采收：${item.treeName} - ${item.adopter}`;
+    document.getElementById('harvestAmount').value = item.amount && item.amount !== '—' ? item.amount : '';
+    document.getElementById('harvestRemark').value = '';
+    showModal('harvestModal');
+  }
+
+  /* 确认采收：全部写回数据层；仅回写本条对应预约，不再批量误置 */
+  function confirmHarvest() {
+    const row = window.__currentHarvestRow;
+    if (!row) return;
+    const qty = Number(document.getElementById('harvestAmount').value);
+    const remark = document.getElementById('harvestRemark').value || '';
+    if (!qty || qty <= 0) { toast('请填写有效的采收数量', 'error'); return; }
+
+    try {
+      if (row.source === 'harvest') {
+        if (remark) S.saveHarvest({ id: row.id, treeCode: row.treeCode, date: row.date, qty: qty, remark: remark });
+        S.confirmHarvest(row.id, { qty: qty });
+        toast('采收已确认：' + row.treeName + ' ' + qty + ' 斤');
+      } else {
+        const tree = S.findTree(row.treeCode);
+        if (!tree) throw new Error('果树编号「' + (row.treeCode || '未知') + '」未在认养台账登记，请先在果树台账补录后再采收');
+        const rec = S.saveHarvest({
+          treeCode: tree.treeCode,
+          date: row.date || new Date().toISOString().slice(0, 10),
+          qty: qty,
+          method: '到园采摘',
+          reservationId: row.reservationId,
+          remark: remark
+        });
+        S.confirmHarvest(rec.id, { qty: qty });
+        toast('采收成功：' + tree.treeName + ' ' + qty + ' 斤');
+      }
+      closeModal('harvestModal');
+      window.__currentHarvestRow = null;
+      reloadData();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  // 新增弹窗：果树下拉取自数据层已认养果树
+  function showAddModal() {
+    const sel = document.getElementById('addTree');
+    const adopted = S.trees().filter(function (t) { return t.status === 'adopted' && t.adopter; });
+    sel.innerHTML = adopted.length
+      ? adopted.map(function (t) { return '<option value="' + t.treeCode + '">' + t.treeName + ' - ' + t.adopter + '</option>'; }).join('')
+      : '<option value="">暂无可采收的已认养果树</option>';
+    document.getElementById('addAmount').value = '';
+    document.getElementById('addDate').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('addRemark').value = '';
+    showModal('addModal');
+  }
+
+  function saveAdd() {
+    const treeCode = document.getElementById('addTree').value;
+    const amount = Number(document.getElementById('addAmount').value);
+    const date = document.getElementById('addDate').value;
+    const remark = document.getElementById('addRemark').value || '';
+    if (!treeCode) { toast('暂无可采收的已认养果树', 'error'); return; }
+    if (!amount || amount <= 0) { toast('请输入有效的预计采收量', 'error'); return; }
+    if (!date) { toast('请选择采收日期', 'error'); return; }
+    try {
+      const rec = S.saveHarvest({ treeCode: treeCode, date: date, qty: amount, remark: remark, status: 'pending' });
+      toast('采收记录已创建：' + rec.id);
+      closeModal('addModal');
+      reloadData();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  }
+
+  // 导出功能
+  function showExportModal() {
+    showModal('exportModal');
+  }
+
+  function doExport(format) {
+    closeModal('exportModal');
+    const rows = filteredData.length ? filteredData : allRows();
+    if (!rows.length) { toast('暂无可导出的采收记录', 'error'); return; }
+    const header = ['记录编号', '认养果树', '认养人', '联系电话', '采收量(斤)', '采收日期', '状态', '所属基地', '数据来源'];
+    const lines = [header.join(',')].concat(rows.map(function (i) {
+      return [
+        i.code, i.treeName, i.adopter, i.phone || '', i.amount, i.date,
+        statusText(i.status), i.base, i.source === 'mobile' ? '移动端预约' : '后台采收'
+      ].map(function (v) {
+        return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+      }).join(',');
+    }));
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = '认养采收记录_' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('已导出 ' + rows.length + ' 条采收记录');
+  }
+
+  // 数据变更后刷新（含跨标签页 storage 同步）
+  function reloadData() {
+    filteredData = allRows();
+    currentPage = 1;
+    goToPage(1);
+  }
+
+  if (S && S.onChange) S.onChange(reloadData);
+  window.addEventListener('storage', function (e) {
+    if (!e.key || e.key === S.STORAGE_KEY || e.key === S.CROSS.reservations) reloadData();
+  });
+
+  // 初始化
+  reloadData();
+</script>
+
+<!-- 已通过质量审查（第2轮修正）- 严过审 2026-09-18 -->
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/common-functions.js"></script>
+  <script src="js/search-helper.js"></script>
+  <script src="js/typography.js"></script>
+</body>
+</html>

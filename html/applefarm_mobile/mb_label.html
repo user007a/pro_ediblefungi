@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌环境监测系统 - 扫码开工</title>
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <script src="js/mobile-store.js"></script>
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+
+    body { background: var(--bg); }
+    [hidden] { display: none !important; }
+    .mb-app { padding-bottom: 24px; }
+    .page-body { padding: 12px 14px 28px; }
+
+    .p-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow-card);
+    }
+    .p-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-md);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .p-card-title svg { width: 18px; height: 18px; color: var(--primary); }
+
+    .scan-row { display: flex; gap: 8px; align-items: stretch; }
+    .p-input {
+      width: 100%;
+      height: 46px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0 12px;
+      font-size: var(--font-base);
+      font-family: inherit;
+      color: var(--text);
+      background: var(--bg-white);
+    }
+    .p-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-50);
+    }
+    .p-input[readonly] { background: var(--primary-50); color: var(--text-secondary); }
+    .p-textarea {
+      height: auto;
+      min-height: 64px;
+      padding: 10px 12px;
+      line-height: 1.5;
+      resize: vertical;
+    }
+    .p-input.is-invalid {
+      border-color: var(--error);
+      background: var(--error-light);
+    }
+    .scan-row .p-input { flex: 1; min-width: 0; }
+    .scan-sim {
+      flex: 0 0 auto;
+      min-height: 46px;
+      padding: 0 14px;
+      background: var(--primary-50);
+      border: 1px solid var(--primary-200);
+      color: var(--primary-700);
+      white-space: nowrap;
+    }
+    .scan-hint {
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      margin-top: 6px;
+    }
+    .field-error {
+      min-height: 16px;
+      margin-top: 4px;
+      font-size: var(--font-xs);
+      color: var(--error);
+      line-height: 1.4;
+    }
+    .scan-submit { margin-top: 4px; }
+
+    .batch-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .batch-code {
+      font-family: var(--font-family-number);
+      font-size: var(--font-lg);
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: var(--primary-700);
+    }
+    .batch-sub { font-size: var(--font-xs); color: var(--text-tertiary); margin-top: 2px; }
+    .batch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 12px;
+    }
+    .batch-item {
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      line-height: 1.4;
+    }
+    .batch-item b {
+      display: block;
+      margin-top: 2px;
+      font-size: var(--font-sm);
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .stage-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stage-chip {
+      padding: 8px 13px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      background: var(--bg-white);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: var(--font-sm);
+      cursor: pointer;
+    }
+    .stage-chip.active {
+      background: var(--primary-50);
+      border-color: var(--primary);
+      color: var(--primary-700);
+      font-weight: 600;
+    }
+    .stage-chip-note { font-size: var(--font-xs); color: var(--text-tertiary); margin-top: 8px; }
+
+    .p-field { margin-top: 12px; }
+    .p-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+    }
+    .p-label .req { color: var(--error); }
+    .stage-submit { margin-top: 16px; }
+
+    .result-card {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      background: var(--primary-50);
+      border-color: var(--primary-200);
+    }
+    .result-icon {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--success-light);
+      color: var(--success-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .result-icon svg { width: 22px; height: 22px; }
+    .result-title { font-size: var(--font-md); font-weight: 700; color: var(--text); }
+    .result-desc { font-size: var(--font-xs); color: var(--text-secondary); margin-top: 3px; line-height: 1.5; }
+    .result-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-soft {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+
+    .job-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .job-item:last-child { border-bottom: none; }
+    .job-main { flex: 1; min-width: 0; }
+    .job-code {
+      font-family: var(--font-family-number);
+      font-size: var(--font-sm);
+      font-weight: 700;
+      color: var(--text);
+    }
+    .job-meta {
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+    .empty-tip {
+      text-align: center;
+      padding: 24px 12px;
+      font-size: var(--font-sm);
+      color: var(--text-tertiary);
+      line-height: 1.6;
+    }
+
+    .sample-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      cursor: pointer;
+    }
+    .sample-item:active { background: var(--primary-50); }
+    .sample-code {
+      font-family: var(--font-family-number);
+      font-size: var(--font-base);
+      font-weight: 700;
+      color: var(--text);
+    }
+    .sample-meta { font-size: var(--font-xs); color: var(--text-secondary); margin-top: 2px; }
+    .sample-arrow { color: var(--primary); font-size: var(--font-md); }
+
+    .mb-btn { font-family: inherit; }
+    #syncBar { margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <div class="mb-back-bar">
+      <button class="mb-back-arrow" type="button" onclick="navigateTo('mb_home.html')" aria-label="返回首页">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <div class="mb-back-title">扫码开工</div>
+    </div>
+
+    <div id="syncBar"></div>
+
+    <main class="page-body">
+      <!-- 扫码区 -->
+      <section class="p-card">
+        <div class="p-card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <path d="M14 14h3v3h-3z"/>
+            <path d="M21 14v7h-7"/>
+          </svg>
+          扫描菌包批次码
+        </div>
+        <div class="scan-row">
+          <input class="p-input" id="batchInput" type="text" maxlength="16" autocomplete="off"
+                 placeholder="输入或粘贴批次码">
+          <button class="mb-btn scan-sim" type="button" onclick="openSamplePicker()">模拟扫码</button>
+        </div>
+        <div class="scan-hint">批次码格式：JB-8位日期-2位序号，如 JB-20261116-03</div>
+        <div class="field-error" id="err_batch"></div>
+        <button class="mb-btn mb-btn-primary mb-btn-block scan-submit" type="button" onclick="confirmStart()">确认开工</button>
+      </section>
+
+      <!-- 批次校验结果 -->
+      <section id="batchCard" hidden></section>
+
+      <!-- 开工信息 -->
+      <section class="p-card" id="stageCard" hidden>
+        <div class="p-card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+            <rect x="9" y="3" width="6" height="4" rx="1"/>
+            <polyline points="9 14 11 16 15 12"/>
+          </svg>
+          选择开工工序
+        </div>
+        <div class="stage-chips" id="stageChips"></div>
+        <div class="stage-chip-note">开局记录将自动关联当前菌包批次与接种室</div>
+
+        <div class="p-field">
+          <label class="p-label" for="operatorInput">操作人<span class="req">*</span></label>
+          <input class="p-input" id="operatorInput" type="text" placeholder="请输入操作人">
+          <div class="field-error" id="err_operator"></div>
+        </div>
+        <div class="p-field">
+          <label class="p-label" for="startTimeView">开始时间</label>
+          <input class="p-input" id="startTimeView" type="text" readonly>
+        </div>
+        <div class="p-field">
+          <label class="p-label" for="remarkInput">备注</label>
+          <textarea class="p-input p-textarea" id="remarkInput" placeholder="备注信息（选填）"></textarea>
+        </div>
+        <button class="mb-btn mb-btn-primary mb-btn-block stage-submit" type="button" onclick="confirmStart()">确认开工</button>
+      </section>
+
+      <!-- 开工成功 -->
+      <section id="resultCard"></section>
+
+      <!-- 最近扫码开工 -->
+      <section class="p-card">
+        <div class="p-card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <polyline points="12 7 12 12 15 14"/>
+          </svg>
+          最近扫码开工
+        </div>
+        <div id="recentList"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 模拟扫码样例 -->
+  <div class="mb-modal-overlay" id="sampleModal">
+    <div class="mb-modal">
+      <div class="mb-modal-title">模拟扫码 · 选择菌包批次</div>
+      <div id="sampleList"></div>
+      <div class="mb-modal-actions">
+        <button class="mb-btn btn-soft" type="button" onclick="closeSamplePicker()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+     * 扫码开工：批次校验 → 登记开工 → 关联批次跳转工序填报
+     * 开工记录：localStorage['mushroom_scan_jobs']
+     * 离线队列：MobileStore.enqueue({type:'scan_start', ...})
+     * ============================================================ */
+
+    var SCAN_KEY = 'mushroom_scan_jobs';
+    var BATCH_RE = /^JB-\d{8}-\d{2}$/;
+
+    /* 模拟扫码可选样例 */
+    var SAMPLES = [
+      { code: 'JB-20261116-03', note: '灭菌完成 2026-11-16 08:40 · 待接种' },
+      { code: 'JB-20261116-04', note: '灭菌完成 2026-11-16 08:40 · 待接种' },
+      { code: 'JB-20261115-08', note: '灭菌完成 2026-11-16 08:40 · 待接种' }
+    ];
+
+    /* 开工工序：label 为本页口径，target 为工序填报页 Tab 口径 */
+    var STAGES = [
+      { name: '拌料装袋', target: '拌料装袋' },
+      { name: '灭菌接种', target: '接种' },
+      { name: '发菌培养', target: '培养' },
+      { name: '出菇管理', target: '出菇' },
+      { name: '采收', target: '采收' }
+    ];
+
+    var BATCH_META = {
+      variety: '杏鲍菇',
+      strain: '菌种-X2',
+      sterilized: '2026-11-16 08:40',
+      house: '接种室 A',
+      current: '待接种',
+      tag: '灭菌合格'
+    };
+
+    var selectedStage = '';
+    var verifiedBatch = '';
+    var lastJob = null;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function navigateTo(page) { window.location.href = page; }
+
+    function currentOperator() {
+      try {
+        return sessionStorage.getItem('loginUser') || '李国强';
+      } catch (e) {
+        return '李国强';
+      }
+    }
+
+    function readJobs() {
+      try {
+        var raw = localStorage.getItem(SCAN_KEY);
+        var v = raw ? JSON.parse(raw) : [];
+        return Array.isArray(v) ? v : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveJobs(list) {
+      try {
+        localStorage.setItem(SCAN_KEY, JSON.stringify(list));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function normBatch() {
+      return document.getElementById('batchInput').value.trim().toUpperCase();
+    }
+
+    function setBatchError(msg) {
+      var input = document.getElementById('batchInput');
+      var box = document.getElementById('err_batch');
+      if (box) box.textContent = msg || '';
+      if (input) input.classList.toggle('is-invalid', !!msg);
+    }
+
+    function setOperatorError(msg) {
+      var input = document.getElementById('operatorInput');
+      var box = document.getElementById('err_operator');
+      if (box) box.textContent = msg || '';
+      if (input) input.classList.toggle('is-invalid', !!msg);
+    }
+
+    /* 重复开工：同一批次 + 同一工序已存在开工记录 */
+    function findDuplicate(batch, stage) {
+      var list = readJobs();
+      for (var i = 0; i < list.length; i++) {
+        if (list[i] && list[i].batch === batch && list[i].stage === stage) return list[i];
+      }
+      return null;
+    }
+
+    /* 队列中 type=scan_start 的记录 → 待同步集合 */
+    function pendingScanSet() {
+      var set = {};
+      MobileStore.list(MobileStore.KEYS.queue).forEach(function (e) {
+        if (!e || e.type !== 'scan_start') return;
+        if (e.refId) set[e.refId] = true;
+        if (e.payload && e.payload.id) set[e.payload.id] = true;
+      });
+      return set;
+    }
+
+    function renderSamples() {
+      document.getElementById('sampleList').innerHTML = SAMPLES.map(function (s) {
+        return '<div class="sample-item" onclick="pickSample(\'' + s.code + '\')">' +
+          '<div><div class="sample-code">' + esc(s.code) + '</div>' +
+          '<div class="sample-meta">' + esc(s.note) + '</div></div>' +
+          '<span class="sample-arrow">›</span></div>';
+      }).join('');
+    }
+
+    function openSamplePicker() {
+      renderSamples();
+      document.getElementById('sampleModal').classList.add('show');
+    }
+
+    function closeSamplePicker() {
+      document.getElementById('sampleModal').classList.remove('show');
+    }
+
+    function pickSample(code) {
+      document.getElementById('batchInput').value = code;
+      closeSamplePicker();
+      setBatchError('');
+      verifyAndReveal(code, true);
+      MobileStore.toast('已识别批次 ' + code, 'success');
+    }
+
+    function renderStageChips() {
+      document.getElementById('stageChips').innerHTML = STAGES.map(function (s) {
+        return '<button type="button" class="stage-chip' + (s.name === selectedStage ? ' active' : '') +
+          '" onclick="selectStage(\'' + s.name + '\')">' + esc(s.name) + '</button>';
+      }).join('');
+    }
+
+    function selectStage(name) {
+      selectedStage = name;
+      renderStageChips();
+      setBatchError('');
+    }
+
+    function renderBatchCard() {
+      var box = document.getElementById('batchCard');
+      box.innerHTML =
+        '<div class="p-card">' +
+          '<div class="batch-head">' +
+            '<div>' +
+              '<div class="batch-code">' + esc(verifiedBatch) + '</div>' +
+              '<div class="batch-sub">菌包批次校验通过</div>' +
+            '</div>' +
+            '<span class="mb-tag success">' + esc(BATCH_META.tag) + '</span>' +
+          '</div>' +
+          '<div class="batch-grid">' +
+            '<div class="batch-item">品种<b>' + esc(BATCH_META.variety) + '</b></div>' +
+            '<div class="batch-item">菌种批次<b>' + esc(BATCH_META.strain) + '</b></div>' +
+            '<div class="batch-item">灭菌完成<b>' + esc(BATCH_META.sterilized) + '</b></div>' +
+            '<div class="batch-item">菇房<b>' + esc(BATCH_META.house) + '</b></div>' +
+            '<div class="batch-item">当前工序<b>' + esc(BATCH_META.current) + '</b></div>' +
+            '<div class="batch-item">批次状态<b>' + esc(BATCH_META.tag) + '</b></div>' +
+          '</div>' +
+        '</div>';
+      box.hidden = false;
+    }
+
+    function verifyAndReveal(code, preselect) {
+      verifiedBatch = code;
+      renderBatchCard();
+      document.getElementById('stageCard').hidden = false;
+      if (preselect && !selectedStage) {
+        selectedStage = '灭菌接种';
+        renderStageChips();
+      }
+      document.getElementById('startTimeView').value = MobileStore.fmtTime(Date.now());
+    }
+
+    function confirmStart() {
+      setBatchError('');
+      setOperatorError('');
+      var code = normBatch();
+      if (!BATCH_RE.test(code)) {
+        setBatchError('批次码格式有误');
+        MobileStore.toast('批次码格式有误', 'error');
+        return;
+      }
+
+      verifyAndReveal(code, false);
+
+      if (!selectedStage) {
+        MobileStore.toast('批次校验通过，请选择开工工序', 'info');
+        var card = document.getElementById('stageCard');
+        if (card.scrollIntoView) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      var dup = findDuplicate(code, selectedStage);
+      if (dup) {
+        setBatchError('批次 ' + code + ' 已登记「' + selectedStage + '」开工，请勿重复开工');
+        MobileStore.toast('重复开工已被拦截', 'error');
+        return;
+      }
+
+      var operator = document.getElementById('operatorInput').value.trim();
+      if (!operator) {
+        setOperatorError('请填写操作人');
+        MobileStore.toast('请填写操作人', 'warning');
+        return;
+      }
+
+      var job = {
+        id: 'scan_' + Date.now(),
+        batch: code,
+        stage: selectedStage,
+        operator: operator,
+        house: BATCH_META.house,
+        startTime: MobileStore.fmtTime(Date.now()),
+        remark: document.getElementById('remarkInput').value.trim(),
+        status: 'submitted'
+      };
+
+      var ok = saveJobs([job].concat(readJobs()));
+      if (!ok) {
+        MobileStore.toast('本地存储写入失败，请清理空间后重试', 'error');
+        return;
+      }
+
+      /* 标记离线待同步；在线时 MobileStore 会立即补传并移出队列 */
+      MobileStore.enqueue({
+        id: 'q_' + job.id,
+        type: 'scan_start',
+        refId: job.id,
+        payload: job
+      });
+
+      lastJob = job;
+      renderResult(job);
+      renderRecent();
+      MobileStore.toast('开工登记成功：' + job.batch + ' · ' + job.stage, 'success');
+    }
+
+    function renderResult(job) {
+      document.getElementById('resultCard').innerHTML =
+        '<div class="p-card result-card">' +
+          '<div class="result-icon">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '</div>' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div class="result-title">开工登记成功</div>' +
+            '<div class="result-desc">' + esc(job.batch) + ' · ' + esc(job.stage) + ' · ' + esc(job.startTime) + '</div>' +
+            '<div class="result-desc">记录已写入开工台账并关联批次，可继续填报工序明细。</div>' +
+            '<div class="result-actions">' +
+              '<button class="mb-btn mb-btn-primary mb-btn-sm" type="button" onclick="gotoRecord()">去填报</button>' +
+              '<button class="mb-btn mb-btn-sm btn-soft" type="button" onclick="resetScan()">继续扫码</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    function gotoRecord() {
+      if (!lastJob) return;
+      var stage = STAGES.filter(function (s) { return s.name === lastJob.stage; })[0];
+      var target = stage ? stage.target : lastJob.stage;
+      window.location.href = 'mb_record_task.html?batch=' + encodeURIComponent(lastJob.batch) +
+        '&stage=' + encodeURIComponent(target);
+    }
+
+    function resetScan() {
+      lastJob = null;
+      verifiedBatch = '';
+      selectedStage = '';
+      document.getElementById('batchInput').value = '';
+      document.getElementById('resultCard').innerHTML = '';
+      document.getElementById('batchCard').innerHTML = '';
+      document.getElementById('batchCard').hidden = true;
+      document.getElementById('stageCard').hidden = true;
+      document.getElementById('remarkInput').value = '';
+      renderStageChips();
+      setBatchError('');
+      setOperatorError('');
+      document.getElementById('batchInput').focus();
+    }
+
+    function renderRecent() {
+      var jobs = readJobs().slice().sort(function (a, b) {
+        return String(b.startTime || '').localeCompare(String(a.startTime || ''));
+      }).slice(0, 10);
+      var box = document.getElementById('recentList');
+      if (!jobs.length) {
+        box.innerHTML = '<div class="empty-tip">暂无扫码开工记录<br>扫描菌包批次码即可登记开工</div>';
+        return;
+      }
+      var pendingSet = pendingScanSet();
+      box.innerHTML = jobs.map(function (j) {
+        var pending = !!pendingSet[j.id];
+        return '<div class="job-item">' +
+          '<div class="job-main">' +
+            '<div class="job-code">' + esc(j.batch) + '</div>' +
+            '<div class="job-meta">' + esc(j.stage) + ' · ' + esc(j.startTime) + ' · ' + esc(j.operator || '-') + '</div>' +
+          '</div>' +
+          '<span class="mb-tag ' + (pending ? 'warning' : 'success') + '">' + (pending ? '待同步' : '已同步') + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      document.getElementById('operatorInput').value = currentOperator();
+      document.getElementById('startTimeView').value = MobileStore.fmtTime(Date.now());
+      renderStageChips();
+      renderRecent();
+      MobileStore.renderSyncBar(document.getElementById('syncBar'));
+
+      document.getElementById('batchInput').addEventListener('input', function () {
+        if (normBatch() !== verifiedBatch) {
+          document.getElementById('batchCard').hidden = true;
+          document.getElementById('resultCard').innerHTML = '';
+        }
+        setBatchError('');
+      });
+
+      document.getElementById('batchInput').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          confirmStart();
+        }
+      });
+
+      document.getElementById('sampleModal').addEventListener('click', function (e) {
+        if (e.target === this) closeSamplePicker();
+      });
+
+      /* 队列变化 / 跨页数据变化时刷新最近开工状态 */
+      MobileStore.onQueueChange(function () { renderRecent(); });
+      MobileStore.subscribe(function () { renderRecent(); });
+      window.addEventListener('storage', function (e) {
+        if (e.key === SCAN_KEY || e.key === MobileStore.KEYS.queue) renderRecent();
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌环境监测系统 - 采收过磅</title>
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <script src="js/mobile-store.js"></script>
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+    body { background: var(--bg); }
+
+    .mb-app { padding-bottom: 32px; }
+
+    /* ---------- 汇总卡 ---------- */
+    .yd-summary {
+      margin: var(--space-4) var(--space-4) 0;
+      border-radius: var(--radius-xl);
+      padding: 18px 16px 16px;
+      background: var(--gradient-header);
+      color: var(--text-on-primary);
+      box-shadow: 0 6px 20px rgba(69, 48, 35, 0.24);
+    }
+    .yd-summary-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .yd-summary-title { font-size: var(--font-md); font-weight: 700; letter-spacing: 0.3px; }
+    .yd-summary-date { font-size: var(--font-2xs); opacity: 0.8; }
+    .yd-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .yd-sum-cell {
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius-md);
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .yd-sum-value {
+      font-size: var(--font-xl);
+      font-weight: 800;
+      line-height: 1.15;
+      font-family: var(--font-family-number);
+    }
+    .yd-sum-value small { font-size: var(--font-2xs); font-weight: 500; margin-left: 2px; opacity: 0.85; }
+    .yd-sum-label { font-size: var(--font-2xs); opacity: 0.82; margin-top: 3px; }
+
+    /* ---------- 卡片 / 区块 ---------- */
+    .yd-card {
+      margin: var(--space-4);
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      box-shadow: var(--shadow-card);
+    }
+    .yd-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .yd-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-md);
+      font-weight: 700;
+      color: var(--text);
+    }
+    .yd-card-sub { font-size: var(--font-2xs); color: var(--text-tertiary); }
+
+    /* ---------- 表单 ---------- */
+    .yd-field { margin-bottom: 14px; }
+    .yd-field:last-child { margin-bottom: 0; }
+    .yd-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .yd-label b { color: var(--error); font-weight: 600; }
+    .yd-label .hint { font-size: var(--font-2xs); color: var(--text-tertiary); }
+    .yd-input {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      color: var(--text);
+      font-size: var(--font-base);
+      font-family: inherit;
+      transition: border-color var(--transition-fast);
+    }
+    .yd-input:focus { outline: none; border-color: var(--primary); }
+    .yd-input[readonly] { background: var(--primary-50); color: var(--text-secondary); }
+    .yd-input.has-error { border-color: var(--error); background: var(--error-light); }
+    .yd-textarea {
+      width: 100%;
+      min-height: 76px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      color: var(--text);
+      font-size: var(--font-sm);
+      font-family: inherit;
+      line-height: 1.5;
+      resize: none;
+    }
+    .yd-textarea:focus { outline: none; border-color: var(--primary); }
+    .yd-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .yd-err {
+      display: none;
+      font-size: var(--font-2xs);
+      color: var(--error-dark);
+      margin-top: 5px;
+      line-height: 1.4;
+    }
+    .yd-err.show { display: block; }
+
+    /* 分级标准提示 */
+    .yd-std {
+      background: var(--primary-50);
+      border: 1px dashed var(--primary-200);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      font-size: var(--font-2xs);
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .yd-std-title { font-size: var(--font-xs); font-weight: 700; color: var(--primary-700); margin-bottom: 2px; }
+    .yd-std b { color: var(--primary-700); }
+
+    /* 自动计算结果 */
+    .yd-calc {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: var(--info-light);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      margin: 4px 0 14px;
+    }
+    .yd-calc-cell { text-align: center; min-width: 0; }
+    .yd-calc-value {
+      font-size: var(--font-lg);
+      font-weight: 700;
+      color: var(--primary-700);
+      font-family: var(--font-family-number);
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .yd-calc-value.warn { color: var(--warning-dark); }
+    .yd-calc-value.bad { color: var(--error-dark); }
+    .yd-calc-label { font-size: var(--font-2xs); color: var(--text-tertiary); margin-top: 2px; }
+
+    /* 照片 */
+    .yd-photo {
+      position: relative;
+      height: 150px;
+      border: 2px dashed var(--border-strong);
+      border-radius: var(--radius-lg);
+      background: var(--bg-white);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .yd-photo.has-photo { border-style: solid; border-color: var(--primary-300); }
+    .yd-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .yd-photo-tip { font-size: var(--font-sm); color: var(--text-secondary); }
+    .yd-photo-sub { font-size: var(--font-2xs); color: var(--text-tertiary); }
+    .yd-photo-badge {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+      z-index: 2;
+      font-size: var(--font-2xs);
+      color: var(--text-on-primary);
+      background: rgba(59, 44, 31, 0.62);
+      border-radius: var(--radius-full);
+      padding: 2px 8px;
+    }
+
+    /* ---------- 记录列表 ---------- */
+    .yd-rec {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+    }
+    .yd-rec:last-child { border-bottom: none; }
+    .yd-rec:active { background: var(--primary-50); }
+    .yd-rec-main { flex: 1; min-width: 0; }
+    .yd-rec-id { font-size: var(--font-sm); font-weight: 700; color: var(--text); }
+    .yd-rec-desc { font-size: var(--font-2xs); color: var(--text-secondary); margin-top: 3px; }
+    .yd-rec-side { text-align: right; flex-shrink: 0; }
+    .yd-rec-num { font-size: var(--font-sm); font-weight: 700; color: var(--primary-700); font-family: var(--font-family-number); }
+    .yd-rec-time { font-size: var(--font-2xs); color: var(--text-tertiary); margin-top: 3px; }
+    .yd-sync-link {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: var(--font-2xs);
+      color: var(--primary-600);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .yd-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 7px;
+      border-radius: var(--radius-full);
+      font-size: var(--font-2xs);
+      font-weight: 600;
+      line-height: 1.7;
+      margin-top: 4px;
+    }
+    .yd-badge.ok { background: var(--success); color: var(--text-inverse); }
+    .yd-badge.pending { background: var(--warning); color: var(--text-inverse); }
+    .yd-empty {
+      padding: 26px 12px;
+      text-align: center;
+      font-size: var(--font-sm);
+      color: var(--text-tertiary);
+    }
+
+    /* ---------- 弹窗 ---------- */
+    .yd-detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: var(--font-sm);
+    }
+    .yd-detail-row:last-child { border-bottom: none; }
+    .yd-detail-row span { color: var(--text-tertiary); flex-shrink: 0; }
+    .yd-detail-row b { color: var(--text); font-weight: 600; text-align: right; word-break: break-all; }
+    .yd-detail-photo { width: 100%; border-radius: var(--radius-md); margin-top: 10px; }
+    .yd-confirm-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      background: var(--warning-light);
+      color: var(--warning-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .yd-confirm-icon svg { width: 28px; height: 28px; }
+    .yd-confirm-title { font-size: var(--font-lg); font-weight: 700; text-align: center; color: var(--text); }
+    .yd-confirm-desc {
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      line-height: 1.6;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .yd-confirm-desc em { font-style: normal; color: var(--error-dark); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <div class="mb-back-bar">
+      <button class="mb-back-arrow" type="button" onclick="goHome()" aria-label="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="mb-back-title">采收过磅</div>
+    </div>
+
+    <!-- 汇总 -->
+    <div class="yd-summary">
+      <div class="yd-summary-head">
+        <div class="yd-summary-title">今日采收汇总</div>
+        <div class="yd-summary-date" id="sumDate">—</div>
+      </div>
+      <div class="yd-summary-grid">
+        <div class="yd-sum-cell">
+          <div class="yd-sum-value" id="sumTotal">0<small>kg</small></div>
+          <div class="yd-sum-label">采收总量</div>
+        </div>
+        <div class="yd-sum-cell">
+          <div class="yd-sum-value" id="sumRate">—</div>
+          <div class="yd-sum-label">一级率</div>
+        </div>
+        <div class="yd-sum-cell">
+          <div class="yd-sum-value" id="sumCount">0<small>单</small></div>
+          <div class="yd-sum-label">采收单数</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="syncBar"></div>
+    <!-- 过磅表单 -->
+    <div class="yd-card">
+      <div class="yd-card-head">
+        <div class="yd-card-title"><span class="mb-section-dot"></span>采收过磅录入</div>
+        <span class="yd-card-sub">SC-07 · 分级过磅</span>
+      </div>
+
+      <div class="yd-field">
+        <div class="yd-label"><span>批次号 <b>*</b></span><span class="hint">选择后联动菇房/品种</span></div>
+        <select class="yd-input" id="fBatch" onchange="onBatchChange()"></select>
+        <div class="yd-err" id="errBatch">请选择批次号</div>
+      </div>
+
+      <div class="yd-row">
+        <div class="yd-field">
+          <div class="yd-label"><span>菇房</span></div>
+          <input class="yd-input" id="fHouse" readonly value="—">
+        </div>
+        <div class="yd-field">
+          <div class="yd-label"><span>品种</span></div>
+          <input class="yd-input" id="fVariety" readonly value="杏鲍菇">
+        </div>
+      </div>
+
+      <div class="yd-std">
+        <div class="yd-std-title">分级标准</div>
+        <div><b>一级</b>：菌盖直径 4~6cm、菌柄长度 ≤8cm</div>
+        <div><b>二级</b>：菌盖直径 6~8cm</div>
+        <div><b>等外</b>：畸形 / 破损</div>
+      </div>
+
+      <div class="yd-field">
+        <div class="yd-label"><span>总重量（kg）<b>*</b></span><span class="hint">>5000kg 需复核</span></div>
+        <input class="yd-input" id="fTotal" type="number" inputmode="decimal" min="0" step="0.1" placeholder="请输入本批过磅总重" oninput="recalc()">
+        <div class="yd-err" id="errTotal"></div>
+      </div>
+
+      <div class="yd-row">
+        <div class="yd-field">
+          <div class="yd-label"><span>一级重量（kg）<b>*</b></span></div>
+          <input class="yd-input" id="fA" type="number" inputmode="decimal" min="0" step="0.1" placeholder="0" oninput="recalc()">
+          <div class="yd-err" id="errA"></div>
+        </div>
+        <div class="yd-field">
+          <div class="yd-label"><span>二级重量（kg）<b>*</b></span></div>
+          <input class="yd-input" id="fB" type="number" inputmode="decimal" min="0" step="0.1" placeholder="0" oninput="recalc()">
+          <div class="yd-err" id="errB"></div>
+        </div>
+      </div>
+
+      <div class="yd-calc">
+        <div class="yd-calc-cell">
+          <div class="yd-calc-value" id="calcC">0.0</div>
+          <div class="yd-calc-label">等外重量 kg</div>
+        </div>
+        <div class="yd-calc-cell">
+          <div class="yd-calc-value" id="calcRate">0.0%</div>
+          <div class="yd-calc-label">一级率</div>
+        </div>
+        <div class="yd-calc-cell">
+          <div class="yd-calc-value" id="calcSum">0.0</div>
+          <div class="yd-calc-label">一二级合计 kg</div>
+        </div>
+      </div>
+      <div class="yd-err" id="errSum" style="margin-top:-8px;margin-bottom:12px;"></div>
+
+      <div class="yd-row">
+        <div class="yd-field">
+          <div class="yd-label"><span>操作人</span></div>
+          <input class="yd-input" id="fOperator" value="李国强">
+        </div>
+        <div class="yd-field">
+          <div class="yd-label"><span>过磅时间 <b>*</b></span></div>
+          <input class="yd-input" id="fTime" type="datetime-local">
+          <div class="yd-err" id="errTime">请选择过磅时间</div>
+        </div>
+      </div>
+
+      <div class="yd-field">
+        <div class="yd-label"><span>备注</span><span class="hint">选填</span></div>
+        <textarea class="yd-textarea" id="fNote" placeholder="如：本批为第二潮菇，含少量破损菇"></textarea>
+      </div>
+
+      <div class="yd-field">
+        <div class="yd-label"><span>过磅凭证照片</span><span class="hint">选填</span></div>
+        <div class="yd-photo" id="photoBox" onclick="pickPhoto()">
+          <span class="yd-photo-badge" id="photoBadge" style="display:none;">示例照片</span>
+          <div class="yd-photo-tip">点击拍照 / 选择图片</div>
+          <div class="yd-photo-sub">用于采收追溯留证</div>
+        </div>
+      </div>
+
+      <button class="mb-btn mb-btn-primary mb-btn-block mb-btn-lg" type="button" onclick="askSubmit()">提交过磅单</button>
+    </div>
+    <!-- 今日采收记录 -->
+    <div class="yd-card" style="padding:0;overflow:hidden;">
+      <div class="yd-card-head" style="padding:14px 16px 10px;margin-bottom:0;">
+        <div class="yd-card-title"><span class="mb-section-dot"></span>今日采收记录</div>
+        <span class="yd-card-sub" id="recCount">0 条</span>
+      </div>
+      <div id="recList"></div>
+    </div>
+
+    <!-- 确认弹窗 -->
+    <div class="mb-modal-overlay" id="confirmModal">
+      <div class="mb-modal">
+        <div class="yd-confirm-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 9v2m0 4h.01"/><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          </svg>
+        </div>
+        <div class="yd-confirm-title">确认提交过磅单？</div>
+        <div class="yd-confirm-desc" id="confirmDesc">
+          提交后生成采收单并计入产量，<em>不可删除</em>。
+        </div>
+        <div class="mb-modal-actions">
+          <button class="mb-btn mb-btn-secondary" type="button" onclick="closeConfirm()">再核对一下</button>
+          <button class="mb-btn mb-btn-primary" type="button" onclick="doSubmit()">确认提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <div class="mb-modal-overlay is-sheet" id="detailModal">
+      <div class="mb-modal is-sheet">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:var(--font-lg);font-weight:700;color:var(--text);" id="detailId">采收单详情</div>
+          <button class="mb-btn mb-btn-icon" type="button" onclick="closeDetail()" aria-label="关闭" style="background:var(--primary-50);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div id="detailBody"></div>
+        <div class="mb-modal-actions" id="detailActions">
+          <button class="mb-btn mb-btn-secondary" type="button" onclick="closeDetail()">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="photoInput" accept="image/*" hidden>
+  <script>
+    var KEY = 'mushroom_harvest_records';
+    var SAMPLE_PHOTO = '../applefarm_h5/images/trace_fruiting.jpg';
+    var BATCHES = {
+      'JB-20261116-01': { house: '一号出菇房 GF-01', variety: '杏鲍菇' },
+      'JB-20261116-02': { house: '二号出菇房 GF-02', variety: '杏鲍菇' },
+      'JB-20261115-06': { house: '三号出菇房 GF-03', variety: '杏鲍菇' }
+    };
+    var photoData = SAMPLE_PHOTO;
+    var photoIsSample = true;
+
+    function $(id) { return document.getElementById(id); }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function toast(msg, type) {
+      if (window.MobileStore && MobileStore.toast) MobileStore.toast(msg, type || 'success');
+      else alert(msg);
+    }
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function dateKey(d) {
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    }
+
+    function readRecords() {
+      try {
+        var v = JSON.parse(localStorage.getItem(KEY) || '[]');
+        return Array.isArray(v) ? v : [];
+      } catch (e) { return []; }
+    }
+
+    function saveRecords(arr) {
+      try { localStorage.setItem(KEY, JSON.stringify(arr)); } catch (e) { toast('本地存储空间不足，保存失败', 'error'); }
+    }
+
+    function todayRecords() {
+      var today = dateKey(new Date());
+      return readRecords().filter(function (r) {
+        var d = new Date(String(r.time || '').replace(/-/g, '/'));
+        return !isNaN(d.getTime()) && dateKey(d) === today;
+      }).sort(function (a, b) {
+        return new Date(String(b.time).replace(/-/g, '/')) - new Date(String(a.time).replace(/-/g, '/'));
+      });
+    }
+
+    /* ---------- 批次联动 ---------- */
+    function initBatch() {
+      var sel = $('fBatch');
+      var html = '<option value="">请选择批次号</option>';
+      Object.keys(BATCHES).forEach(function (id) {
+        html += '<option value="' + esc(id) + '">' + esc(id) + '</option>';
+      });
+      sel.innerHTML = html;
+    }
+
+    function onBatchChange() {
+      var b = BATCHES[$('fBatch').value];
+      $('fHouse').value = b ? b.house : '—';
+      $('fVariety').value = b ? b.variety : '—';
+      setErr('errBatch', '', false);
+    }
+
+    /* ---------- 自动计算 ---------- */
+    function num(id) {
+      var v = parseFloat($(id).value);
+      return isNaN(v) ? 0 : v;
+    }
+
+    function recalc() {
+      var total = num('fTotal'), a = num('fA'), b = num('fB');
+      var c = total - a - b;
+      var rate = total > 0 ? (a / total * 100) : 0;
+
+      var cEl = $('calcC');
+      cEl.textContent = c.toFixed(1);
+      cEl.className = 'yd-calc-value' + (c < 0 ? ' bad' : '');
+      $('calcRate').textContent = total > 0 ? rate.toFixed(1) + '%' : '—';
+      $('calcSum').textContent = (a + b).toFixed(1);
+
+      // 实时字段级校验
+      var totalVal = $('fTotal').value;
+      setErr('errTotal', totalVal !== '' && total <= 0 ? '总重量必须大于 0' : '', totalVal !== '' && total <= 0);
+      var over = total > 5000;
+      if (over) {
+        setErr('errTotal', '总重超过 5000kg，请复核过磅数据', true);
+        $('errTotal').style.color = 'var(--warning-dark)';
+      } else {
+        $('errTotal').style.color = '';
+      }
+      setErr('errA', a < 0 ? '一级重量不能为负数' : '', a < 0);
+      setErr('errB', b < 0 ? '二级重量不能为负数' : '', b < 0);
+      var overSum = total > 0 && (a + b) > total;
+      setErr('errSum', overSum ? '一级 + 二级（' + (a + b).toFixed(1) + 'kg）不能大于总重量' : '', overSum);
+      $('fA').classList.toggle('has-error', a < 0 || overSum);
+      $('fB').classList.toggle('has-error', b < 0 || overSum);
+    }
+
+    function setErr(id, msg, show) {
+      var el = $(id);
+      if (!el) return;
+      el.textContent = msg || '';
+      el.classList.toggle('show', !!show);
+    }
+
+    /* ---------- 图片 ---------- */
+    function renderPhoto() {
+      var box = $('photoBox');
+      box.innerHTML = '<img src="' + esc(photoData) + '" alt="过磅凭证">' +
+        (photoIsSample ? '<span class="yd-photo-badge">示例照片</span>' : '');
+      box.classList.add('has-photo');
+    }
+
+    function pickPhoto() { $('photoInput').click(); }
+
+    function onPhotoPicked(input) {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      if (!file.type || file.type.indexOf('image/') !== 0) {
+        toast('请选择图片文件', 'warning');
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        photoData = e.target.result;
+        photoIsSample = false;
+        renderPhoto();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    /* ---------- 校验与提交 ---------- */
+    function validate() {
+      var ok = true;
+      var batch = $('fBatch').value;
+      var time = $('fTime').value;
+      var total = num('fTotal'), a = num('fA'), b = num('fB');
+
+      if (!batch) { setErr('errBatch', '请选择批次号', true); ok = false; }
+      else setErr('errBatch', '', false);
+
+      if (!time) { setErr('errTime', '请选择过磅时间', true); ok = false; }
+      else setErr('errTime', '', false);
+
+      var totalVal = $('fTotal').value;
+      if (totalVal === '' || total <= 0) {
+        setErr('errTotal', '请输入大于 0 的总重量', true);
+        $('fTotal').classList.add('has-error');
+        ok = false;
+      } else if (total > 5000) {
+        setErr('errTotal', '总重超过 5000kg，请复核过磅数据', true);
+        $('errTotal').style.color = 'var(--warning-dark)';
+        $('fTotal').classList.remove('has-error');
+      } else {
+        setErr('errTotal', '', false);
+        $('fTotal').classList.remove('has-error');
+        $('errTotal').style.color = '';
+      }
+
+      if ($('fA').value === '' || a < 0) {
+        setErr('errA', a < 0 ? '一级重量不能为负数' : '请输入一级重量', true);
+        $('fA').classList.add('has-error');
+        ok = false;
+      } else { setErr('errA', '', false); $('fA').classList.remove('has-error'); }
+
+      if ($('fB').value === '' || b < 0) {
+        setErr('errB', b < 0 ? '二级重量不能为负数' : '请输入二级重量', true);
+        $('fB').classList.add('has-error');
+        ok = false;
+      } else { setErr('errB', '', false); $('fB').classList.remove('has-error'); }
+
+      if (total > 0 && (a + b) > total) {
+        setErr('errSum', '一级 + 二级（' + (a + b).toFixed(1) + 'kg）不能大于总重量', true);
+        $('fA').classList.add('has-error');
+        $('fB').classList.add('has-error');
+        ok = false;
+      } else {
+        setErr('errSum', '', false);
+      }
+      return ok;
+    }
+
+    function askSubmit() {
+      if (!validate()) {
+        toast('请先修正表单中的错误项', 'warning');
+        return;
+      }
+      var total = num('fTotal');
+      var desc = '提交后生成采收单并计入产量，<em>不可删除</em>。<br>' +
+        esc($('fBatch').value) + ' · 总重 ' + total.toFixed(1) + ' kg · 一级率 ' +
+        (total > 0 ? (num('fA') / total * 100).toFixed(1) : '0.0') + '%';
+      if (total > 5000) desc += '<br><em>注意：总重超过 5000kg，请已复核过磅数据。</em>';
+      $('confirmDesc').innerHTML = desc;
+      $('confirmModal').classList.add('show');
+    }
+
+    function closeConfirm() { $('confirmModal').classList.remove('show'); }
+
+    function genId() {
+      var today = dateKey(new Date()).replace(/-/g, '');
+      var prefix = 'CS-' + today + '-';
+      var max = 0;
+      readRecords().forEach(function (r) {
+        if (String(r.id || '').indexOf(prefix) === 0) {
+          var n = parseInt(String(r.id).slice(prefix.length), 10);
+          if (!isNaN(n) && n > max) max = n;
+        }
+      });
+      return prefix + pad(max + 1);
+    }
+
+    function doSubmit() {
+      closeConfirm();
+      var total = num('fTotal'), a = num('fA'), b = num('fB');
+      var batch = $('fBatch').value;
+      var meta = BATCHES[batch] || {};
+      var online = !(window.MobileStore && MobileStore.isOnline && !MobileStore.isOnline());
+
+      var rec = {
+        id: genId(),
+        batch: batch,
+        house: meta.house || '',
+        variety: meta.variety || '杏鲍菇',
+        total: total,
+        gradeA: a,
+        gradeB: b,
+        gradeC: Math.max(0, total - a - b),
+        rateA: total > 0 ? Math.round(a / total * 1000) / 10 : 0,
+        operator: $('fOperator').value.trim() || '李国强',
+        time: $('fTime').value.replace('T', ' '),
+        photo: photoData,
+        note: $('fNote').value.trim(),
+        status: online ? 'submitted' : 'pending'
+      };
+
+      var arr = readRecords();
+      arr.unshift(rec);
+      saveRecords(arr);
+
+      if (!online) {
+        if (window.MobileStore && MobileStore.enqueue) {
+          MobileStore.enqueue({ type: 'harvest_record', refId: rec.id, payload: rec });
+        }
+        toast('已离线保存，联网后自动同步', 'warning');
+      } else {
+        toast('采收单 ' + rec.id + ' 已生成', 'success');
+      }
+
+      resetForm();
+      renderAll();
+    }
+
+    function resetForm() {
+      $('fTotal').value = '';
+      $('fA').value = '';
+      $('fB').value = '';
+      $('fNote').value = '';
+      var now = new Date();
+      $('fTime').value = dateKey(now) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+      ['fTotal', 'fA', 'fB'].forEach(function (id) { $(id).classList.remove('has-error'); });
+      setErr('errTotal', '', false);
+      setErr('errSum', '', false);
+      setErr('errA', '', false);
+      setErr('errB', '', false);
+      $('errTotal').style.color = '';
+      recalc();
+    }
+
+    /* ---------- 汇总 / 列表 ---------- */
+    function renderSummary() {
+      var list = todayRecords();
+      var total = 0, a = 0;
+      list.forEach(function (r) { total += Number(r.total) || 0; a += Number(r.gradeA) || 0; });
+      $('sumTotal').innerHTML = total.toFixed(1) + '<small>kg</small>';
+      $('sumRate').textContent = total > 0 ? (a / total * 100).toFixed(1) + '%' : '—';
+      $('sumCount').innerHTML = list.length + '<small>单</small>';
+      var now = new Date();
+      $('sumDate').textContent = (now.getMonth() + 1) + '月' + now.getDate() + '日 实时';
+      $('recCount').textContent = list.length + ' 条';
+    }
+
+    function renderList() {
+      var list = todayRecords();
+      var box = $('recList');
+      if (!list.length) {
+        box.innerHTML = '<div class="yd-empty">今日暂无采收记录，请在上方录入过磅数据</div>';
+        return;
+      }
+      box.innerHTML = list.map(function (r, i) {
+        var badge = r.status === 'pending'
+          ? '<span class="yd-badge pending">待同步</span>'
+          : '<span class="yd-badge ok">已提交</span>';
+        var syncLink = r.status === 'pending'
+          ? '<div><span class="yd-sync-link" onclick="event.stopPropagation();retrySyncById(\'' + esc(r.id) + '\')">重试同步</span></div>'
+          : '';
+        return '' +
+          '<div class="yd-rec" onclick="openDetail(' + i + ')">' +
+            '<div class="yd-rec-main">' +
+              '<div class="yd-rec-id">' + esc(r.id) + '</div>' +
+              '<div class="yd-rec-desc">' + esc(r.batch) + ' · ' + esc(r.house) + '</div>' +
+              '<div class="yd-rec-desc">总重 ' + Number(r.total).toFixed(1) + ' kg · 一级率 ' + Number(r.rateA).toFixed(1) + '%</div>' +
+            '</div>' +
+            '<div class="yd-rec-side">' +
+              badge +
+              syncLink +
+              '<div class="yd-rec-time">' + esc(String(r.time).slice(11, 16)) + '</div>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    function renderAll() {
+      renderSummary();
+      renderList();
+    }
+
+    /* ---------- 详情与重试同步 ---------- */
+    function openDetail(i) {
+      var list = todayRecords();
+      var r = list[i];
+      if (!r) return;
+      $('detailId').textContent = r.id;
+      $('detailBody').innerHTML = '' +
+        row('批次号', r.batch) +
+        row('菇房', r.house) +
+        row('品种', r.variety) +
+        row('总重量', Number(r.total).toFixed(1) + ' kg') +
+        row('一级重量', Number(r.gradeA).toFixed(1) + ' kg') +
+        row('二级重量', Number(r.gradeB).toFixed(1) + ' kg') +
+        row('等外重量', Number(r.gradeC).toFixed(1) + ' kg') +
+        row('一级率', Number(r.rateA).toFixed(1) + '%') +
+        row('操作人', r.operator) +
+        row('过磅时间', r.time) +
+        row('状态', r.status === 'pending' ? '待同步' : '已提交（计入产量）') +
+        row('备注', r.note || '—') +
+        (r.photo ? '<img class="yd-detail-photo" src="' + esc(r.photo) + '" alt="过磅凭证">' : '');
+      $('detailActions').innerHTML =
+        '<button class="mb-btn mb-btn-secondary" type="button" onclick="closeDetail()">关闭</button>' +
+        (r.status === 'pending'
+          ? '<button class="mb-btn mb-btn-primary" type="button" onclick="retrySyncById(\'' + esc(r.id) + '\')">重试同步</button>'
+          : '');
+      $('detailModal').classList.add('show');
+    }
+
+    function row(k, v) {
+      return '<div class="yd-detail-row"><span>' + esc(k) + '</span><b>' + esc(v) + '</b></div>';
+    }
+
+    function closeDetail() { $('detailModal').classList.remove('show'); }
+
+    function retrySyncById(id) {
+      closeDetail();
+      if (window.MobileStore && MobileStore.isOnline && !MobileStore.isOnline()) {
+        toast('当前处于离线状态，联网后将自动同步', 'warning');
+        return;
+      }
+      var all = readRecords();
+      var found = false;
+      for (var i = 0; i < all.length; i++) {
+        if (all[i].id === id) { all[i].status = 'submitted'; found = true; }
+      }
+      if (!found) { toast('记录不存在', 'error'); return; }
+      saveRecords(all);
+      if (window.MobileStore && MobileStore.flush) MobileStore.flush();
+      renderAll();
+      toast('同步完成', 'success');
+    }
+
+    function goHome() { window.location.href = 'mb_home.html'; }
+
+    /* ---------- 初始化 ---------- */
+    document.addEventListener('DOMContentLoaded', function () {
+      initBatch();
+      var now = new Date();
+      $('fTime').value = dateKey(now) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+      $('fOperator').value = sessionStorage.getItem('loginUser') || '李国强';
+      renderPhoto();
+      clearInterval(window.__ydTick);
+      window.__ydTick = setInterval(renderSummary, 60000);
+      renderAll();
+      if (window.MobileStore && $('syncBar')) MobileStore.renderSyncBar($('syncBar'));
+      $('photoInput').addEventListener('change', function () { onPhotoPicked(this); });
+      $('confirmModal').addEventListener('click', function (e) { if (e.target === this) closeConfirm(); });
+      $('detailModal').addEventListener('click', function (e) { if (e.target === this) closeDetail(); });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 农事计划</title>
+<!-- 使用设计系统: Design System v2.0 + sidebar-layout -->
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+  <link rel="stylesheet" href="css/page-content.css">
+<style>
+  /* 模块卡片 hover 效果 */
+  .module-card {
+    transition:all 0.2s ease;
+  }
+  .module-card:hover {
+    background:var(--bg-hover);
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-md);
+  }
+  /* 已延期计划行高亮 */
+  tr.row-delayed td { background:#fff1f0; }
+  tr.row-delayed:hover td { background:#ffe7e6; }
+  /* 模型推荐提示条 */
+  .prefill-banner {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 16px;
+    margin-bottom:16px;
+    border-radius:8px;
+    background:var(--info-bg, #e6f4ff);
+    border:1px solid var(--info-border, #bae0ff);
+    color:var(--text-primary);
+    font-size:13px;
+  }
+  .prefill-banner .prefill-text { font-weight:500; }
+
+  /* ===== 计划日历 ===== */
+  .calendar-toolbar {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .calendar-nav {
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .calendar-nav .cal-month-label {
+    min-width:104px;
+    text-align:center;
+    font-size:15px;
+    font-weight:600;
+    color:var(--text-primary);
+    font-variant-numeric:tabular-nums;
+  }
+  .cal-icon-btn {
+    width:30px;
+    height:30px;
+    border:1px solid var(--border-default);
+    background:var(--bg-card);
+    border-radius:var(--radius-md);
+    color:var(--text-secondary);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all 0.2s ease;
+  }
+  .cal-icon-btn:hover { color:var(--primary-500); border-color:var(--primary-500); background:var(--info-bg); }
+  .cal-icon-btn svg { width:16px; height:16px; }
+  .calendar-legend {
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .cal-legend-item {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:12px;
+    color:var(--text-secondary);
+  }
+  .cal-legend-dot {
+    width:10px;
+    height:10px;
+    border-radius:3px;
+    flex:none;
+  }
+  .calendar-summary {
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    padding:10px 14px;
+    margin-bottom:12px;
+    border-radius:var(--radius-md);
+    background:var(--gray-50);
+    border:1px solid var(--border-light);
+    font-size:12px;
+    color:var(--text-tertiary);
+  }
+  .calendar-summary b {
+    color:var(--text-primary);
+    font-size:14px;
+    font-weight:600;
+    font-variant-numeric:tabular-nums;
+    margin-left:4px;
+  }
+  .calendar-weekdays,
+  .calendar-grid {
+    display:grid;
+    grid-template-columns:repeat(7, minmax(0, 1fr));
+  }
+  .calendar-weekdays {
+    border:1px solid var(--border-light);
+    border-bottom:none;
+    border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+    overflow:hidden;
+    background:var(--gray-50);
+  }
+  .calendar-weekdays div {
+    padding:8px 0;
+    text-align:center;
+    font-size:12px;
+    font-weight:600;
+    color:var(--text-tertiary);
+    border-right:1px solid var(--border-light);
+  }
+  .calendar-weekdays div:last-child { border-right:none; }
+  .calendar-grid {
+    border:1px solid var(--border-light);
+    border-radius:0 0 var(--radius-lg) var(--radius-lg);
+    overflow:hidden;
+  }
+  .cal-cell {
+    min-height:104px;
+    padding:6px;
+    border-right:1px solid var(--border-light);
+    border-bottom:1px solid var(--border-light);
+    background:var(--bg-card);
+  }
+  .cal-cell:nth-child(7n) { border-right:none; }
+  .cal-cell.is-outside { background:var(--gray-50); }
+  .cal-cell.is-today { background:#fff7e6; }
+  .cal-cell.is-weekend .cal-day { color:var(--error); }
+  .cal-day {
+    font-size:12px;
+    color:var(--text-tertiary);
+    font-variant-numeric:tabular-nums;
+    margin-bottom:6px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .cal-cell.is-today .cal-day { color:#ff6b35; font-weight:700; }
+  .cal-chip {
+    display:block;
+    width:100%;
+    text-align:left;
+    border:none;
+    border-left:3px solid;
+    border-radius:4px;
+    font-size:12px;
+    line-height:1.5;
+    padding:3px 6px;
+    margin-bottom:4px;
+    cursor:pointer;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:var(--text-primary);
+    transition:all 0.15s ease;
+  }
+  .cal-chip:hover { filter:brightness(0.96); transform:translateX(1px); }
+  .cal-chip .cal-chip-status {
+    color:var(--text-tertiary);
+    font-size:11px;
+    margin-left:4px;
+  }
+  .cal-bar {
+    height:6px;
+    border-radius:3px;
+    margin-bottom:4px;
+  }
+  .cal-more {
+    font-size:11px;
+    color:var(--text-tertiary);
+    cursor:pointer;
+  }
+  .cal-more:hover { color:var(--primary-500); }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="farming" data-active-submenu="farming-plan">
+
+<!-- ===== 整体布局容器 ===== -->
+<div class="app-layout">
+
+  <!-- ===== 侧边栏 ===== -->
+  <!-- 移动端遮罩层 -->
+  <!-- ===== 主内容区 ===== -->
+  <div class="main-wrapper">
+
+    <!-- 顶栏 -->
+    <!-- Tab 标签栏 -->
+    <div class="tab-bar">
+      <!-- Tab 标签由 JS 动态渲染 -->
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <div class="content-wrapper">
+        <!-- 模型推荐提示条（来自生长模型/物候期模型） -->
+        <div class="prefill-banner" id="prefillBanner" style="display:none;">
+          <span class="prefill-text" id="prefillText">来自模型推荐（生长模型/物候期模型）</span>
+          <button class="jg-btn jg-btn-primary" onclick="adoptPrefill()">采纳</button>
+        </div>
+        
+        <!-- 统计卡片区 -->
+        <!-- 统计卡条已按统一规范移除 (原class=patrol-stats) -->
+
+        <!-- ===== 计划日历区 ===== -->
+        <div class="page-section chart-section" id="planCalendarSection">
+          <div class="calendar-toolbar">
+            <div class="calendar-nav">
+              <button class="cal-icon-btn" title="上个月" onclick="calendarShift(-1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span class="cal-month-label" id="calendarMonthLabel">—</span>
+              <button class="cal-icon-btn" title="下个月" onclick="calendarShift(1)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              <button class="jg-btn" onclick="calendarToday()">回到本月</button>
+            </div>
+            <div class="calendar-legend" id="calendarLegend"></div>
+          </div>
+          <div class="calendar-summary" id="calendarSummary"></div>
+          <div class="calendar-weekdays">
+            <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <!-- ===== 搜索栏区 ===== -->
+        <div class="page-section search-section">
+          <div class="search-bar">
+            <select class="search-select" id="baseSelect">
+              <option value="">选择基地</option>
+              <option value="天水麦积区基地">天水麦积区基地</option>
+              <option value="天水秦州区基地">天水秦州区基地</option>
+              <option value="天水甘谷县基地">天水甘谷县基地</option>
+              <option value="天水秦安县基地">天水秦安县基地</option>
+              <option value="天水清水县基地">天水清水县基地</option>
+              <option value="天水武山县基地">天水武山县基地</option>
+              <option value="天水张家川县基地">天水张家川县基地</option>
+            </select>
+            <select class="search-select" id="statusSelect">
+              <option value="">全部状态</option>
+              <option value="pending">待执行</option>
+              <option value="executing">执行中</option>
+              <option value="completed">已完成</option>
+              <option value="delayed">已延期</option>
+            </select>
+            <select class="search-select" id="typeSelect">
+              <option value="">全部类型</option>
+              <option value="fertilizer">施肥</option>
+              <option value="pesticide">喷药</option>
+              <option value="irrigation">灌溉</option>
+              <option value="pruning">修剪</option>
+              <option value="thinning">疏花疏果</option>
+              <option value="bagging">套袋</option>
+              <option value="weeding">除草</option>
+              <option value="harvest">采收</option>
+              <option value="other">其他</option>
+            </select>
+            <input type="date" class="search-input" id="startDate" placeholder="开始日期">
+            <span class="date-separator">至</span>
+            <input type="date" class="search-input" id="endDate" placeholder="结束日期">
+            <input type="text" class="search-input" placeholder="搜索计划名称..." id="searchInput">
+
+          <div class="search-actions"><button class="jg-btn jg-btn-primary" onclick="handleSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button><button class="jg-btn" onclick="handleReset()">重置</button></div>
+          </div>
+        </div>
+
+        <!-- ===== 操作按钮区（搜索栏下、数据列表上）===== -->
+        <div class="page-section action-bar">
+          <button class="jg-btn jg-btn-primary" onclick="Modal.show('modal-add-plan')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;">
+              <path d="M12 5v14"/>
+              <path d="M5 12h14"/>
+            </svg>
+            新建计划
+          </button>
+          <button class="jg-btn" onclick="Modal.show('modal-export')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" x2="12" y1="15" y2="3"/>
+            </svg>
+            导出计划
+          </button>
+        </div>
+
+        <!-- ===== 数据列表区 ===== -->
+        <div class="page-section data-section">
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:52px;">序号</th>
+                  <th style="width:118px;">计划编号</th>
+                  <th>计划名称</th>
+                  <th style="width:130px;">所属基地</th>
+                  <th style="width:88px;">类型</th>
+                  <th style="width:120px;">地块范围</th>
+                  <th style="width:170px;">引用标准</th>
+                  <th style="width:140px;">计划量 / 已审核</th>
+                  <th style="width:104px;">完成率</th>
+                  <th style="width:180px;">起止时间</th>
+                  <th style="width:78px;">负责人</th>
+                  <th style="width:76px;">状态</th>
+                  <th style="width:190px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody">
+              </tbody>
+            </table>
+          </div>
+          <div id="pagination-container">
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- 新建计划模态框 -->
+  <div id="modal-add-plan" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">新建农事计划</h3>
+        <button class="modal-close">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L12 12M12 4L4 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="form-add-plan" class="modal-form">
+          <div class="form-group">
+            <label>计划名称</label>
+            <input type="text" class="form-control" id="add-name" placeholder="请输入计划名称">
+          </div>
+          <div class="form-group">
+            <label>所属基地</label>
+            <select class="form-control" id="add-base">
+              <option value="">请选择基地</option>
+              <option value="天水麦积区基地">天水麦积区基地</option>
+              <option value="天水秦州基地">天水秦州基地</option>
+              <option value="青岛莱西基地">青岛莱西基地</option>
+              <option value="招远基地">招远基地</option>
+              <option value="天水甘谷基地">天水甘谷基地</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>计划类型</label>
+            <select class="form-control" id="add-type">
+              <option value="">请选择类型</option>
+              <option value="fertilizer">施肥</option>
+              <option value="pesticide">喷药</option>
+              <option value="irrigation">灌溉</option>
+              <option value="pruning">修剪</option>
+              <option value="thinning">疏花疏果</option>
+              <option value="bagging">套袋</option>
+              <option value="weeding">除草</option>
+              <option value="harvest">采收</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>地块范围（可多选）</label>
+            <select class="form-control" id="add-plots" multiple size="5"></select>
+          </div>
+          <div class="form-group">
+            <label>引用农事标准</label>
+            <select class="form-control" id="add-standard"></select>
+          </div>
+          <div class="form-group">
+            <label>计划量</label>
+            <div style="display:flex;gap:8px;">
+              <input type="number" class="form-control" id="add-qty" placeholder="0" min="0" style="flex:1;">
+              <select class="form-control" id="add-unit" style="width:90px;">
+                <option value="亩">亩</option>
+                <option value="个">个</option>
+                <option value="kg">kg</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>负责人</label>
+            <select class="form-control" id="add-manager">
+              <option value="">请选择负责人</option>
+              <option value="惠加宁">惠加宁</option>
+              <option value="黄忠坚">黄忠坚</option>
+              <option value="徐水应">徐水应</option>
+              <option value="朱泉龙">朱泉龙</option>
+              <option value="陈小忠">陈小忠</option>
+              <option value="廖春亮">廖春亮</option>
+              <option value="李建明">李建明</option>
+              <option value="李根">李根</option>
+              <option value="张才孙">张才孙</option>
+              <option value="刘全国">刘全国</option>
+              <option value="毛定卫">毛定卫</option>
+              <option value="叶三东">叶三东</option>
+              <option value="周才贵">周才贵</option>
+              <option value="程名高">程名高</option>
+              <option value="邓小华">邓小华</option>
+              <option value="周成友">周成友</option>
+              <option value="危红卫">危红卫</option>
+              <option value="方超">方超</option>
+              <option value="曹红英">曹红英</option>
+              <option value="崔新根">崔新根</option>
+              <option value="超级用户">超级用户</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>开始时间</label>
+            <input type="date" class="form-control" id="add-start">
+          </div>
+          <div class="form-group">
+            <label>结束时间</label>
+            <input type="date" class="form-control" id="add-end">
+          </div>
+          <div class="form-group">
+            <label>计划描述</label>
+            <textarea class="form-control" rows="3" id="add-desc" placeholder="请输入计划描述"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="jg-btn" onclick="Modal.hide('modal-add-plan')">取消</button>
+        <button class="jg-btn jg-btn-primary" onclick="submitAddPlan()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 导出计划模态框 -->
+  <div id="modal-export" class="modal-overlay">
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-header">
+        <h3 class="modal-title">导出计划</h3>
+        <button class="modal-close">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L12 12M12 4L4 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p style="color:var(--text-secondary); margin-bottom:16px;">请选择导出格式：</p>
+        <div style="display:flex; gap:12px;">
+          <button class="jg-btn jg-btn-primary" onclick="exportPlan('excel')">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;">
+              <path d="M10 2H2v16h16V8l-6-6z"/>
+              <path d="M14 2v6h6M13 9H7M13 13H7M13 17H7"/>
+            </svg>
+            Excel格式
+          </button>
+          <button class="jg-btn" onclick="exportPlan('pdf')">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;">
+              <path d="M10 2H2v16h16V8l-6-6z"/>
+              <path d="M14 2v6h6M13 9H7M13 13H7M13 17H7"/>
+            </svg>
+            PDF格式
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="jg-btn" onclick="Modal.hide('modal-export')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 详情模态框 -->
+  <div id="modal-detail" class="modal-overlay">
+    <div class="modal-box" style="max-width:600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">计划详情</h3>
+        <button class="modal-close">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L12 12M12 4L4 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="detail-content">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">计划编号</div>
+              <div id="detail-code" style="font-weight:600;">—</div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">计划名称</div>
+              <div id="detail-name" style="font-weight:600;">春季施肥计划</div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">所属基地</div>
+              <div id="detail-base" style="font-weight:600;">天水麦积区基地</div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">计划类型</div>
+              <div id="detail-type" style="font-weight:600;">施肥</div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">地块范围</div>
+              <div id="detail-plots" style="font-weight:600;">—</div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">引用标准</div>
+              <div id="detail-standard" style="font-weight:600;">—</div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">计划量 / 已审核</div>
+              <div id="detail-qty" style="font-weight:600;">—</div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">负责人</div>
+              <div id="detail-manager" style="font-weight:600;">惠加宁</div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">开始时间</div>
+              <div id="detail-start" style="font-weight:600;">2026-09-01</div>
+            </div>
+            <div style="padding:12px; background:var(--gray-50); border-radius:8px;">
+              <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">结束时间</div>
+              <div id="detail-end" style="font-weight:600;">2026-09-15</div>
+            </div>
+          </div>
+          <div style="margin-top:16px; padding:12px; background:var(--gray-50); border-radius:8px;">
+            <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">关联任务</div>
+            <div id="detail-tasks" style="font-weight:500;">—</div>
+          </div>
+          <div style="margin-top:12px; padding:12px; background:var(--gray-50); border-radius:8px;">
+            <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">计划描述</div>
+            <div id="detail-desc" style="font-weight:500;">根据果园实际情况，进行春季施肥作业，促进果树生长发育。</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="jg-btn" onclick="Modal.hide('modal-detail')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑模态框 -->
+  <div id="modal-edit" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">编辑农事计划</h3>
+        <button class="modal-close">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L12 12M12 4L4 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="form-edit-plan" class="modal-form">
+          <div class="form-group">
+            <label>计划名称</label>
+            <input type="text" class="form-control" id="edit-name" value="春季施肥计划">
+          </div>
+          <div class="form-group">
+            <label>所属基地</label>
+            <select class="form-control" id="edit-base">
+              <option value="天水麦积区基地" selected>天水麦积区基地</option>
+              <option value="天水秦州基地">天水秦州基地</option>
+              <option value="青岛莱西基地">青岛莱西基地</option>
+              <option value="招远基地">招远基地</option>
+              <option value="天水甘谷基地">天水甘谷基地</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>计划类型</label>
+            <select class="form-control" id="edit-type">
+              <option value="fertilizer" selected>施肥</option>
+              <option value="pesticide">喷药</option>
+              <option value="irrigation">灌溉</option>
+              <option value="pruning">修剪</option>
+              <option value="thinning">疏花疏果</option>
+              <option value="bagging">套袋</option>
+              <option value="weeding">除草</option>
+              <option value="harvest">采收</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>地块范围（可多选）</label>
+            <select class="form-control" id="edit-plots" multiple size="5"></select>
+          </div>
+          <div class="form-group">
+            <label>引用农事标准</label>
+            <select class="form-control" id="edit-standard"></select>
+          </div>
+          <div class="form-group">
+            <label>计划量</label>
+            <div style="display:flex;gap:8px;">
+              <input type="number" class="form-control" id="edit-qty" placeholder="0" min="0" style="flex:1;">
+              <select class="form-control" id="edit-unit" style="width:90px;">
+                <option value="亩">亩</option>
+                <option value="个">个</option>
+                <option value="kg">kg</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>负责人</label>
+            <select class="form-control" id="edit-manager">
+              <option value="">请选择负责人</option>
+              <option value="惠加宁">惠加宁</option>
+              <option value="黄忠坚">黄忠坚</option>
+              <option value="徐水应">徐水应</option>
+              <option value="朱泉龙">朱泉龙</option>
+              <option value="陈小忠">陈小忠</option>
+              <option value="廖春亮">廖春亮</option>
+              <option value="李建明">李建明</option>
+              <option value="李根">李根</option>
+              <option value="张才孙">张才孙</option>
+              <option value="刘全国">刘全国</option>
+              <option value="毛定卫">毛定卫</option>
+              <option value="叶三东">叶三东</option>
+              <option value="周才贵">周才贵</option>
+              <option value="程名高">程名高</option>
+              <option value="邓小华">邓小华</option>
+              <option value="周成友">周成友</option>
+              <option value="危红卫">危红卫</option>
+              <option value="方超">方超</option>
+              <option value="曹红英">曹红英</option>
+              <option value="崔新根">崔新根</option>
+              <option value="超级用户">超级用户</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>开始时间</label>
+            <input type="date" class="form-control" id="edit-start" value="2026-09-01">
+          </div>
+          <div class="form-group">
+            <label>结束时间</label>
+            <input type="date" class="form-control" id="edit-end" value="2026-09-15">
+          </div>
+          <div class="form-group">
+            <label>计划描述</label>
+            <textarea class="form-control" rows="3" id="edit-desc">根据果园实际情况，进行春季施肥作业，促进果树生长发育。</textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="jg-btn" onclick="Modal.hide('modal-edit')">取消</button>
+        <button class="jg-btn jg-btn-primary" onclick="submitEditPlan()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 执行计划模态框 -->
+  <div id="modal-execute" class="modal-overlay">
+    <div class="modal-box" style="max-width:420px;">
+      <div class="modal-header">
+        <h3 class="modal-title">执行计划</h3>
+        <button class="modal-close">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4L12 12M12 4L4 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center; padding:16px 0;">
+          <div style="font-size:48px; margin-bottom:12px;">▶</div>
+          <p style="color:var(--text-secondary);">确定要开始执行计划 "<span id="execute-name" style="font-weight:600; color:var(--primary-500);">春季施肥计划</span>" 吗？</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="jg-btn" onclick="Modal.hide('modal-execute')">取消</button>
+        <button class="jg-btn jg-btn-primary" onclick="executePlan()">确定执行</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 引入交互脚本 -->
+<script src="js/shared/production-store.js"></script>
+<script src="js/common-functions.js"></script>
+<script>
+/* ==========================================================
+ * 农事计划 —— 生产管理闭环（计划 → 任务 → 记录）
+ * 数据源：ProductionStore（localStorage 共享数据层）
+ * ========================================================== */
+var PS = window.ProductionStore;
+var currentPlanId = '';
+var BASE_OPTIONS = ['天水麦积区基地', '天水秦州基地', '青岛莱西基地', '招远基地', '天水甘谷基地', '天水秦安县基地', '天水清水县基地', '天水武山县基地', '天水张家川县基地'];
+var PLAN_STATUS_OPTIONS = [
+  ['pending', '待执行'], ['executing', '执行中'], ['completed', '已完成'], ['delayed', '已延期'], ['cancelled', '已取消']
+];
+
+/* ---------- 渲染辅助 ---------- */
+function typeTagClass(type) { return PS.typeTagClass(type); }
+
+function getStatusTag(status) {
+  var map = {
+    completed: '<span class="status-tag normal">已完成</span>',
+    executing: '<span class="status-tag done">执行中</span>',
+    pending: '<span class="status-tag warning">待执行</span>',
+    delayed: '<span class="status-tag danger">已延期</span>',
+    cancelled: '<span class="status-tag danger">已取消</span>',
+    draft: '<span class="status-tag">草稿</span>'
+  };
+  return map[status] || map.pending;
+}
+
+function getCompletionCell(plan) {
+  var stats = PS.planStats(plan.id);
+  var planned = parseFloat(plan.plannedQty) || 0;
+  if (!planned) return '<span style="color:var(--text-tertiary);">—</span>';
+  var rate = stats.rate;
+  var color = rate >= 100 ? 'var(--success)' : rate >= 60 ? 'var(--warning)' : 'var(--error)';
+  var bar = Math.max(0, Math.min(100, rate));
+  return '<div style="display:flex;align-items:center;gap:6px;">' +
+    '<span style="flex:1;height:6px;border-radius:3px;background:var(--gray-100);overflow:hidden;position:relative;">' +
+    '<i style="position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:' + color + ';width:' + bar + '%;"></i></span>' +
+    '<span style="color:' + color + ';font-weight:600;min-width:34px;text-align:right;">' + rate + '%</span></div>';
+}
+
+function getActionButtons(item) {
+  var btns = '<button class="action-btn detail" onclick="showDetail(\'' + item.id + '\')">详情</button>' +
+    '<button class="action-btn edit" onclick="showEdit(\'' + item.id + '\')">编辑</button>';
+  if (item.status !== 'completed' && item.status !== 'cancelled') {
+    btns += '<button class="action-btn approve" onclick="generateTasksForPlan(\'' + item.id + '\')">生成任务</button>';
+  }
+  btns += '<button class="action-btn delete" onclick="showDeleteConfirm(\'' + item.id + '\')">删除</button>';
+  return '<div class="action-btns">' + btns + '</div>';
+}
+
+function renderRow(item, index) {
+  var stats = PS.planStats(item.id);
+  var rowAttr = item.status === 'delayed' ? ' class="row-delayed"' : '';
+  var plots = (item.plotRange || '').split(',').filter(Boolean);
+  var plotText = plots.length ? (plots.length > 2 ? plots[0] + ' 等 ' + plots.length + ' 个地块' : plots.join('、')) : '—';
+  var qtyText = item.plannedQty ? (item.plannedQty + ' / ' + stats.approvedQty + ' ' + (item.unit || '')) : '—';
+  return '<tr' + rowAttr + '>' +
+    '<td>' + (index + 1) + '</td>' +
+    '<td><span style="font-family:var(--font-mono,monospace);font-size:12px;color:var(--text-tertiary);">' + item.id + '</span></td>' +
+    '<td><strong>' + item.name + '</strong></td>' +
+    '<td>' + item.base + '</td>' +
+    '<td><span class="type-tag ' + typeTagClass(item.type) + '">' + item.typeName + '</span></td>' +
+    '<td title="' + (item.plotRange || '') + '">' + plotText + '</td>' +
+    '<td style="font-size:12px;" title="' + (item.standardName || '') + '">' + (item.standardName || '—') + '</td>' +
+    '<td>' + qtyText + '</td>' +
+    '<td>' + getCompletionCell(item) + '</td>' +
+    '<td style="font-size:12px;">' + item.startDate + '<br>' + item.endDate + '</td>' +
+    '<td>' + item.manager + '</td>' +
+    '<td>' + getStatusTag(item.status) + '</td>' +
+    '<td>' + getActionButtons(item) + '</td>' +
+    '</tr>';
+}
+
+/* ---------- 数据与筛选 ---------- */
+function allPlans() { PS.recompute(); return PS.plans(); }
+
+function applyAutoDelay() { PS.recompute(); }
+
+function filterPlans() {
+  var keyword = (document.getElementById('searchInput').value || '').trim();
+  var base = document.getElementById('baseSelect').value;
+  var type = document.getElementById('typeSelect').value;
+  var status = document.getElementById('statusSelect').value;
+  var start = document.getElementById('startDate').value;
+  var end = document.getElementById('endDate').value;
+  return allPlans().filter(function (item) {
+    if (keyword && item.name.indexOf(keyword) < 0) return false;
+    if (base && item.base.indexOf(base) < 0) return false;
+    if (type && item.type !== type) return false;
+    if (status && item.status !== status) return false;
+    if (start && item.endDate && item.endDate < start) return false;
+    if (end && item.startDate && item.startDate > end) return false;
+    return true;
+  });
+}
+
+function handleSearch() {
+  var list = filterPlans();
+  Pagination.updateData(list);
+  calBase = true;
+  renderCalendar();
+  Toast.info('找到 ' + list.length + ' 条记录');
+}
+
+function handleReset() {
+  ['searchInput', 'baseSelect', 'typeSelect', 'statusSelect', 'startDate', 'endDate'].forEach(function (id) {
+    document.getElementById(id).value = '';
+  });
+  Pagination.updateData(allPlans());
+  calBase = false;
+  renderCalendar();
+  Toast.info('搜索条件已重置');
+}
+
+/* ---------- 下拉初始化 ---------- */
+function selectOption(sel, value) {
+  if (!sel) return;
+  for (var i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === value) { sel.selectedIndex = i; return; }
+  }
+}
+
+function fillPlotOptions(selectId) {
+  var sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = PS.PLOTS.map(function (p) {
+    return '<option value="' + p + '">' + PS.plotLabel(p) + '</option>';
+  }).join('');
+}
+
+function fillStandardOptions(selectId) {
+  var sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">不引用标准</option>' + PS.standards().filter(function (s) {
+    return s.status !== '废止';
+  }).map(function (s) {
+    return '<option value="' + s.id + '">' + s.code + ' ' + s.name + '</option>';
+  }).join('');
+}
+
+function selectedPlots(selectId) {
+  var sel = document.getElementById(selectId);
+  var out = [];
+  if (!sel) return out;
+  for (var i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].selected) out.push(sel.options[i].value);
+  }
+  return out;
+}
+
+function markPlots(selectId, list) {
+  var sel = document.getElementById(selectId);
+  if (!sel) return;
+  var arr = (list || '').split(',').map(function (s) { return s.trim(); });
+  for (var i = 0; i < sel.options.length; i++) {
+    sel.options[i].selected = arr.indexOf(sel.options[i].value) >= 0;
+  }
+}
+
+/* ---------- 详情 / 编辑 / 删除 ---------- */
+function showDetail(id) {
+  currentPlanId = id;
+  var plan = PS.get('plans', id) || {};
+  var stats = PS.planStats(id);
+  var setText = function (elId, val) {
+    var el = document.getElementById(elId);
+    if (el) el.textContent = (val === undefined || val === null || val === '') ? '—' : val;
+  };
+  setText('detail-code', plan.id);
+  setText('detail-name', plan.name);
+  setText('detail-base', plan.base);
+  setText('detail-type', plan.typeName);
+  setText('detail-plots', (plan.plotRange || '').split(',').filter(Boolean).map(function (p) { return PS.plotLabel(p); }).join('、'));
+  setText('detail-standard', plan.standardName);
+  setText('detail-qty', (plan.plannedQty || 0) + ' / ' + stats.approvedQty + ' ' + (plan.unit || ''));
+  setText('detail-manager', plan.manager);
+  setText('detail-start', plan.startDate);
+  setText('detail-end', plan.endDate);
+  setText('detail-desc', plan.desc);
+  var tasks = PS.tasksByPlan(id);
+  setText('detail-tasks', tasks.length ? tasks.map(function (t) { return t.id + '（' + t.plotId + '）' + (PS.STATUS_TEXT[t.status] || t.status); }).join('；') : '尚未生成任务');
+  Modal.show('modal-detail');
+}
+
+function showEdit(id) {
+  currentPlanId = id;
+  var plan = PS.get('plans', id) || {};
+  document.getElementById('edit-name').value = plan.name || '';
+  selectOption(document.getElementById('edit-base'), plan.base);
+  selectOption(document.getElementById('edit-type'), plan.type);
+  selectOption(document.getElementById('edit-manager'), plan.manager);
+  document.getElementById('edit-start').value = plan.startDate || '';
+  document.getElementById('edit-end').value = plan.endDate || '';
+  document.getElementById('edit-desc').value = plan.desc || '';
+  markPlots('edit-plots', plan.plotRange);
+  selectOption(document.getElementById('edit-standard'), plan.standardId || '');
+  document.getElementById('edit-qty').value = plan.plannedQty || '';
+  document.getElementById('edit-unit').value = plan.unit || '亩';
+  Modal.show('modal-edit');
+}
+
+function showDeleteConfirm(id) {
+  currentPlanId = id;
+  var plan = PS.get('plans', id) || {};
+  ConfirmDialog.show({
+    title: '删除计划',
+    message: '确定要删除计划「' + (plan.name || id) + '」吗？关联任务将保留但失去计划来源；已有审核通过记录的计划不可删除。',
+    onConfirm: function () {
+      if (!PS.remove('plans', id)) { Toast.error(PS.lastError() || '删除失败'); return; }
+      Pagination.updateData(allPlans());
+      Toast.success('计划已删除');
+    }
+  });
+}
+
+function showExecute(id) {
+  currentPlanId = id;
+  var plan = PS.get('plans', id) || {};
+  document.getElementById('execute-name').textContent = plan.name || id;
+  Modal.show('modal-execute');
+}
+
+/* ---------- 生成任务 ---------- */
+function generateTasksForPlan(id) {
+  var invalid = PS.validate.generateTasks(id);
+  if (invalid) { Toast.error(invalid); return; }
+  var plan = PS.get('plans', id) || {};
+  var plots = (plan.plotRange || '').split(',').filter(Boolean);
+  ConfirmDialog.show({
+    title: '生成任务',
+    message: '按地块范围（' + plots.length + ' 个地块）拆分生成农事任务，并分摊计划量？',
+    onConfirm: function () {
+      var n = PS.generateTasks(id);
+      Pagination.updateData(allPlans());
+      if (n > 0) Toast.success('已生成 ' + n + ' 条任务，可在「任务管理」中查看');
+      else if (PS.lastError()) Toast.error(PS.lastError());
+      else Toast.info('该计划下各地块均已存在任务');
+    }
+  });
+}
+
+/* ---------- 新建 / 编辑提交 ---------- */
+function submitAddPlan() {
+  var name = document.getElementById('add-name').value.trim();
+  var base = document.getElementById('add-base').value;
+  var type = document.getElementById('add-type').value;
+  var manager = document.getElementById('add-manager').value;
+  var start = document.getElementById('add-start').value;
+  var end = document.getElementById('add-end').value;
+  var desc = document.getElementById('add-desc').value.trim();
+  var plots = selectedPlots('add-plots');
+  var standardId = document.getElementById('add-standard').value;
+  var qty = document.getElementById('add-qty').value;
+  var unit = document.getElementById('add-unit').value;
+
+  if (!name || !base || !type || !manager) { Toast.error('请填写完整信息'); return; }
+  if (!plots.length) { Toast.error('请选择至少一个地块'); return; }
+
+  var std = standardId ? PS.get('standards', standardId) : null;
+  var typeName = getTypeName(type);
+  var plan = {
+    id: PS.nextId('plans'),
+    name: name, base: base, type: type, typeName: typeName,
+    manager: manager, startDate: start, endDate: end,
+    status: 'pending',
+    plannedQty: parseFloat(qty) || 0, actualQty: 0, unit: unit,
+    plotRange: plots.join(','),
+    standardId: standardId, standardName: std ? std.name : '',
+    desc: desc, createdAt: PS.stampNow()
+  };
+  var invalid = PS.validate.plan(plan);
+  if (invalid) { Toast.error(invalid); return; }
+  PS.upsert('plans', plan);
+  Pagination.updateData(allPlans());
+  Modal.hide('modal-add-plan');
+  document.getElementById('form-add-plan').reset();
+  Toast.success('农事计划创建成功：' + plan.id);
+}
+
+function submitEditPlan() {
+  var plan = PS.get('plans', currentPlanId);
+  if (!plan) { Toast.error('计划不存在或已被删除'); return; }
+  var type = document.getElementById('edit-type').value;
+  var standardId = document.getElementById('edit-standard').value;
+  var std = standardId ? PS.get('standards', standardId) : null;
+  var plots = selectedPlots('edit-plots');
+  var patch = {
+    id: plan.id,
+    name: document.getElementById('edit-name').value.trim(),
+    base: document.getElementById('edit-base').value,
+    type: type, typeName: getTypeName(type),
+    manager: document.getElementById('edit-manager').value,
+    startDate: document.getElementById('edit-start').value,
+    endDate: document.getElementById('edit-end').value,
+    desc: document.getElementById('edit-desc').value.trim(),
+    plotRange: plots.join(','),
+    standardId: standardId,
+    standardName: std ? std.name : '',
+    plannedQty: parseFloat(document.getElementById('edit-qty').value) || 0,
+    unit: document.getElementById('edit-unit').value
+  };
+  var invalid = PS.validate.plan(Object.assign({}, plan, patch));
+  if (invalid) { Toast.error(invalid); return; }
+  PS.upsert('plans', patch);
+  Pagination.updateData(allPlans());
+  Modal.hide('modal-edit');
+  Toast.success('计划已更新');
+}
+
+function executePlan() {
+  var plan = PS.get('plans', currentPlanId);
+  if (!plan) { Toast.error('计划不存在或已被删除'); return; }
+  if (plan.status === 'cancelled' || plan.status === 'completed') {
+    Toast.error('该计划已结束，不能执行');
+    return;
+  }
+  if (plan.status === 'pending') {
+    PS.upsert('plans', { id: plan.id, status: 'executing' });
+  }
+  Modal.hide('modal-execute');
+  Pagination.updateData(allPlans());
+  Toast.success('计划已进入执行阶段');
+}
+
+function getTypeName(code) {
+  var map = {
+    fertilizer: '施肥', pesticide: '喷药', irrigation: '灌溉', pruning: '修剪',
+    thinning: '疏花疏果', bagging: '套袋', weeding: '除草', harvest: '采收', other: '其他'
+  };
+  return map[code] || '其他';
+}
+
+/* ---------- 模型预填（保持原能力） ---------- */
+function readPrefill() {
+  try {
+    var raw = localStorage.getItem('orchard_farming_prefill');
+    if (!raw) return null;
+    var pre = JSON.parse(raw);
+    return (pre && !pre.consumed) ? pre : null;
+  } catch (e) { return null; }
+}
+
+function mapTaskType(name) {
+  var t = String(name || '');
+  if (t.indexOf('肥') >= 0) return 'fertilizer';
+  if (t.indexOf('药') >= 0 || t.indexOf('虫') >= 0 || t.indexOf('病') >= 0) return 'pesticide';
+  if (t.indexOf('灌') >= 0 || t.indexOf('水') >= 0) return 'irrigation';
+  if (t.indexOf('剪') >= 0) return 'pruning';
+  if (t.indexOf('疏') >= 0) return 'thinning';
+  if (t.indexOf('袋') >= 0) return 'bagging';
+  if (t.indexOf('草') >= 0) return 'weeding';
+  if (t.indexOf('采') >= 0 || t.indexOf('收') >= 0) return 'harvest';
+  return 'other';
+}
+
+function prefillSource(p) {
+  var m = p.model || p.source || '生长模型';
+  return m;
+}
+
+function applyPrefill(p) {
+  var name = decodeURIComponent(p.name || ('基于' + prefillSource(p) + '的建议')).replace(/^"|"$/g, '');
+  document.getElementById('add-name').value = name;
+  selectOption(document.getElementById('add-base'), p.base || '');
+  selectOption(document.getElementById('add-type'), p.type || mapTaskType(name));
+  selectOption(document.getElementById('add-manager'), p.manager || '');
+  document.getElementById('add-start').value = p.startDate || PS.today();
+  document.getElementById('add-end').value = p.endDate || PS.today();
+  document.getElementById('add-desc').value = p.desc || '';
+  return name;
+}
+
+function adoptPrefill() {
+  var pre = readPrefill();
+  if (!pre) { document.getElementById('prefillBanner').style.display = 'none'; return; }
+  pre.consumed = true;
+  localStorage.setItem('orchard_farming_prefill', JSON.stringify(pre));
+  document.getElementById('prefillBanner').style.display = 'none';
+  Modal.show('modal-add-plan');
+  Toast.success('已采纳模型建议，请补充地块与计划量');
+}
+
+function consumeModelPrefill() {
+  var pre = readPrefill();
+  if (!pre) return;
+  var name = applyPrefill(pre);
+  var textEl = document.getElementById('prefillText');
+  if (textEl) textEl.textContent = '来自模型推荐（' + prefillSource(pre) + '）：' + name;
+  var banner = document.getElementById('prefillBanner');
+  if (banner) banner.style.display = 'flex';
+  Modal.show('modal-add-plan');
+}
+
+/* ---------- 导出 ---------- */
+function downloadCSV(filename, rows) {
+  var csv = rows.map(function (r) {
+    return r.map(function (c) { return '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\r\n');
+  var blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  var link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function exportPlan(format) {
+  var list = filterPlans();
+  var rows = [['计划编号', '计划名称', '基地', '类型', '地块范围', '引用标准', '计划量', '已审核量', '单位', '完成率', '开始时间', '结束时间', '负责人', '状态']];
+  list.forEach(function (p) {
+    var s = PS.planStats(p.id);
+    rows.push([p.id, p.name, p.base, p.typeName, p.plotRange, p.standardName, p.plannedQty, s.approvedQty, p.unit, s.rate + '%', p.startDate, p.endDate, p.manager, (PS.STATUS_TEXT[p.status] || p.status)]);
+  });
+  downloadCSV('农事计划_' + PS.today() + '.csv', rows);
+  Modal.hide('modal-export');
+  Toast.success('已导出 ' + list.length + ' 条计划');
+}
+
+/* ---------- 计划日历 ---------- */
+var calYear = 0;        // 当前展示的年份
+var calCursor = 0;      // 当前展示的月份（1-based）
+var calBase = false;    // 日历是否套用上方筛选条件
+
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+function dateStr(y, m, d) { return y + '-' + pad2(m) + '-' + pad2(d); }
+function parseDate(s) {
+  var p = String(s || '').slice(0, 10).split('-');
+  return { y: parseInt(p[0], 10), m: parseInt(p[1], 10), d: parseInt(p[2], 10) };
+}
+function dayDiff(a, b) {
+  return Math.round((Date.parse(b + 'T00:00:00') - Date.parse(a + 'T00:00:00')) / 86400000);
+}
+
+/** 计划跨月展示：把区间按天拆开，落到每一天 */
+function calendarPlanDays(plan) {
+  var start = String(plan.startDate || '').slice(0, 10);
+  var end = String(plan.endDate || '').slice(0, 10);
+  if (!start) return [];
+  if (!end || end < start) end = start;
+  var s = parseDate(start), e = parseDate(end);
+  var days = [];
+  var cur = new Date(s.y, s.m - 1, s.d);
+  var last = new Date(e.y, e.m - 1, e.d);
+  var guard = 0;
+  while (cur <= last && guard < 400) {
+    days.push(cur.getFullYear() + '-' + pad2(cur.getMonth() + 1) + '-' + pad2(cur.getDate()));
+    cur.setDate(cur.getDate() + 1);
+    guard++;
+  }
+  return days;
+}
+
+function calendarSourcePlans() {
+  return calBase ? filterPlans() : allPlans();
+}
+
+function calendarShift(step) {
+  var m = calCursor + step;
+  var y = calYear;
+  if (m < 1) { m = 12; y -= 1; }
+  if (m > 12) { m = 1; y += 1; }
+  calCursor = m;
+  calYear = y;
+  renderCalendar();
+}
+
+function calendarToday() {
+  var now = new Date();
+  calYear = now.getFullYear();
+  calCursor = now.getMonth() + 1;
+  renderCalendar();
+}
+
+/** 渲染日历 */
+function renderCalendar() {
+  var grid = document.getElementById('calendarGrid');
+  if (!grid) return;
+  var label = document.getElementById('calendarMonthLabel');
+  if (label) label.textContent = calYear + ' 年 ' + calCursor + ' 月';
+
+  var plans = calendarSourcePlans();
+  var byDay = {};
+  plans.forEach(function (p) {
+    calendarPlanDays(p).forEach(function (d) {
+      if (!byDay[d]) byDay[d] = [];
+      byDay[d].push(p);
+    });
+  });
+
+  // 图例：当前筛选下出现过的类型
+  var used = {};
+  Object.keys(byDay).forEach(function (d) {
+    byDay[d].forEach(function (p) { used[p.type] = 1; });
+  });
+  var legend = document.getElementById('calendarLegend');
+  if (legend) {
+    var keys = Object.keys(used);
+    legend.innerHTML = keys.length ? keys.map(function (k) {
+      return '<span class="cal-legend-item"><i class="cal-legend-dot" style="background:' + PS.typeColor(k) + ';"></i>' +
+        (PS.TYPE_NAMES[k] || k) + '</span>';
+    }).join('') : '<span class="cal-legend-item">当前条件下暂无计划</span>';
+  }
+
+  // 概览
+  var monthPlans = {};
+  Object.keys(byDay).forEach(function (d) {
+    var mm = d.slice(0, 7);
+    if (mm !== calYear + '-' + pad2(calCursor)) return;
+    byDay[d].forEach(function (p) { monthPlans[p.id] = p; });
+  });
+  var mp = Object.keys(monthPlans).map(function (k) { return monthPlans[k]; });
+  var summary = document.getElementById('calendarSummary');
+  if (summary) {
+    var done = mp.filter(function (p) { return p.status === 'completed'; }).length;
+    var running = mp.filter(function (p) { return p.status === 'executing'; }).length;
+    var delay = mp.filter(function (p) { return p.status === 'delayed'; }).length;
+    var pending = mp.filter(function (p) { return p.status === 'pending'; }).length;
+    summary.innerHTML =
+      '<span>本月计划<b>' + mp.length + '</b></span>' +
+      '<span>已完成<b style="color:var(--success);">' + done + '</b></span>' +
+      '<span>执行中<b style="color:var(--info);">' + running + '</b></span>' +
+      '<span>待执行<b style="color:var(--warning);">' + pending + '</b></span>' +
+      '<span>已延期<b style="color:var(--error);">' + delay + '</b></span>';
+  }
+
+  // 网格
+  var first = new Date(calYear, calCursor - 1, 1);
+  var startPad = first.getDay();
+  var daysInMonth = new Date(calYear, calCursor, 0).getDate();
+  var prevDays = new Date(calYear, calCursor - 1, 0).getDate();
+  var today = PS.today();
+  var html = '';
+  var totalCells = Math.ceil((startPad + daysInMonth) / 7) * 7;
+
+  for (var i = 0; i < totalCells; i++) {
+    var dayNum, cellDate, outside = false, weekend = false;
+    if (i < startPad) {
+      outside = true;
+      dayNum = prevDays - startPad + i + 1;
+      var pd = new Date(calYear, calCursor - 2, dayNum);
+      cellDate = pd.getFullYear() + '-' + pad2(pd.getMonth() + 1) + '-' + pad2(pd.getDate());
+    } else if (i >= startPad + daysInMonth) {
+      outside = true;
+      dayNum = i - startPad - daysInMonth + 1;
+      var nd = new Date(calYear, calCursor, dayNum);
+      cellDate = nd.getFullYear() + '-' + pad2(nd.getMonth() + 1) + '-' + pad2(nd.getDate());
+    } else {
+      dayNum = i - startPad + 1;
+      cellDate = dateStr(calYear, calCursor, dayNum);
+    }
+    var w = new Date(cellDate + 'T00:00:00').getDay();
+    if (w === 0 || w === 6) weekend = true;
+
+    var cls = 'cal-cell';
+    if (outside) cls += ' is-outside';
+    if (cellDate === today) cls += ' is-today';
+    if (weekend) cls += ' is-weekend';
+
+    var list = byDay[cellDate] || [];
+    var chips = '';
+    if (list.length) {
+      // 同一计划跨多天时，后几天只显示进度条，避免重复堆叠
+      var seen = {};
+      list.forEach(function (p) {
+        var s = String(p.startDate || '').slice(0, 10);
+        var e = String(p.endDate || '').slice(0, 10) || s;
+        var span = Math.max(1, dayDiff(s, e) + 1);
+        var offset = dayDiff(s, cellDate);
+        var pct = Math.round((offset + 1) / span * 100);
+        var color = PS.typeColor(p.type);
+        if (cellDate === s) {
+          chips += '<button class="cal-chip" title="' + p.name + '（' + (p.typeName || '') + '）" ' +
+            'style="border-left-color:' + color + ';background:' + color + '14;" ' +
+            'onclick="calendarPickPlan(\'' + p.id + '\')">' + p.name +
+            '<span class="cal-chip-status">' + (PS.STATUS_TEXT[p.status] || p.status) + '</span></button>';
+        } else {
+          chips += '<div class="cal-bar" title="' + p.name + '" style="background:' + color + '33;">' +
+            '<div style="height:100%;width:' + pct + '%;border-radius:3px;background:' + color + ';"></div></div>';
+        }
+        seen[p.id] = 1;
+      });
+    }
+
+    html += '<div class="' + cls + '">' +
+      '<div class="cal-day"><span>' + dayNum + '</span>' +
+      (list.length ? '<span>' + list.length + ' 项</span>' : '') + '</div>' +
+      chips + '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+/** 点击日历中的计划 → 打开详情 */
+function calendarPickPlan(id) {
+  var plan = PS.get('plans', id);
+  if (!plan) return;
+  showDetail(id);
+}
+
+/* ---------- 初始化 ---------- */
+document.addEventListener('DOMContentLoaded', function () {
+  fillPlotOptions('add-plots');
+  fillPlotOptions('edit-plots');
+  fillStandardOptions('add-standard');
+  fillStandardOptions('edit-standard');
+
+  var list = allPlans();
+  Pagination.init({
+    containerId: 'pagination-container',
+    tbodyId: 'dataTableBody',
+    pageSize: 10,
+    renderRow: renderRow,
+    data: list
+  });
+
+  calendarToday();
+  consumeModelPrefill();
+  window.addEventListener('productionStoreChange', function () {
+    // 任务/记录变更后刷新完成率与状态
+    Pagination.updateData(allPlans());
+    renderCalendar();
+  });
+});
+</script>
+
+<!-- 已通过质量审查（第2轮修正）- 严过审 2026-09-18 -->
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+  <script src="js/search-helper.js"></script>
+  <script src="js/typography.js"></script>
+</body>
+</html>

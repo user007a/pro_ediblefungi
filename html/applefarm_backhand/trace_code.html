@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工厂化农业数据管理系统 - 追溯码管理</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,21,41,0.5); display:flex; align-items:center; justify-content:center; z-index:1200; opacity:0; visibility:hidden; transition:all .25s ease; }
+  .modal-overlay.active { opacity:1; visibility:visible; }
+  .modal { background:var(--bg-card); border-radius:16px; width:520px; max-width:92vw; max-height:90vh; overflow:hidden; transform:scale(.92); transition:all .25s ease; display:flex; flex-direction:column; }
+  .modal-overlay.active .modal { transform:scale(1); }
+  .modal-header { padding:18px 24px; border-bottom:1px solid var(--border-default); display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#1890ff 0%,#13c2c2 100%); color:#fff; flex-shrink:0; }
+  .modal-header h3 { font-size:17px; font-weight:600; margin:0; color:#fff; }
+  .modal-close { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.2); border:none; color:#fff; cursor:pointer; font-size:16px; line-height:1; }
+  .modal-close:hover { background:rgba(255,255,255,.32); }
+  .modal-body { padding:22px 24px; overflow-y:auto; }
+  .modal-footer { padding:14px 24px; border-top:1px solid var(--border-default); display:flex; justify-content:flex-end; gap:12px; flex-shrink:0; }
+  .form-group { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
+  .form-group label { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .form-group input, .form-group select { padding:9px 12px; border:1px solid var(--border-default); border-radius:8px; font-size:14px; transition:all .2s; background:#fff; color:var(--text-primary); }
+  .form-group input:focus, .form-group select:focus { outline:none; border-color:#1890ff; box-shadow:0 0 0 3px rgba(24,144,255,.12); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-hint { font-size:12px; color:var(--text-tertiary); }
+  .req { color:#ff4d4f; }
+  .detail-grid { display:grid; grid-template-columns:110px 1fr; gap:10px; padding:9px 0; border-bottom:1px dashed var(--border-light); font-size:13px; }
+  .detail-grid:last-child { border-bottom:none; }
+  .detail-label { color:var(--text-tertiary); }
+  .detail-value { color:var(--text-primary); font-weight:500; word-break:break-all; }
+  /* 抽屉 */
+  .drawer-overlay { position:fixed; inset:0; background:rgba(0,21,41,.45); z-index:1100; opacity:0; visibility:hidden; transition:all .25s; }
+  .drawer-overlay.active { opacity:1; visibility:visible; }
+  .drawer { position:fixed; top:0; right:0; bottom:0; width:460px; max-width:94vw; background:var(--bg-card); z-index:1101; transform:translateX(102%); transition:transform .3s ease; display:flex; flex-direction:column; box-shadow:-10px 0 34px rgba(0,21,41,.16); }
+  .drawer.active { transform:none; }
+  .drawer-header { padding:18px 22px; background:linear-gradient(135deg,#1890ff 0%,#722ed1 100%); color:#fff; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .drawer-header h3 { margin:0; font-size:16px; color:#fff; }
+  .drawer-body { flex:1; overflow-y:auto; padding:18px 22px; }
+  .drawer-footer { padding:12px 22px; border-top:1px solid var(--border-default); display:flex; gap:10px; justify-content:flex-end; flex-shrink:0; }
+  .drawer-body::-webkit-scrollbar, .modal-body::-webkit-scrollbar { width:6px; }
+  .drawer-body::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track { background:#f0f5ff; }
+  .drawer-body::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb { background:#91caff; border-radius:3px; }
+  .drawer-body::-webkit-scrollbar-thumb:hover, .modal-body::-webkit-scrollbar-thumb:hover { background:#1890ff; }
+  /* toast（带撤销） */
+  .toast { position:fixed; top:20px; right:20px; padding:13px 18px; background:var(--bg-card); border-radius:10px; box-shadow:0 6px 24px rgba(0,21,41,.18); display:flex; align-items:center; gap:10px; z-index:2000; transform:translateX(120%); transition:all .3s ease; border-left:4px solid #52c41a; max-width:min(480px,90vw); font-size:13px; }
+  .toast.show { transform:translateX(0); }
+  .toast.error { border-left-color:#ff4d4f; }
+  .toast.warning { border-left-color:#fa8c16; }
+  .toast.info { border-left-color:#1890ff; }
+  .toast-undo { border:1px solid #1890ff; color:#1890ff; background:#e6f4ff; border-radius:6px; padding:3px 12px; font-size:12px; cursor:pointer; flex-shrink:0; }
+  .toast-undo:hover { background:#1890ff; color:#fff; }
+  /* 业务组件 */
+  .stats-section { margin-bottom:16px; }
+  @media (max-width:1100px){ .stats-section { grid-template-columns:repeat(2,1fr); } }
+  .pbar { height:8px; background:#eef2f7; border-radius:4px; overflow:hidden; min-width:70px; }
+  .pbar > i { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,#1890ff,#52c41a); }
+  .qr-box { width:150px; height:150px; margin:0 auto 10px; border:2px solid #91caff; border-radius:12px; padding:10px; background:#fff; }
+  .flow-chips { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0 14px; }
+  .flow-chip { padding:4px 12px; border-radius:999px; font-size:12px; border:1px solid var(--border-default); color:var(--text-tertiary); background:#fafafa; }
+  .flow-chip.on { border-color:#1890ff; color:#1890ff; background:#e6f4ff; font-weight:600; }
+  .flow-arrow { color:#bfbfbf; font-size:12px; }
+  .section-title { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:600; color:var(--text-primary); margin:20px 0 12px; }
+  .section-title::before { content:''; width:4px; height:16px; border-radius:2px; background:linear-gradient(180deg,#1890ff,#13c2c2); }
+  .bulk-bar { display:none; align-items:center; gap:12px; padding:8px 14px; margin-bottom:10px; background:#e6f4ff; border:1px solid #91caff; border-radius:8px; font-size:13px; color:#0958d9; }
+  .bulk-bar.show { display:flex; }
+  th.sortable { cursor:pointer; user-select:none; }
+  th.sortable:hover { color:#1890ff; }
+  .empty-row td { text-align:center; color:var(--text-tertiary); padding:36px 0 !important; font-size:13px; }
+  .mono { font-family:Consolas,Menlo,monospace; font-size:12.5px; }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="trace" data-active-submenu="trace-code">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <main class="main-content">
+      <div class="content-wrapper">
+
+        <div class="stats-section metrics-row">
+          <div class="stat-card blue">
+            <div class="stat-header"><span class="stat-label">累计赋码</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM18 18h3v3h-3z"/></svg></span></div>
+            <div class="stat-value" id="stTotal">—</div>
+            <div class="stat-footer"><span class="stat-trend up" id="stMonth">本月 —</span></div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-header"><span class="stat-label">本月赋码</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg></span></div>
+            <div class="stat-value" id="stMonthVal">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">含批码 / 箱码 / 袋码</span></div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-header"><span class="stat-label">已激活码</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span></div>
+            <div class="stat-value" id="stActive">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);" id="stBound">已绑定 —</span></div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-header"><span class="stat-label">待打印码</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></span></div>
+            <div class="stat-value" id="stUnprinted">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);" id="stTasks">打印任务 —</span></div>
+          </div>
+        </div>
+
+        <div class="search-section">
+          <div class="search-bar">
+            <select class="search-select" id="batchSelect" style="width:220px;"><option value="">全部批次</option></select>
+            <select class="search-select" id="statusSelect" style="width:140px;">
+              <option value="">全部状态</option>
+              <option value="未激活">未激活</option>
+              <option value="已激活">已激活</option>
+              <option value="已绑定">已绑定</option>
+              <option value="已打印">已打印</option>
+            </select>
+            <select class="search-select" id="levelSelect" style="width:130px;">
+              <option value="">全部层级</option>
+              <option value="批码">批码</option>
+              <option value="箱码">箱码</option>
+              <option value="袋码">袋码</option>
+            </select>
+            <input type="text" class="search-input" placeholder="输入追溯码 / 批次号搜索…" id="codeInput" style="width:220px;">
+            <div class="search-actions">
+              <button class="jg-btn jg-btn-primary" onclick="applyFilter(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button>
+              <button class="jg-btn" onclick="resetSearch()">重置</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <div class="action-left">
+            <button class="jg-btn jg-btn-primary" onclick="openGenerateModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 4v16m8-8H4"/></svg>批量生成
+            </button>
+            <button class="jg-btn" onclick="printFiltered()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>批量打印
+            </button>
+            <button class="jg-btn" onclick="exportCSV()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出 CSV
+            </button>
+          </div>
+          <div class="action-right"><span style="font-size:13px;color:var(--text-tertiary);" id="filterInfo"></span></div>
+        </div>
+
+        <div class="bulk-bar" id="bulkBar">
+          <span>已勾选 <strong id="bulkCount">0</strong> 条追溯码</span>
+          <button class="jg-btn" style="border-color:#ff4d4f;color:#ff4d4f;" onclick="bulkDelete()">批量删除</button>
+          <button class="jg-btn" onclick="clearSelection()">取消勾选</button>
+        </div>
+
+        <div class="data-section">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:44px;"><input type="checkbox" id="checkAll" onchange="toggleAll(this.checked)" aria-label="全选"></th>
+                <th style="width:56px;">序号</th>
+                <th>追溯码</th>
+                <th>批次号</th>
+                <th>品种</th>
+                <th>层级</th>
+                <th>状态</th>
+                <th>打印</th>
+                <th class="sortable" onclick="toggleSort()" id="thTime">生成时间 <span id="sortArrow">↕</span></th>
+                <th style="width:230px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody"></tbody>
+          </table>
+          <div id="pagination-container"></div>
+        </div>
+
+        <div class="section-title">打印任务</div>
+        <div class="data-section">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:56px;">序号</th>
+                <th>任务号</th>
+                <th>批次号</th>
+                <th>码数</th>
+                <th>打印机</th>
+                <th>状态</th>
+                <th>操作人</th>
+                <th>时间</th>
+                <th style="width:150px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="taskTableBody"></tbody>
+          </table>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 码详情抽屉 -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="codeDrawer" role="dialog" aria-label="追溯码详情">
+  <div class="drawer-header">
+    <h3>追溯码详情</h3>
+    <button class="modal-close" onclick="closeDrawer()" aria-label="关闭">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-footer" id="drawerFooter"></div>
+</div>
+
+<!-- 批量生成弹窗 -->
+<div class="modal-overlay" id="generateModal">
+  <div class="modal">
+    <div class="modal-header"><h3>批量生成追溯码</h3><button class="modal-close" onclick="closeModal('generateModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>生产批次 <span class="req">*</span></label>
+        <select id="genBatch"><option value="">请选择批次</option></select>
+        <span class="form-hint">批次来自全链条录入主数据，格式 MJ-YYMMDD-NN</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>码层级 <span class="req">*</span></label>
+          <select id="genLevel"><option value="批码">批码（批次级）</option><option value="箱码" selected>箱码（箱级）</option><option value="袋码">袋码（袋级）</option></select>
+        </div>
+        <div class="form-group">
+          <label>生成数量 <span class="req">*</span></label>
+          <input type="number" id="genCount" value="20" min="1" max="200">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>品种 / 菇房</label>
+        <input type="text" id="genInfo" readonly placeholder="选择批次后自动带出">
+      </div>
+      <span class="form-hint">新码初始状态为「未激活」，生成后可逐条激活、绑定并打印标签。</span>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('generateModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="confirmGenerate()">确认生成</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header"><h3>编辑追溯码</h3><button class="modal-close" onclick="closeModal('editModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>追溯码</label><input type="text" id="editId" readonly></div>
+      <div class="form-group"><label>生产批次 <span class="req">*</span></label><select id="editBatch"></select></div>
+      <div class="form-row">
+        <div class="form-group"><label>码层级</label><select id="editLevel"><option>批码</option><option>箱码</option><option>袋码</option></select></div>
+        <div class="form-group"><label>状态</label><select id="editStatus"><option>未激活</option><option>已激活</option><option>已绑定</option><option>已打印</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('editModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="confirmEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 通用确认弹窗 -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="width:420px;">
+    <div class="modal-header" style="background:linear-gradient(135deg,#fa8c16 0%,#ff4d4f 100%);"><h3 id="confirmTitle">确认操作</h3><button class="modal-close" onclick="closeModal('confirmModal')">×</button></div>
+    <div class="modal-body"><div id="confirmText" style="font-size:14px;color:var(--text-secondary);line-height:1.7;"></div></div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('confirmModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span id="toastMessage">操作成功</span>
+  <button class="toast-undo" id="toastUndo" style="display:none;">撤销</button>
+</div>
+
+<script src="js/shared/fungi-store.js"></script>
+<script>
+/* ============================================================
+ * 追溯码管理 —— FungiStore.traceCodes / printTasks 单一真源
+ * 状态流转：未激活 → 已激活 → 已绑定 → 已打印
+ * ============================================================ */
+'use strict';
+var FS = window.FungiStore;
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function pad(n,l){ n=String(n); while(n.length<(l||2)) n='0'+n; return n; }
+function nowHM(){ var d=new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function nowStr(){ return FS.at(0, nowHM()); }
+function fmt(n){ return Number(n||0).toLocaleString('zh-CN'); }
+function goPage(url,title){ if(window.parent && typeof window.parent.openPage==='function') window.parent.openPage(url,title); else window.location.href=url; }
+function opLog(action, object){
+  try{
+    var u=JSON.parse(sessionStorage.getItem('snzg_user')||'null')||{};
+    var arr=JSON.parse(localStorage.getItem('mushroom_op_log')||'[]');
+    arr.unshift({ time:nowStr(), account:u.username||'admin', action:action, object:object||'—' });
+    if(arr.length>200) arr.length=200;
+    localStorage.setItem('mushroom_op_log', JSON.stringify(arr));
+  }catch(e){}
+}
+/* toast + 撤销 */
+var toastTimer=null, undoFn=null;
+function showToast(msg,type,undo){
+  var t=document.getElementById('toast');
+  document.getElementById('toastMessage').textContent=msg;
+  var ub=document.getElementById('toastUndo');
+  undoFn=undo||null; ub.style.display=undo?'':'none';
+  t.className='toast '+(type||'success')+' show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.remove('show'); undoFn=null; }, undo?6000:3000);
+}
+document.getElementById('toastUndo').addEventListener('click',function(){
+  if(undoFn){ var f=undoFn; undoFn=null; f(); }
+  document.getElementById('toast').classList.remove('show');
+});
+function openModal(id){ document.getElementById(id).classList.add('active'); }
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+function askConfirm(title,html,onOk){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmText').innerHTML=html;
+  var btn=document.getElementById('confirmOk');
+  var nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
+  nb.addEventListener('click',function(){ closeModal('confirmModal'); onOk(); });
+  openModal('confirmModal');
+}
+function openDrawer(){ document.getElementById('drawerOverlay').classList.add('active'); document.getElementById('codeDrawer').classList.add('active'); }
+function closeDrawer(){ document.getElementById('drawerOverlay').classList.remove('active'); document.getElementById('codeDrawer').classList.remove('active'); }
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ document.querySelectorAll('.modal-overlay.active').forEach(function(o){ closeModal(o.id); }); closeDrawer(); }
+});
+document.querySelectorAll('.modal-overlay').forEach(function(o){
+  o.addEventListener('click',function(e){ if(e.target===o) closeModal(o.id); });
+});
+
+/* ---------- 数据推导 ---------- */
+function normStatus(s){ return s==='已生成' ? '未激活' : s; }
+function batchOf(id){ return FS.list('batches').filter(function(b){ return b.id===id; })[0]||null; }
+function varietyOf(batchId){ var b=batchOf(batchId); return b?b.variety:'—'; }
+function allCodes(){ return FS.list('traceCodes'); }
+function statusCls(s){
+  s=normStatus(s);
+  return s==='已绑定'?'active':s==='已激活'?'active':s==='已打印'?'active':'inactive';
+}
+function statusStyle(s){
+  s=normStatus(s);
+  var map={ '未激活':'background:#fff7e6;color:#fa8c16;border:1px solid #ffd591;',
+            '已激活':'background:#e6f4ff;color:#1890ff;border:1px solid #91caff;',
+            '已绑定':'background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f;',
+            '已打印':'background:#f9f0ff;color:#722ed1;border:1px solid #d3adf7;' };
+  return 'display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;'+(map[s]||'');
+}
+
+/* ---------- 统计卡 ---------- */
+function renderStats(){
+  var st=FS.stats(), codes=allCodes();
+  document.getElementById('stTotal').textContent=fmt(st.trace);
+  document.getElementById('stMonth').textContent='本月 +'+fmt(st.traceMonth);
+  document.getElementById('stMonthVal').textContent=fmt(st.traceMonth);
+  var act=codes.filter(function(c){ return normStatus(c.status)==='已激活'; }).length;
+  var bound=codes.filter(function(c){ return normStatus(c.status)==='已绑定'; }).length;
+  var unprinted=codes.filter(function(c){ return !c.printed; }).length;
+  document.getElementById('stActive').textContent=fmt(act);
+  document.getElementById('stBound').textContent='已绑定 '+bound+' 个';
+  document.getElementById('stUnprinted').textContent=fmt(unprinted);
+  var tasks=FS.list('printTasks');
+  var running=tasks.filter(function(t){ return t.status==='打印中'; }).length;
+  document.getElementById('stTasks').textContent='打印任务 '+tasks.length+' 个'+(running?' · '+running+' 个进行中':'');
+}
+
+/* ---------- 筛选 / 排序 / 分页 ---------- */
+var sortDesc=true, selected={};
+var Pagination={
+  currentPage:1,pageSize:10,filteredData:[],
+  init:function(data){ this.filteredData=data; this.currentPage=1; this.render(); },
+  updateData:function(data){ this.filteredData=data; this.currentPage=1; this.render(); },
+  goToPage:function(p){ var tp=Math.max(1,Math.ceil(this.filteredData.length/this.pageSize)); if(p<1||p>tp) return; this.currentPage=p; this.render(); },
+  render:function(){
+    var total=this.filteredData.length, tp=Math.max(1,Math.ceil(total/this.pageSize));
+    if(this.currentPage>tp) this.currentPage=tp;
+    var start=(this.currentPage-1)*this.pageSize;
+    var rows=this.filteredData.slice(start,start+this.pageSize);
+    var tbody=document.getElementById('dataTableBody');
+    if(!rows.length){
+      tbody.innerHTML='<tr class="empty-row"><td colspan="10">暂无符合条件的追溯码，点击「批量生成」为批次赋码</td></tr>';
+    }else{
+      tbody.innerHTML=rows.map(function(c,i){ return renderRow(c,start+i+1); }).join('');
+    }
+    var html='<div class="pagination">';
+    html+='<button class="page-btn '+(this.currentPage<=1?'disabled':'')+'" onclick="Pagination.goToPage('+(this.currentPage-1)+')">‹</button>';
+    for(var i=1;i<=tp;i++){
+      if(i===1||i===tp||Math.abs(i-this.currentPage)<=1) html+='<button class="page-btn '+(i===this.currentPage?'active':'')+'" onclick="Pagination.goToPage('+i+')">'+i+'</button>';
+      else if(Math.abs(i-this.currentPage)===2) html+='<span style="padding:0 6px;color:#9aa5b1;">…</span>';
+    }
+    html+='<button class="page-btn '+(this.currentPage>=tp?'disabled':'')+'" onclick="Pagination.goToPage('+(this.currentPage+1)+')">›</button>';
+    html+='<span style="margin-left:14px;font-size:13px;color:#6b7b6b;">第 '+this.currentPage+' / '+tp+' 页 · 共 '+total+' 条</span></div>';
+    document.getElementById('pagination-container').innerHTML=html;
+    syncCheckAll();
+  }
+};
+function currentFiltered(){
+  var b=document.getElementById('batchSelect').value;
+  var s=document.getElementById('statusSelect').value;
+  var lv=document.getElementById('levelSelect').value;
+  var kw=document.getElementById('codeInput').value.trim().toLowerCase();
+  var rows=allCodes().filter(function(c){
+    if(b && c.batch!==b) return false;
+    if(s && normStatus(c.status)!==s) return false;
+    if(lv && c.level!==lv) return false;
+    if(kw && c.id.toLowerCase().indexOf(kw)<0 && String(c.batch).toLowerCase().indexOf(kw)<0) return false;
+    return true;
+  });
+  rows.sort(function(a,b2){ var r=String(a.time).localeCompare(String(b2.time)); return sortDesc?-r:r; });
+  return rows;
+}
+function applyFilter(notify){
+  var rows=currentFiltered();
+  Pagination.updateData(rows);
+  document.getElementById('filterInfo').textContent='筛选结果 '+rows.length+' 条';
+  if(notify) showToast('找到 '+rows.length+' 条记录','info');
+}
+function resetSearch(){
+  ['batchSelect','statusSelect','levelSelect'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('codeInput').value='';
+  applyFilter(false); showToast('已重置筛选条件','info');
+}
+function toggleSort(){
+  sortDesc=!sortDesc;
+  document.getElementById('sortArrow').textContent=sortDesc?'↓':'↑';
+  applyFilter(false);
+}
+function renderRow(c,seq){
+  var ns=normStatus(c.status);
+  var acts='<button class="action-btn detail" onclick="viewDetail(\''+esc(c.id)+'\')">详情</button>';
+  if(ns==='未激活') acts+='<button class="action-btn" onclick="activateCode(\''+esc(c.id)+'\')">激活</button>';
+  if(ns==='已激活') acts+='<button class="action-btn" onclick="bindCode(\''+esc(c.id)+'\')">绑定</button>';
+  if(!c.printed) acts+='<button class="action-btn qrcode" onclick="printCode(\''+esc(c.id)+'\')">打印</button>';
+  acts+='<button class="action-btn" style="color:#ff4d4f;" onclick="deleteCode(\''+esc(c.id)+'\')">删除</button>';
+  return '<tr>'+
+    '<td><input type="checkbox" class="row-check" data-id="'+esc(c.id)+'" '+(selected[c.id]?'checked':'')+' onchange="toggleRow(\''+esc(c.id)+'\',this.checked)" aria-label="勾选"></td>'+
+    '<td>'+seq+'</td>'+
+    '<td><strong class="mono">'+esc(c.id)+'</strong></td>'+
+    '<td class="mono">'+esc(c.batch)+'</td>'+
+    '<td>'+esc(varietyOf(c.batch))+'</td>'+
+    '<td>'+esc(c.level||'批码')+'</td>'+
+    '<td><span style="'+statusStyle(c.status)+'">'+esc(ns)+'</span></td>'+
+    '<td>'+(c.printed?'<span style="color:#52c41a;">已打印</span>':'<span style="color:#fa8c16;">待打印</span>')+'</td>'+
+    '<td>'+esc(c.time)+'</td>'+
+    '<td><div class="action-btns">'+acts+'</div></td></tr>';
+}
+/* 勾选 */
+function toggleRow(id,on){ if(on) selected[id]=true; else delete selected[id]; syncBulk(); }
+function toggleAll(on){
+  Pagination.filteredData.slice((Pagination.currentPage-1)*Pagination.pageSize,Pagination.currentPage*Pagination.pageSize).forEach(function(c){
+    if(on) selected[c.id]=true; else delete selected[c.id];
+  });
+  Pagination.render(); syncBulk();
+}
+function syncCheckAll(){
+  var rows=Pagination.filteredData.slice((Pagination.currentPage-1)*Pagination.pageSize,Pagination.currentPage*Pagination.pageSize);
+  var all=rows.length>0 && rows.every(function(c){ return selected[c.id]; });
+  document.getElementById('checkAll').checked=all;
+}
+function syncBulk(){
+  var n=Object.keys(selected).length;
+  document.getElementById('bulkCount').textContent=n;
+  document.getElementById('bulkBar').classList.toggle('show',n>0);
+}
+function clearSelection(){ selected={}; Pagination.render(); syncBulk(); }
+function removeWithUndo(ids,label){
+  var removed=[];
+  ids.forEach(function(id){
+    var list=allCodes(); var idx=list.findIndex(function(x){ return x.id===id; });
+    var obj=FS.remove('traceCodes',id);
+    if(obj) removed.push({obj:obj,idx:idx});
+    delete selected[id];
+  });
+  refresh();
+  showToast('已删除 '+removed.length+' '+label,'warning',function(){
+    removed.sort(function(a,b){ return a.idx-b.idx; }).forEach(function(r){ FS.restore('traceCodes',r.obj,r.idx); });
+    refresh(); showToast('已撤销删除','success');
+  });
+  opLog('删除追溯码',ids.join('、'));
+}
+function bulkDelete(){
+  var ids=Object.keys(selected);
+  if(!ids.length) return;
+  askConfirm('批量删除追溯码','即将删除勾选的 <strong>'+ids.length+'</strong> 条追溯码，删除后可在提示中撤销。是否继续？',function(){
+    removeWithUndo(ids,'条追溯码');
+  });
+}
+function deleteCode(id){
+  askConfirm('删除追溯码','确定删除追溯码 <strong class="mono">'+esc(id)+'</strong> 吗？删除后可撤销。',function(){
+    removeWithUndo([id],'条追溯码');
+  });
+}
+
+/* ---------- 状态流转 ---------- */
+function activateCode(id){
+  FS.update('traceCodes',id,{status:'已激活'});
+  opLog('激活追溯码',id); refresh(); showToast('已激活：'+id,'success');
+}
+function bindCode(id){
+  var c=FS.get('traceCodes',id); if(!c) return;
+  FS.update('traceCodes',id,{status:'已绑定'});
+  opLog('绑定追溯码',id+' → '+c.batch); refresh(); showToast('已绑定批次 '+c.batch,'success');
+}
+function addPrintTask(batch,count){
+  var t={ batch:batch, count:count, printer:'标签打印机 A', status:'打印中', operator:(JSON.parse(sessionStorage.getItem('snzg_user')||'{}').realName)||'陈小忠', time:nowStr() };
+  FS.add('printTasks',t); return t;
+}
+function printCode(id){
+  var c=FS.get('traceCodes',id); if(!c) return;
+  FS.update('traceCodes',id,{printed:true,status:'已打印'});
+  var t=addPrintTask(c.batch,1);
+  opLog('打印追溯码',id); refresh();
+  showToast('已提交打印：'+id+'（任务 '+t.id+'）','success');
+}
+function printFiltered(){
+  var rows=Pagination.filteredData.filter(function(c){ return !c.printed; });
+  if(!rows.length){ showToast('当前筛选结果中没有待打印的追溯码','warning'); return; }
+  var groups={};
+  rows.forEach(function(c){ (groups[c.batch]=groups[c.batch]||[]).push(c.id); });
+  Object.keys(groups).forEach(function(b){
+    groups[b].forEach(function(id){ FS.update('traceCodes',id,{printed:true,status:'已打印'}); });
+    addPrintTask(b,groups[b].length);
+  });
+  opLog('批量打印追溯码',rows.length+' 条'); refresh();
+  showToast('已打印 '+rows.length+' 条，生成 '+Object.keys(groups).length+' 个打印任务','success');
+}
+function finishTask(id){
+  FS.update('printTasks',id,{status:'已完成'});
+  opLog('完成打印任务',id); renderTasks(); renderStats(); showToast('打印任务 '+id+' 已完成','success');
+}
+function deleteTask(id){
+  askConfirm('删除打印任务','确定删除打印任务 <strong class="mono">'+esc(id)+'</strong> 吗？',function(){
+    var list=FS.list('printTasks'); var idx=list.findIndex(function(x){ return x.id===id; });
+    var obj=FS.remove('printTasks',id);
+    renderTasks(); renderStats();
+    showToast('已删除打印任务 '+id,'warning',function(){ FS.restore('printTasks',obj,idx); renderTasks(); renderStats(); showToast('已撤销删除','success'); });
+    opLog('删除打印任务',id);
+  });
+}
+function renderTasks(){
+  var tasks=FS.list('printTasks');
+  var tbody=document.getElementById('taskTableBody');
+  if(!tasks.length){ tbody.innerHTML='<tr class="empty-row"><td colspan="9">暂无打印任务，对追溯码执行「打印」后自动生成</td></tr>'; return; }
+  tbody.innerHTML=tasks.map(function(t,i){
+    var st=t.status==='已完成'
+      ? '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f;">已完成</span>'
+      : '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:#e6f4ff;color:#1890ff;border:1px solid #91caff;">打印中</span>';
+    var acts=t.status==='打印中'?'<button class="action-btn detail" onclick="finishTask(\''+esc(t.id)+'\')">完成</button>':'';
+    acts+='<button class="action-btn" style="color:#ff4d4f;" onclick="deleteTask(\''+esc(t.id)+'\')">删除</button>';
+    return '<tr><td>'+(i+1)+'</td><td class="mono">'+esc(t.id)+'</td><td class="mono">'+esc(t.batch)+'</td><td>'+t.count+'</td><td>'+esc(t.printer||'标签打印机 A')+'</td><td>'+st+'</td><td>'+esc(t.operator||'—')+'</td><td>'+esc(t.time)+'</td><td><div class="action-btns">'+acts+'</div></td></tr>';
+  }).join('');
+}
+
+/* ---------- 批量生成 ---------- */
+function fillBatchOptions(sel,withEmpty){
+  sel.innerHTML=(withEmpty?'<option value="">请选择批次</option>':'')+FS.list('batches').map(function(b){
+    return '<option value="'+esc(b.id)+'">'+esc(b.id)+' · '+esc(b.variety)+' · '+esc(b.stage)+'</option>';
+  }).join('');
+}
+function openGenerateModal(){
+  fillBatchOptions(document.getElementById('genBatch'),true);
+  document.getElementById('genCount').value=20;
+  document.getElementById('genInfo').value='';
+  openModal('generateModal');
+}
+document.getElementById('genBatch').addEventListener('change',function(){
+  var b=batchOf(this.value);
+  document.getElementById('genInfo').value=b?(b.variety+' · '+b.room+' · '+fmt(b.bags)+' 袋'):'';
+});
+function confirmGenerate(){
+  var batch=document.getElementById('genBatch').value;
+  var level=document.getElementById('genLevel').value;
+  var count=Math.floor(Number(document.getElementById('genCount').value));
+  if(!batch){ showToast('请选择生产批次','error'); return; }
+  if(!count||count<1||count>200){ showToast('生成数量需在 1-200 之间','error'); return; }
+  var prefix='TR-'+FS.dayKey(0).slice(2).replace(/-/g,'')+'-';
+  var existing={}; allCodes().forEach(function(c){ existing[c.id]=true; });
+  var n=1, made=0;
+  while(made<count){
+    var id=prefix+pad(n,5); n++;
+    if(existing[id]) continue;
+    existing[id]=true;
+    FS.add('traceCodes',{ id:id, batch:batch, level:level, status:'未激活', printed:false, time:nowStr() });
+    made++;
+  }
+  closeModal('generateModal');
+  opLog('批量生成追溯码',batch+' × '+count);
+  refresh(); showToast('已生成 '+count+' 个'+level+'，批次 '+batch,'success');
+}
+
+/* ---------- 编辑 ---------- */
+var editingId='';
+function openEdit(id){
+  var c=FS.get('traceCodes',id); if(!c) return;
+  editingId=id;
+  document.getElementById('editId').value=id;
+  fillBatchOptions(document.getElementById('editBatch'),false);
+  document.getElementById('editBatch').value=c.batch;
+  document.getElementById('editLevel').value=c.level||'批码';
+  document.getElementById('editStatus').value=normStatus(c.status);
+  closeDrawer(); openModal('editModal');
+}
+function confirmEdit(){
+  var batch=document.getElementById('editBatch').value;
+  if(!batch){ showToast('请选择批次','error'); return; }
+  var status=document.getElementById('editStatus').value;
+  FS.update('traceCodes',editingId,{ batch:batch, level:document.getElementById('editLevel').value, status:status, printed:status==='已打印'?true:FS.get('traceCodes',editingId).printed });
+  closeModal('editModal'); opLog('编辑追溯码',editingId); refresh(); showToast('已保存：'+editingId,'success');
+}
+
+/* ---------- 抽屉详情 ---------- */
+function pseudoQR(seedStr){
+  var h=2166136261;
+  for(var i=0;i<seedStr.length;i++){ h^=seedStr.charCodeAt(i); h=Math.imul(h,16777619); }
+  var rnd=function(){ h^=h<<13; h^=h>>>17; h^=h<<5; return (h>>>0)/4294967296; };
+  var cells='',N=21,s=130/N;
+  function finder(x,y){ return '<rect x="'+(x*s)+'" y="'+(y*s)+'" width="'+(7*s)+'" height="'+(7*s)+'" fill="#001529"/><rect x="'+((x+1)*s)+'" y="'+((y+1)*s)+'" width="'+(5*s)+'" height="'+(5*s)+'" fill="#fff"/><rect x="'+((x+2)*s)+'" y="'+((y+2)*s)+'" width="'+(3*s)+'" height="'+(3*s)+'" fill="#001529"/>'; }
+  for(var y=0;y<N;y++)for(var x=0;x<N;x++){
+    if((x<8&&y<8)||(x>N-9&&y<8)||(x<8&&y>N-9)) continue;
+    if(rnd()>0.52) cells+='<rect x="'+(x*s)+'" y="'+(y*s)+'" width="'+s+'" height="'+s+'" fill="#001529"/>';
+  }
+  return '<svg viewBox="0 0 130 130" width="100%" height="100%" role="img" aria-label="追溯二维码示意">'+cells+finder(0,0)+finder(N-7,0)+finder(0,N-7)+'</svg>';
+}
+function viewDetail(id){
+  var c=FS.get('traceCodes',id); if(!c) return;
+  var b=batchOf(c.batch), ns=normStatus(c.status);
+  var steps=['未激活','已激活','已绑定','已打印'];
+  var reach=steps.indexOf(ns);
+  var chips=steps.map(function(s,i){
+    return (i?'<span class="flow-arrow">→</span>':'')+'<span class="flow-chip '+(i<=reach?'on':'')+'">'+s+'</span>';
+  }).join('');
+  var tasks=FS.list('printTasks').filter(function(t){ return t.batch===c.batch; });
+  document.getElementById('drawerBody').innerHTML=
+    '<div class="qr-box">'+pseudoQR(c.id)+'</div>'+
+    '<div style="text-align:center;font-weight:600;font-size:15px;margin-bottom:4px;" class="mono">'+esc(c.id)+'</div>'+
+    '<div style="text-align:center;font-size:12px;color:var(--text-tertiary);margin-bottom:8px;">扫码进入消费者追溯页（演示示意码）</div>'+
+    '<div class="flow-chips" style="justify-content:center;">'+chips+'</div>'+
+    '<div class="detail-grid"><span class="detail-label">生产批次</span><span class="detail-value mono">'+esc(c.batch)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">品种</span><span class="detail-value">'+esc(b?b.variety:'—')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">菌种 / 菇房</span><span class="detail-value">'+esc(b?(b.strain+' / '+b.room):'—')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">码层级</span><span class="detail-value">'+esc(c.level||'批码')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">当前状态</span><span class="detail-value"><span style="'+statusStyle(c.status)+'">'+esc(ns)+'</span></span></div>'+
+    '<div class="detail-grid"><span class="detail-label">打印状态</span><span class="detail-value">'+(c.printed?'已打印':'待打印')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">生成时间</span><span class="detail-value">'+esc(c.time)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">关联打印任务</span><span class="detail-value">'+(tasks.length?tasks.map(function(t){ return esc(t.id)+'（'+t.count+' 码 · '+esc(t.status)+'）'; }).join('<br>'):'暂无')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">全链条档案</span><span class="detail-value"><a href="javascript:void(0)" style="color:#1890ff;" onclick="goPage(\'trace_batch.html?batch='+encodeURIComponent(c.batch)+'\',\'全链条录入\')">查看批次 9 节点链路 →</a></span></div>';
+  var f='<button class="jg-btn" onclick="openEdit(\''+esc(c.id)+'\')">编辑</button>';
+  if(ns==='未激活') f+='<button class="jg-btn" onclick="activateCode(\''+esc(c.id)+'\');viewDetail(\''+esc(c.id)+'\')">激活</button>';
+  if(ns==='已激活') f+='<button class="jg-btn" onclick="bindCode(\''+esc(c.id)+'\');viewDetail(\''+esc(c.id)+'\')">绑定</button>';
+  if(!c.printed) f+='<button class="jg-btn jg-btn-primary" onclick="printCode(\''+esc(c.id)+'\');viewDetail(\''+esc(c.id)+'\')">打印标签</button>';
+  document.getElementById('drawerFooter').innerHTML=f;
+  openDrawer();
+}
+
+/* ---------- 导出 ---------- */
+function exportCSV(){
+  var rows=Pagination.filteredData;
+  if(!rows.length){ showToast('当前没有可导出的数据','warning'); return; }
+  var head=['追溯码','批次号','品种','层级','状态','打印','生成时间'];
+  var lines=[head.join(',')].concat(rows.map(function(c){
+    return [c.id,c.batch,varietyOf(c.batch),c.level||'批码',normStatus(c.status),c.printed?'已打印':'待打印',c.time].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+  }));
+  var blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='追溯码_'+FS.dayKey(0)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },1500);
+  opLog('导出追溯码CSV',rows.length+' 条');
+  showToast('已导出 '+rows.length+' 条追溯码','success');
+}
+
+/* ---------- 初始化 ---------- */
+function refresh(){ renderStats(); applyFilter(false); renderTasks(); }
+document.addEventListener('DOMContentLoaded',function(){
+  fillBatchOptions(document.getElementById('batchSelect'),true);
+  document.getElementById('batchSelect').insertAdjacentHTML('afterbegin','');
+  document.getElementById('batchSelect').options[0].textContent='全部批次';
+  ['batchSelect','statusSelect','levelSelect'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(){ applyFilter(false); }); });
+  document.getElementById('codeInput').addEventListener('input',function(){ applyFilter(false); });
+  window.addEventListener('fungiStoreChange',function(){ renderStats(); renderTasks(); });
+  refresh();
+  var preset=new URLSearchParams(window.location.search).get('batch');
+  if(preset){ document.getElementById('batchSelect').value=preset; applyFilter(false); }
+});
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/typography.js"></script>
+</body>
+</html>

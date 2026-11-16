@@ -1,0 +1,2493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 系统设置</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .system-tab-content {
+    display:none;
+    animation:fadeIn 0.2s ease;
+  }
+  .system-tab-content.active {
+    display:block;
+  }
+  @keyframes fadeIn {
+    from { opacity:0; transform:translateY(8px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .panel-container {
+    background:var(--bg-card);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    border:1px solid var(--border-light);
+    overflow:hidden;
+  }
+  .panel-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 20px;
+    border-bottom:1px solid var(--border-light);
+    background:linear-gradient(135deg, var(--gray-50), var(--bg-card));
+  }
+  .panel-title {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:var(--font-size-lg);
+    font-weight:var(--font-weight-semibold);
+    color:var(--text-primary);
+  }
+  .panel-title svg {
+    width:20px;
+    height:20px;
+    color:var(--primary-500);
+  }
+  .panel-body {
+    padding:20px;
+  }
+  .search-wrapper {
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .search-box {
+    position:relative;
+    flex:1;
+    max-width:320px;
+  }
+  .search-box input {
+    width:100%;
+    padding:10px 14px 10px 38px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    transition:all var(--transition-fast);
+    background:var(--bg-card);
+  }
+  .search-box input:focus {
+    border-color:var(--primary-500);
+    box-shadow:0 0 0 3px rgba(24, 144, 255, 0.1);
+    outline:none;
+  }
+  .search-box svg {
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    width:16px;
+    height:16px;
+    color:var(--text-disabled);
+  }
+  .data-grid {
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    margin-top:16px;
+  }
+  .data-grid th {
+    padding:12px 16px;
+    text-align:left;
+    font-weight:var(--font-weight-semibold);
+    font-size:var(--font-size-sm);
+    color:var(--text-secondary);
+    background:linear-gradient(135deg, var(--gray-50), var(--gray-100));
+    border-bottom:2px solid var(--border-strong);
+    white-space:nowrap;
+    position:sticky;
+    top:0;
+    z-index:1;
+  }
+  .data-grid th:first-child { border-top-left-radius:var(--radius-md); }
+  .data-grid th:last-child { border-top-right-radius:var(--radius-md); }
+  .data-grid td {
+    padding:14px 16px;
+    border-bottom:1px solid var(--border-light);
+    transition:background var(--transition-fast);
+    font-size:var(--font-size-base);
+  }
+  .data-grid tbody tr:hover td { background:var(--bg-hover); }
+  .data-grid tbody tr:last-child td { border-bottom:none; }
+  .data-grid tbody tr:last-child td:first-child { border-bottom-left-radius:var(--radius-md); }
+  .data-grid tbody tr:last-child td:last-child { border-bottom-right-radius:var(--radius-md); }
+  /* 字典值编辑表格（弹窗内紧凑布局） */
+  .dict-value-table { margin-top:0; }
+  .dict-value-table th { padding:8px 10px; font-size:12px; }
+  .dict-value-table td { padding:6px 8px; }
+  .dict-value-table .form-input { padding:6px 8px; font-size:13px; }
+  .action-group {
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .action-btn {
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:6px 12px;
+    border-radius:var(--radius-sm);
+    font-size:var(--font-size-sm);
+    font-weight:var(--font-weight-medium);
+    cursor:pointer;
+    transition:all var(--transition-fast);
+    border:1px solid transparent;
+    background:transparent;
+  }
+  .action-btn svg { width:14px; height:14px; }
+  .action-btn.edit { color:var(--info); }
+  .action-btn.edit:hover { background:var(--info-bg); border-color:var(--info-border); }
+  .action-btn.reset { color:var(--warning); }
+  .action-btn.reset:hover { background:var(--warning-bg); border-color:var(--warning-border); }
+  .action-btn.delete { color:var(--error); }
+  .action-btn.delete:hover { background:var(--error-bg); border-color:var(--error-border); }
+  .action-btn.primary { color:var(--success); }
+  .action-btn.primary:hover { background:var(--success-bg); border-color:var(--success-border); }
+  .action-btn.view { color:var(--primary-500); }
+  .action-btn.view:hover { background:var(--primary-50); border-color:var(--primary-200); }
+  .role-badge {
+    display:inline-flex;
+    align-items:center;
+    padding:4px 10px;
+    border-radius:var(--radius-full);
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
+    white-space:nowrap;
+  }
+  .role-badge.admin { background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:var(--text-inverse); }
+  .role-badge.manager { background:var(--info-bg); color:var(--info); border:1px solid var(--info-border); }
+  .role-badge.operator { background:var(--warning-bg); color:#9a6700; border:1px solid var(--warning-border); }
+  .role-badge.viewer { background:var(--gray-100); color:var(--text-tertiary); border:1px solid var(--gray-200); }
+  .status-badge {
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:4px 10px;
+    border-radius:var(--radius-full);
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
+    white-space:nowrap;
+  }
+  .status-badge.active { background:var(--success-bg); color:var(--success); border:1px solid var(--success-border); }
+  .status-badge.disabled { background:var(--gray-100); color:var(--text-tertiary); border:1px solid var(--gray-200); }
+  .status-badge.warning { background:var(--warning-bg); color:#9a6700; border:1px solid var(--warning-border); }
+  .status-badge.info { background:var(--info-bg); color:var(--info); border:1px solid var(--info-border); }
+  .config-section {
+    margin-bottom:24px;
+    padding:20px;
+    background:var(--gray-50);
+    border-radius:var(--radius-lg);
+    border:1px solid var(--border-light);
+  }
+  .config-section-header {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:16px;
+    font-size:var(--font-size-lg);
+    font-weight:var(--font-weight-semibold);
+    color:var(--text-primary);
+    padding-bottom:12px;
+    border-bottom:1px solid var(--border-light);
+  }
+  .config-section-header svg { width:18px; height:18px; color:var(--primary-500); }
+  .config-row {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 0;
+    border-bottom:1px dashed var(--border-light);
+  }
+  .config-row:last-child { border-bottom:none; }
+  .config-info { flex:1; }
+  .config-label { font-size:var(--font-size-base); font-weight:var(--font-weight-medium); color:var(--text-primary); margin-bottom:4px; }
+  .config-desc { font-size:var(--font-size-sm); color:var(--text-tertiary); }
+  .config-value {
+    font-size:var(--font-size-base);
+    font-weight:var(--font-weight-medium);
+    color:var(--text-secondary);
+    padding:6px 12px;
+    background:var(--bg-card);
+    border-radius:var(--radius-sm);
+    border:1px solid var(--border-light);
+  }
+  /* ===== 部门管理 / 岗位管理（tab-dept、tab-post） ===== */
+  .dept-name-cell {
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .dept-expand-btn {
+    width:20px;
+    height:20px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border:none;
+    background:transparent;
+    color:var(--text-tertiary);
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    flex-shrink:0;
+    transition:all var(--transition-fast);
+  }
+  .dept-expand-btn:hover { background:var(--bg-hover); color:var(--primary-500); }
+  .dept-expand-btn svg { width:14px; height:14px; }
+  .dept-expand-placeholder { width:20px; flex-shrink:0; }
+  .sort-input {
+    width:70px;
+    padding:4px 8px;
+    font-size:var(--font-size-sm);
+    border:1px solid var(--border-default);
+    border-radius:var(--radius-sm);
+    background:var(--bg-card);
+    color:var(--text-primary);
+    text-align:center;
+    outline:none;
+    transition:all var(--transition-fast);
+  }
+  .sort-input:focus {
+    border-color:var(--primary-500);
+    box-shadow:0 0 0 3px rgba(24, 144, 255, 0.1);
+  }
+  .code-text {
+    font-family:var(--font-family-mono, monospace);
+    color:var(--text-secondary);
+  }
+  .radio-group {
+    display:flex;
+    align-items:center;
+    gap:20px;
+    padding-top:8px;
+  }
+  .radio-option {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    font-size:var(--font-size-base);
+    color:var(--text-secondary);
+  }
+  .radio-option input[type="radio"] {
+    accent-color:var(--primary-500);
+    width:16px;
+    height:16px;
+    cursor:pointer;
+  }
+  .toggle-switch {
+    position:relative;
+    width:48px;
+    height:26px;
+    cursor:pointer;
+  }
+  .toggle-track {
+    position:absolute;
+    top:0; left:0; right:0; bottom:0;
+    background:var(--gray-300);
+    border-radius:26px;
+    transition:all var(--transition-normal);
+  }
+  .toggle-track.on { background:var(--gradient-primary); }
+  .toggle-thumb {
+    position:absolute;
+    top:2px; left:2px;
+    width:22px; height:22px;
+    background:var(--bg-card);
+    border-radius:50%;
+    box-shadow:var(--shadow-sm);
+    transition:all var(--transition-normal);
+  }
+  .toggle-track.on .toggle-thumb { transform:translateX(22px); }
+  .stats-row {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:16px;
+    margin-bottom:20px;
+  }
+  .stat-card {
+    padding:20px;
+    border-radius:var(--radius-lg);
+    border:1px solid;
+    background:var(--bg-card);
+  }
+  .stat-card.green { background:linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%); border-color:var(--success-border); }
+  .stat-card.blue { background:linear-gradient(135deg, #e6f7ff 0%, #bae6ff 100%); border-color:var(--info-border); }
+  .stat-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .stat-header svg { width:20px; height:20px; }
+  .stat-card.green .stat-header svg { color:var(--success); }
+  .stat-card.blue .stat-header svg { color:var(--info); }
+  .stat-title { font-size:var(--font-size-base); font-weight:var(--font-weight-semibold); }
+  .stat-card.green .stat-title { color:var(--success); }
+  .stat-card.blue .stat-title { color:var(--info); }
+  .stat-content { display:flex; gap:24px; flex-wrap:wrap; align-items:center; }
+  .stat-item { text-align:center; flex:1 1 0; min-width:0; }
+  .stat-value { font-size:28px; font-weight:var(--font-weight-bold); color:var(--text-primary); }
+  .stat-label { font-size:var(--font-size-sm); color:var(--text-tertiary); margin-top:4px; }
+  .btn-group { display:flex; gap:12px; margin-bottom:16px; }
+  .primary-btn, .secondary-btn, .add-btn {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 20px;
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    font-weight:var(--font-weight-medium);
+    cursor:pointer;
+    transition:all var(--transition-normal);
+  }
+  .primary-btn {
+    background:var(--gradient-primary);
+    color:var(--text-inverse);
+    border:none;
+    box-shadow:var(--shadow-primary);
+  }
+  .primary-btn:hover { transform:translateY(-2px); box-shadow:var(--shadow-primary-hover); }
+  .secondary-btn {
+    background:var(--bg-card);
+    color:var(--text-secondary);
+    border:1.5px solid var(--border-default);
+  }
+  .secondary-btn:hover { border-color:var(--primary-500); color:var(--primary-500); box-shadow:0 4px 12px rgba(24, 144, 255, 0.15); }
+  .add-btn {
+    background:var(--gradient-primary);
+    color:var(--text-inverse);
+    border:none;
+    box-shadow:var(--shadow-primary);
+  }
+  .add-btn:hover { transform:translateY(-2px); box-shadow:var(--shadow-primary-hover); }
+  .primary-btn svg, .secondary-btn svg, .add-btn svg { width:16px; height:16px; }
+  .modal-overlay {
+    display:none;
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background:rgba(0, 0, 0, 0.5);
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+    animation:fadeIn 0.2s ease;
+  }
+  .modal-overlay.show { display:flex; }
+  .modal {
+    background:var(--bg-card);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-lg);
+    width:90%;
+    max-width:600px;
+    max-height:90vh;
+    overflow:hidden;
+    animation:slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { opacity:0; transform:translateY(20px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .modal-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 20px;
+    border-bottom:1px solid var(--border-light);
+    background:linear-gradient(135deg, var(--gray-50), var(--bg-card));
+  }
+  .modal-title {
+    font-size:var(--font-size-lg);
+    font-weight:var(--font-weight-semibold);
+    color:var(--text-primary);
+  }
+  .modal-close {
+    width:32px;
+    height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:var(--radius-md);
+    cursor:pointer;
+    transition:all var(--transition-fast);
+    color:var(--text-tertiary);
+  }
+  .modal-close:hover { background:var(--bg-hover); color:var(--text-primary); }
+  .modal-body {
+    padding:20px;
+    max-height:calc(90vh - 120px);
+    overflow-y:auto;
+  }
+  .modal-footer {
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:12px;
+    padding:16px 20px;
+    border-top:1px solid var(--border-light);
+    background:var(--gray-50);
+  }
+  .modal-footer .btn {
+    padding:10px 24px;
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    font-weight:var(--font-weight-medium);
+    cursor:pointer;
+    transition:all var(--transition-fast);
+    border:none;
+  }
+  .modal-footer .btn-primary {
+    background:var(--gradient-primary);
+    color:var(--text-inverse);
+    box-shadow:var(--shadow-primary);
+  }
+  .modal-footer .btn-primary:hover { transform:translateY(-2px); box-shadow:var(--shadow-primary-hover); }
+  .modal-footer .btn-secondary {
+    background:var(--bg-card);
+    color:var(--text-secondary);
+    border:1.5px solid var(--border-default);
+  }
+  .modal-footer .btn-secondary:hover { border-color:var(--primary-500); color:var(--primary-500); }
+  .form-group {
+    display:flex;
+    flex-direction:column;
+    margin-bottom:16px;
+  }
+  .form-group.half { width:calc(50% - 8px); }
+  .form-group.full { width:100%; }
+  .form-row { display:flex; gap:16px; flex-wrap:wrap; }
+  .form-label {
+    font-size:var(--font-size-base);
+    font-weight:var(--font-weight-medium);
+    color:var(--text-secondary);
+    margin-bottom:8px;
+  }
+  .form-input, .form-select, .form-textarea {
+    padding:10px 14px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    transition:all var(--transition-fast);
+    background:var(--bg-card);
+    outline:none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color:var(--primary-500);
+    box-shadow:0 0 0 3px rgba(24, 144, 255, 0.1);
+  }
+  .form-textarea { resize:vertical; min-height:80px; }
+  .permission-tree {
+    max-height:300px;
+    overflow-y:auto;
+    padding-right:12px;
+  }
+  /* 权限配置弹窗：加大尺寸以完整清晰展示全部菜单 */
+  .modal.modal-permission {
+    max-width:960px;
+    width:94%;
+  }
+  .modal.modal-permission .modal-body {
+    max-height:calc(92vh - 130px);
+    padding:20px 24px;
+  }
+  .permission-toolbar {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 14px;
+    margin-bottom:16px;
+    background:var(--gray-50);
+    border:1px solid var(--border-light);
+    border-radius:var(--radius-md);
+  }
+  .permission-toolbar-tip {
+    font-size:var(--font-size-sm);
+    color:var(--text-tertiary);
+  }
+  .permission-toolbar-actions {
+    display:flex;
+    gap:8px;
+    flex-shrink:0;
+  }
+  .permission-toolbar-actions button {
+    padding:6px 14px;
+    font-size:var(--font-size-sm);
+    border-radius:var(--radius-md);
+    border:1.5px solid var(--border-default);
+    background:var(--bg-card);
+    color:var(--text-secondary);
+    cursor:pointer;
+    transition:all var(--transition-fast);
+  }
+  .permission-toolbar-actions button:hover {
+    border-color:var(--primary-500);
+    color:var(--primary-500);
+  }
+  .permission-tree {
+    max-height:none;
+    overflow:visible;
+    padding-right:0;
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:12px 20px;
+  }
+  .permission-item {
+    padding:10px 14px;
+    border-bottom:none;
+    border:1px solid var(--border-light);
+    border-radius:var(--radius-md);
+    background:var(--bg-card);
+    align-self:start;
+  }
+  .permission-item:last-child { border-bottom:1px solid var(--border-light); }
+  .permission-header {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    font-weight:var(--font-weight-medium);
+    color:var(--text-primary);
+  }
+  .permission-header:hover { color:var(--primary-500); }
+  .permission-header svg {
+    width:16px;
+    height:16px;
+    transition:transform 0.2s;
+  }
+  .permission-header.expanded svg { transform:rotate(90deg); }
+  .permission-children {
+    margin-left:24px;
+    margin-top:8px;
+    display:none;
+  }
+  .permission-children.show { display:block; }
+  .permission-checkbox {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 0;
+    font-size:var(--font-size-sm);
+    color:var(--text-secondary);
+  }
+  .permission-checkbox label {
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .permission-checkbox input[type="checkbox"] {
+    width:15px;
+    height:15px;
+    accent-color:var(--primary-500);
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  @media (max-width:768px) {
+    .permission-tree { grid-template-columns:1fr; }
+  }
+  .detail-info {
+    display:flex;
+    justify-content:space-between;
+    padding:12px 0;
+    border-bottom:1px dashed var(--border-light);
+  }
+  .detail-info:last-child { border-bottom:none; }
+  .detail-label {
+    font-size:var(--font-size-sm);
+    color:var(--text-tertiary);
+    font-weight:var(--font-weight-medium);
+  }
+  .detail-value {
+    font-size:var(--font-size-sm);
+    color:var(--text-primary);
+    font-weight:var(--font-weight-medium);
+  }
+  .confirm-warning {
+    background:var(--warning-bg);
+    border-left:4px solid var(--warning);
+    padding:12px 16px;
+    margin-bottom:16px;
+    border-radius:0 var(--radius-md) var(--radius-md) 0;
+  }
+  .confirm-warning p {
+    margin:0;
+    font-size:var(--font-size-sm);
+    color:#9a6700;
+  }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+<link rel="stylesheet" href="css/system-page.css">
+</head>
+<body data-active-menu="settings" data-active-submenu="system-settings">
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <main class="main-content">
+      <div class="sp-header">
+        <div class="sp-header-main">
+          <div class="sp-header-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="sp-title">系统设置</div>
+            <div class="sp-subtitle">用户、角色、组织架构与系统参数的统一管理入口</div>
+          </div>
+        </div>
+        <div class="sp-header-actions">
+          <span class="sp-chip">系统运行正常</span>
+        </div>
+      </div>
+
+      <div class="system-tabs">
+        <div class="system-tab active" onclick="switchTab(event, 'users')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          用户管理
+        </div>
+        <div class="system-tab" onclick="switchTab(event, 'roles')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+          </svg>
+          角色权限
+        </div>
+        <div class="system-tab" onclick="switchTab(event, 'dept')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"/><path d="M5 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M15 9h2a2 2 0 0 1 2 2v10"/><path d="M9 7h2"/><path d="M9 11h2"/><path d="M9 15h2"/>
+          </svg>
+          部门管理
+        </div>
+        <div class="system-tab" onclick="switchTab(event, 'post')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          </svg>
+          岗位管理
+        </div>
+        <div class="system-tab" onclick="switchTab(event, 'dict')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+          </svg>
+          数据字典
+        </div>
+        <div class="system-tab" onclick="switchTab(event, 'config')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+          系统配置
+        </div>
+        <div class="system-tab" onclick="switchTab(event, 'logs')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>
+          </svg>
+          操作日志
+        </div>
+      </div>
+      <div id="tab-users" class="system-tab-content active">
+        <div class="panel-container">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              用户列表
+            </div>
+            <div class="search-wrapper">
+              <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" placeholder="搜索用户名/手机号..." id="userSearchInput" onkeyup="searchUsers()">
+              </div>
+              <select class="form-select" id="userDeptSelect" style="width:auto;min-width:120px;" onchange="searchUsers()">
+                <option value="">全部部门</option>
+                <option value="种植部">种植部</option>
+                <option value="技术部">技术部</option>
+                <option value="仓储部">仓储部</option>
+                <option value="销售部">销售部</option>
+                <option value="行政部">行政部</option>
+              </select>
+              <select class="form-select" id="userJobSelect" style="width:auto;min-width:130px;" onchange="searchUsers()">
+                <option value="">全部岗位</option>
+                <option value="管理">管理</option>
+                <option value="技术">技术</option>
+                <option value="作业">作业</option>
+                <option value="销售">销售</option>
+              </select>
+              <button class="primary-btn" onclick="openAddUserModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 5v14"/><path d="M5 12h14"/>
+                </svg>
+                新增用户
+              </button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <!-- 员工规模统计卡（按岗位分类） -->
+            <div class="stats-row" id="userStatsRow"></div>
+            <table class="data-grid">
+              <thead>
+                <tr><th>用户名</th><th>姓名</th><th>角色</th><th>部门</th><th>岗位分类</th><th>手机号</th><th>所属基地</th><th>状态</th><th>最后登录</th><th>操作</th></tr>
+              </thead>
+              <tbody id="userTableBody"></tbody>
+            </table>
+            <div id="userPagination"></div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-roles" class="system-tab-content">
+        <div class="panel-container">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+              角色配置
+            </div>
+            <button class="add-btn" onclick="openAddRoleModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14"/><path d="M5 12h14"/>
+              </svg>
+              新增角色
+            </button>
+          </div>
+          <div class="panel-body">
+            <table class="data-grid">
+              <thead>
+                <tr><th>角色名称</th><th>角色代码</th><th>用户数</th><th>描述</th><th>状态</th><th>操作</th></tr>
+              </thead>
+              <tbody id="roleTableBody"></tbody>
+            </table>
+            <div id="rolePagination"></div>
+          </div>
+
+          <!-- 权限矩阵（PC-B-054）：角色 × 模块 -->
+          <div style="margin-top:24px;border-top:1px solid var(--border-light);padding-top:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <div style="font-weight:600;font-size:14px;color:var(--text-primary);">权限矩阵（角色 × 模块）</div>
+              <div>
+                <select id="permRoleSelect" style="padding:6px 12px;border:1px solid var(--border-default);border-radius:6px;font-size:13px;"></select>
+                <button class="jg-btn jg-btn-primary" style="margin-left:8px;" onclick="savePermission()">保存</button>
+              </div>
+            </div>
+            <table class="data-grid" style="font-size:13px;">
+              <thead>
+                <tr><th>模块</th><th>查看</th><th>新增</th><th>编辑</th><th>删除</th><th>导出</th></tr>
+              </thead>
+              <tbody id="permMatrixBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="tab-dept" class="system-tab-content">
+        <div class="page-section">
+          <div class="search-bar">
+            <label class="search-label">部门名称</label>
+            <input type="text" class="search-input" placeholder="请输入部门名称" id="deptSearchInput" onkeyup="searchDepts()">
+            <label class="search-label">状态</label>
+            <select class="search-select" id="deptStatusSelect" onchange="searchDepts()">
+              <option value="">全部状态</option>
+              <option value="active">正常</option>
+              <option value="disabled">停用</option>
+            </select>
+            <div class="search-actions">
+              <button class="jg-btn jg-btn-primary" onclick="searchDepts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button>
+              <button class="jg-btn" onclick="resetDeptSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>重置</button>
+            </div>
+          </div>
+          <div class="action-bar">
+            <div class="action-left">
+              <button class="jg-btn jg-btn-primary" id="btnDeptAdd" onclick="openAddDeptModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M12 5v14"/><path d="M5 12h14"/>
+                </svg>
+                新增
+              </button>
+              <button class="jg-btn jg-btn-warning" id="btnDeptSaveSort" onclick="batchSaveDeptSort()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                </svg>
+                保存排序
+              </button>
+              <button class="jg-btn" id="btnDeptExpand" onclick="toggleAllDepts(true)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>
+                </svg>
+                展开并排序
+              </button>
+            </div>
+            <div class="action-right">
+              <span class="selected-info" id="deptSelectedInfo">已选 0 项</span>
+            </div>
+          </div>
+          <div class="data-section">
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:44px;"><input type="checkbox" id="deptCheckAll" onclick="toggleDeptCheckAll(this)"></th>
+                    <th style="width:240px;">部门名称</th>
+                    <th style="width:140px;">排序</th>
+                    <th style="width:120px;">状态</th>
+                    <th style="width:200px;">创建时间</th>
+                    <th style="width:220px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="deptTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-post" class="system-tab-content">
+        <div class="page-section">
+          <div class="search-bar">
+            <label class="search-label">岗位编码</label>
+            <input type="text" class="search-input" placeholder="请输入岗位编码" id="postCodeSearchInput" onkeyup="searchPosts()">
+            <label class="search-label">岗位名称</label>
+            <input type="text" class="search-input" placeholder="请输入岗位名称" id="postNameSearchInput" onkeyup="searchPosts()">
+            <label class="search-label">状态</label>
+            <select class="search-select" id="postStatusSelect" onchange="searchPosts()">
+              <option value="">全部状态</option>
+              <option value="active">正常</option>
+              <option value="disabled">停用</option>
+            </select>
+            <div class="search-actions">
+              <button class="jg-btn jg-btn-primary" onclick="searchPosts()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button>
+              <button class="jg-btn" onclick="resetPostSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>重置</button>
+            </div>
+          </div>
+          <div class="action-bar">
+            <div class="action-left">
+              <button class="jg-btn jg-btn-primary" id="btnPostAdd" onclick="openAddPostModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M12 5v14"/><path d="M5 12h14"/>
+                </svg>
+                新增
+              </button>
+              <button class="jg-btn" id="btnPostEdit" onclick="batchEditPost()" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                </svg>
+                修改
+              </button>
+              <button class="jg-btn jg-btn-danger" id="btnPostDelete" onclick="batchDeletePost()" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                删除
+              </button>
+              <button class="jg-btn" id="btnPostExport" onclick="exportPosts()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>
+                </svg>
+                导出
+              </button>
+            </div>
+            <div class="action-right">
+              <span class="selected-info" id="postSelectedInfo">已选 0 项</span>
+            </div>
+          </div>
+          <div class="data-section">
+            <div class="data-table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width:44px;"><input type="checkbox" id="postCheckAll" onclick="togglePostCheckAll(this)"></th>
+                    <th style="width:80px;">序号</th>
+                    <th style="width:180px;">岗位编码</th>
+                    <th>岗位名称</th>
+                    <th style="width:120px;">岗位顺序</th>
+                    <th style="width:120px;">状态</th>
+                    <th style="width:200px;">创建时间</th>
+                    <th style="width:160px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="postTableBody"></tbody>
+              </table>
+            </div>
+            <div id="pagination-container"></div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-dict" class="system-tab-content">
+        <div class="panel-container">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+              </svg>
+              数据字典维护
+            </div>
+            <div class="search-wrapper">
+              <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" placeholder="搜索字典名称..." id="dictSearchInput" onkeyup="searchDicts()">
+              </div>
+              <button class="add-btn" onclick="openAddDictModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 5v14"/><path d="M5 12h14"/>
+                </svg>
+                新增字典
+              </button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <table class="data-grid">
+              <thead>
+                <tr><th>字典类型</th><th>字典编码</th><th>字典名称</th><th>字典值</th><th>排序</th><th>状态</th><th>操作</th></tr>
+              </thead>
+              <tbody id="dictTableBody"></tbody>
+            </table>
+            <div id="dictPagination"></div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-config" class="system-tab-content">
+        <div class="panel-container">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+              系统参数配置
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="config-section">
+              <div class="config-section-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/>
+                </svg>
+                数据采集
+              </div>
+              <div class="config-row">
+                <div class="config-info">
+                  <div class="config-label">数据采集频率</div>
+                  <div class="config-desc">IoT设备数据上报间隔</div>
+                </div>
+                <div class="config-value">5分钟/次</div>
+              </div>
+              <div class="config-row">
+                <div class="config-info">
+                  <div class="config-label">离线判断阈值</div>
+                  <div class="config-desc">超过该时间未上报视为离线</div>
+                </div>
+                <div class="config-value">30分钟</div>
+              </div>
+              <div class="config-row">
+                <div class="config-info">
+                  <div class="config-label">自动采集开关</div>
+                  <div class="config-desc">是否自动采集IoT设备数据</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <div class="toggle-track on">
+                    <div class="toggle-thumb"></div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- 数据源接入（可在本页直接编辑，保存后移动端与数据大屏实时同步） -->
+            <div class="config-section" id="sec-datasource">
+              <div class="config-section-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                </svg>
+                数据源接入配置
+                <span style="margin-left:auto;font-size:12px;font-weight:normal;color:var(--text-tertiary);">数据源在本页可直接编辑，保存后移动端与数据大屏实时同步</span>
+              </div>
+              <table class="data-grid">
+                <thead>
+                  <tr><th style="width:60px;">序号</th><th>数据源名称</th><th>类型</th><th>协议</th><th>接入地址</th><th>采集频率</th><th>状态</th></tr>
+                </thead>
+                <tbody id="sourceTableBody"></tbody>
+              </table>
+              <div id="sourceEmpty" style="display:none;padding:32px;text-align:center;color:var(--text-tertiary);font-size:var(--font-size-sm);">暂无数据源，请在「数据运营 → 数据源接入」新增后再回到本页查看</div>
+            </div>
+
+            <div class="config-section">
+              <div class="config-section-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+                </svg>
+                预警设置
+              </div>
+              <div class="config-row">
+                <div class="config-info">
+                  <div class="config-label">低温预警阈值</div>
+                  <div class="config-desc">气温低于此值触发低温预警</div>
+                </div>
+                <div class="config-value">5℃</div>
+              </div>
+              <div class="config-row">
+                <div class="config-info">
+                  <div class="config-label">库存预警开关</div>
+                  <div class="config-desc">农资库存低于安全值时自动预警</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <div class="toggle-track on">
+                    <div class="toggle-thumb"></div>
+                  </div>
+                </label>
+              </div>
+              <div class="config-row">
+                <div class="config-info">
+                  <div class="config-label">短信通知开关</div>
+                  <div class="config-desc">紧急预警是否发送短信通知</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <div class="toggle-track on">
+                    <div class="toggle-thumb"></div>
+                  </div>
+                </label>
+              </div>
+            </div>
+            <div class="config-section">
+              <div class="config-section-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                安全设置
+              </div>
+              <div class="config-row">
+                <div class="config-info">
+                  <div class="config-label">登录失败锁定次数</div>
+                  <div class="config-desc">连续登录失败超过该次数后锁定账户</div>
+                </div>
+                <div class="config-value">5次</div>
+              </div>
+              <div class="config-row">
+                <div class="config-info">
+                  <div class="config-label">会话超时时间</div>
+                  <div class="config-desc">无操作自动退出登录时间</div>
+                </div>
+                <div class="config-value">30分钟</div>
+              </div>
+              <div class="config-row">
+                <div class="config-info">
+                  <div class="config-label">操作日志记录</div>
+                  <div class="config-desc">记录用户的关键操作行为</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" checked>
+                  <div class="toggle-track on">
+                    <div class="toggle-thumb"></div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-logs" class="system-tab-content">
+        <div class="panel-container">
+          <div class="panel-header">
+            <div class="panel-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>
+              </svg>
+              操作日志
+            </div>
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input type="text" placeholder="搜索操作内容..." id="logSearchInput" onkeyup="searchLogs()">
+            </div>
+          </div>
+          <div class="panel-body">
+            <table class="data-grid">
+              <thead>
+                <tr><th>操作时间</th><th>操作人</th><th>操作模块</th><th>操作类型</th><th>操作内容</th><th>IP地址</th><th>操作</th></tr>
+              </thead>
+              <tbody id="logTableBody"></tbody>
+            </table>
+            <div id="logPagination"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">弹窗标题</div>
+      <div class="modal-close" onclick="closeModal()">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 5l-5 5M5 5l5 5M15 15l-5-5M5 15l5-5"/>
+        </svg>
+      </div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter">
+      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="submitModal()">确定</button>
+    </div>
+  </div>
+</div>
+<script src="js/shared/data-store.js"></script>
+<script>
+const mockUsers = [
+  { id: 1, username: 'admin', realName: '超级用户', role: 'admin', dept: '行政部', jobType: '管理', phone: '13800000000', base: '全部基地', status: 'active', lastLogin: '2026-09-20 10:30' },
+  { id: 2, username: 'huijianing', realName: '惠加宁', role: 'manager', dept: '种植部', jobType: '管理', phone: '13307912585', base: '天水麦积区基地', status: 'active', lastLogin: '2026-09-20 09:15' },
+  { id: 3, username: 'huangzhongjian', realName: '黄忠坚', role: 'manager', dept: '种植部', jobType: '管理', phone: '13979412180', base: '天水麦积区基地', status: 'active', lastLogin: '2026-09-20 08:40' },
+  { id: 4, username: 'xushuiying', realName: '徐水应', role: 'operator', dept: '技术部', jobType: '技术', phone: '13879418637', base: '招远基地', status: 'active', lastLogin: '2026-09-19 16:45' },
+  { id: 5, username: 'zhuquanlong', realName: '朱泉龙', role: 'operator', dept: '种植部', jobType: '作业', phone: '18296452648', base: '招远基地', status: 'active', lastLogin: '2026-09-19 15:20' },
+  { id: 6, username: 'chenxiaozhong', realName: '陈小忠', role: 'operator', dept: '技术部', jobType: '技术', phone: '18779417899', base: '天水甘谷基地', status: 'active', lastLogin: '2026-09-20 11:20' },
+  { id: 7, username: 'liaochunliang', realName: '廖春亮', role: 'operator', dept: '种植部', jobType: '作业', phone: '13767679075', base: '天水秦州基地', status: 'active', lastLogin: '2026-09-19 14:30' },
+  { id: 8, username: 'lijianming', realName: '李建明', role: 'manager', dept: '销售部', jobType: '销售', phone: '13970432567', base: '青岛崂山基地', status: 'active', lastLogin: '2026-09-20 10:00' },
+  { id: 9, username: 'ligen', realName: '李根', role: 'operator', dept: '仓储部', jobType: '作业', phone: '13030587809', base: '天水福山基地', status: 'active', lastLogin: '2026-09-18 09:00' },
+  { id: 10, username: 'zhangcaisun', realName: '张才孙', role: 'operator', dept: '销售部', jobType: '销售', phone: '15079427679', base: '潍坊寿光基地', status: 'active', lastLogin: '2026-09-20 08:30' },
+  { id: 11, username: 'liuquanguo', realName: '刘全国', role: 'manager', dept: '销售部', jobType: '管理', phone: '13870409283', base: '临沂沂水基地', status: 'active', lastLogin: '2026-09-19 11:45' },
+  { id: 12, username: 'maodingwei', realName: '毛定卫', role: 'operator', dept: '种植部', jobType: '作业', phone: '15979580151', base: '泰安肥城基地', status: 'active', lastLogin: '2026-09-17 15:20' },
+  { id: 13, username: 'yesandong', realName: '叶三东', role: 'operator', dept: '技术部', jobType: '技术', phone: '13307946219', base: '济宁曲阜基地', status: 'active', lastLogin: '2026-09-20 09:50' },
+  { id: 14, username: 'zhoucaigui', realName: '周才贵', role: 'operator', dept: '仓储部', jobType: '作业', phone: '13307043277', base: '济南历城基地', status: 'active', lastLogin: '2026-09-19 17:30' },
+  { id: 15, username: 'chengminggao', realName: '程名高', role: 'operator', dept: '技术部', jobType: '技术', phone: '13879411631', base: '淄博临淄基地', status: 'active', lastLogin: '2026-09-18 14:00' },
+  { id: 16, username: 'dengxiaohua', realName: '邓小华', role: 'operator', dept: '仓储部', jobType: '作业', phone: '15179450918', base: '东营河口基地', status: 'active', lastLogin: '2026-09-20 10:00' },
+  { id: 17, username: 'zhouchengyou', realName: '周成友', role: 'operator', dept: '销售部', jobType: '销售', phone: '13407945529', base: '滨州无棣基地', status: 'active', lastLogin: '2026-09-20 10:15' },
+  { id: 18, username: 'weihongwei', realName: '危红卫', role: 'operator', dept: '技术部', jobType: '技术', phone: '13870456916', base: '德州乐陵基地', status: 'active', lastLogin: '2026-09-19 08:45' },
+  { id: 19, username: 'fangchao', realName: '方超', role: 'operator', dept: '种植部', jobType: '作业', phone: '13437942227', base: '聊城高唐基地', status: 'active', lastLogin: '2026-09-18 16:30' },
+  { id: 20, username: 'caohongying', realName: '曹红英', role: 'operator', dept: '销售部', jobType: '销售', phone: '15179480005', base: '菏泽曹县基地', status: 'active', lastLogin: '2026-09-17 09:20' },
+  { id: 21, username: 'cuixingen', realName: '崔新根', role: 'operator', dept: '仓储部', jobType: '作业', phone: '13970402086', base: '枣庄滕州基地', status: 'disabled', lastLogin: '2026-09-01 10:00' }
+];
+let mockRoles = [
+  { id: 1, name: '超级管理员', code: 'admin', userCount: 1, desc: '系统最高权限，可管理所有功能', status: 'active' },
+  { id: 2, name: '企业管理员', code: 'enterprise', userCount: 2, desc: '管理企业信息、基地与地块等基础数据', status: 'active' },
+  { id: 3, name: '基地管理员', code: 'manager', userCount: 3, desc: '管理基地日常运营，可操作农事、采收等', status: 'active' },
+  { id: 4, name: '农事操作员', code: 'operator', userCount: 12, desc: '执行具体农事操作，记录采集数据', status: 'active' },
+  { id: 5, name: '仓库管理员', code: 'warehouse', userCount: 1, desc: '管理农资库存、出入库操作', status: 'active' },
+  { id: 6, name: '设备管理员', code: 'equipment', userCount: 1, desc: '管理IoT设备、维护保养', status: 'active' },
+  { id: 7, name: '营销专员', code: 'marketing', userCount: 1, desc: '产品营销、订单与客户管理', status: 'active' },
+  { id: 8, name: '财务管理员', code: 'finance', userCount: 1, desc: '负责财务报表、收支管理', status: 'active' }
+];
+const mockDicts = [
+  { id: 1, type: '产品等级', code: 'GRADE_TYPE', name: '苹果等级分类', value: '特级,一级,二级,等外', sort: 1, status: 'active' },
+  { id: 2, type: '产品类型', code: 'PRODUCT_TYPE', name: '产品类型分类', value: '鲜果,果汁原料,果干原料', sort: 2, status: 'active' },
+  { id: 3, type: '基地类型', code: 'BASE_TYPE', name: '基地类型分类', value: '自营基地,合作基地,示范基地', sort: 3, status: 'active' },
+  { id: 4, type: '预警类型', code: 'ALERT_TYPE', name: '预警信息分类', value: '低温预警,高温预警,旱情预警,虫情预警', sort: 4, status: 'active' },
+  { id: 5, type: '设备状态', code: 'DEVICE_STATUS', name: '设备运行状态', value: '在线,离线,故障,维护中', sort: 5, status: 'active' },
+  { id: 6, type: '农事类型', code: 'FARMING_TYPE', name: '农事作业类型', value: '疏果,套袋,喷药,灌溉,施肥,修剪,环剥,除草,授粉', sort: 6, status: 'active' },
+  { id: 7, type: '季节类型', code: 'SEASON_TYPE', name: '季节分类', value: '春季,夏季,秋季,冬季', sort: 7, status: 'active' },
+  { id: 8, type: '土壤类型', code: 'SOIL_TYPE', name: '土壤类型分类', value: '砂质土,壤质土,黏质土,盐碱土', sort: 8, status: 'active' },
+  { id: 9, type: '病虫害类型', code: 'PEST_TYPE', name: '病虫害分类', value: '红蜘蛛,蚜虫,白粉病,腐烂病', sort: 9, status: 'active' },
+  { id: 10, type: '肥料类型', code: 'FERTILIZER_TYPE', name: '肥料类型分类', value: '氮肥,磷肥,钾肥,复合肥,有机肥', sort: 10, status: 'active' },
+  { id: 11, type: '农药类型', code: 'PESTICIDE_TYPE', name: '农药类型分类', value: '杀虫剂,杀菌剂,除草剂,生长调节剂', sort: 11, status: 'active' },
+  { id: 12, type: '包装类型', code: 'PACKAGE_TYPE', name: '包装方式分类', value: '纸箱,泡沫箱,网套,保鲜膜', sort: 12, status: 'active' },
+  { id: 13, type: '运输方式', code: 'TRANSPORT_TYPE', name: '运输方式分类', value: '冷链,常温,空运,海运', sort: 13, status: 'active' },
+  { id: 14, type: '订单状态', code: 'ORDER_STATUS', name: '订单状态分类', value: '待付款,待发货,已发货,已完成,已取消', sort: 14, status: 'active' },
+  { id: 15, type: '支付方式', code: 'PAYMENT_TYPE', name: '支付方式分类', value: '微信支付,支付宝,银行卡,货到付款', sort: 15, status: 'active' },
+  { id: 16, type: '发票类型', code: 'INVOICE_TYPE', name: '发票类型分类', value: '增值税专票,增值税普票,电子发票', sort: 16, status: 'active' },
+  { id: 17, type: '审批状态', code: 'APPROVAL_STATUS', name: '审批状态分类', value: '待审批,已通过,已拒绝,已撤销', sort: 17, status: 'active' },
+  { id: 18, type: '通知类型', code: 'NOTICE_TYPE', name: '通知消息类型', value: '系统通知,预警提醒,工单通知,公告通知', sort: 18, status: 'active' },
+  { id: 19, type: '日志类型', code: 'LOG_TYPE', name: '操作日志类型', value: '登录,新增,编辑,删除,查询,导出', sort: 19, status: 'active' },
+  { id: 20, type: '权限类型', code: 'PERMISSION_TYPE', name: '权限分类', value: '菜单权限,按钮权限,数据权限', sort: 20, status: 'active' },
+  { id: 21, type: '角色类型', code: 'ROLE_TYPE', name: '角色分类', value: '系统角色,自定义角色', sort: 21, status: 'active' },
+  { id: 22, type: '数据来源', code: 'DATA_SOURCE', name: '数据来源分类', value: '手动录入,设备采集,接口同步', sort: 22, status: 'active' },
+  { id: 23, type: '计量单位', code: 'UNIT_TYPE', name: '计量单位分类', value: '千克,吨,件,箱,亩,公顷', sort: 23, status: 'active' }
+];
+// 备份记录（按备份时间倒序，最新在前）
+const mockBackups = [
+  { id: 1, time: '2026-09-30 02:00:00', type: 'auto', size: '22.4 MB', status: 'success' },
+  { id: 2, time: '2026-09-29 02:00:00', type: 'auto', size: '22.1 MB', status: 'success' },
+  { id: 3, time: '2026-09-28 02:00:00', type: 'auto', size: '21.8 MB', status: 'success' },
+  { id: 4, time: '2026-09-20 02:00:00', type: 'auto', size: '28.5 MB', status: 'success' },
+  { id: 5, time: '2026-09-19 02:00:00', type: 'auto', size: '28.2 MB', status: 'success' },
+  { id: 6, time: '2026-09-18 14:30:00', type: 'manual', size: '27.8 MB', status: 'success' },
+  { id: 7, time: '2026-09-17 02:00:00', type: 'auto', size: '27.5 MB', status: 'success' },
+  { id: 8, time: '2026-09-16 02:00:00', type: 'auto', size: '27.1 MB', status: 'success' },
+  { id: 9, time: '2026-09-15 02:00:00', type: 'auto', size: '26.8 MB', status: 'success' },
+  { id: 10, time: '2026-09-14 10:00:00', type: 'manual', size: '26.5 MB', status: 'success' },
+  { id: 11, time: '2026-09-13 02:00:00', type: 'auto', size: '26.2 MB', status: 'success' },
+  { id: 12, time: '2026-09-12 02:00:00', type: 'auto', size: '25.9 MB', status: 'success' },
+  { id: 13, time: '2026-09-11 02:00:00', type: 'auto', size: '25.6 MB', status: 'success' },
+  { id: 14, time: '2026-09-10 02:00:00', type: 'auto', size: '25.3 MB', status: 'success' },
+  { id: 15, time: '2026-09-09 16:00:00', type: 'manual', size: '25.1 MB', status: 'success' },
+  { id: 16, time: '2026-09-08 02:00:00', type: 'auto', size: '24.8 MB', status: 'success' },
+  { id: 17, time: '2026-09-07 02:00:00', type: 'auto', size: '24.5 MB', status: 'success' },
+  { id: 18, time: '2026-09-06 02:00:00', type: 'auto', size: '24.2 MB', status: 'success' },
+  { id: 19, time: '2026-09-05 02:00:00', type: 'auto', size: '23.9 MB', status: 'success' },
+  { id: 20, time: '2026-09-04 02:00:00', type: 'auto', size: '23.6 MB', status: 'success' },
+  { id: 21, time: '2026-09-03 02:00:00', type: 'auto', size: '23.3 MB', status: 'success' },
+  { id: 22, time: '2026-09-02 02:00:00', type: 'auto', size: '23.0 MB', status: 'success' },
+  { id: 23, time: '2026-09-01 02:00:00', type: 'auto', size: '22.7 MB', status: 'success' }
+];
+const mockLogs = [
+  { id: 1, time: '2026-09-20 10:30:15', user: 'admin', module: '系统登录', type: 'login', content: '超级用户登录系统', ip: '192.168.1.100' },
+  { id: 2, time: '2026-09-20 10:35:22', user: 'huijianing', module: '农事管理', type: 'add', content: '新增农事计划：麦积区基地9月施肥计划', ip: '192.168.1.101' },
+  { id: 3, time: '2026-09-20 09:45:10', user: 'xushuiying', module: '农资管理', type: 'edit', content: '修改农资信息：NPK复合肥库存数量', ip: '192.168.1.102' },
+  { id: 4, time: '2026-09-20 08:20:05', user: 'admin', module: '系统配置', type: 'edit', content: '修改预警阈值：低温预警阈值 3℃→5℃', ip: '192.168.1.100' },
+  { id: 5, time: '2026-09-19 17:00:30', user: 'huangzhongjian', module: '设备管理', type: 'delete', content: '删除设备维护记录：摄像头C03维护记录', ip: '192.168.1.101' },
+  { id: 6, time: '2026-09-19 15:30:20', user: 'chenxiaozhong', module: '采收管理', type: 'add', content: '新增采收记录：天水麦积区基地花牛苹果', ip: '192.168.1.103' },
+  { id: 7, time: '2026-09-19 14:15:45', user: 'liaochunliang', module: '地块管理', type: 'edit', content: '修改地块信息：更新土壤检测数据', ip: '192.168.1.104' },
+  { id: 8, time: '2026-09-19 11:20:00', user: 'admin', module: '用户管理', type: 'add', content: '新增用户：崔新根', ip: '192.168.1.100' },
+  { id: 9, time: '2026-09-19 10:00:30', user: 'ligen', module: '预警管理', type: 'view', content: '查看预警记录：低温预警列表', ip: '192.168.1.105' },
+  { id: 10, time: '2026-09-18 16:45:00', user: 'zhangcaisun', module: '报表管理', type: 'export', content: '导出报表：周度农事统计报表', ip: '192.168.1.106' },
+  { id: 11, time: '2026-09-18 14:30:22', user: 'liuquanguo', module: '仓库管理', type: 'add', content: '新增入库记录：有机肥500kg', ip: '192.168.1.107' },
+  { id: 12, time: '2026-09-18 09:15:00', user: 'maodingwei', module: '数据字典', type: 'edit', content: '修改字典：更新产品等级分类', ip: '192.168.1.108' },
+  { id: 13, time: '2026-09-17 17:30:45', user: 'yesandong', module: '角色管理', type: 'add', content: '新增角色：营销专员', ip: '192.168.1.109' },
+  { id: 14, time: '2026-09-17 15:20:00', user: 'zhoucaigui', module: '权限管理', type: 'edit', content: '配置角色权限：农事操作员权限更新', ip: '192.168.1.110' },
+  { id: 15, time: '2026-09-17 10:00:30', user: 'admin', module: '数据备份', type: 'add', content: '执行手动备份', ip: '192.168.1.100' },
+  { id: 16, time: '2026-09-16 16:00:00', user: 'chengminggao', module: '订单管理', type: 'add', content: '新增订单：电商平台订单#20260516001', ip: '192.168.1.111' },
+  { id: 17, time: '2026-09-16 13:45:22', user: 'dengxiaohua', module: '客户管理', type: 'edit', content: '修改客户信息：更新联系人电话', ip: '192.168.1.112' },
+  { id: 18, time: '2026-09-16 09:30:00', user: 'zhouchengyou', module: '系统公告', type: 'add', content: '发布公告：系统维护通知', ip: '192.168.1.113' },
+  { id: 19, time: '2026-09-15 17:00:15', user: 'weihongwei', module: '设备管理', type: 'add', content: '新增设备：温湿度传感器S012', ip: '192.168.1.114' },
+  { id: 20, time: '2026-09-15 14:20:00', user: 'fangchao', module: '地块管理', type: 'delete', content: '删除地块：测试地块001', ip: '192.168.1.115' },
+  { id: 21, time: '2026-09-15 10:15:30', user: 'caohongying', module: '农事管理', type: 'edit', content: '修改农事记录：调整施肥量', ip: '192.168.1.116' },
+  { id: 22, time: '2026-09-14 16:30:00', user: 'zhuquanlong', module: '农资管理', type: 'export', content: '导出农资库存报表', ip: '192.168.1.117' },
+  { id: 23, time: '2026-09-14 09:00:00', user: 'lijianming', module: '系统登录', type: 'login', content: '基地管理员登录系统', ip: '192.168.1.118' }
+];
+let currentUserPage = 1;
+let currentRolePage = 1;
+let currentDictPage = 1;
+let currentBackupPage = 1;
+let currentLogPage = 1;
+const pageSize = 10;
+function renderTable(data, tableBodyId, renderRow, page, total) {
+  const tbody = document.getElementById(tableBodyId);
+  tbody.innerHTML = '';
+  const start = (page - 1) * pageSize;
+  const end = Math.min(start + pageSize, total);
+  for (let i = start; i < end; i++) {
+    tbody.innerHTML += renderRow(data[i]);
+  }
+}
+function renderPagination(paginationId, currentPage, total) {
+  const pagination = document.getElementById(paginationId);
+  if (!pagination) return;
+  const totalPages = Math.ceil(total / pageSize);
+  let html = '<div class="pagination">';
+  html += '<button class="page-btn ' + (currentPage <= 1 ? 'disabled' : '') + '" onclick="goToPage(\'' + paginationId + '\', ' + (currentPage - 1) + ')">‹</button>';
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      html += '<button class="page-btn ' + (i === currentPage ? 'active' : '') + '" onclick="goToPage(\'' + paginationId + '\', ' + i + ')">' + i + '</button>';
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      html += '<span class="page-ellipsis" style="padding:0 8px;color:#6b7b6b;">...</span>';
+    }
+  }
+  html += '<button class="page-btn ' + (currentPage >= totalPages ? 'disabled' : '') + '" onclick="goToPage(\'' + paginationId + '\', ' + (currentPage + 1) + ')">›</button>';
+  html += '<span style="margin-left:16px;font-size:13px;color:#6b7b6b;">第 ' + currentPage + ' 页/共 ' + totalPages + ' 页，共 ' + total + ' 条记录</span>';
+  html += '</div>';
+  pagination.innerHTML = html;
+}
+function goToPage(paginationId, page) {
+  const totalPages = {
+    'userPagination': Math.ceil(mockUsers.length / pageSize),
+    'rolePagination': Math.ceil(mockRoles.length / pageSize),
+    'dictPagination': Math.ceil(mockDicts.length / pageSize),
+    'logPagination': Math.ceil(mockLogs.length / pageSize)
+  };
+  const pageMap = {
+    'userPagination': 'currentUserPage',
+    'rolePagination': 'currentRolePage',
+    'dictPagination': 'currentDictPage',
+    'logPagination': 'currentLogPage'
+  };
+  const tableMap = {
+    'userPagination': { body: 'userTableBody', data: mockUsers, render: renderUserRow },
+    'rolePagination': { body: 'roleTableBody', data: mockRoles, render: renderRoleRow },
+    'dictPagination': { body: 'dictTableBody', data: mockDicts, render: renderDictRow },
+    'logPagination': { body: 'logTableBody', data: mockLogs, render: renderLogRow }
+  };
+  if (page < 1 || page > totalPages[paginationId]) return;
+  window[pageMap[paginationId]] = page;
+  const { body, data, render } = tableMap[paginationId];
+  renderTable(data, body, render, page, data.length);
+  renderPagination(paginationId, page, data.length);
+}
+// 员工规模统计卡：员工总数 + 按岗位分类的人数与百分比
+const JOB_TYPES = ['管理', '技术', '作业', '销售'];
+function renderUserStats(list) {
+  var box = document.getElementById('userStatsRow');
+  if (!box) return;
+  var data = list || mockUsers;
+  var total = data.length;
+  var items = JOB_TYPES.map(function (j) {
+    var n = data.filter(function (u) { return u.jobType === j; }).length;
+    var pct = total > 0 ? Math.round(n / total * 1000) / 10 : 0;
+    return '<div class="stat-item"><div class="stat-value">' + n + ' 人</div><div class="stat-label">' + j + ' · ' + pct.toFixed(1) + '%</div></div>';
+  }).join('');
+  box.innerHTML =
+    '<div class="stat-card blue">' +
+      '<div class="stat-header">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' +
+        '<span class="stat-title">员工总数</span>' +
+      '</div>' +
+      '<div class="stat-content">' +
+        '<div class="stat-item"><div class="stat-value">' + total + '</div><div class="stat-label">在册账号</div></div>' +
+        items +
+      '</div>' +
+    '</div>';
+}
+
+function renderUserRow(user) {
+  const roleMap = { admin: '超级管理员', enterprise: '企业管理员', manager: '基地管理员', operator: '农事操作员', warehouse: '仓库管理员', equipment: '设备管理员', marketing: '营销专员', finance: '财务管理员' };
+  const roleClass = { admin: 'admin', enterprise: 'manager', manager: 'manager', operator: 'operator', warehouse: 'operator', equipment: 'operator', marketing: 'manager', finance: 'manager' };
+  const statusClass = user.status === 'active' ? 'active' : 'disabled';
+  const statusText = user.status === 'active' ? '正常' : '已禁用';
+  const isAdmin = user.username === 'admin';
+  let actions = '';
+  if (isAdmin) {
+    actions = '<button class="action-btn edit" onclick="openEditUserModal(' + user.id + ')">编辑</button>';
+  } else if (user.status === 'disabled') {
+    actions = '<button class="action-btn edit" onclick="openEditUserModal(' + user.id + ')">编辑</button><button class="action-btn primary" onclick="enableUser(' + user.id + ')">启用</button>';
+  } else {
+    actions = '<button class="action-btn edit" onclick="openEditUserModal(' + user.id + ')">编辑</button><button class="action-btn reset" onclick="openResetPasswordModal(' + user.id + ')">重置密码</button><button class="action-btn delete" onclick="openDisableUserModal(' + user.id + ')">禁用</button>';
+  }
+  return '<tr><td><strong>' + user.username + '</strong></td><td>' + user.realName + '</td><td><span class="role-badge ' + roleClass[user.role] + '">' + roleMap[user.role] + '</span></td><td>' + (user.dept || '-') + '</td><td><span class="status-badge ' + jobBadge(user.jobType) + '">' + (user.jobType || '-') + '</span></td><td>' + user.phone + '</td><td>' + user.base + '</td><td><span class="status-badge ' + statusClass + '">' + statusText + '</span></td><td>' + user.lastLogin + '</td><td><div class="action-group">' + actions + '</div></td></tr>';
+}
+// 岗位分类标签色
+function jobBadge(job) {
+  return { '管理': 'info', '技术': 'active', '作业': 'warning', '销售': 'disabled' }[job] || 'disabled';
+}
+function renderRoleRow(role) {
+  const statusClass = role.status === 'active' ? 'active' : 'disabled';
+  const statusText = role.status === 'active' ? '启用' : '停用';
+  let actions = '<button class="action-btn edit" onclick="openEditRoleModal(' + role.id + ')">编辑</button>';
+  if (role.code !== 'admin') {
+    actions += '<button class="action-btn reset" onclick="openPermissionModal(' + role.id + ')">权限配置</button>';
+  }
+  return '<tr><td><strong>' + role.name + '</strong></td><td>' + role.code + '</td><td>' + role.userCount + '</td><td>' + role.desc + '</td><td><span class="status-badge ' + statusClass + '">' + statusText + '</span></td><td><div class="action-group">' + actions + '</div></td></tr>';
+}
+/* ============================================================
+ * 数据字典持久化
+ * localStorage key: smartorchard_data_dict
+ *   存储结构：字典条目数组 [{ id, type, code, name, value, sort, status }]
+ *   用途：供移动端跨端读取（如 mb_record_task.html 的「农事类型」九宫格），
+ *         后台字典的增 / 删 / 改后写回该 key，移动端通过 storage 事件同步。
+ * ============================================================ */
+var DICT_STORAGE_KEY = 'smartorchard_data_dict';
+
+// 把当前字典数组完整写回 localStorage
+function saveDicts() {
+  try { localStorage.setItem(DICT_STORAGE_KEY, JSON.stringify(mockDicts)); } catch (e) { /* 忽略写入异常 */ }
+}
+
+// 初始化：key 不存在时用 mockDicts 完整播种；已存在则加载回当前数组
+function initDictStorage() {
+  var raw = null;
+  try { raw = localStorage.getItem(DICT_STORAGE_KEY); } catch (e) { raw = null; }
+  if (raw) {
+    try {
+      var loaded = JSON.parse(raw);
+      if (loaded && loaded.length) {
+        mockDicts.length = 0;
+        for (var i = 0; i < loaded.length; i++) { mockDicts.push(loaded[i]); }
+        return;
+      }
+    } catch (e) { /* 解析失败则重新播种 */ }
+  }
+  saveDicts();
+}
+
+// 增删改后刷新字典表格
+function refreshDictTable() {
+  renderTable(mockDicts, 'dictTableBody', renderDictRow, currentDictPage, mockDicts.length);
+  renderPagination('dictPagination', currentDictPage, mockDicts.length);
+}
+
+function renderDictRow(dict) {
+  const statusClass = dict.status === 'active' ? 'active' : 'disabled';
+  const statusText = dict.status === 'active' ? '启用' : '停用';
+  const actions = dict.code === 'GRADE_TYPE' ? 
+    '<button class="action-btn edit" onclick="openEditDictModal(' + dict.id + ')">编辑</button>' :
+    '<button class="action-btn edit" onclick="openEditDictModal(' + dict.id + ')">编辑</button><button class="action-btn delete" onclick="openDeleteDictModal(' + dict.id + ')">删除</button>';
+  return '<tr><td>' + dict.type + '</td><td>' + dict.code + '</td><td>' + dict.name + '</td><td>' + dict.value + '</td><td>' + dict.sort + '</td><td><span class="status-badge ' + statusClass + '">' + statusText + '</span></td><td><div class="action-group">' + actions + '</div></td></tr>';
+}
+function renderLogRow(log) {
+  const typeMap = { login: '登录', add: '新增', edit: '编辑', delete: '删除', view: '查看', export: '导出' };
+  const typeClass = { login: 'active', add: 'info', edit: 'info', delete: 'warning', view: 'info', export: 'info' };
+  return '<tr><td>' + log.time + '</td><td>' + log.user + '</td><td>' + log.module + '</td><td><span class="status-badge ' + typeClass[log.type] + '">' + typeMap[log.type] + '</span></td><td>' + log.content + '</td><td>' + log.ip + '</td><td><div class="action-group"><button class="action-btn view" onclick="openLogDetailModal(' + log.id + ')">查看详情</button></div></td></tr>';
+}
+function searchUsers() {
+  const keyword = document.getElementById('userSearchInput').value.toLowerCase();
+  const deptEl = document.getElementById('userDeptSelect');
+  const jobEl = document.getElementById('userJobSelect');
+  const dept = deptEl ? deptEl.value : '';
+  const job = jobEl ? jobEl.value : '';
+  const filtered = mockUsers.filter(function(u) {
+    const matchKeyword = !keyword || u.username.toLowerCase().includes(keyword) || u.phone.includes(keyword) || u.realName.toLowerCase().includes(keyword);
+    const matchDept = !dept || u.dept === dept;
+    const matchJob = !job || u.jobType === job;
+    return matchKeyword && matchDept && matchJob;
+  });
+  currentUserPage = 1;
+  renderTable(filtered, 'userTableBody', renderUserRow, 1, filtered.length);
+  renderPagination('userPagination', 1, filtered.length);
+  renderUserStats(mockUsers);
+}
+function searchDicts() {
+  const keyword = document.getElementById('dictSearchInput').value.toLowerCase();
+  const filtered = mockDicts.filter(function(d) {
+    return d.type.toLowerCase().includes(keyword) || d.name.toLowerCase().includes(keyword);
+  });
+  currentDictPage = 1;
+  renderTable(filtered, 'dictTableBody', renderDictRow, 1, filtered.length);
+  renderPagination('dictPagination', 1, filtered.length);
+  saveDicts(); // 搜索后同步回写 localStorage（smartorchard_data_dict）
+}
+function searchLogs() {
+  const keyword = document.getElementById('logSearchInput').value.toLowerCase();
+  const filtered = mockLogs.filter(function(l) {
+    return l.content.toLowerCase().includes(keyword) || l.user.toLowerCase().includes(keyword) || l.module.toLowerCase().includes(keyword);
+  });
+  currentLogPage = 1;
+  renderTable(filtered, 'logTableBody', renderLogRow, 1, filtered.length);
+  renderPagination('logPagination', 1, filtered.length);
+}
+function openModal(title, body, footer, extraClass) {
+  document.getElementById('modalTitle').innerHTML = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalFooter').innerHTML = footer || '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="submitModal()">确定</button>';
+  const modalEl = document.querySelector('#modalOverlay .modal');
+  modalEl.className = 'modal' + (extraClass ? ' ' + extraClass : '');
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+function submitModal() {
+  closeModal();
+  alert('操作成功');
+}
+function openAddUserModal() {
+  const body = '<div class="form-row"><div class="form-group half"><label class="form-label required">用户名</label><input type="text" class="form-input" id="modalUsername" placeholder="请输入用户名"></div><div class="form-group half"><label class="form-label required">姓名</label><input type="text" class="form-input" id="modalRealName" placeholder="请输入姓名"></div><div class="form-group half"><label class="form-label required">密码</label><input type="password" class="form-input" id="modalPassword" placeholder="请输入密码"></div><div class="form-group half"><label class="form-label required">确认密码</label><input type="password" class="form-input" id="modalConfirmPassword" placeholder="请确认密码"></div><div class="form-group half"><label class="form-label">手机号</label><input type="text" class="form-input" id="modalPhone" placeholder="请输入手机号"></div><div class="form-group half"><label class="form-label">角色</label><select class="form-select" id="modalRole"><option value="enterprise">企业管理员</option><option value="manager">基地管理员</option><option value="operator">农事操作员</option><option value="warehouse">仓库管理员</option><option value="equipment">设备管理员</option><option value="marketing">营销专员</option><option value="finance">财务管理员</option></select></div><div class="form-group full"><label class="form-label">所属基地</label><input type="text" class="form-input" id="modalBase" placeholder="请输入所属基地"></div></div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="addUser()">确定</button>';
+  openModal('新增用户', body, footer);
+}
+function openEditUserModal(userId) {
+  const user = mockUsers.find(function(u) { return u.id === userId; });
+  const body = '<div class="form-row"><div class="form-group half"><label class="form-label">用户名</label><input type="text" class="form-input" id="modalUsername" value="' + user.username + '" disabled></div><div class="form-group half"><label class="form-label required">姓名</label><input type="text" class="form-input" id="modalRealName" value="' + user.realName + '"></div><div class="form-group half"><label class="form-label">手机号</label><input type="text" class="form-input" id="modalPhone" value="' + user.phone + '"></div><div class="form-group half"><label class="form-label">角色</label><select class="form-select" id="modalRole"><option value="admin"' + (user.role === 'admin' ? ' selected' : '') + '>超级管理员</option><option value="enterprise"' + (user.role === 'enterprise' ? ' selected' : '') + '>企业管理员</option><option value="manager"' + (user.role === 'manager' ? ' selected' : '') + '>基地管理员</option><option value="operator"' + (user.role === 'operator' ? ' selected' : '') + '>农事操作员</option><option value="warehouse"' + (user.role === 'warehouse' ? ' selected' : '') + '>仓库管理员</option><option value="equipment"' + (user.role === 'equipment' ? ' selected' : '') + '>设备管理员</option><option value="marketing"' + (user.role === 'marketing' ? ' selected' : '') + '>营销专员</option><option value="finance"' + (user.role === 'finance' ? ' selected' : '') + '>财务管理员</option></select></div><div class="form-group full"><label class="form-label">所属基地</label><input type="text" class="form-input" id="modalBase" value="' + user.base + '"></div></div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="editUser()">确定</button>';
+  openModal('编辑用户', body, footer);
+}
+function openResetPasswordModal(userId) {
+  const user = mockUsers.find(function(u) { return u.id === userId; });
+  window.__currentOpUser = user.username;
+  const body = '<div class="confirm-warning"><p>确认要重置用户 <strong>' + user.username + '</strong> 的密码吗？留空则重置为默认密码 <strong>admin123</strong>。</p></div><div class="form-group"><label class="form-label">新密码</label><input type="password" class="form-input" id="modalPassword" placeholder="请输入新密码（留空则使用默认密码）"></div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="resetPassword()">确定重置</button>';
+  openModal('重置密码', body, footer);
+}
+function openDisableUserModal(userId) {
+  const user = mockUsers.find(function(u) { return u.id === userId; });
+  window.__currentOpUser = user.username;
+  const body = '<div class="confirm-warning"><p>确认要禁用用户 <strong>' + user.username + '</strong> 吗？禁用后该用户将无法登录系统。</p></div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="disableUser()">确定禁用</button>';
+  openModal('禁用用户', body, footer);
+}
+function enableUser(userId) {
+  const user = mockUsers.find(function(u) { return u.id === userId; });
+  window.__currentOpUser = user.username;
+  const body = '<div class="confirm-warning"><p>确认要启用用户 <strong>' + user.username + '</strong> 吗？启用后该用户可以正常登录系统。</p></div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="doEnableUser()">确定启用</button>';
+  openModal('启用用户', body, footer);
+}
+function openAddRoleModal() {
+  const body = '<div class="form-row"><div class="form-group half"><label class="form-label required">角色名称</label><input type="text" class="form-input" id="modalRoleName" placeholder="请输入角色名称"></div><div class="form-group half"><label class="form-label required">角色代码</label><input type="text" class="form-input" id="modalRoleCode" placeholder="请输入角色代码（英文）"></div><div class="form-group full"><label class="form-label">角色描述</label><textarea class="form-textarea" id="modalRoleDesc" placeholder="请输入角色描述"></textarea></div></div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="addRole()">确定</button>';
+  openModal('新增角色', body, footer);
+}
+function openEditRoleModal(roleId) {
+  const role = mockRoles.find(function(r) { return r.id === roleId; });
+  window.__currentRoleCode = role.code;
+  const body = '<div class="form-row"><div class="form-group half"><label class="form-label">角色名称</label><input type="text" class="form-input" id="modalRoleName" value="' + role.name + '"' + (role.code === 'admin' ? ' disabled' : '') + '></div><div class="form-group half"><label class="form-label">角色代码</label><input type="text" class="form-input" id="modalRoleCode" value="' + role.code + '" disabled></div><div class="form-group full"><label class="form-label">角色描述</label><textarea class="form-textarea" id="modalRoleDesc">' + role.desc + '</textarea></div><div class="form-group half"><label class="form-label">状态</label><select class="form-select" id="modalRoleStatus"><option value="active"' + (role.status === 'active' ? ' selected' : '') + '>启用</option><option value="disabled"' + (role.status === 'disabled' ? ' selected' : '') + '>停用</option></select></div></div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="editRole()">确定</button>';
+  openModal('编辑角色', body, footer);
+}
+const permissionMenus = [
+  { name: '系统首页', children: [] },
+  { name: '企业管理', children: ['企业信息', '基地管理', '地块管理'] },
+  { name: '生产管理', children: ['农事计划', '任务管理', '农事记录', '巡园管理', '无人机巡检', '农事标准'] },
+  { name: '采收管理', children: ['采收计划', '采收记录', '采后处理', '采收发货', '储藏管理'] },
+  { name: '物资管理', children: ['农资供应商', '农资档案', '农资出入库', '农资库存', '领用与使用', '退库与退货', '基础配置'] },
+  { name: '溯源管理', children: ['批次管理', '溯源编码', '溯源查询', '溯源统计', '区块链存证', '溯源配置', '标签管理'] },
+  { name: '认养管理', children: ['认养果树', '认养农事', '认养采收', '认养订单'] },
+  { name: '销售管理', children: ['销售订单', '发货与物流', '客户管理', '售后与退款', '价格与促销', '销售目标', '客户对账单', '销售统计'] },
+  { name: '预警管理', children: ['预警总览', '设备预警', '农事预警', '内部报告', '预警设置'] },
+  { name: '设备管理', children: ['设备信息', '设备日志', '设备维护'] },
+  { name: '证书管理', children: ['证书管理', '农产品合格证'] },
+  { name: '统计分析', children: ['报表总览', '成本报表', '营收报表', '利润报表', '绩效看板', '绩效详情'] },
+  { name: '模型管理', children: ['模型配置', '生长模型', '物候模型', '气象模型', '病虫害模型', '产量模型', '价格模型'] },
+  { name: '系统管理', children: ['系统设置', '菜单设置', '用户设置'] }
+];
+function openPermissionModal(roleId) {
+  const role = mockRoles.find(function(r) { return r.id === roleId; });
+  window.__currentPermRole = role.code;
+  const saved = JSON.parse(localStorage.getItem('snzg_permissions') || '{}');
+  const arrowSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 5v14l11-7z"/></svg>';
+  let items = '';
+  permissionMenus.forEach(function(menu) {
+    let children = '';
+    const mKey = role.code + ':' + menu.name;
+    if (menu.children.length) {
+      children = '<div class="permission-children show">' + menu.children.map(function(child) {
+        const cKey = role.code + ':' + menu.name + ':' + child;
+        const checked = (saved[cKey] !== false && saved[mKey] !== false) ? 'checked' : '';
+        return '<div class="permission-checkbox"><label><input type="checkbox" name="perm" value="' + cKey + '" ' + checked + '>' + child + '</label></div>';
+      }).join('') + '</div>';
+    }
+    items += '<div class="permission-item"><div class="permission-header expanded" onclick="togglePermission(this)">' + arrowSvg + menu.name + '</div>' + children + '</div>';
+  });
+  const body = '<div class="permission-toolbar"><span class="permission-toolbar-tip">为「' + role.name + '」分配可访问的菜单权限，勾选后该角色可查看对应菜单。</span><div class="permission-toolbar-actions"><button type="button" onclick="toggleAllPermission(true)">全选</button><button type="button" onclick="toggleAllPermission(false)">全不选</button></div></div><div class="permission-tree">' + items + '</div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="savePermission()">保存配置</button>';
+  openModal(role.name + ' - 权限配置', body, footer, 'modal-permission');
+}
+function togglePermission(el) {
+  el.classList.toggle('expanded');
+  const children = el.nextElementSibling;
+  if (children) children.classList.toggle('show');
+}
+function toggleAllPermission(checked) {
+  document.querySelectorAll('#modalBody .permission-checkbox input[type="checkbox"]').forEach(function(cb) { cb.checked = checked; });
+}
+function openAddDictModal() {
+  const body =
+    '<div class="form-row">' +
+      '<div class="form-group half"><label class="form-label required">字典类型</label><input type="text" class="form-input" id="modalDictType" placeholder="请输入字典类型"></div>' +
+      '<div class="form-group half"><label class="form-label required">字典编码</label><input type="text" class="form-input" id="modalDictCode" placeholder="请输入字典编码（英文大写）"></div>' +
+      '<div class="form-group half"><label class="form-label required">字典名称</label><input type="text" class="form-input" id="modalDictName" placeholder="请输入字典名称"></div>' +
+      '<div class="form-group half"><label class="form-label required">排序</label><input type="number" class="form-input" id="modalDictSort" value="1" min="1"></div>' +
+    '</div>' +
+    '<div class="form-group full" style="margin-top:12px;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+        '<label class="form-label" style="margin:0;">字典值</label>' +
+        '<button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="addDictValueRow()">+ 新增一行</button>' +
+      '</div>' +
+      '<table class="data-grid dict-value-table" style="width:100%;">' +
+        '<thead><tr><th style="width:25%;">值</th><th style="width:30%;">显示名称</th><th style="width:15%;">排序</th><th>备注</th><th style="width:60px;">操作</th></tr></thead>' +
+        '<tbody id="dictValueTbody"><tr class="dict-value-row"><td><input type="text" class="form-input" data-field="value" placeholder="如：level1"></td><td><input type="text" class="form-input" data-field="label" placeholder="如：一级"></td><td><input type="number" class="form-input" data-field="sort" value="1" min="1"></td><td><input type="text" class="form-input" data-field="remark" placeholder="可选"></td><td style="text-align:center;"><button type="button" class="action-btn delete" onclick="removeDictValueRow(this)">删</button></td></tr></tbody>' +
+      '</table>' +
+    '</div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="addDict()">确定</button>';
+  openModal('新增字典', body, footer);
+}
+function openEditDictModal(dictId) {
+  const dict = mockDicts.find(function(d) { return d.id === dictId; });
+  window.__currentDictId = dictId; // 编辑提交时定位目标条目
+  // 解析字典值字符串为表格行（支持 JSON 数组 或 逗号分隔字符串）
+  let rows = [];
+  try {
+    const raw = (dict.value || '').trim();
+    if (raw.startsWith('[')) {
+      const arr = JSON.parse(raw);
+      rows = arr.map(function(it) {
+        return {
+          value: it.value || it.code || '',
+          label: it.label || it.name || '',
+          sort: it.sort || 1,
+          remark: it.remark || ''
+        };
+      });
+    } else if (raw) {
+      // 形如 "level1=一级,level2=二级" 或 "一级,二级"
+      raw.split(/[,，]/).forEach(function(part, idx) {
+        const kv = part.split(/[=:]/);
+        if (kv.length >= 2) {
+          rows.push({ value: kv[0].trim(), label: kv[1].trim(), sort: idx + 1, remark: '' });
+        } else if (kv[0].trim()) {
+          rows.push({ value: kv[0].trim(), label: kv[0].trim(), sort: idx + 1, remark: '' });
+        }
+      });
+    }
+  } catch (e) { /* 忽略解析错误 */ }
+  if (!rows.length) rows.push({ value: '', label: '', sort: 1, remark: '' });
+  const rowsHtml = rows.map(function(r) {
+    return '<tr class="dict-value-row"><td><input type="text" class="form-input" data-field="value" value="' + (r.value || '').replace(/"/g, '&quot;') + '" placeholder="如：level1"></td><td><input type="text" class="form-input" data-field="label" value="' + (r.label || '').replace(/"/g, '&quot;') + '" placeholder="如：一级"></td><td><input type="number" class="form-input" data-field="sort" value="' + (r.sort || 1) + '" min="1"></td><td><input type="text" class="form-input" data-field="remark" value="' + (r.remark || '').replace(/"/g, '&quot;') + '" placeholder="可选"></td><td style="text-align:center;"><button type="button" class="action-btn delete" onclick="removeDictValueRow(this)">删</button></td></tr>';
+  }).join('');
+  const body =
+    '<div class="form-row">' +
+      '<div class="form-group half"><label class="form-label">字典类型</label><input type="text" class="form-input" id="modalDictType" value="' + dict.type + '"></div>' +
+      '<div class="form-group half"><label class="form-label">字典编码</label><input type="text" class="form-input" id="modalDictCode" value="' + dict.code + '" disabled></div>' +
+      '<div class="form-group half"><label class="form-label">字典名称</label><input type="text" class="form-input" id="modalDictName" value="' + dict.name + '"></div>' +
+      '<div class="form-group half"><label class="form-label">排序</label><input type="number" class="form-input" id="modalDictSort" value="' + dict.sort + '" min="1"></div>' +
+      '<div class="form-group half"><label class="form-label">状态</label><select class="form-select" id="modalDictStatus"><option value="active"' + (dict.status === 'active' ? ' selected' : '') + '>启用</option><option value="disabled"' + (dict.status === 'disabled' ? ' selected' : '') + '>停用</option></select></div>' +
+    '</div>' +
+    '<div class="form-group full" style="margin-top:12px;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+        '<label class="form-label" style="margin:0;">字典值</label>' +
+        '<button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="addDictValueRow()">+ 新增一行</button>' +
+      '</div>' +
+      '<table class="data-grid dict-value-table" style="width:100%;">' +
+        '<thead><tr><th style="width:25%;">值</th><th style="width:30%;">显示名称</th><th style="width:15%;">排序</th><th>备注</th><th style="width:60px;">操作</th></tr></thead>' +
+        '<tbody id="dictValueTbody">' + rowsHtml + '</tbody>' +
+      '</table>' +
+    '</div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="editDict()">确定</button>';
+  openModal('编辑字典', body, footer);
+}
+
+// 字典值表格辅助函数
+function addDictValueRow() {
+  const tbody = document.getElementById('dictValueTbody');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.className = 'dict-value-row';
+  tr.innerHTML = '<td><input type="text" class="form-input" data-field="value" placeholder="如：level1"></td>' +
+    '<td><input type="text" class="form-input" data-field="label" placeholder="如：一级"></td>' +
+    '<td><input type="number" class="form-input" data-field="sort" value="' + (tbody.querySelectorAll('tr').length + 1) + '" min="1"></td>' +
+    '<td><input type="text" class="form-input" data-field="remark" placeholder="可选"></td>' +
+    '<td style="text-align:center;"><button type="button" class="action-btn delete" onclick="removeDictValueRow(this)">删</button></td>';
+  tbody.appendChild(tr);
+}
+function removeDictValueRow(btn) {
+  const tr = btn.closest('tr');
+  if (!tr) return;
+  // 移除空值行（值为空且显示名为空）后，若只剩一行也允许删除
+  tr.remove();
+  // 移除后若表格无任何行，自动补一行
+  const tbody = document.getElementById('dictValueTbody');
+  if (tbody && tbody.querySelectorAll('tr.dict-value-row').length === 0) {
+    addDictValueRow();
+  }
+}
+function collectDictValueRows() {
+  const tbody = document.getElementById('dictValueTbody');
+  if (!tbody) return '';
+  const rows = [];
+  tbody.querySelectorAll('tr.dict-value-row').forEach(function(tr) {
+    const value = tr.querySelector('[data-field="value"]').value.trim();
+    const label = tr.querySelector('[data-field="label"]').value.trim();
+    const sort = tr.querySelector('[data-field="sort"]').value || '';
+    const remark = tr.querySelector('[data-field="remark"]').value.trim();
+    // 跳过空值且空标签的行
+    if (!value && !label) return;
+    rows.push({ value: value, label: label, sort: parseInt(sort, 10) || 1, remark: remark });
+  });
+  // 返回 JSON 字符串（保留完整结构），便于以后编辑回填
+  return JSON.stringify(rows);
+}
+function openDeleteDictModal(dictId) {
+  const dict = mockDicts.find(function(d) { return d.id === dictId; });
+  window.__currentDictId = dictId; // 删除提交时定位目标条目
+  const body = '<div class="confirm-warning"><p>确认要删除字典 <strong>' + dict.name + '</strong> 吗？此操作不可恢复。</p></div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button><button class="btn btn-primary" onclick="deleteDict()">确定删除</button>';
+  openModal('删除字典', body, footer);
+}
+function openLogDetailModal(logId) {
+  const log = mockLogs.find(function(l) { return l.id === logId; });
+  const typeMap = { login: '登录', add: '新增', edit: '编辑', delete: '删除', view: '查看', export: '导出' };
+  const body = '<div class="detail-info"><span class="detail-label">操作时间</span><span class="detail-value">' + log.time + '</span></div><div class="detail-info"><span class="detail-label">操作人</span><span class="detail-value">' + log.user + '</span></div><div class="detail-info"><span class="detail-label">操作模块</span><span class="detail-value">' + log.module + '</span></div><div class="detail-info"><span class="detail-label">操作类型</span><span class="detail-value">' + typeMap[log.type] + '</span></div><div class="detail-info"><span class="detail-label">操作内容</span><span class="detail-value">' + log.content + '</span></div><div class="detail-info"><span class="detail-label">IP地址</span><span class="detail-value">' + log.ip + '</span></div>';
+  const footer = '<button class="btn btn-primary" onclick="closeModal()">关闭</button>';
+  openModal('日志详情', body, footer);
+}
+function addUser() { closeModal(); alert('新增用户成功'); }
+function editUser() { closeModal(); alert('编辑用户成功'); }
+function resetPassword() {
+  // 收集弹窗中的用户名 + 新密码，落库到 snzg_passwords
+  var uname = window.__currentOpUser || '';
+  var npwd = (document.getElementById('modalPassword') || {}).value || '';
+  if (!uname) { alert('未获取到目标用户，请重新打开弹窗'); return; }
+  if (npwd && npwd.length < 6) { alert('新密码至少 6 位'); return; }
+  var pwd = npwd || 'admin123';
+  try {
+    var map = JSON.parse(localStorage.getItem('snzg_passwords') || '{}');
+    map[uname] = pwd;
+    localStorage.setItem('snzg_passwords', JSON.stringify(map));
+    alert('密码重置成功：' + uname + ' → ' + pwd);
+  } catch (e) { alert('保存失败：' + e.message); }
+  closeModal();
+}
+function disableUser() {
+  var uname = window.__currentOpUser || '';
+  if (!uname) { alert('请选择要禁用的用户'); return; }
+  try {
+    var list = JSON.parse(localStorage.getItem('snzg_user_states') || '{}');
+    list[uname] = 'disabled';
+    localStorage.setItem('snzg_user_states', JSON.stringify(list));
+  } catch (e) {}
+  alert('用户已禁用：' + uname);
+  closeModal();
+}
+function doEnableUser() {
+  var uname = window.__currentOpUser || '';
+  if (!uname) { alert('请选择要启用的用户'); return; }
+  try {
+    var list = JSON.parse(localStorage.getItem('snzg_user_states') || '{}');
+    list[uname] = 'active';
+    localStorage.setItem('snzg_user_states', JSON.stringify(list));
+  } catch (e) {}
+  alert('用户已启用：' + uname);
+  closeModal();
+}
+// 权限矩阵：12 模块 × 5 操作
+var PERM_MODULES = ['农事计划', '农事记录', '农资管理', '设备管理', '预警中心', '溯源管理', '采收管理', '认养管理', '模型中心', '销售订单', '任务管理', '系统设置'];
+var PERM_ACTIONS = ['view', 'add', 'edit', 'delete', 'export'];
+function renderPermMatrix() {
+  var sel = document.getElementById('permRoleSelect');
+  if (sel) {
+    sel.innerHTML = mockRoles.map(function(r){ return '<option value="' + r.code + '">' + r.name + '</option>'; }).join('');
+  }
+  var saved = JSON.parse(localStorage.getItem('snzg_permissions') || '{}');
+  var role = sel ? sel.value : '';
+  var body = document.getElementById('permMatrixBody');
+  if (!body) return;
+  body.innerHTML = PERM_MODULES.map(function(m){
+    var cells = PERM_ACTIONS.map(function(a){
+      var key = role + ':' + m + ':' + a;
+      var checked = saved[key] ? 'checked' : '';
+      return '<td style="text-align:center;"><label style="display:inline-block;cursor:pointer;"><input type="checkbox" name="perm" value="' + key + '" ' + checked + '> <span style="font-size:12px;">' + a + '</span></label></td>';
+    }).join('');
+    return '<tr><td style="font-weight:500;">' + m + '</td>' + cells + '</tr>';
+  }).join('');
+}
+function savePermission() {
+  var perms = {}, all = {}, role = window.__currentPermRole || '';
+  document.querySelectorAll('input[name="perm"]').forEach(function(el){
+    all[el.value] = true;
+    if (el.checked) perms[el.value] = true;
+  });
+  Object.keys(all).forEach(function(k){ if (!(k in perms)) perms[k] = false; });
+  try { localStorage.setItem('snzg_permissions', JSON.stringify(perms)); } catch (e) { alert('保存失败：' + e.message); return; }
+  alert('「' + role + '」权限配置已保存（已授权 ' +
+        Object.keys(perms).filter(function(k){ return perms[k]; }).length + ' 项），下次登录后生效。');
+  closeModal();
+}
+
+function refreshRoleTable() {
+  renderTable(mockRoles, 'roleTableBody', renderRoleRow, currentRolePage, mockRoles.length);
+  renderPagination('rolePagination', currentRolePage, mockRoles.length);
+}
+function addRole() {
+  var name = ((document.getElementById('modalRoleName') || {}).value || '').trim();
+  var code = ((document.getElementById('modalRoleCode') || {}).value || '').trim();
+  var desc = ((document.getElementById('modalRoleDesc') || {}).value || '').trim();
+  if (!name || !code) { alert('请填写角色名称与角色代码'); return; }
+  if (mockRoles.some(function(r) { return r.code === code; })) { alert('角色代码已存在：' + code); return; }
+  try {
+    var list = JSON.parse(localStorage.getItem('snzg_roles') || '[]');
+    list.push({ id: 'R' + Date.now(), name: name, code: code, desc: desc, status: 'active', createdAt: new Date().toISOString() });
+    localStorage.setItem('snzg_roles', JSON.stringify(list));
+    mockRoles = mockRoles.concat([{ id: Math.max.apply(null, mockRoles.map(function(r) { return r.id; })) + 1, name: name, code: code, userCount: 0, desc: desc, status: 'active' }]);
+    refreshRoleTable();
+  } catch (e) { alert('保存失败：' + e.message); return; }
+  closeModal();
+  alert('新增角色成功：' + name);
+}
+function editRole() {
+  var name = ((document.getElementById('modalRoleName') || {}).value || '').trim();
+  var desc = ((document.getElementById('modalRoleDesc') || {}).value || '').trim();
+  var status = (document.getElementById('modalRoleStatus') || {}).value || 'active';
+  var code = window.__currentRoleCode;
+  if (!name) { alert('请填写角色名称'); return; }
+  if (!code) { alert('未获取到目标角色，请重新打开弹窗'); return; }
+  try {
+    var list = JSON.parse(localStorage.getItem('snzg_roles') || '[]');
+    var hit = list.filter(function(r) { return r.code === code; })[0];
+    if (hit) { hit.name = name; hit.desc = desc; hit.status = status; }
+    else { list.push({ id: 'R' + Date.now(), name: name, code: code, desc: desc, status: status }); }
+    localStorage.setItem('snzg_roles', JSON.stringify(list));
+    mockRoles.forEach(function(r) { if (r.code === code) { r.name = name; r.desc = desc; r.status = status; } });
+    refreshRoleTable();
+  } catch (e) { alert('保存失败：' + e.message); return; }
+  closeModal();
+  alert('编辑角色成功：' + name);
+}
+function addDict() {
+  var type = ((document.getElementById('modalDictType') || {}).value || '').trim();
+  var code = ((document.getElementById('modalDictCode') || {}).value || '').trim();
+  var name = ((document.getElementById('modalDictName') || {}).value || '').trim();
+  if (!type || !code || !name) { alert('请填写字典类型、编码与名称'); return; }
+  var sort = parseInt((document.getElementById('modalDictSort') || {}).value, 10) || (mockDicts.length + 1);
+  var newId = 1;
+  mockDicts.forEach(function(d) { if (d.id >= newId) newId = d.id + 1; });
+  mockDicts.push({ id: newId, type: type, code: code.toUpperCase(), name: name, value: collectDictValueRows(), sort: sort, status: 'active' });
+  saveDicts();
+  refreshDictTable();
+  closeModal();
+  alert('新增字典成功：' + code);
+}
+function editDict() {
+  var dict = null;
+  for (var i = 0; i < mockDicts.length; i++) { if (mockDicts[i].id === window.__currentDictId) { dict = mockDicts[i]; break; } }
+  if (!dict) { closeModal(); return; }
+  var type = ((document.getElementById('modalDictType') || {}).value || '').trim();
+  var name = ((document.getElementById('modalDictName') || {}).value || '').trim();
+  if (type) dict.type = type;
+  if (name) dict.name = name;
+  dict.sort = parseInt((document.getElementById('modalDictSort') || {}).value, 10) || dict.sort;
+  dict.status = (document.getElementById('modalDictStatus') || {}).value || dict.status;
+  dict.value = collectDictValueRows();
+  saveDicts();
+  refreshDictTable();
+  closeModal();
+  alert('编辑字典成功：' + dict.code);
+}
+function deleteDict() {
+  var idx = -1;
+  for (var i = 0; i < mockDicts.length; i++) { if (mockDicts[i].id === window.__currentDictId) { idx = i; break; } }
+  if (idx < 0) { closeModal(); return; }
+  var removed = mockDicts.splice(idx, 1)[0];
+  saveDicts();
+  refreshDictTable();
+  closeModal();
+  alert('字典已删除：' + removed.code);
+}
+function switchTab(event, tabId) {
+  document.querySelectorAll('.system-tab').forEach(function(tab) { tab.classList.remove('active'); });
+  document.querySelectorAll('.system-tab-content').forEach(function(content) { content.classList.remove('active'); });
+  event.currentTarget.classList.add('active');
+  document.getElementById('tab-' + tabId).classList.add('active');
+}
+/* ============================================================
+ * 部门管理 / 岗位管理
+ *   部门：南丰县下辖乡镇两级树形结构，排序支持行内编辑后「保存排序」
+ *   岗位：编码 + 名称 + 顺序的平铺列表，分页复用 Pagination 组件
+ *   两者均写入 localStorage，刷新后保留增删改结果
+ * ============================================================ */
+const DEPT_STORAGE_KEY = 'smartorchard_dept';
+const POST_STORAGE_KEY = 'smartorchard_post';
+const DEPT_TIME = '2026-09-19 12:03:44';
+const POST_TIME = '2026-08-06 22:53:48';
+
+let mockDepts = [
+  { id: 1, parentId: 0, name: '南丰县', sort: 0, status: 'active', createdAt: DEPT_TIME },
+  { id: 2, parentId: 1, name: '梨城镇', sort: 1, status: 'active', createdAt: DEPT_TIME },
+  { id: 3, parentId: 1, name: '太和镇', sort: 2, status: 'active', createdAt: DEPT_TIME },
+  { id: 4, parentId: 1, name: '白窑镇', sort: 3, status: 'active', createdAt: DEPT_TIME },
+  { id: 5, parentId: 1, name: '沿山镇', sort: 4, status: 'active', createdAt: DEPT_TIME },
+  { id: 6, parentId: 1, name: '沿河镇', sort: 5, status: 'active', createdAt: DEPT_TIME },
+  { id: 7, parentId: 1, name: '阜田镇', sort: 6, status: 'active', createdAt: DEPT_TIME },
+  { id: 8, parentId: 1, name: '茶湾镇', sort: 7, status: 'active', createdAt: DEPT_TIME },
+  { id: 9, parentId: 1, name: '三溪乡', sort: 8, status: 'active', createdAt: DEPT_TIME },
+  { id: 10, parentId: 1, name: '东坪乡', sort: 9, status: 'active', createdAt: DEPT_TIME },
+  { id: 11, parentId: 1, name: '草滩乡', sort: 10, status: 'active', createdAt: DEPT_TIME },
+  { id: 12, parentId: 1, name: '大塬乡', sort: 11, status: 'active', createdAt: DEPT_TIME },
+  { id: 13, parentId: 1, name: '尚坊乡', sort: 12, status: 'active', createdAt: DEPT_TIME }
+];
+
+let mockPosts = [
+  { id: 1, code: 'secretary', name: '书记', sort: 1, status: 'active', remark: '主持全面工作', createdAt: POST_TIME },
+  { id: 2, code: 'director', name: '局长', sort: 2, status: 'active', remark: '负责分管工作', createdAt: POST_TIME },
+  { id: 3, code: 'office', name: '主任', sort: 3, status: 'active', remark: '科室负责人', createdAt: POST_TIME },
+  { id: 4, code: 'clerk', name: '科员', sort: 4, status: 'active', remark: '日常业务办理', createdAt: POST_TIME }
+];
+
+let deptCollapsed = {};
+let selectedDeptIds = [];
+let selectedPostIds = [];
+
+function loadLocal(key, target) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return;
+    const list = JSON.parse(raw);
+    if (Array.isArray(list) && list.length) {
+      target.length = 0;
+      list.forEach(function (item) { target.push(item); });
+    }
+  } catch (e) { /* 解析失败则沿用初始数据 */ }
+}
+function saveLocal(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { /* 忽略写入异常 */ }
+}
+
+function deptChildren(parentId) {
+  return mockDepts.filter(function (d) { return d.parentId === parentId; })
+                  .sort(function (a, b) { return a.sort - b.sort || a.id - b.id; });
+}
+function deptDescendantIds(id) {
+  const ids = [];
+  deptChildren(id).forEach(function (child) {
+    ids.push(child.id);
+    deptDescendantIds(child.id).forEach(function (sub) { ids.push(sub); });
+  });
+  return ids;
+}
+
+/* ---------- 部门管理 ---------- */
+function renderDeptTable() {
+  const tbody = document.getElementById('deptTableBody');
+  if (!tbody) return;
+  const rows = [];
+  (function walk(parentId, level) {
+    deptChildren(parentId).forEach(function (dept) {
+      const kids = deptChildren(dept.id);
+      const collapsed = !!deptCollapsed[dept.id];
+      rows.push(deptRowHtml(dept, level, kids.length > 0, collapsed));
+      if (kids.length && !collapsed) walk(dept.id, level + 1);
+    });
+  })(0, 0);
+  tbody.innerHTML = rows.join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);padding:32px;">暂无部门数据</td></tr>';
+  syncDeptSelection();
+}
+function deptRowHtml(dept, level, hasChildren, collapsed) {
+  const statusText = dept.status === 'active' ? '正常' : '停用';
+  const statusClass = dept.status === 'active' ? 'status-tag active' : 'status-tag disabled';
+  const toggle = hasChildren
+    ? '<button class="dept-expand-btn" onclick="toggleDeptNode(' + dept.id + ')" title="' + (collapsed ? '展开' : '折叠') + '">' +
+        (collapsed
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>') +
+      '</button>'
+    : '<span class="dept-expand-placeholder"></span>';
+  // 顶级部门不提供删除入口
+  const delBtn = level === 0
+    ? ''
+    : '<button class="action-btn delete" onclick="deleteDept(' + dept.id + ')">删除</button>';
+  return '<tr>' +
+    '<td><input type="checkbox" ' + (selectedDeptIds.indexOf(dept.id) !== -1 ? 'checked' : '') + ' onchange="toggleDeptCheck(' + dept.id + ', this.checked)"></td>' +
+    '<td><div class="dept-name-cell" style="padding-left:' + (level * 22) + 'px;">' + toggle + '<span>' + escSource(dept.name) + '</span></div></td>' +
+    '<td><input type="number" class="sort-input" value="' + dept.sort + '" min="0" data-dept-sort="' + dept.id + '"></td>' +
+    '<td><span class="' + statusClass + '">' + statusText + '</span></td>' +
+    '<td>' + escSource(dept.createdAt) + '</td>' +
+    '<td><div class="action-btns">' +
+      '<button class="action-btn edit" onclick="openEditDeptModal(' + dept.id + ')">修改</button>' +
+      '<button class="action-btn edit" onclick="openAddDeptModal(' + dept.id + ')">新增</button>' +
+      delBtn +
+    '</div></td>' +
+  '</tr>';
+}
+function toggleDeptNode(id) {
+  deptCollapsed[id] = !deptCollapsed[id];
+  renderDeptTable();
+}
+function toggleAllDepts(expand) {
+  mockDepts.forEach(function (d) { deptCollapsed[d.id] = !expand; });
+  renderDeptTable();
+}
+// 批量保存：读取表格中所有「排序」输入框的值后统一落库并按新顺序重排
+function batchSaveDeptSort() {
+  document.querySelectorAll('[data-dept-sort]').forEach(function (input) {
+    const dept = mockDepts.find(function (d) { return d.id === Number(input.dataset.deptSort); });
+    if (dept) dept.sort = Number(input.value) || 0;
+  });
+  saveLocal(DEPT_STORAGE_KEY, mockDepts);
+  renderDeptTable();
+  toastDept('部门排序已保存');
+}
+function toggleDeptCheck(id, checked) {
+  const i = selectedDeptIds.indexOf(id);
+  if (checked && i === -1) selectedDeptIds.push(id);
+  if (!checked && i !== -1) selectedDeptIds.splice(i, 1);
+  syncDeptSelection();
+}
+function toggleDeptCheckAll(checkbox) {
+  selectedDeptIds = checkbox.checked ? mockDepts.map(function (d) { return d.id; }) : [];
+  renderDeptTable();
+}
+function syncDeptSelection() {
+  const n = selectedDeptIds.length;
+  const info = document.getElementById('deptSelectedInfo');
+  if (info) info.textContent = '已选 ' + n + ' 项';
+  const all = document.getElementById('deptCheckAll');
+  if (all) all.checked = n > 0 && n === mockDepts.length;
+}
+function searchDepts() {
+  const keyword = (document.getElementById('deptSearchInput').value || '').trim();
+  const status = document.getElementById('deptStatusSelect').value;
+  deptCollapsed = {};
+  const filtered = mockDepts.filter(function (d) {
+    const matchName = !keyword || d.name.indexOf(keyword) !== -1;
+    const matchStatus = !status || d.status === status;
+    return matchName && matchStatus;
+  });
+  const tbody = document.getElementById('deptTableBody');
+  tbody.innerHTML = filtered.length
+    ? filtered.map(function (d, i) {
+        const hasChildren = deptChildren(d.id).length > 0;
+        return deptRowHtml(d, i === 0 && d.parentId === 0 ? 0 : 1, hasChildren, false);
+      }).join('')
+    : '<tr><td colspan="6" style="text-align:center;color:var(--text-tertiary);padding:32px;">未找到匹配的部门</td></tr>';
+  selectedDeptIds = [];
+  syncDeptSelection();
+}
+function resetDeptSearch() {
+  document.getElementById('deptSearchInput').value = '';
+  document.getElementById('deptStatusSelect').value = '';
+  deptCollapsed = {};
+  renderDeptTable();
+}
+function statusRadioHtml(name, current) {
+  return [
+    { value: 'active', label: '正常' },
+    { value: 'disabled', label: '停用' }
+  ].map(function (o) {
+    return '<label class="radio-option"><input type="radio" name="' + name + '" value="' + o.value + '"' +
+      (o.value === current ? ' checked' : '') + '><span>' + o.label + '</span></label>';
+  }).join('');
+}
+function parentDeptOptions(selectedId) {
+  return mockDepts.map(function (d) {
+    return '<option value="' + d.id + '"' + (d.id === selectedId ? ' selected' : '') + '>' +
+      (d.parentId === 0 ? '' : '　') + escSource(d.name) + '</option>';
+  }).join('');
+}
+function deptFormHtml(dept, parentId) {
+  const d = dept || {};
+  const parent = dept ? dept.parentId : (parentId || 0);
+  const status = d.status || 'active';
+  const sort = d.sort !== undefined ? d.sort : mockDepts.length + 1;
+  return '<div class="form-row">' +
+      '<div class="form-group full"><label class="form-label required">上级部门</label>' +
+        '<select class="form-select" id="modalDeptParent"' + (dept && dept.parentId === 0 ? ' disabled' : '') + '>' +
+          (dept && dept.parentId === 0 ? '<option value="0">南丰县（顶级）</option>' : parentDeptOptions(parent)) +
+        '</select></div>' +
+      '<div class="form-group half"><label class="form-label required">部门名称</label>' +
+        '<input type="text" class="form-input" id="modalDeptName" placeholder="请输入部门名称" value="' + escSource(d.name || '') + '"></div>' +
+      '<div class="form-group half"><label class="form-label required">显示排序</label>' +
+        '<input type="number" class="form-input" id="modalDeptSort" min="0" value="' + sort + '"></div>' +
+      '<div class="form-group half"><label class="form-label">负责人</label>' +
+        '<input type="text" class="form-input" id="modalDeptOwner" placeholder="请输入负责人" value="' + escSource(d.owner || '') + '"></div>' +
+      '<div class="form-group half"><label class="form-label">联系电话</label>' +
+        '<input type="text" class="form-input" id="modalDeptPhone" placeholder="请输入联系电话" value="' + escSource(d.phone || '') + '"></div>' +
+      '<div class="form-group half"><label class="form-label">邮箱</label>' +
+        '<input type="text" class="form-input" id="modalDeptEmail" placeholder="请输入邮箱" value="' + escSource(d.email || '') + '"></div>' +
+      '<div class="form-group half"><label class="form-label">部门状态</label>' +
+        '<div class="radio-group">' + statusRadioHtml('modalDeptStatus', status) + '</div></div>' +
+    '</div>';
+}
+function openAddDeptModal(parentId) {
+  window.__currentDeptId = null;
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button>' +
+                 '<button class="btn btn-primary" onclick="submitDept()">确定</button>';
+  openModal('添加部门', deptFormHtml(null, parentId), footer);
+}
+function openEditDeptModal(deptId) {
+  const dept = mockDepts.find(function (d) { return d.id === deptId; });
+  if (!dept) return;
+  window.__currentDeptId = deptId;
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button>' +
+                 '<button class="btn btn-primary" onclick="submitDept()">确定</button>';
+  openModal('修改部门', deptFormHtml(dept), footer);
+}
+function submitDept() {
+  const name = (document.getElementById('modalDeptName').value || '').trim();
+  const sort = document.getElementById('modalDeptSort').value;
+  if (!name) { alert('请填写部门名称'); return; }
+  if (sort === '' || Number(sort) < 0) { alert('请填写正确的显示排序'); return; }
+  const status = document.querySelector('input[name="modalDeptStatus"]:checked');
+  const parentEl = document.getElementById('modalDeptParent');
+  const payload = {
+    name: name,
+    sort: Number(sort),
+    status: status ? status.value : 'active',
+    owner: (document.getElementById('modalDeptOwner').value || '').trim(),
+    phone: (document.getElementById('modalDeptPhone').value || '').trim(),
+    email: (document.getElementById('modalDeptEmail').value || '').trim(),
+    createdAt: nowText()
+  };
+  const parentId = parentEl ? Number(parentEl.value) || 0 : 0;
+  const editId = window.__currentDeptId;
+  if (editId) {
+    const dept = mockDepts.find(function (d) { return d.id === editId; });
+    const isSelfOrDescendant = parentId === editId || deptDescendantIds(editId).indexOf(parentId) !== -1;
+    Object.assign(dept, payload);
+    if (!isSelfOrDescendant) dept.parentId = parentId;
+  } else {
+    mockDepts.push(Object.assign({ id: Date.now(), parentId: parentId }, payload));
+  }
+  saveLocal(DEPT_STORAGE_KEY, mockDepts);
+  closeModal();
+  renderDeptTable();
+  toastDept(editId ? '部门修改成功' : '部门新增成功');
+}
+function deleteDept(deptId) {
+  if (deptChildren(deptId).length) { alert('该部门存在下级部门，无法删除'); return; }
+  const dept = mockDepts.find(function (d) { return d.id === deptId; });
+  if (!dept) return;
+  const body = '<div class="confirm-warning"><p>确认要删除部门 <strong>' + escSource(dept.name) + '</strong> 吗？删除后不可恢复。</p></div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button>' +
+                 '<button class="btn btn-primary" onclick="confirmDeleteDept(' + deptId + ')">确定</button>';
+  openModal('删除部门', body, footer);
+}
+function confirmDeleteDept(deptId) {
+  const idx = mockDepts.findIndex(function (d) { return d.id === deptId; });
+  if (idx > -1) mockDepts.splice(idx, 1);
+  selectedDeptIds = selectedDeptIds.filter(function (id) { return id !== deptId; });
+  saveLocal(DEPT_STORAGE_KEY, mockDepts);
+  closeModal();
+  renderDeptTable();
+  toastDept('部门已删除');
+}
+function batchDeleteDept() {
+  if (!selectedDeptIds.length) { alert('请先选择要删除的部门'); return; }
+  const ids = selectedDeptIds.slice();
+  const withChildren = ids.filter(function (id) { return deptChildren(id).length > 0; });
+  if (withChildren.length) { alert('所选部门中存在下级部门，请先处理下级部门'); return; }
+  mockDepts = mockDepts.filter(function (d) { return ids.indexOf(d.id) === -1; });
+  selectedDeptIds = [];
+  saveLocal(DEPT_STORAGE_KEY, mockDepts);
+  renderDeptTable();
+  toastDept('已删除 ' + ids.length + ' 个部门');
+}
+/* ---------- 岗位管理 ---------- */
+function renderPostTable() {
+  const filtered = filterPosts();
+  if (window.Pagination) {
+    window.Pagination.updateData(filtered);
+  } else {
+    const tbody = document.getElementById('postTableBody');
+    tbody.innerHTML = filtered.map(function (p, i) { return postRowHtml(p, i + 1); }).join('');
+  }
+  syncPostSelection();
+}
+function postRowHtml(post, index) {
+  const statusText = post.status === 'active' ? '正常' : '停用';
+  const statusClass = post.status === 'active' ? 'status-tag active' : 'status-tag disabled';
+  return '<tr>' +
+    '<td><input type="checkbox" ' + (selectedPostIds.indexOf(post.id) !== -1 ? 'checked' : '') + ' onchange="togglePostCheck(' + post.id + ', this.checked)"></td>' +
+    '<td>' + index + '</td>' +
+    '<td><span class="code-text">' + escSource(post.code) + '</span></td>' +
+    '<td>' + escSource(post.name) + '</td>' +
+    '<td>' + post.sort + '</td>' +
+    '<td><span class="' + statusClass + '">' + statusText + '</span></td>' +
+    '<td>' + escSource(post.createdAt) + '</td>' +
+    '<td><div class="action-btns">' +
+      '<button class="action-btn edit" onclick="openEditPostModal(' + post.id + ')">修改</button>' +
+      '<button class="action-btn delete" onclick="deletePost(' + post.id + ')">删除</button>' +
+    '</div></td>' +
+  '</tr>';
+}
+function filterPosts() {
+  const code = (document.getElementById('postCodeSearchInput').value || '').trim();
+  const name = (document.getElementById('postNameSearchInput').value || '').trim();
+  const status = document.getElementById('postStatusSelect').value;
+  return mockPosts.filter(function (p) {
+    const matchCode = !code || p.code.toLowerCase().indexOf(code.toLowerCase()) !== -1;
+    const matchName = !name || p.name.indexOf(name) !== -1;
+    const matchStatus = !status || p.status === status;
+    return matchCode && matchName && matchStatus;
+  });
+}
+function searchPosts() {
+  selectedPostIds = [];
+  renderPostTable();
+}
+function resetPostSearch() {
+  document.getElementById('postCodeSearchInput').value = '';
+  document.getElementById('postNameSearchInput').value = '';
+  document.getElementById('postStatusSelect').value = '';
+  renderPostTable();
+}
+function togglePostCheck(id, checked) {
+  const i = selectedPostIds.indexOf(id);
+  if (checked && i === -1) selectedPostIds.push(id);
+  if (!checked && i !== -1) selectedPostIds.splice(i, 1);
+  syncPostSelection();
+}
+function togglePostCheckAll(checkbox) {
+  selectedPostIds = checkbox.checked ? filterPosts().map(function (p) { return p.id; }) : [];
+  renderPostTable();
+}
+function syncPostSelection() {
+  const n = selectedPostIds.length;
+  const info = document.getElementById('postSelectedInfo');
+  if (info) info.textContent = '已选 ' + n + ' 项';
+  const editBtn = document.getElementById('btnPostEdit');
+  const delBtn = document.getElementById('btnPostDelete');
+  if (editBtn) editBtn.disabled = n !== 1;
+  if (delBtn) delBtn.disabled = n === 0;
+  const all = document.getElementById('postCheckAll');
+  if (all) {
+    const shown = filterPosts().length;
+    all.checked = n > 0 && n === shown;
+  }
+}
+function postFormHtml(post) {
+  const p = post || {};
+  const status = p.status || 'active';
+  const sort = p.sort !== undefined ? p.sort : mockPosts.length + 1;
+  return '<div class="form-row">' +
+      '<div class="form-group full"><label class="form-label required">岗位名称</label>' +
+        '<input type="text" class="form-input" id="modalPostName" placeholder="请输入岗位名称" value="' + escSource(p.name || '') + '"></div>' +
+      '<div class="form-group full"><label class="form-label required">岗位编码</label>' +
+        '<input type="text" class="form-input" id="modalPostCode" placeholder="请输入岗位编码（英文）" value="' + escSource(p.code || '') + '"></div>' +
+      '<div class="form-group full"><label class="form-label required">岗位顺序</label>' +
+        '<input type="number" class="form-input" id="modalPostSort" min="1" value="' + sort + '"></div>' +
+      '<div class="form-group full"><label class="form-label">岗位状态</label>' +
+        '<div class="radio-group">' + statusRadioHtml('modalPostStatus', status) + '</div></div>' +
+      '<div class="form-group full"><label class="form-label">备注</label>' +
+        '<textarea class="form-textarea" id="modalPostRemark" placeholder="请输入内容">' + escSource(p.remark || '') + '</textarea></div>' +
+    '</div>';
+}
+function openAddPostModal() {
+  window.__currentPostId = null;
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button>' +
+                 '<button class="btn btn-primary" onclick="submitPost()">确定</button>';
+  openModal('添加岗位', postFormHtml(null), footer);
+}
+function openEditPostModal(postId) {
+  const post = mockPosts.find(function (p) { return p.id === postId; });
+  if (!post) return;
+  window.__currentPostId = postId;
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button>' +
+                 '<button class="btn btn-primary" onclick="submitPost()">确定</button>';
+  openModal('修改岗位', postFormHtml(post), footer);
+}
+function submitPost() {
+  const name = (document.getElementById('modalPostName').value || '').trim();
+  const code = (document.getElementById('modalPostCode').value || '').trim();
+  const sort = document.getElementById('modalPostSort').value;
+  if (!name) { alert('请填写岗位名称'); return; }
+  if (!code) { alert('请填写岗位编码'); return; }
+  if (sort === '' || Number(sort) < 1) { alert('请填写正确的岗位顺序'); return; }
+  const editId = window.__currentPostId;
+  const duplicated = mockPosts.some(function (p) { return p.code === code && p.id !== editId; });
+  if (duplicated) { alert('岗位编码已存在：' + code); return; }
+  const statusEl = document.querySelector('input[name="modalPostStatus"]:checked');
+  const payload = {
+    name: name,
+    code: code,
+    sort: Number(sort),
+    status: statusEl ? statusEl.value : 'active',
+    remark: (document.getElementById('modalPostRemark').value || '').trim(),
+    createdAt: nowText()
+  };
+  if (editId) {
+    const post = mockPosts.find(function (p) { return p.id === editId; });
+    Object.assign(post, payload);
+  } else {
+    mockPosts.push(Object.assign({ id: Date.now() }, payload));
+  }
+  saveLocal(POST_STORAGE_KEY, mockPosts);
+  closeModal();
+  renderPostTable();
+  toastDept(editId ? '岗位修改成功' : '岗位新增成功');
+}
+function deletePost(postId) {
+  const post = mockPosts.find(function (p) { return p.id === postId; });
+  if (!post) return;
+  const body = '<div class="confirm-warning"><p>确认要删除岗位 <strong>' + escSource(post.name) + '</strong> 吗？删除后不可恢复。</p></div>';
+  const footer = '<button class="btn btn-secondary" onclick="closeModal()">取消</button>' +
+                 '<button class="btn btn-primary" onclick="confirmDeletePost(' + postId + ')">确定</button>';
+  openModal('删除岗位', body, footer);
+}
+function confirmDeletePost(postId) {
+  const idx = mockPosts.findIndex(function (p) { return p.id === postId; });
+  if (idx > -1) mockPosts.splice(idx, 1);
+  selectedPostIds = selectedPostIds.filter(function (id) { return id !== postId; });
+  saveLocal(POST_STORAGE_KEY, mockPosts);
+  closeModal();
+  renderPostTable();
+  toastDept('岗位已删除');
+}
+function batchEditPost() {
+  if (selectedPostIds.length !== 1) { alert('请仅选择一条岗位记录'); return; }
+  openEditPostModal(selectedPostIds[0]);
+}
+function batchDeletePost() {
+  if (!selectedPostIds.length) { alert('请先选择要删除的岗位'); return; }
+  const n = selectedPostIds.length;
+  mockPosts = mockPosts.filter(function (p) { return selectedPostIds.indexOf(p.id) === -1; });
+  selectedPostIds = [];
+  saveLocal(POST_STORAGE_KEY, mockPosts);
+  renderPostTable();
+  toastDept('已删除 ' + n + ' 个岗位');
+}
+function exportPosts() {
+  const list = filterPosts();
+  if (!list.length) { alert('当前没有可导出的岗位数据'); return; }
+  const rows = [['序号', '岗位编码', '岗位名称', '岗位顺序', '状态', '创建时间']].concat(
+    list.map(function (p, i) {
+      return [i + 1, p.code, p.name, p.sort, p.status === 'active' ? '正常' : '停用', p.createdAt];
+    })
+  );
+  const csv = '\ufeff' + rows.map(function (row) {
+    return row.map(function (cell) { return '"' + String(cell).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = '岗位列表.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+  toastDept('已导出 ' + list.length + ' 条岗位数据');
+}
+function toastDept(message) {
+  if (window.Toast && typeof window.Toast.success === 'function') {
+    window.Toast.success(message);
+  } else {
+    alert(message);
+  }
+}
+
+/* ============================================================
+ * 数据源接入（数据来自共享 Store：js/shared/data-store.js）
+ *   DataStore.subscribe 注册时立即回调一次，渲染逻辑放在回调里
+ * ============================================================ */
+var SOURCE_TYPE_OPTIONS = ['业务库', 'IoT 网关', '区块链', '移动端'];
+var SOURCE_PROTO_OPTIONS = ['REST API', 'MQTT', 'WebSocket', 'HTTPS'];
+var SOURCE_FREQ_OPTIONS = ['实时', '5分钟', '10分钟', '15分钟', '30分钟', '1小时', '每日'];
+var SOURCE_STATUS = [
+  { value: 'online', label: '运行中', badge: 'active' },
+  { value: 'warning', label: '延迟偏高', badge: 'warning' },
+  { value: 'offline', label: '已离线', badge: 'disabled' }
+];
+
+function sourceStatusBadge(status) {
+  var found = SOURCE_STATUS.filter(function (s) { return s.value === status; })[0];
+  return found
+    ? '<span class="status-badge ' + found.badge + '">' + found.label + '</span>'
+    : '<span class="status-badge disabled">' + (status || '-') + '</span>';
+}
+
+function renderSources() {
+  var body = document.getElementById('sourceTableBody');
+  if (!body) return;
+  var list = (typeof DataStore !== 'undefined' && DataStore.sources) ? DataStore.sources() : [];
+  var emptyEl = document.getElementById('sourceEmpty');
+
+  if (!list.length) {
+    body.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  body.innerHTML = list.map(function (x, i) {
+    return '<tr>' +
+      '<td>' + (i + 1) + '</td>' +
+      '<td><strong>' + escSource(x.name) + '</strong></td>' +
+      '<td>' + escSource(x.type) + '</td>' +
+      '<td>' + escSource(x.protocol) + '</td>' +
+      '<td class="text-mono">' + escSource(x.endpoint) + '</td>' +
+      '<td>' + escSource(x.freq) + '</td>' +
+      '<td>' + sourceStatusBadge(x.status) + '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function escSource(v) {
+  return String(v === undefined || v === null ? '-' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function sourceFormHtml(item) {
+  var v = item || {};
+  function opts(list, cur) {
+    return list.map(function (o) {
+      return '<option value="' + o.value + '"' + (o.value === cur ? ' selected' : '') + '>' + o.label + '</option>';
+    }).join('');
+  }
+  var statusOpts = opts(SOURCE_STATUS.map(function (s) { return { value: s.value, label: s.label }; }), v.status || 'online');
+  return '<div class="form-row">' +
+      '<div class="form-group half"><label class="form-label">数据源名称</label><input type="text" class="form-input" id="srcName" value="' + escSource(v.name || '') + '"></div>' +
+      '<div class="form-group half"><label class="form-label">类型</label><select class="form-select" id="srcType">' + opts(SOURCE_TYPE_OPTIONS.map(function (t) { return { value: t, label: t }; }), v.type || '业务库') + '</select></div>' +
+      '<div class="form-group half"><label class="form-label">协议</label><select class="form-select" id="srcProto">' + opts(SOURCE_PROTO_OPTIONS.map(function (t) { return { value: t, label: t }; }), v.protocol || 'REST API') + '</select></div>' +
+      '<div class="form-group half"><label class="form-label">采集频率</label><select class="form-select" id="srcFreq">' + opts(SOURCE_FREQ_OPTIONS.map(function (t) { return { value: t, label: t }; }), v.freq || '5分钟') + '</select></div>' +
+      '<div class="form-group half"><label class="form-label">状态</label><select class="form-select" id="srcStatus">' + statusOpts + '</select></div>' +
+      '<div class="form-group full"><label class="form-label">接入地址</label><input type="text" class="form-input" id="srcEndpoint" value="' + escSource(v.endpoint || '') + '" placeholder="如 /api/v1/xxx 或 mqtt://host:1883/topic"></div>' +
+    '</div>';
+}
+
+function openSourceModal(item) {
+  var isEdit = !!item;
+  openModal(isEdit ? '编辑数据源' : '新增数据源', sourceFormHtml(item),
+    '<button class="btn btn-secondary" onclick="closeModal()">取消</button>' +
+    '<button class="btn btn-primary" onclick="saveSource(' + (isEdit ? '\'' + item.id + '\'' : 'null') + ')">确定</button>');
+}
+
+function saveSource(id) {
+  var name = (document.getElementById('srcName') || {}).value || '';
+  if (!name.trim()) { alert('请填写数据源名称'); return; }
+  var status = (document.getElementById('srcStatus') || {}).value || 'online';
+  var statusLabel = (SOURCE_STATUS.filter(function (s) { return s.value === status; })[0] || {}).label || '运行中';
+
+  DataStore.upsertSource({
+    id: id || ('DS' + Date.now().toString().slice(-4)),
+    name: name.trim(),
+    type: (document.getElementById('srcType') || {}).value || '业务库',
+    protocol: (document.getElementById('srcProto') || {}).value || 'REST API',
+    endpoint: (document.getElementById('srcEndpoint') || {}).value || '',
+    freq: (document.getElementById('srcFreq') || {}).value || '5分钟',
+    status: status,
+    statusText: statusLabel,
+    updatedAt: nowText()
+  });
+  closeModal();
+  alert(id ? '数据源已更新' : '数据源已新增');
+}
+
+function editSource(id) {
+  var item = DataStore.sources().filter(function (x) { return x.id === id; })[0];
+  if (!item) { alert('数据源不存在'); return; }
+  openSourceModal(item);
+}
+
+function deleteSource(id) {
+  var item = DataStore.sources().filter(function (x) { return x.id === id; })[0];
+  if (!item) { alert('数据源不存在'); return; }
+  openModal('删除数据源',
+    '<div class="confirm-warning"><p>确认要删除数据源「' + escSource(item.name) + '」吗？此操作不可撤销。</p></div>',
+    '<button class="btn btn-secondary" onclick="closeModal()">取消</button>' +
+    '<button class="btn btn-primary" onclick="confirmDeleteSource(\'' + id + '\')">确定删除</button>');
+}
+
+function confirmDeleteSource(id) {
+  DataStore.removeSource(id);
+  closeModal();
+  alert('数据源已删除');
+}
+
+function nowText() {
+  var d = new Date();
+  function p(n) { return String(n).padStart(2, '0'); }
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+if (typeof DataStore !== 'undefined' && DataStore.subscribe) {
+  DataStore.subscribe(function () { renderSources(); });
+} else {
+  renderSources();
+}
+document.addEventListener('DOMContentLoaded', function() {
+  initDictStorage(); // 播种 / 载入 smartorchard_data_dict，供移动端读取
+  renderTable(mockUsers, 'userTableBody', renderUserRow, currentUserPage, mockUsers.length);
+  renderPagination('userPagination', currentUserPage, mockUsers.length);
+  renderUserStats(mockUsers);
+  renderTable(mockRoles, 'roleTableBody', renderRoleRow, currentRolePage, mockRoles.length);
+
+  // 权限矩阵渲染（PC-B-054）
+  renderPermMatrix();
+  var permSel = document.getElementById('permRoleSelect');
+  if (permSel) permSel.addEventListener('change', renderPermMatrix);
+  renderPagination('rolePagination', currentRolePage, mockRoles.length);
+  renderTable(mockDicts, 'dictTableBody', renderDictRow, currentDictPage, mockDicts.length);
+  renderPagination('dictPagination', currentDictPage, mockDicts.length);
+
+  // 部门管理 / 岗位管理：载入本地数据 → 渲染
+  loadLocal(DEPT_STORAGE_KEY, mockDepts);
+  loadLocal(POST_STORAGE_KEY, mockPosts);
+  renderDeptTable();
+  if (window.Pagination) {
+    window.Pagination.init({
+      containerId: 'pagination-container',
+      tbodyId: 'postTableBody',
+      pageSize: 10,
+      data: mockPosts,
+      renderRow: function (post, index) { return postRowHtml(post, index + 1); }
+    });
+  } else {
+    document.getElementById('postTableBody').innerHTML =
+      mockPosts.map(function (p, i) { return postRowHtml(p, i + 1); }).join('');
+  }
+  syncPostSelection();
+
+  renderTable(mockLogs, 'logTableBody', renderLogRow, currentLogPage, mockLogs.length);
+  renderPagination('logPagination', currentLogPage, mockLogs.length);
+});
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/common-functions.js"></script>
+  <script src="js/typography.js"></script>
+</body>
+</html>

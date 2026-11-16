@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工厂化农业数据管理系统 - 工艺标准</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .page-head{margin-bottom:16px;}
+  .page-head h1{font-size:18px;font-weight:700;margin:0;color:var(--text-primary);}
+  .page-head .crumb{font-size:12px;color:var(--text-tertiary);margin-top:4px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;}
+  .stat-card{background:var(--bg-card,#fff);border:1px solid var(--border-color,#e8ece8);border-radius:12px;padding:16px 18px;border-left:4px solid #1890ff;}
+  .stat-card.green{border-left-color:#52c41a;}
+  .stat-card.orange{border-left-color:#fa8c16;}
+  .stat-card.purple{border-left-color:#722ed1;}
+  .stat-label{font-size:12px;color:var(--text-tertiary);margin-bottom:6px;}
+  .stat-value{font-size:22px;font-weight:600;line-height:1.2;}
+  .stat-value small{font-size:12px;font-weight:400;color:var(--text-tertiary);margin-left:4px;}
+  .stat-sub{margin-top:6px;font-size:12px;color:var(--text-tertiary);}
+  @media(max-width:1100px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+  th.sortable:hover{color:#1890ff;}
+  .sort-arrow{font-size:10px;margin-left:3px;color:#1890ff;}
+  .empty-cell{text-align:center;color:var(--text-tertiary);padding:32px 0!important;}
+  .row-btn{padding:3px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-default,#d9d9d9);background:#fff;color:var(--text-secondary,#555);cursor:pointer;margin-right:6px;white-space:nowrap;}
+  .row-btn:hover{border-color:#1890ff;color:#1890ff;}
+  .row-btn.danger{color:#ff4d4f;border-color:#ffccc7;}
+  .row-btn.danger:hover{background:#fff2f0;}
+  .row-btn.primary{color:#1890ff;border-color:#91d5ff;}
+  .drawer-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;}
+  .drawer-mask.show{display:block;}
+  .drawer{position:fixed;top:0;right:-580px;width:560px;max-width:94vw;height:100vh;background:#fff;z-index:9999;box-shadow:-8px 0 32px rgba(0,0,0,.15);transition:right .25s ease;display:flex;flex-direction:column;}
+  .drawer.open{right:0;}
+  .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .drawer-header h3{margin:0;font-size:16px;font-weight:600;color:var(--text-primary);}
+  .drawer-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .drawer-close:hover{background:#f5f5f5;color:#333;}
+  .drawer-body{padding:20px 24px;overflow-y:auto;flex:1;}
+  .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 20px;margin-bottom:16px;}
+  .detail-item.full{grid-column:1/-1;}
+  .detail-item .dl{font-size:12px;color:var(--text-tertiary);margin-bottom:2px;}
+  .detail-item .dv{font-size:14px;color:var(--text-primary);font-weight:500;word-break:break-all;}
+  .drawer-sec{font-size:13px;font-weight:600;color:var(--text-primary);margin:18px 0 10px;padding-left:8px;border-left:3px solid #1890ff;}
+  .key-box{background:#f7f9f7;border:1px solid #e8ede8;border-radius:8px;padding:14px 16px;font-size:13px;line-height:1.8;color:var(--text-primary);}
+  .ver-list{list-style:none;margin:0;padding:0;}
+  .ver-list li{display:flex;gap:12px;padding:8px 0;border-bottom:1px dashed #eef1ef;font-size:13px;}
+  .ver-list li:last-child{border-bottom:none;}
+  .ver-tag{flex:none;width:56px;font-weight:600;color:#1890ff;}
+  .ver-date{flex:none;width:96px;color:var(--text-tertiary);}
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{width:560px;max-width:92vw;max-height:86vh;background:#fff;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .modal-header h3{font-size:16px;font-weight:600;margin:0;}
+  .modal-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .modal-body{padding:20px 24px;overflow-y:auto;}
+  .form-group{margin-bottom:14px;}
+  .form-group.full{grid-column:1/-1;}
+  .form-group label{display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;}
+  .form-group label .req{color:#ff4d4f;margin-left:2px;}
+  #modal .modal-body input,#modal .modal-body select,#modal .modal-body textarea{width:100%;padding:9px 12px;border:1.5px solid #d9d9d9;border-radius:8px;font-size:13px!important;background:#fff;outline:none;font-family:inherit;box-sizing:border-box;}
+  #modal .modal-body textarea{min-height:72px;resize:vertical;line-height:1.6;}
+  #modal .modal-body input:focus,#modal .modal-body select:focus,#modal .modal-body textarea:focus{border-color:#1890ff;box-shadow:0 0 0 3px rgba(24,144,255,.1);}
+  .modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:14px 24px;border-top:1px solid #eef1ef;flex:none;}
+  .toast-undo{display:none;padding:3px 12px;border-radius:6px;border:1px solid currentColor;background:rgba(255,255,255,.6);font-size:12px;font-weight:600;cursor:pointer;color:inherit;}
+</style>
+<style id="standalone-fix">.main-wrapper{margin-left:0!important;width:100%!important;}</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="guide" data-active-submenu="guide-standard">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar"><div class="tab-bar-actions"><button class="tab-close-all" title="关闭全部标签"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg></button></div></div>
+    <main class="main-content"><div class="content-wrapper">
+
+      <div class="page-head">
+        <h1>工艺标准</h1>
+        <div class="crumb">企业管理 / 工艺标准 · 食用菌工厂化生产工艺规程（SOP）</div>
+      </div>
+
+      <div class="stat-grid" id="statGrid"></div>
+
+      <div class="page-section search-section">
+        <div class="search-bar">
+          <select class="search-select" id="filterSelect" onchange="renderTable()">
+            <option value="">全部状态</option>
+            <option value="启用">启用</option>
+            <option value="停用">停用</option>
+          </select>
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索编号、名称、关键参数..." oninput="renderTable()">
+          <div class="search-actions">
+            <button class="jg-btn" onclick="resetFilters()">重置</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-section action-bar">
+        <div class="action-left">
+          <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openSopForm()">+ 新建标准</button>
+          <button class="jg-btn" id="exportBtn" onclick="exportSops()">导出CSV</button>
+          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete('sops','标准')">批量删除</button>
+          <span class="selected-info" id="selInfo"></span>
+        </div>
+      </div>
+
+      <div class="page-section data-section">
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+                <th class="sortable" data-key="id" onclick="sortBy('id')">编号<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="name" onclick="sortBy('name')">名称<span class="sort-arrow"></span></th>
+                <th>版本</th>
+                <th>适用</th>
+                <th class="sortable" data-key="effective" onclick="sortBy('effective')">生效日期<span class="sort-arrow"></span></th>
+                <th>状态</th>
+                <th>关键参数摘要</th>
+                <th style="width:210px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div></main>
+  </div>
+</div>
+
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header"><h3 id="drawerTitle">详情</h3><button class="drawer-close" id="drawerClose" onclick="closeDrawer()">×</button></div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header"><h3 id="modalTitle">编辑</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeModal()">取消</button><button class="jg-btn jg-btn-primary" id="modalSave" onclick="saveModal()">保存</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal-box" style="width:420px;">
+    <div class="modal-header"><h3>删除确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
+    <div class="modal-body"><p id="confirmText" style="margin:0;font-size:14px;color:var(--text-primary);"></p></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="doConfirm()">确认删除</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="toast-message" id="toastMessage"></span><button class="toast-undo" id="toastUndo">撤销</button></div>
+
+<script src="js/shared/fungi-store.js"></script>
+<script>
+var FS = window.FungiStore;
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function today(){return FS.dayKey(0);}
+function nav(url,title){try{if(window.parent&&window.parent!==window&&typeof window.parent.openPage==='function'){window.parent.openPage(url,title);return;}}catch(e){}location.href=url;}
+var toastTimer=null;
+function showToast(msg,type,undoFn){var t=document.getElementById('toast');document.getElementById('toastMessage').textContent=msg;t.className='toast toast-'+(type||'success')+' show';var ub=document.getElementById('toastUndo');if(undoFn){ub.style.display='inline-block';ub.onclick=function(){hideToast();undoFn();};}else{ub.style.display='none';ub.onclick=null;}clearTimeout(toastTimer);toastTimer=setTimeout(hideToast,undoFn?6000:2600);}
+function hideToast(){document.getElementById('toast').classList.remove('show');}
+function openModal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.add('show');}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+var confirmCb=null;
+function askConfirm(msg,cb){document.getElementById('confirmText').textContent=msg;confirmCb=cb;document.getElementById('confirmModal').classList.add('show');}
+function doConfirm(){var cb=confirmCb;closeConfirm();if(cb)cb();}
+function closeConfirm(){confirmCb=null;document.getElementById('confirmModal').classList.remove('show');}
+function openDrawer(title,html){document.getElementById('drawerTitle').textContent=title;document.getElementById('drawerBody').innerHTML=html;document.getElementById('drawer').classList.add('open');document.getElementById('drawerMask').classList.add('show');}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawerMask').classList.remove('show');}
+function rowClick(e,id){if(e.target.closest('button,input,select,a,label'))return;openDetail(id);}
+function val(id){var el=document.getElementById(id);return el?el.value.trim():'';}
+function reqOK(){var ok=true;document.querySelectorAll('#modalBody [data-req]').forEach(function(el){if(!String(el.value).trim()){el.style.borderColor='#ff4d4f';ok=false;}else{el.style.borderColor='';}});if(!ok)showToast('请填写完整必填项（红框）','error');return ok;}
+function fg(label,html,req,full){return '<div class="form-group'+(full?' full':'')+'"><label>'+label+(req?'<span class="req">*</span>':'')+'</label>'+html+'</div>';}
+function inp(id,v,type,req){return '<input id="'+id+'" type="'+(type||'text')+'" value="'+esc(v==null?'':v)+'"'+(req?' data-req="1"':'')+'>';}
+function sel(id,opts,v,req){return '<select id="'+id+'"'+(req?' data-req="1"':'')+'>'+opts.map(function(o){return '<option value="'+esc(o)+'"'+(String(o)===String(v)?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';}
+var selected={};
+function toggleAll(cb){document.querySelectorAll('#tableBody .row-check').forEach(function(c){c.checked=cb.checked;selected[c.dataset.id]=cb.checked;});updateSelInfo();}
+function toggleRow(cb){selected[cb.dataset.id]=cb.checked;updateSelInfo();}
+function updateSelInfo(){var n=Object.keys(selected).filter(function(k){return selected[k];}).length;var el=document.getElementById('selInfo');if(el)el.textContent=n?('已选 '+n+' 条'):'';var all=document.getElementById('selectAll');if(all){var boxes=document.querySelectorAll('#tableBody .row-check');all.checked=boxes.length>0&&n===boxes.length;}}
+function removeRow(col,id,label){var idx=FS.list(col).findIndex(function(x){return x.id===id;});askConfirm('确认删除「'+label+'」？删除后可撤销。',function(){var gone=FS.remove(col,id);delete selected[id];renderAll();showToast('已删除「'+label+'」','success',function(){FS.restore(col,gone,idx);renderAll();showToast('已撤销删除','success');});});}
+function batchDelete(col,label){var ids=Object.keys(selected).filter(function(k){return selected[k];});if(!ids.length){showToast('请先勾选要删除的记录','warning');return;}askConfirm('确认删除选中的 '+ids.length+' 条'+label+'？删除后可撤销。',function(){var list=FS.list(col);var removed=ids.map(function(id){return {obj:FS.get(col,id),idx:list.findIndex(function(x){return x.id===id;})};}).filter(function(r){return r.obj;}).sort(function(a,b){return a.idx-b.idx;});ids.forEach(function(id){FS.remove(col,id);});selected={};renderAll();showToast('已删除 '+removed.length+' 条'+label,'success',function(){removed.forEach(function(r){FS.restore(col,r.obj,r.idx);});renderAll();showToast('已撤销批量删除','success');});});}
+function exportCSV(name,headers,rows){if(!rows.length){showToast('当前视图暂无可导出数据','warning');return;}var csv='﻿'+[headers].concat(rows).map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'_'+today()+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);showToast('导出成功，文件已下载','success');}
+var sortKey='',sortDir=1;
+function sortBy(k){if(sortKey===k){sortDir=-sortDir;}else{sortKey=k;sortDir=1;}renderTable();}
+function applySort(rows){if(!sortKey)return rows;return rows.slice().sort(function(a,b){var x=a[sortKey],y=b[sortKey];if(typeof x==='number'&&typeof y==='number')return (x-y)*sortDir;return String(x==null?'':x).localeCompare(String(y==null?'':y),'zh')*sortDir;});}
+function paintArrows(){document.querySelectorAll('th.sortable').forEach(function(th){var a=th.querySelector('.sort-arrow');if(a)a.textContent=th.dataset.key===sortKey?(sortDir>0?'▲':'▼'):'';});}
+function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('filterSelect').value='';renderAll();}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeConfirm();closeDrawer();}});
+
+/* ===== 工艺标准 ===== */
+function sopRows(){
+  var kw=document.getElementById('searchInput').value.trim().toLowerCase();
+  var st=document.getElementById('filterSelect').value;
+  return FS.list('sops').filter(function(s){
+    if(st&&s.status!==st)return false;
+    if(kw&&(s.id+' '+s.name+' '+s.key+' '+s.scope).toLowerCase().indexOf(kw)===-1)return false;
+    return true;
+  });
+}
+function renderStats(){
+  var ss=FS.list('sops');
+  var on=ss.filter(function(s){return s.status==='启用';}).length;
+  var cards=[
+    {label:'工艺标准',value:ss.length,unit:'项',sub:'覆盖菌包到采收全工序',cls:''},
+    {label:'启用中',value:on,unit:'项',sub:'现行有效版本',cls:'green'},
+    {label:'已停用',value:ss.length-on,unit:'项',sub:'停用标准不参与生产校验',cls:'orange'},
+    {label:'全品种适用',value:ss.filter(function(s){return s.scope==='全品种';}).length,unit:'项',sub:'其余为分品种标准',cls:'purple'}
+  ];
+  document.getElementById('statGrid').innerHTML=cards.map(function(c){
+    return '<div class="stat-card '+c.cls+'"><div class="stat-label">'+c.label+'</div><div class="stat-value">'+esc(c.value)+(c.unit?'<small>'+c.unit+'</small>':'')+'</div><div class="stat-sub">'+esc(c.sub)+'</div></div>';
+  }).join('');
+}
+function renderTable(){
+  var rows=applySort(sopRows());
+  var body=document.getElementById('tableBody');
+  if(!rows.length){body.innerHTML='<tr><td colspan="9" class="empty-cell">暂无符合条件的工艺标准，点击「新建标准」添加</td></tr>';updateSelInfo();paintArrows();return;}
+  body.innerHTML=rows.map(function(s){
+    var toggle=s.status==='启用'?
+      '<button class="row-btn" onclick="toggleSop(\''+s.id+'\')">停用</button>':
+      '<button class="row-btn primary" onclick="toggleSop(\''+s.id+'\')">启用</button>';
+    return '<tr onclick="rowClick(event,\''+s.id+'\')" style="cursor:pointer;">'+
+      '<td><input type="checkbox" class="row-check" data-id="'+s.id+'" '+(selected[s.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+      '<td><strong>'+esc(s.id)+'</strong></td>'+
+      '<td>'+esc(s.name)+'</td>'+
+      '<td>'+esc(s.version)+'</td>'+
+      '<td>'+esc(s.scope)+'</td>'+
+      '<td>'+esc(String(s.effective).slice(0,10))+'</td>'+
+      '<td><span class="status-tag '+(s.status==='启用'?'normal':'inactive')+'">'+esc(s.status)+'</span></td>'+
+      '<td style="max-width:260px;">'+esc(s.key)+'</td>'+
+      '<td><button class="row-btn primary" onclick="openDetail(\''+s.id+'\')">查看</button>'+toggle+
+      '<button class="row-btn row-edit" onclick="openSopForm(\''+s.id+'\')">编辑</button><button class="row-btn danger row-del" onclick="removeRow(\'sops\',\''+s.id+'\',\''+esc(s.name)+'\')">删除</button></td>'+
+    '</tr>';
+  }).join('');
+  updateSelInfo();paintArrows();
+}
+function renderAll(){renderStats();renderTable();}
+
+function toggleSop(id){
+  var s=FS.get('sops',id);if(!s)return;
+  var next=s.status==='启用'?'停用':'启用';
+  FS.update('sops',id,{status:next});
+  renderAll();
+  showToast('「'+s.name+'」已'+next,next==='启用'?'success':'warning');
+}
+
+/* 版本历史：store 未存历史版本，按当前版本号与生效日期在页内推导 */
+function versionHistory(s){
+  var m=String(s.version).match(/v(\d+)\.(\d+)/);
+  var out=[{ver:s.version,date:String(s.effective).slice(0,10),note:'现行版本'}];
+  if(m){
+    var major=+m[1],minor=+m[2];
+    var base=new Date(String(s.effective).slice(0,10)+'T00:00:00').getTime();
+    var step=1;
+    for(var mi=minor-1;mi>=0&&step<=3;mi--,step++){
+      out.push({ver:'v'+major+'.'+mi,date:fmtDate(base-step*120*86400000),note:'历史版本'});
+    }
+    if(step<=3&&major>1)out.push({ver:'v'+(major-1)+'.0',date:fmtDate(base-step*120*86400000),note:'历史版本'});
+  }
+  return out;
+}
+function fmtDate(t){var d=new Date(t);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+
+var editingId='';
+function openSopForm(id){
+  editingId=id||'';
+  var s=id?FS.get('sops',id):null;
+  openModal(s?'编辑工艺标准':'新建工艺标准',
+    fg('标准名称',inp('f_name',s?s.name:'','text',true),true,true)+
+    fg('版本号',inp('f_version',s?s.version:'v1.0','text',true),true)+
+    fg('适用范围',sel('f_scope',['全品种','分品种'],s?s.scope:'全品种',true),true)+
+    fg('生效日期',inp('f_effective',s?String(s.effective).slice(0,10):today(),'date',true),true)+
+    fg('状态',sel('f_status',['启用','停用'],s?s.status:'启用',true),true)+
+    fg('关键参数（全文）','<textarea id="f_key" data-req="1">'+esc(s?s.key:'')+'</textarea>',true,true)
+  );
+}
+function saveModal(){
+  if(!reqOK())return;
+  var patch={name:val('f_name'),version:val('f_version'),scope:val('f_scope'),effective:val('f_effective')+' 00:00',status:val('f_status'),key:val('f_key')};
+  if(editingId){FS.update('sops',editingId,patch);showToast('工艺标准已更新','success');}
+  else{FS.add('sops',patch);showToast('工艺标准已创建','success');}
+  closeModal();renderAll();
+}
+function openDetail(id){
+  var s=FS.get('sops',id);if(!s)return;
+  var hist=versionHistory(s);
+  openDrawer('工艺标准 · '+s.name,
+    '<div class="detail-grid">'+
+    '<div class="detail-item"><div class="dl">编号</div><div class="dv">'+esc(s.id)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">版本</div><div class="dv">'+esc(s.version)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">适用范围</div><div class="dv">'+esc(s.scope)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">生效日期</div><div class="dv">'+esc(String(s.effective).slice(0,10))+'</div></div>'+
+    '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+(s.status==='启用'?'normal':'inactive')+'">'+esc(s.status)+'</span></div></div>'+
+    '</div>'+
+    '<div class="drawer-sec">关键参数全文</div>'+
+    '<div class="key-box">'+esc(s.key)+'</div>'+
+    '<div class="drawer-sec">版本历史</div>'+
+    '<ul class="ver-list">'+hist.map(function(h){
+      return '<li><span class="ver-tag">'+esc(h.ver)+'</span><span class="ver-date">'+esc(h.date)+'</span><span>'+esc(h.note)+'</span></li>';
+    }).join('')+'</ul>'+
+    '<p style="font-size:11px;color:var(--text-tertiary);margin-top:10px;">版本历史由当前版本号与生效日期推导，供演示参考。</p>'
+  );
+}
+function exportSops(){
+  var rows=applySort(sopRows());
+  exportCSV('工艺标准',['编号','名称','版本','适用','生效日期','状态','关键参数'],rows.map(function(s){
+    return [s.id,s.name,s.version,s.scope,String(s.effective).slice(0,10),s.status,s.key];
+  }));
+}
+renderAll();
+</script>
+</body>
+</html>

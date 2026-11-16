@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌环境监测系统 - 环境监测</title>
+  <!-- H5设计系统 -->
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <script src="js/mobile-store.js"></script>
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+
+    body { background: var(--bg); }
+
+    /* ===== 顶部 Header ===== */
+    .page-head {
+      background: var(--gradient-header);
+      padding: calc(var(--safe-top) + 18px) 20px 28px;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 4px 24px rgba(69, 48, 35, 0.26), 0 1px 3px rgba(0, 0, 0, 0.08);
+      color: var(--text-on-primary);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .head-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .head-title {
+      font-size: var(--font-2xl);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
+    }
+
+    .head-sub {
+      font-size: var(--font-xs);
+      opacity: 0.88;
+      margin-top: 6px;
+      letter-spacing: 0.3px;
+      line-height: 1.5;
+    }
+
+    .head-refresh {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.18);
+      color: var(--text-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .head-refresh:active {
+      background: rgba(255, 255, 255, 0.30);
+      transform: scale(0.94) rotate(30deg);
+    }
+
+    .head-refresh svg { width: 20px; height: 20px; }
+
+    /* ===== 菇房选择器 ===== */
+    .room-bar {
+      position: relative;
+      z-index: 2;
+      margin: -16px 12px 0;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .room-bar-label {
+      flex-shrink: 0;
+      font-size: var(--font-2xs);
+      color: var(--text-tertiary);
+      letter-spacing: 0.5px;
+    }
+
+    .room-select-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .room-select-wrap select {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      border: none;
+      background: transparent;
+      padding: 3px 22px 3px 0;
+      font-family: var(--font-family);
+      font-size: var(--font-base);
+      font-weight: 600;
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .room-chevron {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--text-tertiary);
+      pointer-events: none;
+    }
+
+    /* ===== 通用区块 ===== */
+    .sec { padding: 14px 12px 0; }
+
+    .card {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-card);
+      padding: 14px 16px;
+    }
+
+    /* ===== 适宜性评估 ===== */
+    .assess { position: relative; overflow: hidden; padding-left: 18px; }
+
+    .assess::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--gradient-primary);
+    }
+
+    .assess-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .assess-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      background: var(--primary-50);
+      border: 1px solid var(--primary-200);
+      color: var(--primary-700);
+      font-size: var(--font-xs);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .assess-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary-500);
+    }
+
+    .assess-base {
+      font-size: var(--font-2xs);
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
+
+    .assess-title {
+      margin-top: 10px;
+      font-size: var(--font-base);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .assess-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 9px;
+      padding-top: 9px;
+      border-top: 1px dashed var(--border-light);
+      font-size: var(--font-xs);
+      color: var(--success-dark);
+      font-weight: 600;
+    }
+
+    .assess-foot span {
+      color: var(--text-tertiary);
+      font-weight: 400;
+      font-size: var(--font-2xs);
+    }
+
+    /* ===== 四指标卡 ===== */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .metric {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      padding: 12px;
+      min-width: 0;
+    }
+
+    .metric-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .metric-name {
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .metric-trend {
+      font-size: var(--font-2xs);
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
+
+    .metric-trend.is-up { color: var(--warning-dark); }
+    .metric-trend.is-down { color: var(--info-dark); }
+
+    .metric-value {
+      margin-top: 4px;
+      font-family: var(--font-family-number);
+      font-size: var(--font-2xl);
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--text);
+    }
+
+    .metric-value small {
+      margin-left: 2px;
+      font-family: var(--font-family);
+      font-size: var(--font-xs);
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+
+    .metric-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 26px;
+      margin-top: 8px;
+    }
+
+    .metric-bars i {
+      display: block;
+      flex: 1;
+      min-height: 3px;
+      border-radius: 2px 2px 0 0;
+      background: var(--primary-200);
+    }
+
+    .metric-bars i.hi { background: var(--primary-500); }
+
+    .metric-threshold {
+      margin-top: 6px;
+      font-size: 10px;
+      color: var(--text-tertiary);
+      line-height: 1.4;
+    }
+
+    /* ===== 曲线区 ===== */
+    .chart-card { padding: 14px; }
+
+    .chart-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .chart-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-md);
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .seg {
+      display: inline-flex;
+      padding: 2px;
+      background: var(--primary-50);
+      border: 1px solid var(--primary-100);
+      border-radius: var(--radius-full);
+      flex-shrink: 0;
+    }
+
+    .seg button {
+      border: none;
+      background: transparent;
+      padding: 5px 10px;
+      border-radius: var(--radius-full);
+      font-family: inherit;
+      font-size: var(--font-2xs);
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .seg button.active {
+      background: var(--bg-white);
+      color: var(--primary-700);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: var(--font-2xs);
+      color: var(--text-secondary);
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend i {
+      display: inline-block;
+      width: 14px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    .legend b {
+      color: var(--text);
+      font-weight: 700;
+      font-family: var(--font-family-number);
+      font-size: var(--font-xs);
+    }
+
+    .chart-box {
+      margin-top: 8px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .chart-box svg { display: block; width: 100%; height: auto; }
+
+    .chart-caption {
+      margin-top: 6px;
+      font-size: 10px;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+
+    /* ===== 越限提醒 ===== */
+    .alert-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .alert-summary {
+      margin-top: 6px;
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+
+    .ar-card {
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: var(--bg-warm);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+    }
+
+    .ar-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .ar-name {
+      font-size: var(--font-sm);
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .ar-fields {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .ar-fields div {
+      background: var(--bg-white);
+      border-radius: var(--radius-sm);
+      padding: 6px 8px;
+      min-width: 0;
+    }
+
+    .ar-fields span {
+      display: block;
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .ar-fields b {
+      display: block;
+      margin-top: 2px;
+      font-size: var(--font-xs);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .ar-advice {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .ar-advice span {
+      flex-shrink: 0;
+      color: var(--primary-700);
+      font-weight: 600;
+    }
+
+    /* ===== 设备控制 ===== */
+    .sec-title {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .sec-title h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-size: var(--font-md);
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .sec-note {
+      font-size: var(--font-2xs);
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
+
+    .sec-subnote {
+      margin: -4px 0 10px;
+      font-size: var(--font-2xs);
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+
+    .dlist {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .dcard {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+      transition: transform var(--transition-fast);
+    }
+
+    .dcard:active { transform: scale(0.99); }
+
+    .dcard-ico {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .dcard-ico svg { width: 20px; height: 20px; }
+
+    .dcard-ico.run { background: var(--success-light); color: var(--success-dark); }
+    .dcard-ico.offline { background: var(--gray-100); color: var(--text-tertiary); }
+    .dcard-ico.fault { background: var(--warning-light); color: var(--error); }
+    .dcard-ico.stop { background: var(--gray-100); color: var(--text-secondary); }
+
+    .dcard-main { flex: 1; min-width: 0; }
+
+    .dcard-name {
+      font-size: var(--font-sm);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .dcard-meta {
+      margin-top: 3px;
+      font-size: var(--font-2xs);
+      color: var(--text-tertiary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .circuit {
+      display: inline-block;
+      padding: 1px 5px;
+      border: 1px solid var(--primary-100);
+      border-radius: 4px;
+      background: var(--primary-50);
+      color: var(--primary-700);
+      font-family: var(--font-family-mono);
+      font-size: 10px;
+      letter-spacing: 0.3px;
+    }
+
+    .dcard-right {
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .dcard-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: var(--font-xs);
+      font-weight: 600;
+    }
+
+    .dcard-state i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .dcard-state.run { color: var(--success-dark); }
+    .dcard-state.run i { background: var(--primary-500); }
+    .dcard-state.offline { color: var(--text-tertiary); }
+    .dcard-state.offline i { background: var(--gray-400); }
+    .dcard-state.fault { color: var(--error); }
+    .dcard-state.fault i { background: var(--error); animation: pulse 2s infinite; }
+    .dcard-state.stop { color: var(--text-secondary); }
+    .dcard-state.stop i { background: var(--gray-400); }
+
+    .dcard-mode {
+      margin-top: 3px;
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    /* ===== 抽屉 ===== */
+    .drawer-sheet {
+      max-height: 90vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .drawer-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-size: var(--font-lg);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .dw-sub {
+      margin-top: 4px;
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .modal-close svg { width: 18px; height: 18px; color: var(--text-secondary); }
+
+    .dw-banner {
+      margin-bottom: 10px;
+      padding: 9px 11px;
+      border-radius: var(--radius-md);
+      font-size: var(--font-xs);
+      line-height: 1.55;
+      border-left: 3px solid var(--warning);
+      background: var(--warning-light);
+      color: var(--warning-dark);
+    }
+
+    .dw-banner.danger {
+      border-left-color: var(--error);
+      background: var(--error-light);
+      color: var(--error-dark);
+    }
+
+    .dw-block {
+      padding: 12px 0;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .dw-block:first-of-type {
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .dw-block-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: var(--font-sm);
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .dw-hint {
+      font-size: var(--font-2xs);
+      font-weight: 400;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+
+    .dw-switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .dw-strong {
+      font-size: var(--font-base);
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .dw-switch-row .dw-hint { margin-top: 3px; max-width: 220px; }
+
+    .switch {
+      width: 52px;
+      height: 30px;
+      flex-shrink: 0;
+      padding: 3px;
+      border: none;
+      border-radius: var(--radius-full);
+      background: var(--gray-300);
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+
+    .switch span {
+      display: block;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--bg-white);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.20);
+      transform: translateX(0);
+      transition: transform var(--transition-fast);
+    }
+
+    .switch.on { background: var(--gradient-primary); }
+    .switch.on span { transform: translateX(22px); }
+    .switch.is-disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .stepper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 0;
+    }
+
+    .stepper-label {
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+    }
+
+    .stepper-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-btn {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--primary-200);
+      border-radius: var(--radius-sm);
+      background: var(--primary-50);
+      color: var(--primary-700);
+      font-family: inherit;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+
+    .step-btn:active { background: var(--primary-100); }
+
+    .step-val {
+      min-width: 80px;
+      text-align: center;
+      font-family: var(--font-family-number);
+      font-size: var(--font-base);
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .step-val small {
+      margin-left: 2px;
+      font-family: var(--font-family);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+
+    .mode-seg {
+      display: flex;
+      gap: 2px;
+      padding: 2px;
+      background: var(--primary-50);
+      border: 1px solid var(--primary-100);
+      border-radius: var(--radius-md);
+    }
+
+    .mode-seg button {
+      flex: 1;
+      height: 34px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      font-family: inherit;
+      font-size: var(--font-sm);
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .mode-seg button.active {
+      background: var(--bg-white);
+      color: var(--primary-700);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .mode-hint {
+      margin-top: 8px;
+      font-size: var(--font-2xs);
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+
+    /* ===== 维护申请表单 ===== */
+    .form-row { margin-bottom: 16px; }
+
+    .form-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+    }
+
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      font-family: inherit;
+      font-size: var(--font-sm);
+      color: var(--text);
+      outline: none;
+    }
+
+    .form-textarea {
+      min-height: 88px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .form-select:focus,
+    .form-textarea:focus { border-color: var(--primary); }
+
+    /* ===== 确认弹窗 ===== */
+    .confirm-text {
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* ===== 页脚 ===== */
+    .monitor-foot {
+      padding: 18px 20px 6px;
+      text-align: center;
+      font-size: 10px;
+      color: var(--text-tertiary);
+      line-height: 1.65;
+    }
+
+    @media (max-width: 374px) {
+      .head-title { font-size: var(--font-xl); }
+      .metric-value { font-size: var(--font-xl); }
+      .ar-fields { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <!-- ===================== 顶部 Header（主 Tab，无返回） ===================== -->
+    <div class="page-head">
+      <div class="head-row">
+        <div>
+          <div class="head-title">环境监测</div>
+          <div class="head-sub" id="headSub">一号出菇房 GF-01 · 出菇期 第 11 天</div>
+        </div>
+        <button class="head-refresh" type="button" onclick="refreshMonitor()" aria-label="刷新监测数据">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===================== 菇房选择器 ===================== -->
+    <div class="room-bar">
+      <span class="room-bar-label">当前菇房</span>
+      <div class="room-select-wrap">
+        <select id="roomSelect" onchange="changeRoom(this.value)" aria-label="选择菇房">
+          <option value="GF-01" selected>一号出菇房 GF-01</option>
+          <option value="GF-02">二号出菇房 GF-02</option>
+          <option value="GF-03">三号出菇房 GF-03</option>
+          <option value="B2">二号培养房 B2</option>
+        </select>
+        <svg class="room-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ===================== 适宜性评估 ===================== -->
+    <div class="sec">
+      <div class="card assess">
+        <div class="assess-top">
+          <span class="assess-badge">适宜</span>
+          <span class="assess-base">比对基准 · 出菇期配方 v3.2</span>
+        </div>
+        <div class="assess-title">温湿度与 CO₂ 均在出菇期配方范围内</div>
+        <div class="assess-foot">
+          <span style="color: var(--success-dark); font-weight: 600;">✓ 适合指标 4 项</span>
+          <span>阈值来源：环境控制配方 v3.2</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== 四指标卡 ===================== -->
+    <div class="sec">
+      <div class="metric-grid">
+        <div class="metric">
+          <div class="metric-head">
+            <span class="metric-name">温度</span>
+            <span class="metric-trend is-up">↑ 0.2℃</span>
+          </div>
+          <div class="metric-value">18.4<small>℃</small></div>
+          <div class="metric-bars" aria-hidden="true">
+            <i style="height: 38%;"></i><i style="height: 52%;"></i><i style="height: 46%;"></i>
+            <i style="height: 64%;"></i><i style="height: 58%;"></i><i style="height: 72%;"></i>
+            <i class="hi" style="height: 86%;"></i>
+          </div>
+          <div class="metric-threshold">适宜 16~20℃</div>
+        </div>
+        <div class="metric">
+          <div class="metric-head">
+            <span class="metric-name">湿度</span>
+            <span class="metric-trend is-up">↑ 0.3%</span>
+          </div>
+          <div class="metric-value">92.3<small>%</small></div>
+          <div class="metric-bars" aria-hidden="true">
+            <i style="height: 72%;"></i><i style="height: 78%;"></i><i style="height: 66%;"></i>
+            <i style="height: 70%;"></i><i style="height: 82%;"></i><i style="height: 76%;"></i>
+            <i class="hi" style="height: 80%;"></i>
+          </div>
+          <div class="metric-threshold">适宜 88%~95%</div>
+        </div>
+        <div class="metric">
+          <div class="metric-head">
+            <span class="metric-name">CO₂ 浓度</span>
+            <span class="metric-trend is-down">↓ 12ppm</span>
+          </div>
+          <div class="metric-value">685<small>ppm</small></div>
+          <div class="metric-bars" aria-hidden="true">
+            <i style="height: 62%;"></i><i style="height: 58%;"></i><i style="height: 66%;"></i>
+            <i style="height: 54%;"></i><i style="height: 60%;"></i><i style="height: 52%;"></i>
+            <i class="hi" style="height: 56%;"></i>
+          </div>
+          <div class="metric-threshold">控制目标 ≤800ppm</div>
+        </div>
+        <div class="metric">
+          <div class="metric-head">
+            <span class="metric-name">光照强度</span>
+            <span class="metric-trend">→ 持稳</span>
+          </div>
+          <div class="metric-value">120<small>lux</small></div>
+          <div class="metric-bars" aria-hidden="true">
+            <i style="height: 48%;"></i><i style="height: 48%;"></i><i style="height: 50%;"></i>
+            <i style="height: 52%;"></i><i style="height: 50%;"></i><i style="height: 52%;"></i>
+            <i class="hi" style="height: 50%;"></i>
+          </div>
+          <div class="metric-threshold">催蕾补光 100~200lux</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== 曲线区 ===================== -->
+    <div class="sec">
+      <div class="card chart-card">
+        <div class="chart-head">
+          <div class="chart-title"><span class="mb-section-dot"></span>环境曲线</div>
+          <div class="seg" id="granSwitch">
+            <button type="button" class="active" data-gran="1min" onclick="renderChart('1min')">1min</button>
+            <button type="button" data-gran="1h" onclick="renderChart('1h')">1h</button>
+            <button type="button" data-gran="1d" onclick="renderChart('1d')">1d</button>
+          </div>
+        </div>
+        <div class="legend">
+          <span><i style="background: var(--primary-500);"></i>温度 <b id="lgTemp">18.4℃</b></span>
+          <span><i style="background: var(--warning-dark);"></i>湿度 <b id="lgHum">92.3%</b></span>
+          <span><i style="background: var(--info-dark);"></i>CO₂ <b id="lgCo2">685ppm</b></span>
+        </div>
+        <div class="chart-box" id="chartBox"></div>
+        <div class="chart-caption" id="chartCaption">近 60 分钟 · 每 5 分钟一个采样点</div>
+        <div class="chart-caption">三条曲线按各自量程归一化显示；阶段背景色带标注生长阶段，红点为越限点（配方 v3.2 控制上限：温度 18.4℃）。</div>
+      </div>
+    </div>
+
+    <!-- ===================== 越限提醒 ===================== -->
+    <div class="sec">
+      <div class="card">
+        <div class="alert-head">
+          <div class="chart-title"><span class="mb-section-dot"></span>越限提醒</div>
+          <span class="mb-tag success">当前无越限</span>
+        </div>
+        <div class="alert-summary">近 24 小时 1 条越限记录，已恢复；当前 4 项指标均在配方范围内。</div>
+
+        <div class="ar-card">
+          <div class="ar-top">
+            <span class="ar-name">温度</span>
+            <span class="mb-tag warning">已恢复</span>
+          </div>
+          <div class="ar-fields">
+            <div><span>当前值</span><b>19.6℃</b></div>
+            <div><span>阈值</span><b>上限 18.4℃</b></div>
+            <div><span>持续时长</span><b>10:12—10:30 · 18min</b></div>
+          </div>
+          <div class="ar-advice">
+            <span>建议处置</span>
+            <p style="margin: 0;">检查风冷热泵与循环风机，确认回读值后按配方 v3.2 复位。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== 设备控制 ===================== -->
+    <div class="sec">
+      <div class="sec-title">
+        <h2><span class="mb-section-dot"></span>设备控制</h2>
+        <span class="sec-note">6 台 · DO-01 ~ DO-06</span>
+      </div>
+      <div class="sec-subnote">点击设备查看启停、阈值与模式；离线或故障设备可提交维护申请。</div>
+      <div class="dlist" id="deviceList"></div>
+    </div>
+
+    <!-- ===================== 页脚 ===================== -->
+    <div class="monitor-foot" id="footTime">数据更新时间：--</div>
+
+    <!-- ===================== 底部 Tab ===================== -->
+    <div class="mb-tab-bar">
+      <div class="mb-tab-item" onclick="navigateTo('mb_home.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>首页</span>
+      </div>
+      <div class="mb-tab-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        <span>监测</span>
+      </div>
+      <div class="mb-tab-item" onclick="navigateTo('vr_panorama.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="6" width="14" height="12" rx="2"/>
+          <polygon points="16 10 22 7 22 17 16 14"/>
+        </svg>
+        <span>监控</span>
+      </div>
+      <div class="mb-tab-item" onclick="navigateTo('mb_mine.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>我的</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 设备详情抽屉 ===================== -->
+  <div class="mb-modal-overlay is-sheet" id="deviceDrawer">
+    <div class="mb-modal is-sheet drawer-sheet">
+      <div class="drawer-head">
+        <div>
+          <div class="modal-title" id="dwName">设备详情</div>
+          <div class="dw-sub" id="dwSub">--</div>
+        </div>
+        <div class="modal-close" onclick="closeDrawer()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </div>
+      </div>
+
+      <div id="dwBanner"></div>
+
+      <div class="dw-block">
+        <div class="dw-block-title">
+          <span>启停控制</span>
+          <span class="dw-hint">二次确认后下发</span>
+        </div>
+        <div class="dw-switch-row">
+          <div>
+            <div class="dw-strong" id="dwPowerText">--</div>
+            <div class="dw-hint" id="dwPowerHint">--</div>
+          </div>
+          <button class="switch" type="button" id="dwSwitch" onclick="togglePower()" aria-pressed="false" aria-label="启停开关">
+            <span></span>
+          </button>
+        </div>
+      </div>
+
+      <div class="dw-block">
+        <div class="dw-block-title">
+          <span>阈值设定</span>
+          <span class="dw-hint">随下次自动刷新下发</span>
+        </div>
+        <div id="dwSteppers"></div>
+      </div>
+
+      <div class="dw-block">
+        <div class="dw-block-title"><span>控制模式</span></div>
+        <div class="mode-seg" id="dwMode">
+          <button type="button" data-mode="auto" onclick="setMode('auto')">自动</button>
+          <button type="button" data-mode="manual" onclick="setMode('manual')">手动</button>
+        </div>
+        <div class="mode-hint" id="dwModeHint">--</div>
+      </div>
+
+      <div class="mb-modal-actions">
+        <button class="mb-btn mb-btn-secondary" type="button" onclick="closeDrawer()">关闭</button>
+        <button class="mb-btn mb-btn-primary" type="button" onclick="requestMaintain()">申请设备维护</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 申请维护弹窗 ===================== -->
+  <div class="mb-modal-overlay is-sheet" id="maintainModal">
+    <div class="mb-modal is-sheet">
+      <div class="drawer-head">
+        <div>
+          <div class="modal-title">申请设备维护</div>
+          <div class="dw-sub">提交后由值班人员受理并安排检修</div>
+        </div>
+        <div class="modal-close" onclick="closeMaintain()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="form-label" for="mtDevice">选择设备</label>
+        <select class="form-select" id="mtDevice">
+          <option value="风冷热泵 1#">风冷热泵 1#（DO-01）</option>
+          <option value="风冷热泵 2#">风冷热泵 2#（DO-02）</option>
+          <option value="超声波加湿器 5#">超声波加湿器 5#（DO-03）</option>
+          <option value="新风风机">新风风机（DO-04）</option>
+          <option value="循环风机 2#">循环风机 2#（DO-05）</option>
+          <option value="LED 补光灯 3#">LED 补光灯 3#（DO-06）</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="mtUrgency">紧急程度</label>
+        <select class="form-select" id="mtUrgency">
+          <option value="low">一般 - 可安排计划维护</option>
+          <option value="normal" selected>较急 - 48 小时内处理</option>
+          <option value="high">紧急 - 需尽快处理</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="mtReason">故障现象</label>
+        <textarea class="form-textarea" id="mtReason" placeholder="请描述故障现象，例如：风机轴承异响、加湿器无雾输出、无法启停…"></textarea>
+      </div>
+
+      <div class="mb-modal-actions">
+        <button class="mb-btn mb-btn-secondary" type="button" onclick="closeMaintain()">取消</button>
+        <button class="mb-btn mb-btn-primary" type="button" onclick="submitMaintain()">提交申请</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== 二次确认弹窗 ===================== -->
+  <div class="mb-modal-overlay" id="confirmModal">
+    <div class="mb-modal">
+      <div class="modal-title" id="cfTitle">请确认</div>
+      <div class="confirm-text" id="cfBody" style="margin-top: 10px;">--</div>
+      <div class="mb-modal-actions">
+        <button class="mb-btn mb-btn-secondary" type="button" onclick="closeConfirm()">取消</button>
+        <button class="mb-btn mb-btn-primary" type="button" id="cfOk" onclick="doConfirm()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ===================== 基础 ===================== */
+    var ROOMS = {
+      'GF-01': { name: '一号出菇房 GF-01', stage: '出菇期', day: 11, time: '10:34' },
+      'GF-02': { name: '二号出菇房 GF-02', stage: '出菇期', day: 7, time: '10:33' },
+      'GF-03': { name: '三号出菇房 GF-03', stage: '催蕾期', day: 3, time: '10:32' },
+      'B2':    { name: '二号培养房 B2', stage: '菌丝培养', day: 18, time: '10:31' }
+    };
+
+    var currentRoom = 'GF-01';
+    var lastStamp = '';
+
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function todayStr() {
+      var d = new Date();
+      return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+    }
+
+    function nowStr() {
+      var d = new Date();
+      return todayStr() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    }
+
+    function toast(msg, type) {
+      if (window.MobileStore && typeof MobileStore.toast === 'function') {
+        MobileStore.toast(msg, type || 'info');
+      } else {
+        window.alert(msg);
+      }
+    }
+
+    function navigateTo(page) { window.location.href = page; }
+
+    function offlineLabel() {
+      var online = !window.MobileStore || MobileStore.isOnline();
+      return '离线数据标注：' + (online ? '无（在线）' : '本地缓存');
+    }
+
+    function paintFoot(stamp) {
+      if (stamp) lastStamp = stamp;
+      var el = document.getElementById('footTime');
+      if (el) el.textContent = '数据更新时间：' + lastStamp + ' · 每 5 分钟自动刷新 · ' + offlineLabel();
+    }
+
+    function changeRoom(key) {
+      var r = ROOMS[key];
+      if (!r) return;
+      currentRoom = key;
+      var sub = document.getElementById('headSub');
+      if (sub) sub.textContent = r.name + ' · ' + r.stage + ' 第 ' + r.day + ' 天';
+      paintFoot(todayStr() + ' ' + r.time);
+      toast('已切换至 ' + r.name, 'success');
+    }
+
+    function refreshMonitor() {
+      paintFoot(nowStr());
+      toast('监测数据已刷新', 'success');
+    }
+
+    window.addEventListener('online', function () { paintFoot(); });
+    window.addEventListener('offline', function () {
+      paintFoot();
+      toast('网络已断开，监测数据转为本地缓存', 'warning');
+    });
+
+    /* ===================== 曲线数据 ===================== */
+    var CHART_DATA = {
+      '1min': {
+        labels: ['10:20', '10:25', '10:30', '10:35', '10:40', '10:45', '10:50',
+                 '10:55', '11:00', '11:05', '11:10', '11:15', '11:20'],
+        temp: [18.22, 18.28, 18.32, 18.36, 18.40, 18.34, 18.30, 18.36, 18.38, 18.34, 18.30, 18.36, 18.40],
+        hum:  [92.0, 92.2, 92.4, 92.6, 92.5, 92.3, 92.1, 92.2, 92.4, 92.5, 92.3, 92.2, 92.3],
+        co2:  [700, 695, 690, 688, 684, 680, 678, 682, 686, 688, 684, 686, 685],
+        bands: [{ from: 0, to: 1, label: '出菇期 · 第 11 天' }],
+        caption: '近 60 分钟 · 每 5 分钟一个采样点'
+      },
+      '1h': {
+        labels: ['昨 09:00', '昨 12:00', '昨 15:00', '昨 18:00', '昨 21:00', '00:00', '03:00',
+                 '06:00', '08:00', '09:00', '10:12', '10:21', '10:30', '11:00'],
+        temp: [17.8, 17.9, 18.1, 18.0, 18.2, 17.9, 17.7, 17.9, 18.1, 18.3, 19.6, 19.4, 18.9, 18.4],
+        hum:  [91.6, 91.8, 92.0, 92.2, 92.4, 92.6, 92.8, 92.6, 92.4, 92.2, 91.9, 91.7, 92.0, 92.3],
+        co2:  [700, 690, 684, 678, 672, 668, 664, 668, 674, 678, 712, 722, 700, 685],
+        bands: [
+          { from: 0, to: 0.5, label: '出菇期 · 夜间稳温' },
+          { from: 0.5, to: 1, label: '出菇期 · 白天管理' }
+        ],
+        caption: '近 24 小时 · 每 2 小时一个采样点 · 10:12—10:30 温度越限后已恢复'
+      },
+      '1d': {
+        labels: ['11-10', '11-11', '11-12', '11-13', '11-14', '11-15', '11-16', '现在'],
+        temp: [17.2, 17.4, 17.7, 17.9, 18.3, 19.6, 18.9, 18.4],
+        hum:  [92.8, 92.5, 92.1, 91.8, 92.0, 92.4, 92.6, 92.3],
+        co2:  [710, 702, 694, 688, 680, 690, 700, 685],
+        bands: [
+          { from: 0, to: 0.4, label: '出菇期 · 第 5-7 天' },
+          { from: 0.4, to: 0.75, label: '第 8-10 天' },
+          { from: 0.75, to: 1, label: '第 11 天' }
+        ],
+        caption: '近 7 天 · 每日一个采样点 · 背景色带为出菇阶段'
+      }
+    };
+
+    var CHART_W = 360, CHART_H = 200;
+    var C_PL = 34, C_PR = 34, C_PT = 32, C_PB = 22;
+    var SERIES = [
+      { key: 'temp', color: 'var(--primary-500)', dash: '', width: 2.2 },
+      { key: 'hum', color: 'var(--warning-dark)', dash: '6 3', width: 2 },
+      { key: 'co2', color: 'var(--info-dark)', dash: '2 3', width: 2 }
+    ];
+
+    function scaleOf(arr) {
+      var min = Math.min.apply(null, arr);
+      var max = Math.max.apply(null, arr);
+      if (max - min < 0.001) max = min + 1;
+      var pad = (max - min) * 0.18;
+      return { min: min - pad, max: max + pad };
+    }
+
+    function isOver(key, v) {
+      if (key === 'temp') return v > 18.4;
+      if (key === 'hum') return v > 95 || v < 88;
+      if (key === 'co2') return v > 800;
+      return false;
+    }
+
+    function linePath(points) {
+      var d = '';
+      for (var i = 0; i < points.length; i++) {
+        d += (i ? 'L' : 'M') + points[i].x.toFixed(1) + ' ' + points[i].y.toFixed(1);
+      }
+      return d;
+    }
+
+    function renderChart(gran) {
+      var cfg = CHART_DATA[gran];
+      var box = document.getElementById('chartBox');
+      if (!cfg || !box) return;
+
+      var n = cfg.labels.length;
+      var iw = CHART_W - C_PL - C_PR;
+      var ih = CHART_H - C_PT - C_PB;
+      var xStep = iw / (n - 1);
+      var scales = {
+        temp: scaleOf(cfg.temp),
+        hum: scaleOf(cfg.hum),
+        co2: scaleOf(cfg.co2)
+      };
+
+      function pointOf(key, index, value) {
+        var s = scales[key];
+        return {
+          x: C_PL + index * xStep,
+          y: C_PT + ih - ((value - s.min) / (s.max - s.min)) * ih
+        };
+      }
+
+      function pointsOf(key) {
+        return cfg[key].map(function (v, i) { return pointOf(key, i, v); });
+      }
+
+      var html = '';
+      html += '<defs><linearGradient id="chartTempFill" x1="0" y1="0" x2="0" y2="1">' +
+              '<stop offset="0%" stop-color="#8C6244" stop-opacity="0.20"/>' +
+              '<stop offset="100%" stop-color="#8C6244" stop-opacity="0"/></linearGradient></defs>';
+
+      /* 阶段背景色带 */
+      cfg.bands.forEach(function (band, bi) {
+        var bx = C_PL + band.from * iw;
+        var bw = (band.to - band.from) * iw;
+        html += '<rect x="' + bx.toFixed(1) + '" y="' + C_PT + '" width="' + bw.toFixed(1) + '" height="' + ih +
+                '" fill="' + (bi % 2 ? 'var(--bg-white)' : 'var(--primary-50)') + '"/>';
+        if (bw > 46) {
+          html += '<text x="' + (bx + 6).toFixed(1) + '" y="' + (C_PT - 8) +
+                  '" font-size="9" fill="var(--text-tertiary)">' + band.label + '</text>';
+        }
+      });
+
+      /* 网格 */
+      for (var g = 0; g <= 3; g++) {
+        var gy = C_PT + (g / 3) * ih;
+        html += '<line x1="' + C_PL + '" y1="' + gy.toFixed(1) + '" x2="' + (CHART_W - C_PR) +
+                '" y2="' + gy.toFixed(1) + '" stroke="var(--border-light)" stroke-width="1"/>';
+      }
+
+      /* 温度面积 */
+      var tempPts = pointsOf('temp');
+      var areaD = 'M' + tempPts[0].x.toFixed(1) + ' ' + (C_PT + ih).toFixed(1);
+      tempPts.forEach(function (p) { areaD += 'L' + p.x.toFixed(1) + ' ' + p.y.toFixed(1); });
+      areaD += 'L' + tempPts[n - 1].x.toFixed(1) + ' ' + (C_PT + ih).toFixed(1) + 'Z';
+      html += '<path d="' + areaD + '" fill="url(#chartTempFill)"/>';
+
+      /* 温度控制上限线 */
+      var ts = scales.temp;
+      var yLimit = C_PT + ih - ((18.4 - ts.min) / (ts.max - ts.min)) * ih;
+      html += '<line x1="' + C_PL + '" y1="' + yLimit.toFixed(1) + '" x2="' + (CHART_W - C_PR) +
+              '" y2="' + yLimit.toFixed(1) + '" stroke="var(--error)" stroke-width="1" ' +
+              'stroke-dasharray="4 4" opacity="0.55"/>';
+      html += '<text x="' + (C_PL + 4) + '" y="' + (yLimit - 4).toFixed(1) +
+              '" font-size="9.5" fill="var(--error)">上限 18.4℃</text>';
+
+      /* 三条曲线 + 越限红点 + 末端点 */
+      SERIES.forEach(function (s) {
+        var pts = pointsOf(s.key);
+        html += '<path d="' + linePath(pts) + '" fill="none" stroke="' + s.color +
+                '" stroke-width="' + s.width + '" stroke-linecap="round" stroke-linejoin="round"' +
+                (s.dash ? ' stroke-dasharray="' + s.dash + '"' : '') + '/>';
+        cfg[s.key].forEach(function (v, i) {
+          if (isOver(s.key, v)) {
+            html += '<circle cx="' + pts[i].x.toFixed(1) + '" cy="' + pts[i].y.toFixed(1) +
+                    '" r="4" fill="var(--error)" stroke="var(--bg-white)" stroke-width="1.5"/>';
+          }
+        });
+        var last = pts[n - 1];
+        html += '<circle cx="' + last.x.toFixed(1) + '" cy="' + last.y.toFixed(1) +
+                '" r="3.2" fill="var(--bg-white)" stroke="' + s.color + '" stroke-width="2"/>';
+      });
+
+      /* 坐标轴标签 */
+      html += '<text x="' + (C_PL - 5) + '" y="' + (C_PT + 4) +
+              '" font-size="9.5" fill="var(--text-tertiary)" text-anchor="end">' + ts.max.toFixed(1) + '℃</text>';
+      html += '<text x="' + (C_PL - 5) + '" y="' + (C_PT + ih) +
+              '" font-size="9.5" fill="var(--text-tertiary)" text-anchor="end">' + ts.min.toFixed(1) + '℃</text>';
+      html += '<text x="' + (CHART_W - C_PR + 5) + '" y="' + (C_PT + 4) +
+              '" font-size="9.5" fill="var(--text-tertiary)">' + Math.round(scales.co2.max) + '</text>';
+      html += '<text x="' + (CHART_W - C_PR + 5) + '" y="' + (C_PT + ih) +
+              '" font-size="9.5" fill="var(--text-tertiary)">' + Math.round(scales.co2.min) + '</text>';
+
+      /* 横轴时间 */
+      var idxList = [0, Math.round((n - 1) / 3), Math.round(2 * (n - 1) / 3), n - 1];
+      var seen = {};
+      idxList.forEach(function (i) {
+        if (seen[i]) return;
+        seen[i] = true;
+        var lx = C_PL + i * xStep;
+        var anchor = i === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle');
+        html += '<text x="' + lx.toFixed(1) + '" y="' + (CHART_H - 7) +
+                '" font-size="9.5" fill="var(--text-tertiary)" text-anchor="' + anchor + '">' +
+                cfg.labels[i] + '</text>';
+      });
+
+      box.innerHTML = '<svg viewBox="0 0 ' + CHART_W + ' ' + CHART_H +
+        '" role="img" aria-label="菇房温度、湿度与 CO₂ 曲线">' + html + '</svg>';
+
+      var caption = document.getElementById('chartCaption');
+      if (caption) caption.textContent = cfg.caption;
+
+      var lgTemp = document.getElementById('lgTemp');
+      var lgHum = document.getElementById('lgHum');
+      var lgCo2 = document.getElementById('lgCo2');
+      if (lgTemp) lgTemp.textContent = cfg.temp[n - 1].toFixed(1) + '℃';
+      if (lgHum) lgHum.textContent = cfg.hum[n - 1].toFixed(1) + '%';
+      if (lgCo2) lgCo2.textContent = cfg.co2[n - 1] + 'ppm';
+
+      document.querySelectorAll('#granSwitch button').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-gran') === gran);
+      });
+    }
+
+    /* ===================== 设备数据 ===================== */
+    var DEVICES = [
+      { id: 'hp1', name: '风冷热泵 1#', circuit: 'DO-01', status: 'run', mode: 'auto', type: 'cool', desc: '出菇房温度回路', limits: { temp: 18.0, hum: 90, co2: 700, lux: 150 }, pendingThreshold: false },
+      { id: 'hp2', name: '风冷热泵 2#', circuit: 'DO-02', status: 'run', mode: 'auto', type: 'cool', desc: '备用温度回路', limits: { temp: 18.0, hum: 90, co2: 700, lux: 150 }, pendingThreshold: false },
+      { id: 'hum5', name: '超声波加湿器 5#', circuit: 'DO-03', status: 'offline', mode: 'auto', type: 'hum', desc: '湿度补湿回路', limits: { temp: 18.0, hum: 92, co2: 700, lux: 150 }, pendingThreshold: false },
+      { id: 'fan1', name: '新风风机', circuit: 'DO-04', status: 'run', mode: 'auto', type: 'air', desc: '换气与 CO₂ 排放', limits: { temp: 18.0, hum: 90, co2: 720, lux: 150 }, pendingThreshold: false },
+      { id: 'circ2', name: '循环风机 2#', circuit: 'DO-05', status: 'fault', mode: 'auto', type: 'circ', desc: '房内气流循环', limits: { temp: 18.0, hum: 90, co2: 700, lux: 150 }, pendingThreshold: false },
+      { id: 'led3', name: 'LED 补光灯 3#', circuit: 'DO-06', status: 'run', mode: 'manual', type: 'led', desc: '催蕾补光回路', limits: { temp: 18.0, hum: 90, co2: 700, lux: 160 }, pendingThreshold: false }
+    ];
+
+    var LIMIT_DEFS = [
+      { key: 'temp', label: '温度上限', unit: '℃', step: 0.1, min: 16, max: 20, dec: 1 },
+      { key: 'hum', label: '湿度下限', unit: '%RH', step: 1, min: 88, max: 95, dec: 0 },
+      { key: 'co2', label: 'CO₂ 上限', unit: 'ppm', step: 50, min: 400, max: 800, dec: 0 },
+      { key: 'lux', label: '光照上限', unit: 'lux', step: 10, min: 100, max: 200, dec: 0 }
+    ];
+
+    var currentDeviceId = null;
+
+    function deviceById(id) {
+      for (var i = 0; i < DEVICES.length; i++) {
+        if (DEVICES[i].id === id) return DEVICES[i];
+      }
+      return null;
+    }
+
+    function statusText(status) {
+      return { run: '运行', offline: '离线', fault: '故障', stop: '已停止' }[status] || status;
+    }
+
+    function modeText(mode) {
+      return mode === 'manual' ? '手动' : '自动';
+    }
+
+    function deviceIcon(type) {
+      var paths = {
+        cool: '<path d="M12 2v20"/><path d="M4.2 6.5l15.6 11"/><path d="M19.8 6.5l-15.6 11"/>',
+        hum: '<path d="M12 2.7C12 2.7 5 10 5 14.5a7 7 0 0 0 14 0C19 10 12 2.7 12 2.7z"/>',
+        air: '<path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h15a3 3 0 1 1-3 3"/><path d="M3 16h9"/>',
+        circ: '<path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/>',
+        led: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'
+      };
+      return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" ' +
+        'stroke-linecap="round" stroke-linejoin="round">' + (paths[type] || paths.cool) + '</svg>';
+    }
+
+    function renderDevices() {
+      var box = document.getElementById('deviceList');
+      if (!box) return;
+      var html = '';
+      DEVICES.forEach(function (d) {
+        html += '<div class="dcard" onclick="openDevice(\'' + d.id + '\')">' +
+          '<div class="dcard-ico ' + d.status + '">' + deviceIcon(d.type) + '</div>' +
+          '<div class="dcard-main">' +
+            '<div class="dcard-name">' + d.name + '</div>' +
+            '<div class="dcard-meta"><span class="circuit">' + d.circuit + '</span> · ' + d.desc + '</div>' +
+          '</div>' +
+          '<div class="dcard-right">' +
+            '<div class="dcard-state ' + d.status + '"><i></i>' + statusText(d.status) + '</div>' +
+            '<div class="dcard-mode">' + modeText(d.mode) + '模式</div>' +
+          '</div>' +
+        '</div>';
+      });
+      box.innerHTML = html;
+    }
+
+    /* ===================== 抽屉 ===================== */
+    function openDevice(id) {
+      currentDeviceId = id;
+      renderDrawer();
+      document.getElementById('deviceDrawer').classList.add('show');
+    }
+
+    function closeDrawer() {
+      document.getElementById('deviceDrawer').classList.remove('show');
+    }
+
+    function renderDrawer() {
+      var d = deviceById(currentDeviceId);
+      if (!d) return;
+
+      document.getElementById('dwName').textContent = d.name;
+      document.getElementById('dwSub').textContent =
+        d.circuit + ' · ' + ROOMS[currentRoom].name + ' · ' + modeText(d.mode) + '模式';
+
+      var banner = '';
+      if (d.status === 'offline') {
+        banner = '<div class="dw-banner">设备离线：启停与阈值下发暂不可用，可提交维护申请安排检修。</div>';
+      } else if (d.status === 'fault') {
+        banner = '<div class="dw-banner danger">回路告警：过载保护已动作，建议停机检修后复位。</div>';
+      }
+      document.getElementById('dwBanner').innerHTML = banner;
+
+      var isRun = d.status === 'run';
+      var sw = document.getElementById('dwSwitch');
+      sw.className = 'switch' + (isRun ? ' on' : '') + (d.status === 'offline' ? ' is-disabled' : '');
+      sw.setAttribute('aria-pressed', isRun ? 'true' : 'false');
+
+      document.getElementById('dwPowerText').textContent =
+        d.status === 'run' ? '运行中' :
+        d.status === 'offline' ? '离线 · 状态未知' :
+        d.status === 'fault' ? '故障停机' : '已停止';
+
+      document.getElementById('dwPowerHint').textContent = isRun
+        ? '停止后 ' + d.circuit + ' 回路断电，需二次确认'
+        : '启动前请确认回路无检修挂牌与人员作业';
+
+      paintSteppers();
+      paintMode();
+    }
+
+    function paintSteppers() {
+      var d = deviceById(currentDeviceId);
+      if (!d) return;
+      var html = '';
+      LIMIT_DEFS.forEach(function (def) {
+        var v = d.limits[def.key];
+        html += '<div class="stepper">' +
+          '<div class="stepper-label">' + def.label + '</div>' +
+          '<div class="stepper-ctrl">' +
+            '<button class="step-btn" type="button" aria-label="降低' + def.label + '" onclick="stepLimit(\'' + def.key + '\', -1)">−</button>' +
+            '<span class="step-val" id="step-' + def.key + '">' + v.toFixed(def.dec) + '<small>' + def.unit + '</small></span>' +
+            '<button class="step-btn" type="button" aria-label="提高' + def.label + '" onclick="stepLimit(\'' + def.key + '\', 1)">+</button>' +
+          '</div>' +
+        '</div>';
+      });
+      var hint = d.pendingThreshold
+        ? (d.status === 'offline'
+            ? '阈值已调整，设备离线，仅本地暂存，恢复在线后下发'
+            : '阈值已调整，待下次自动刷新时下发至控制器')
+        : '允许范围：温度 16~20℃ · 湿度 88~95%RH · CO₂ ≤800ppm · 光照 100~200lux';
+      html += '<div class="dw-hint" id="dwThresholdHint" style="margin-top: 6px;">' + hint + '</div>';
+      document.getElementById('dwSteppers').innerHTML = html;
+    }
+
+    function stepLimit(key, dir) {
+      var d = deviceById(currentDeviceId);
+      if (!d) return;
+      var def = null;
+      LIMIT_DEFS.forEach(function (item) { if (item.key === key) def = item; });
+      if (!def) return;
+
+      var v = Math.round((d.limits[key] + def.step * dir) * 10) / 10;
+      if (v < def.min) {
+        v = def.min;
+        toast(def.label + '已达配方下限 ' + def.min + def.unit, 'warning');
+      }
+      if (v > def.max) {
+        v = def.max;
+        toast(def.label + '已达配方上限 ' + def.max + def.unit, 'warning');
+      }
+      d.limits[key] = v;
+      d.pendingThreshold = true;
+
+      var el = document.getElementById('step-' + key);
+      if (el) el.innerHTML = v.toFixed(def.dec) + '<small>' + def.unit + '</small>';
+      var hint = document.getElementById('dwThresholdHint');
+      if (hint) {
+        hint.textContent = d.status === 'offline'
+          ? '阈值已调整，设备离线，仅本地暂存，恢复在线后下发'
+          : '阈值已调整，待下次自动刷新时下发至控制器';
+      }
+    }
+
+    function paintMode() {
+      var d = deviceById(currentDeviceId);
+      if (!d) return;
+      document.querySelectorAll('#dwMode button').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-mode') === d.mode);
+      });
+      document.getElementById('dwModeHint').textContent = d.mode === 'auto'
+        ? '自动模式：控制器按出菇期配方 v3.2 调节本回路'
+        : '手动模式：需人工值守，自动调节已暂停';
+    }
+
+    function togglePower() {
+      var d = deviceById(currentDeviceId);
+      if (!d) return;
+
+      if (d.status === 'offline') {
+        toast('设备离线，启停指令无法下发', 'warning');
+        return;
+      }
+
+      if (d.status === 'fault') {
+        showConfirm({
+          title: d.name + ' 处于故障状态',
+          body: '该回路已触发过载保护，强制启动可能导致轴承抱死并扩大停机范围。建议先提交设备维护。',
+          confirmText: '仍然启动',
+          danger: true,
+          onConfirm: function () {
+            d.status = 'run';
+            renderDevices();
+            renderDrawer();
+            toast('已发送强制启动指令，请关注运行电流', 'warning');
+          }
+        });
+        return;
+      }
+
+      var willStart = d.status !== 'run';
+      showConfirm({
+        title: (willStart ? '启动 ' : '停止 ') + d.name + '？',
+        body: willStart
+          ? '启动后 ' + d.circuit + ' 回路将通电，' + d.desc + '按' + modeText(d.mode) + '模式运行；请确认回路无检修挂牌与人员作业。'
+          : '停止后 ' + d.circuit + ' 回路断电，' + d.desc + '将停止工作。出菇房温度与湿度可能在 30 分钟内偏离配方范围，需人工确认风冷热泵与新风状态。',
+        confirmText: willStart ? '确认启动' : '确认停止',
+        danger: !willStart,
+        onConfirm: function () {
+          d.status = willStart ? 'run' : 'stop';
+          renderDevices();
+          renderDrawer();
+          toast(d.name + ' 已' + (willStart ? '启动' : '停止'), willStart ? 'success' : 'warning');
+        }
+      });
+    }
+
+    function setMode(mode) {
+      var d = deviceById(currentDeviceId);
+      if (!d) return;
+
+      if (d.status === 'offline') {
+        toast('设备离线，模式切换无法下发', 'warning');
+        return;
+      }
+      if (d.mode === mode) return;
+
+      if (mode === 'manual') {
+        showConfirm({
+          title: '切换为手动控制？',
+          body: '切换后控制器不再按出菇期配方 v3.2 自动调节，温度、湿度与 CO₂ 需人工值守并手动启停设备；无人值守时可能出现 1~2℃ 波动。',
+          confirmText: '确认切换',
+          danger: false,
+          onConfirm: function () {
+            d.mode = 'manual';
+            renderDevices();
+            renderDrawer();
+            toast('已切换为手动控制，请安排人员值守', 'warning');
+          }
+        });
+        return;
+      }
+
+      d.mode = 'auto';
+      renderDevices();
+      renderDrawer();
+      toast('已切回自动控制，按配方 v3.2 接管', 'success');
+    }
+
+    /* ===================== 二次确认 ===================== */
+    var confirmCallback = null;
+
+    function showConfirm(opt) {
+      document.getElementById('cfTitle').textContent = opt.title || '请确认';
+      document.getElementById('cfBody').textContent = opt.body || '';
+      var ok = document.getElementById('cfOk');
+      ok.textContent = opt.confirmText || '确认';
+      ok.className = 'mb-btn ' + (opt.danger ? 'mb-btn-danger' : 'mb-btn-primary');
+      confirmCallback = opt.onConfirm || null;
+      document.getElementById('confirmModal').classList.add('show');
+    }
+
+    function closeConfirm() {
+      document.getElementById('confirmModal').classList.remove('show');
+      confirmCallback = null;
+    }
+
+    function doConfirm() {
+      var cb = confirmCallback;
+      closeConfirm();
+      if (cb) cb();
+    }
+
+    /* ===================== 维护申请 ===================== */
+    function requestMaintain() {
+      var d = deviceById(currentDeviceId);
+      closeDrawer();
+
+      var sel = document.getElementById('mtDevice');
+      if (sel && d) {
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === d.name) { sel.selectedIndex = i; break; }
+        }
+      }
+      document.getElementById('mtReason').value = '';
+      document.getElementById('maintainModal').classList.add('show');
+    }
+
+    function closeMaintain() {
+      document.getElementById('maintainModal').classList.remove('show');
+    }
+
+    function submitMaintain() {
+      var device = document.getElementById('mtDevice').value;
+      var urgency = document.getElementById('mtUrgency').value;
+      var urgencyText = { low: '一般', normal: '较急', high: '紧急' }[urgency] || urgency;
+      var reason = document.getElementById('mtReason').value.trim();
+
+      if (!reason) {
+        toast('请填写故障现象', 'warning');
+        return;
+      }
+
+      if (window.MobileStore && typeof MobileStore.push === 'function') {
+        MobileStore.push('ediblefungi_maintenance_orders', {
+          device: device,
+          urgency: urgency,
+          urgencyText: urgencyText,
+          reason: reason,
+          room: ROOMS[currentRoom].name,
+          status: 'pending',
+          statusText: '待受理'
+        });
+      }
+
+      toast('维护申请已提交，值班人员将在 30 分钟内响应', 'success');
+      closeMaintain();
+    }
+
+    /* ===================== 遮罩点击关闭 ===================== */
+    var drawerEl = document.getElementById('deviceDrawer');
+    if (drawerEl) {
+      drawerEl.addEventListener('click', function (e) {
+        if (e.target === drawerEl) closeDrawer();
+      });
+    }
+
+    var maintainEl = document.getElementById('maintainModal');
+    if (maintainEl) {
+      maintainEl.addEventListener('click', function (e) {
+        if (e.target === maintainEl) closeMaintain();
+      });
+    }
+
+    var confirmEl = document.getElementById('confirmModal');
+    if (confirmEl) {
+      confirmEl.addEventListener('click', function (e) {
+        if (e.target === confirmEl) closeConfirm();
+      });
+    }
+
+    /* ===================== 初始化 ===================== */
+    (function init() {
+      lastStamp = todayStr() + ' ' + ROOMS[currentRoom].time;
+      paintFoot(lastStamp);
+      renderChart('1min');
+      renderDevices();
+    })();
+  </script>
+</body>
+</html>

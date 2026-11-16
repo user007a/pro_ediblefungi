@@ -1,0 +1,388 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>环节详情 - 食用菌数字履历</title>
+  <link rel="stylesheet" href="../applefarm_mobile/css/mobile-design-system.css">
+  <style>
+    /* ========== 菌菇自然色主题（覆盖设计系统默认绿色） ========== */
+    :root {
+      --primary: #8C6244;
+      --primary-50: #F8F2E9;
+      --primary-100: #EFE2D0;
+      --primary-200: #DCC3A5;
+      --gradient-header: linear-gradient(150deg, #453023 0%, #6B4B35 42%, #93684A 76%, #A87C58 100%);
+      --text-on-primary: #FBF4E8;
+      --bg: #FBF5EC;
+      --text: #3B2C1F;
+      --text-secondary: #7C6650;
+      --text-tertiary: #A08A72;
+      --border: #E9DDCC;
+      --border-light: #F2E9DC;
+      --success-light: #EFE3D2;
+      --success-dark: #7A5233;
+      --warning-light: #FAE8DB;
+      --warning-dark: #A85A31;
+      --info-light: #F1EBE3;
+      --info-dark: #6B5A48;
+    }
+    body { background: var(--bg); }
+    .mb-app { padding-bottom: 0; }
+
+    .detail-header {
+      background: var(--gradient-header);
+      padding: calc(var(--safe-top) + 24px) var(--space-4) var(--space-5);
+      color: var(--text-on-primary);
+      border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+      box-shadow: var(--shadow-header);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    .detail-header::before {
+      content: '';
+      position: absolute;
+      top: -30%; right: -15%;
+      width: 70%; height: 120%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.10) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .detail-header > * { position: relative; z-index: 1; }
+    .detail-step {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: var(--font-xs);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.18);
+      margin-bottom: var(--space-2);
+    }
+    .detail-title { font-size: var(--font-xl); font-weight: var(--font-bold); margin-bottom: var(--space-1); }
+    .detail-date { font-size: var(--font-sm); opacity: 0.85; }
+
+    .detail-content { padding: var(--space-4); }
+
+    /* 图版卡片：整幅大图在上 + 居中文字（与溯源首页产品卡一致） */
+    .detail-card {
+      background: var(--bg-white);
+      border-radius: var(--radius-xl);
+      margin-bottom: var(--space-4);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .detail-img-box {
+      position: relative;
+      width: 100%;
+      height: 190px;
+      background: var(--primary-50);
+      overflow: hidden;
+    }
+    .detail-img-box img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .detail-body { padding: 0 var(--space-4) var(--space-4); }
+    .detail-card-title {
+      text-align: center;
+      font-size: var(--font-md);
+      font-weight: var(--font-bold);
+      color: var(--text);
+      padding-top: var(--space-3);
+    }
+    .detail-card-date {
+      text-align: center;
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      margin: 2px 0 var(--space-2);
+    }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label {
+      width: 80px;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+    }
+    .info-value {
+      flex: 1;
+      font-size: var(--font-sm);
+      color: var(--text);
+      font-weight: var(--font-medium);
+    }
+
+    .detail-desc {
+      font-size: var(--font-base);
+      color: var(--text);
+      line-height: 1.8;
+      margin-top: var(--space-3);
+      padding-top: var(--space-3);
+      border-top: 1px dashed var(--border-light);
+    }
+
+    .detail-tags {
+      display: flex;
+      gap: var(--space-2);
+      margin-top: var(--space-3);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* 环节已被后台停用时的友好提示 */
+    .stage-offline-tip {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: var(--space-6, 24px);
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      line-height: 1.8;
+    }
+
+    .detail-footer {
+      padding: 0 var(--space-4) calc(var(--space-6, 24px) + var(--safe-bottom));
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <header class="detail-header">
+      <div class="detail-step" id="stepBadge">🍄 食用菌溯源 · 环节 1/7</div>
+      <div class="detail-title">溯源环节详情</div>
+      <div class="detail-date">食用菌工厂化农业数据管理平台</div>
+    </header>
+
+    <div class="detail-content">
+      <div class="detail-card">
+        <div class="detail-img-box">
+          <img id="pageImg" alt="">
+        </div>
+        <div class="detail-body">
+          <div class="detail-card-title" id="cardTitle">原料进厂</div>
+          <div class="detail-card-date" id="cardDate">—</div>
+          <div class="info-row">
+            <span class="info-label">环节日期</span>
+            <span class="info-value" id="infoDate">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">作业地点</span>
+            <span class="info-value" id="infoLocation">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">负责人</span>
+            <span class="info-value" id="infoWorker">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">环节名称</span>
+            <span class="info-value" id="infoType">—</span>
+          </div>
+          <div class="detail-desc" id="pageDesc">—</div>
+          <div class="detail-tags" id="pageTags"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-footer">
+      食用菌工厂化农业数据管理平台 · 对外溯源展示页<br>
+      该环节数据已随批次一同上链存证
+    </div>
+  </div>
+
+  <script src="js/trace-stages.js"></script>
+  <script>
+    /* 食用菌七环节详情（与列表页 timeline 一一对应） */
+    var traceDetails = {
+      material: {
+        title: '原料进厂',
+        date: '—',
+        location: '原料库 A 区',
+        worker: '质检员 陈静',
+        img: 'images/trace_material.jpg',
+        content: '本批次主料为棉籽壳 42%、玉米芯 30%、木屑 12%、麸皮 12%、玉米面 3%、豆粕 1%，另加生石灰 1%、轻质碳酸钙 1%。原料入厂逐批抽检：含水率 11.8%（限值 ≤15%）、杂质率 0.6%，无霉变、无结块、无异味。抽检合格后按批次分区存放于干燥原料库，执行先进先出，库温 18℃、相对湿度 55%。所有原料批次号、供应商与检测结论同步写入本批次投料记录。',
+        tags: ['批批抽检', '含水率 11.8%', '先进先出']
+      },
+      substrate: {
+        title: '菌包制备',
+        date: '—',
+        location: '拌料装袋车间 B-02',
+        worker: '操作工 刘海',
+        img: 'images/trace_substrate.jpg',
+        content: '按配方自动计量拌料，加水至含水率 62.3%（工艺范围 60%~65%），pH 7.2（工艺范围 7.0~7.5），搅拌 25 分钟至物料均匀。采用聚丙烯折角袋装袋，单袋湿料 1.25kg，装袋机速率 1,200 袋/小时，每 50 袋抽检称重一次，平均偏差 +1.8%，判定合格。本批次共装袋 8,600 袋，拌料机与装袋机编号、配方版本号一并记录。',
+        tags: ['含水率 62.3%', 'pH 7.2', '装袋 8,600 袋']
+      },
+      sterilize: {
+        title: '灭菌接种',
+        date: '—',
+        location: '灭菌接种车间 C-01',
+        worker: '接种组长 王磊',
+        img: 'images/trace_sterilize.jpg',
+        content: '采用高压蒸汽灭菌，升压至 0.12MPa、锅内温度 121℃，保温 120 分钟。锅内三点探头最低温度 121.6℃，灭菌曲线由控制器自动采集、无缺口，判定灭菌合格。料袋冷却至 26℃ 以下转入无菌接种室，接种室洁净度 A 级，接种前紫外照射 30 分钟、75% 酒精消毒。本批次接种 8,600 袋，预期污染率 0.8%，接种操作人、复核人与菌种批次号均已登记。',
+        tags: ['121℃ / 120min', 'A 级无菌', '曲线自动采集']
+      },
+      incubate: {
+        title: '发菌培养',
+        date: '—',
+        location: '培养房 GF-Q1',
+        worker: '培养班长 张敏',
+        img: 'images/trace_incubate.jpg',
+        content: '菌包入培养房 GF-Q1，温度 23.4℃（工艺范围 22~25℃）、相对湿度 65%、CO₂ 1,850ppm，全程避光培养。第 12 天翻袋一次，第 20 天抽查菌丝吃料深度，第 30 天菌丝满袋率 98.6%。培养期间检出绿霉污染 68 袋，已即时清出并做无害化处理，污染率 0.79%，低于 1.5% 的控制阈值。培养房温湿度曲线由控制器连续采集，可回溯至每 5 分钟。',
+        tags: ['满袋率 98.6%', '污染率 0.79%', '培养 30 天']
+      },
+      fruiting: {
+        title: '出菇采收',
+        date: '—',
+        location: '一号出菇房 GF-01',
+        worker: '出菇班长 李强',
+        img: 'images/trace_fruiting.jpg',
+        content: '菌包上架一号出菇房 GF-01，控温 18.0℃、控湿 92.3%、CO₂ 685ppm、光照 120lux（分段补光 12 小时/天）、循环风 6.3m/s。出菇第 6 天菇蕾密度 86 个/㎡，第 11 天菌盖直径达 42~48mm 进入采收期。人工采收 2,860kg，其中畸形菇 96kg（畸形率 3.2%），已单独称重并处置。全周期环境曲线与告警记录随批次归档。',
+        tags: ['18.0℃ / 92.3%RH', 'CO₂ 685ppm', '畸形率 3.2%']
+      },
+      grading: {
+        title: '分级预冷',
+        date: '—',
+        location: '分级预冷车间 D-01',
+        worker: '质检员 陈静',
+        img: 'images/trace_grading.jpg',
+        content: '采收后 40 分钟内进入分级预冷区。按菌盖直径与形态分级：一级品（直径 40~50mm、菌柄挺直、无畸形）2,610kg，二级品 154kg，废品 96kg，一级率 91.3%。分级后进入 0~4℃ 强制预冷库预冷 4 小时，中心温度降至 3.2℃。本批次按 2.5kg/箱包装，共 1,044 箱，逐箱赋码后入库待发运。',
+        tags: ['一级率 91.3%', '预冷至 3.2℃', '赋码 1,044 箱']
+      },
+      coldchain: {
+        title: '冷链流通',
+        date: '—',
+        location: '冷链发货区 / 新K·8F326',
+        worker: '物流专员 赵刚',
+        img: 'images/trace_coldchain.jpg',
+        content: '本批次 1,044 箱于出库当日装车，冷链车 新K·8F326，车厢设定 2~8℃，全程温度记录仪采样间隔 5 分钟：最高 6.4℃、最低 2.1℃，无越限。运抵区域分仓后二次分拨，扫码即可查看该批次从灭菌接种到冷链运输的完整温度与操作曲线。',
+        tags: ['全程 2~8℃', '无越温', '温度曲线可查']
+      }
+    };
+
+    /* 环节顺序（用于「环节 N/7」徽章） */
+    var STAGE_ORDER = ['material', 'substrate', 'sterilize', 'incubate', 'fruiting', 'grading', 'coldchain'];
+
+    function setText(id, value) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+    function setAttr(id, attr, value) {
+      var el = document.getElementById(id);
+      if (el) el.setAttribute(attr, value);
+    }
+    function setHtml(id, value) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = value;
+    }
+
+    /* 环节是否已在后台「C 端展示配置」中停用（停用后仍可看详情，仅作提示） */
+    function isStageDisabled(key) {
+      try {
+        if (!window.TraceStages || typeof TraceStages.get !== 'function') return false;
+        var s = TraceStages.get(key);
+        return !!s && s.enabled === false;
+      } catch (e) { return false; }
+    }
+
+    function showOfflineTip(key, detail, code) {
+      var content = document.querySelector('.detail-content');
+      if (!content) return;
+      var back = 'trace_h5.html' + (code ? '?code=' + encodeURIComponent(code) : '');
+      content.innerHTML =
+        '<div class="stage-offline-tip">' +
+          '<div style="font-size:28px;margin-bottom:8px;">🍄</div>' +
+          '<div style="font-weight:600;color:var(--text);margin-bottom:6px;">该环节已停止对外展示</div>' +
+          '<div>「' + (detail && detail.title ? detail.title : key) + '」当前未在溯源流程中开放，' +
+          '若需查看完整履历，请返回溯源页查看已开放的环节。</div>' +
+          '<div style="margin-top:14px;">' +
+            '<a href="' + back + '" ' +
+            'style="display:inline-block;background:var(--primary);color:#fff;padding:8px 20px;border-radius:8px;font-size:13px;text-decoration:none;">返回溯源页</a>' +
+          '</div>' +
+        '</div>';
+    }
+
+    /* 与列表页保持同一推算规则：以批次采收日期为基准（详见 trace_h5.html DAY_OFFSET） */
+    var STAGE_DAY_OFFSET = { material: -45, substrate: -40, sterilize: -35, incubate: -32, fruiting: -1, grading: 0, coldchain: 2 };
+
+    function shiftDate(dateStr, days) {
+      if (!dateStr) return null;
+      var d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return null;
+      d.setDate(d.getDate() + days);
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      return d.getFullYear() + '.' + pad(d.getMonth() + 1) + '.' + pad(d.getDate());
+    }
+
+    function stageDate(type, harvestDate) {
+      /* 未从列表页带入批次日期时，用示例批次采收日兜底，避免显示占位横线 */
+      var d = shiftDate(harvestDate || '2026-11-12', STAGE_DAY_OFFSET[type] || 0);
+      if (d) return d;
+      return '—';
+    }
+
+    function loadDetail() {
+      var params = new URLSearchParams(window.location.search);
+      var type = params.get('type') || 'material';
+      var code = params.get('code') || '';
+      var detail = traceDetails[type];
+
+      if (!detail) {
+        var contentEl = document.querySelector('.detail-content');
+        if (contentEl) {
+          contentEl.innerHTML = '<div class="stage-offline-tip">未找到该溯源环节的信息，请返回溯源页重新选择。</div>';
+        }
+        setText('stepBadge', '🍄 食用菌溯源');
+        return;
+      }
+
+      var idx = STAGE_ORDER.indexOf(type);
+      setText('stepBadge', '🍄 食用菌溯源 · 环节 ' + (idx >= 0 ? idx + 1 : 1) + '/' + STAGE_ORDER.length);
+      setText('cardTitle', detail.title);
+
+      if (isStageDisabled(type)) {
+        showOfflineTip(type, detail, code);
+        return;
+      }
+
+      var harvestDate = null;
+      if (code) {
+        try {
+          var cached = JSON.parse(sessionStorage.getItem('trace_batch_cache') || '{}');
+          harvestDate = cached[code] || null;
+        } catch (e) { harvestDate = null; }
+      }
+      var dateText = stageDate(type, harvestDate);
+
+      setText('cardDate', dateText);
+      setAttr('pageImg', 'src', detail.img);
+      setAttr('pageImg', 'alt', detail.title);
+      setText('infoDate', dateText);
+      setText('infoLocation', detail.location);
+      setText('infoWorker', detail.worker);
+      setText('infoType', detail.title);
+      setText('pageDesc', detail.content);
+
+      var tagsHtml = '';
+      detail.tags.forEach(function (tag) {
+        tagsHtml += '<span class="mb-tag success">' + tag + '</span>';
+      });
+      setHtml('pageTags', tagsHtml);
+    }
+
+    loadDetail();
+  </script>
+</body>
+</html>

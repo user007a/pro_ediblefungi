@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工厂化农业数据管理系统 - 人员班组</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .page-head{margin-bottom:16px;}
+  .page-head h1{font-size:18px;font-weight:700;margin:0;color:var(--text-primary);}
+  .page-head .crumb{font-size:12px;color:var(--text-tertiary);margin-top:4px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;}
+  .stat-card{background:var(--bg-card,#fff);border:1px solid var(--border-color,#e8ece8);border-radius:12px;padding:16px 18px;border-left:4px solid #1890ff;}
+  .stat-card.green{border-left-color:#52c41a;}
+  .stat-card.orange{border-left-color:#fa8c16;}
+  .stat-card.red{border-left-color:#ff4d4f;}
+  .stat-label{font-size:12px;color:var(--text-tertiary);margin-bottom:6px;}
+  .stat-value{font-size:22px;font-weight:600;line-height:1.2;}
+  .stat-value small{font-size:12px;font-weight:400;color:var(--text-tertiary);margin-left:4px;}
+  .stat-sub{margin-top:6px;font-size:12px;color:var(--text-tertiary);}
+  @media(max-width:1100px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+  th.sortable:hover{color:#1890ff;}
+  .sort-arrow{font-size:10px;margin-left:3px;color:#1890ff;}
+  .empty-cell{text-align:center;color:var(--text-tertiary);padding:32px 0!important;}
+  .row-btn{padding:3px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-default,#d9d9d9);background:#fff;color:var(--text-secondary,#555);cursor:pointer;margin-right:6px;white-space:nowrap;}
+  .row-btn:hover{border-color:#1890ff;color:#1890ff;}
+  .row-btn.danger{color:#ff4d4f;border-color:#ffccc7;}
+  .row-btn.danger:hover{background:#fff2f0;}
+  .drawer-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;}
+  .drawer-mask.show{display:block;}
+  .drawer{position:fixed;top:0;right:-580px;width:560px;max-width:94vw;height:100vh;background:#fff;z-index:9999;box-shadow:-8px 0 32px rgba(0,0,0,.15);transition:right .25s ease;display:flex;flex-direction:column;}
+  .drawer.open{right:0;}
+  .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .drawer-header h3{margin:0;font-size:16px;font-weight:600;color:var(--text-primary);}
+  .drawer-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .drawer-close:hover{background:#f5f5f5;color:#333;}
+  .drawer-body{padding:20px 24px;overflow-y:auto;flex:1;}
+  .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 20px;margin-bottom:16px;}
+  .detail-item.full{grid-column:1/-1;}
+  .detail-item .dl{font-size:12px;color:var(--text-tertiary);margin-bottom:2px;}
+  .detail-item .dv{font-size:14px;color:var(--text-primary);font-weight:500;word-break:break-all;}
+  .drawer-sec{font-size:13px;font-weight:600;color:var(--text-primary);margin:18px 0 10px;padding-left:8px;border-left:3px solid #1890ff;}
+  .member-list{display:flex;flex-wrap:wrap;gap:8px;}
+  .member-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;background:#f7f9f7;border:1px solid #e8ede8;font-size:13px;color:var(--text-primary);}
+  .member-chip.leader{background:#e6f7ff;border-color:#91d5ff;color:#096dd9;font-weight:600;}
+  .member-chip .avatar{width:22px;height:22px;border-radius:50%;background:#1890ff;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;}
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{width:560px;max-width:92vw;max-height:86vh;background:#fff;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .modal-header h3{font-size:16px;font-weight:600;margin:0;}
+  .modal-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .modal-body{padding:20px 24px;overflow-y:auto;}
+  .form-group{margin-bottom:14px;}
+  .form-group.full{grid-column:1/-1;}
+  .form-group label{display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;}
+  .form-group label .req{color:#ff4d4f;margin-left:2px;}
+  #modal .modal-body input,#modal .modal-body select,#modal .modal-body textarea{width:100%;padding:9px 12px;border:1.5px solid #d9d9d9;border-radius:8px;font-size:13px!important;background:#fff;outline:none;font-family:inherit;box-sizing:border-box;}
+  #modal .modal-body textarea{min-height:64px;resize:vertical;line-height:1.6;}
+  #modal .modal-body input:focus,#modal .modal-body select:focus,#modal .modal-body textarea:focus{border-color:#1890ff;box-shadow:0 0 0 3px rgba(24,144,255,.1);}
+  .modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:14px 24px;border-top:1px solid #eef1ef;flex:none;}
+  .toast-undo{display:none;padding:3px 12px;border-radius:6px;border:1px solid currentColor;background:rgba(255,255,255,.6);font-size:12px;font-weight:600;cursor:pointer;color:inherit;}
+</style>
+<style id="standalone-fix">.main-wrapper{margin-left:0!important;width:100%!important;}</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="enterprise" data-active-submenu="team-manage">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar"><div class="tab-bar-actions"><button class="tab-close-all" title="关闭全部标签"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg></button></div></div>
+    <main class="main-content"><div class="content-wrapper">
+
+      <div class="page-head">
+        <h1>人员班组</h1>
+        <div class="crumb">企业管理 / 人员班组 · 生产班组、班次与持证台账</div>
+      </div>
+
+      <div class="stat-grid" id="statGrid"></div>
+
+      <div class="page-section search-section">
+        <div class="search-bar">
+          <select class="search-select" id="filterSelect" onchange="renderTable()">
+            <option value="">全部班次</option>
+            <option value="早班">早班</option>
+            <option value="中班">中班</option>
+            <option value="常白班">常白班 + 值班</option>
+          </select>
+          <select class="search-select" id="certFilter" onchange="renderTable()">
+            <option value="">全部持证状态</option>
+            <option value="已过期">证已过期</option>
+            <option value="30天内">证30天内到期</option>
+            <option value="正常">持证正常</option>
+          </select>
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索班组、班长、成员..." oninput="renderTable()">
+          <div class="search-actions">
+            <button class="jg-btn" onclick="resetFilters()">重置</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-section action-bar">
+        <div class="action-left">
+          <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openTeamForm()">+ 新建班组</button>
+          <button class="jg-btn" id="exportBtn" onclick="exportTeams()">导出CSV</button>
+          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete('teams','班组')">批量删除</button>
+          <span class="selected-info" id="selInfo"></span>
+        </div>
+      </div>
+
+      <div class="page-section data-section">
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+                <th class="sortable" data-key="name" onclick="sortBy('name')">班组<span class="sort-arrow"></span></th>
+                <th>班次</th>
+                <th>班长</th>
+                <th class="sortable" data-key="memberCount" onclick="sortBy('memberCount')">成员数<span class="sort-arrow"></span></th>
+                <th>持证</th>
+                <th class="sortable" data-key="certExpire" onclick="sortBy('certExpire')">证到期<span class="sort-arrow"></span></th>
+                <th>持证状态</th>
+                <th style="width:130px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div></main>
+  </div>
+</div>
+
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header"><h3 id="drawerTitle">详情</h3><button class="drawer-close" id="drawerClose" onclick="closeDrawer()">×</button></div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header"><h3 id="modalTitle">编辑</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeModal()">取消</button><button class="jg-btn jg-btn-primary" id="modalSave" onclick="saveModal()">保存</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal-box" style="width:420px;">
+    <div class="modal-header"><h3>删除确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
+    <div class="modal-body"><p id="confirmText" style="margin:0;font-size:14px;color:var(--text-primary);"></p></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="doConfirm()">确认删除</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="toast-message" id="toastMessage"></span><button class="toast-undo" id="toastUndo">撤销</button></div>
+
+<script src="js/shared/fungi-store.js"></script>
+<script>
+var FS = window.FungiStore;
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function today(){return FS.dayKey(0);}
+function nav(url,title){try{if(window.parent&&window.parent!==window&&typeof window.parent.openPage==='function'){window.parent.openPage(url,title);return;}}catch(e){}location.href=url;}
+var toastTimer=null;
+function showToast(msg,type,undoFn){var t=document.getElementById('toast');document.getElementById('toastMessage').textContent=msg;t.className='toast toast-'+(type||'success')+' show';var ub=document.getElementById('toastUndo');if(undoFn){ub.style.display='inline-block';ub.onclick=function(){hideToast();undoFn();};}else{ub.style.display='none';ub.onclick=null;}clearTimeout(toastTimer);toastTimer=setTimeout(hideToast,undoFn?6000:2600);}
+function hideToast(){document.getElementById('toast').classList.remove('show');}
+function openModal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.add('show');}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+var confirmCb=null;
+function askConfirm(msg,cb){document.getElementById('confirmText').textContent=msg;confirmCb=cb;document.getElementById('confirmModal').classList.add('show');}
+function doConfirm(){var cb=confirmCb;closeConfirm();if(cb)cb();}
+function closeConfirm(){confirmCb=null;document.getElementById('confirmModal').classList.remove('show');}
+function openDrawer(title,html){document.getElementById('drawerTitle').textContent=title;document.getElementById('drawerBody').innerHTML=html;document.getElementById('drawer').classList.add('open');document.getElementById('drawerMask').classList.add('show');}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawerMask').classList.remove('show');}
+function rowClick(e,id){if(e.target.closest('button,input,select,a,label'))return;openDetail(id);}
+function val(id){var el=document.getElementById(id);return el?el.value.trim():'';}
+function reqOK(){var ok=true;document.querySelectorAll('#modalBody [data-req]').forEach(function(el){if(!String(el.value).trim()){el.style.borderColor='#ff4d4f';ok=false;}else{el.style.borderColor='';}});if(!ok)showToast('请填写完整必填项（红框）','error');return ok;}
+function fg(label,html,req,full){return '<div class="form-group'+(full?' full':'')+'"><label>'+label+(req?'<span class="req">*</span>':'')+'</label>'+html+'</div>';}
+function inp(id,v,type,req){return '<input id="'+id+'" type="'+(type||'text')+'" value="'+esc(v==null?'':v)+'"'+(req?' data-req="1"':'')+'>';}
+function sel(id,opts,v,req){return '<select id="'+id+'"'+(req?' data-req="1"':'')+'>'+opts.map(function(o){return '<option value="'+esc(o)+'"'+(String(o)===String(v)?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';}
+var selected={};
+function toggleAll(cb){document.querySelectorAll('#tableBody .row-check').forEach(function(c){c.checked=cb.checked;selected[c.dataset.id]=cb.checked;});updateSelInfo();}
+function toggleRow(cb){selected[cb.dataset.id]=cb.checked;updateSelInfo();}
+function updateSelInfo(){var n=Object.keys(selected).filter(function(k){return selected[k];}).length;var el=document.getElementById('selInfo');if(el)el.textContent=n?('已选 '+n+' 条'):'';var all=document.getElementById('selectAll');if(all){var boxes=document.querySelectorAll('#tableBody .row-check');all.checked=boxes.length>0&&n===boxes.length;}}
+function removeRow(col,id,label){var idx=FS.list(col).findIndex(function(x){return x.id===id;});askConfirm('确认删除「'+label+'」？删除后可撤销。',function(){var gone=FS.remove(col,id);delete selected[id];renderAll();showToast('已删除「'+label+'」','success',function(){FS.restore(col,gone,idx);renderAll();showToast('已撤销删除','success');});});}
+function batchDelete(col,label){var ids=Object.keys(selected).filter(function(k){return selected[k];});if(!ids.length){showToast('请先勾选要删除的记录','warning');return;}askConfirm('确认删除选中的 '+ids.length+' 条'+label+'？删除后可撤销。',function(){var list=FS.list(col);var removed=ids.map(function(id){return {obj:FS.get(col,id),idx:list.findIndex(function(x){return x.id===id;})};}).filter(function(r){return r.obj;}).sort(function(a,b){return a.idx-b.idx;});ids.forEach(function(id){FS.remove(col,id);});selected={};renderAll();showToast('已删除 '+removed.length+' 条'+label,'success',function(){removed.forEach(function(r){FS.restore(col,r.obj,r.idx);});renderAll();showToast('已撤销批量删除','success');});});}
+function exportCSV(name,headers,rows){if(!rows.length){showToast('当前视图暂无可导出数据','warning');return;}var csv='﻿'+[headers].concat(rows).map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'_'+today()+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);showToast('导出成功，文件已下载','success');}
+var sortKey='',sortDir=1;
+function sortBy(k){if(sortKey===k){sortDir=-sortDir;}else{sortKey=k;sortDir=1;}renderTable();}
+function applySort(rows){if(!sortKey)return rows;return rows.slice().sort(function(a,b){var x=a[sortKey],y=b[sortKey];if(typeof x==='number'&&typeof y==='number')return (x-y)*sortDir;return String(x==null?'':x).localeCompare(String(y==null?'':y),'zh')*sortDir;});}
+function paintArrows(){document.querySelectorAll('th.sortable').forEach(function(th){var a=th.querySelector('.sort-arrow');if(a)a.textContent=th.dataset.key===sortKey?(sortDir>0?'▲':'▼'):'';});}
+function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('filterSelect').value='';document.getElementById('certFilter').value='';renderAll();}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeConfirm();closeDrawer();}});
+
+/* ===== 人员班组 ===== */
+var SHIFTS=['早班 06:00-14:00','早班 02:00-10:00','早班 05:00-13:00','早班 05:30-13:30','中班 08:00-16:00','常白班 + 值班'];
+function membersOf(t){return String(t.members||'').split(/[、,，]/).map(function(s){return s.trim();}).filter(Boolean);}
+function certState(t){
+  if(!t.certExpire||t.certExpire==='—')return {text:'无持证要求',cls:'inactive',left:null};
+  var left=Math.ceil((new Date(String(t.certExpire).slice(0,10)+'T23:59:59').getTime()-Date.now())/86400000);
+  if(isNaN(left))return {text:'无持证要求',cls:'inactive',left:null};
+  if(left<0)return {text:'已过期',cls:'danger',left:left};
+  if(left<=30)return {text:'30天内到期',cls:'warning',left:left};
+  return {text:'正常',cls:'normal',left:left};
+}
+function teamRows(){
+  var kw=document.getElementById('searchInput').value.trim().toLowerCase();
+  var shift=document.getElementById('filterSelect').value;
+  var cf=document.getElementById('certFilter').value;
+  return FS.list('teams').map(function(t){
+    var cs=certState(t);
+    return Object.assign({},t,{memberCount:membersOf(t).length,csText:cs.text,csCls:cs.cls,csLeft:cs.left});
+  }).filter(function(t){
+    if(shift&&String(t.shift).indexOf(shift)!==0)return false;
+    if(cf){
+      if(cf==='正常'&&t.csText!=='正常')return false;
+      if(cf==='已过期'&&t.csText!=='已过期')return false;
+      if(cf==='30天内'&&t.csText!=='30天内到期')return false;
+    }
+    if(kw&&(t.name+' '+t.leader+' '+t.members+' '+t.certs).toLowerCase().indexOf(kw)===-1)return false;
+    return true;
+  });
+}
+function renderStats(){
+  var ts=FS.list('teams');
+  var people={};
+  ts.forEach(function(t){membersOf(t).forEach(function(m){people[m]=1;});});
+  var warn=ts.filter(function(t){var s=certState(t).text;return s==='已过期'||s==='30天内到期';}).length;
+  var expired=ts.filter(function(t){return certState(t).text==='已过期';}).length;
+  var cards=[
+    {label:'班组数',value:ts.length,unit:'个',sub:'覆盖制备到冷链全工序',cls:''},
+    {label:'总人数',value:Object.keys(people).length,unit:'人',sub:'按成员去重统计',cls:'green'},
+    {label:'持证到期预警',value:warn,unit:'个',sub:'已过期 '+expired+' 个，30天内到期 '+(warn-expired)+' 个',cls:'red'},
+    {label:'持证班组',value:ts.filter(function(t){return t.certs&&t.certs!=='—';}).length,unit:'个',sub:'压力容器 / 无菌操作 / 叉车等',cls:'orange'}
+  ];
+  document.getElementById('statGrid').innerHTML=cards.map(function(c){
+    return '<div class="stat-card '+c.cls+'"><div class="stat-label">'+c.label+'</div><div class="stat-value">'+esc(c.value)+(c.unit?'<small>'+c.unit+'</small>':'')+'</div><div class="stat-sub">'+esc(c.sub)+'</div></div>';
+  }).join('');
+}
+function renderTable(){
+  var rows=applySort(teamRows());
+  var body=document.getElementById('tableBody');
+  if(!rows.length){body.innerHTML='<tr><td colspan="9" class="empty-cell">暂无符合条件的班组，点击「新建班组」添加</td></tr>';updateSelInfo();paintArrows();return;}
+  body.innerHTML=rows.map(function(t){
+    return '<tr onclick="rowClick(event,\''+t.id+'\')" style="cursor:pointer;">'+
+      '<td><input type="checkbox" class="row-check" data-id="'+t.id+'" '+(selected[t.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+      '<td><strong>'+esc(t.name)+'</strong></td>'+
+      '<td>'+esc(t.shift)+'</td>'+
+      '<td>'+esc(t.leader)+'</td>'+
+      '<td class="text-right">'+t.memberCount+'</td>'+
+      '<td>'+esc(t.certs)+'</td>'+
+      '<td>'+esc(t.certExpire==='—'?'—':String(t.certExpire).slice(0,10))+'</td>'+
+      '<td><span class="status-tag '+t.csCls+'">'+t.csText+'</span></td>'+
+      '<td><button class="row-btn row-edit" onclick="openTeamForm(\''+t.id+'\')">编辑</button><button class="row-btn danger row-del" onclick="removeRow(\'teams\',\''+t.id+'\',\''+esc(t.name)+'\')">删除</button></td>'+
+    '</tr>';
+  }).join('');
+  updateSelInfo();paintArrows();
+}
+function renderAll(){renderStats();renderTable();}
+
+var editingId='';
+function openTeamForm(id){
+  editingId=id||'';
+  var t=id?FS.get('teams',id):null;
+  openModal(t?'编辑班组':'新建班组',
+    fg('班组名称',inp('f_name',t?t.name:'','text',true),true)+
+    fg('班次',sel('f_shift',SHIFTS,t?t.shift:SHIFTS[0],true),true)+
+    fg('班长',inp('f_leader',t?t.leader:'','text',true),true)+
+    fg('持证类型',inp('f_certs',t?t.certs:'—'),false)+
+    fg('证到期日期',inp('f_expire',t&&t.certExpire!=='—'?String(t.certExpire).slice(0,10):'','date'),false)+
+    fg('成员（用顿号分隔）','<textarea id="f_members" data-req="1">'+esc(t?t.members:'')+'</textarea>',true,true)
+  );
+}
+function saveModal(){
+  if(!reqOK())return;
+  var members=val('f_members').replace(/[,，]/g,'、');
+  var leader=val('f_leader');
+  if(membersOf({members:members}).indexOf(leader)===-1)members=leader+'、'+members;
+  var expire=val('f_expire');
+  var patch={name:val('f_name'),shift:val('f_shift'),leader:leader,members:members,certs:val('f_certs')||'—',certExpire:expire?expire+' 00:00':'—'};
+  if(editingId){FS.update('teams',editingId,patch);showToast('班组已更新','success');}
+  else{FS.add('teams',patch);showToast('班组已创建','success');}
+  closeModal();renderAll();
+}
+function openDetail(id){
+  var t=FS.get('teams',id);if(!t)return;
+  var cs=certState(t);
+  var ms=membersOf(t);
+  openDrawer('班组详情 · '+t.name,
+    '<div class="detail-grid">'+
+    '<div class="detail-item"><div class="dl">班组</div><div class="dv">'+esc(t.name)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">班次</div><div class="dv">'+esc(t.shift)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">班长</div><div class="dv">'+esc(t.leader)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">成员数</div><div class="dv">'+ms.length+' 人</div></div>'+
+    '<div class="detail-item"><div class="dl">持证</div><div class="dv">'+esc(t.certs)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">证到期</div><div class="dv">'+esc(t.certExpire==='—'?'—':String(t.certExpire).slice(0,10))+'</div></div>'+
+    '<div class="detail-item"><div class="dl">持证状态</div><div class="dv"><span class="status-tag '+cs.cls+'">'+cs.text+'</span></div></div>'+
+    '</div>'+
+    '<div class="drawer-sec">成员明细</div>'+
+    '<div class="member-list">'+ms.map(function(m){
+      return '<span class="member-chip'+(m===t.leader?' leader':'')+'"><span class="avatar">'+esc(m.charAt(0))+'</span>'+esc(m)+(m===t.leader?' · 班长':'')+'</span>';
+    }).join('')+'</div>'+
+    (cs.cls==='danger'?'<p style="font-size:12px;color:#ff4d4f;margin-top:14px;">持证已过期，请安排复审换证后再上岗。</p>':'')+
+    (cs.cls==='warning'?'<p style="font-size:12px;color:#fa8c16;margin-top:14px;">证书将在 '+cs.left+' 天内到期，请提前安排复审。</p>':'')
+  );
+}
+function exportTeams(){
+  var rows=applySort(teamRows());
+  exportCSV('人员班组',['班组','班次','班长','成员','成员数','持证','证到期','持证状态'],rows.map(function(t){
+    return [t.name,t.shift,t.leader,t.members,t.memberCount,t.certs,t.certExpire,t.csText];
+  }));
+}
+renderAll();
+</script>
+</body>
+</html>

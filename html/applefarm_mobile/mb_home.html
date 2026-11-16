@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌环境监测系统 - 首页</title>
+  <!-- H5设计系统 -->
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <!-- 共享数据层 -->
+  <script src="js/mobile-store.js"></script>
+  <script src="js/mobile-messages.js"></script>
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+
+    body { background: var(--bg); }
+
+    /* --- Header --- */
+    .mb-header-home {
+      background: var(--gradient-header);
+      padding: calc(var(--safe-top) + 18px) 20px 22px;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 4px 24px rgba(69, 48, 35, 0.26), 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .greet-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .greet-hello {
+      font-size: var(--font-2xl);
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: 0.5px;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.10);
+    }
+
+    .greet-sub {
+      font-size: var(--font-xs);
+      opacity: 0.86;
+      margin-top: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .greet-side {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .greet-date {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      line-height: 1.28;
+    }
+
+    .greet-date-md {
+      font-size: var(--font-base);
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .greet-date-dy {
+      font-size: var(--font-xs);
+      opacity: 0.85;
+    }
+
+    .greet-bell {
+      position: relative;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.18);
+      color: var(--text-inverse);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background var(--transition-fast), transform var(--transition-fast);
+    }
+
+    .greet-bell:active {
+      background: rgba(255, 255, 255, 0.30);
+      transform: scale(0.94);
+    }
+
+    .greet-bell svg { width: 20px; height: 20px; }
+
+    .greet-bell-dot {
+      position: absolute;
+      top: 7px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--error);
+    }
+
+    .greet-loc {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 12px;
+      font-size: var(--font-base);
+      letter-spacing: 0.3px;
+      opacity: 0.95;
+    }
+
+    .greet-loc svg {
+      width: 15px;
+      height: 15px;
+      opacity: 0.9;
+      flex-shrink: 0;
+    }
+
+    /* --- 当前菇房环境摘要卡 --- */
+    .env-summary {
+      position: relative;
+      background: var(--bg-white);
+      border-radius: var(--radius-xl);
+      padding: 16px 16px 14px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+    }
+
+    .es-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .es-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-md);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.3px;
+    }
+
+    .stage-badge {
+      flex-shrink: 0;
+      font-size: var(--font-2xs);
+      font-weight: 600;
+      color: var(--primary-700);
+      background: var(--primary-50);
+      border: 1px solid var(--primary-100);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      white-space: nowrap;
+    }
+
+    .es-sub {
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .es-main {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .es-ring {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      flex-shrink: 0;
+    }
+
+    .es-ring svg { display: block; width: 72px; height: 72px; }
+
+    .es-ring-text {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .es-score {
+      font-size: var(--font-2xl);
+      font-weight: 800;
+      line-height: 1;
+      color: var(--primary-700);
+      font-family: var(--font-family-number);
+    }
+
+    .es-score-cap {
+      font-size: var(--font-2xs);
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    .es-verdict { flex: 1; min-width: 0; }
+
+    .es-verdict-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--font-lg);
+      font-weight: 700;
+      color: var(--primary-700);
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+
+    .es-verdict-desc {
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin-top: 4px;
+    }
+
+    .es-metrics {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .es-metric {
+      background: var(--primary-50);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+    }
+
+    .es-metric-label { font-size: var(--font-2xs); color: var(--text-tertiary); }
+
+    .es-metric-value {
+      font-size: var(--font-xl);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text);
+      margin-top: 2px;
+      font-family: var(--font-family-number);
+    }
+
+    .es-metric-value small {
+      font-size: var(--font-2xs);
+      font-weight: 500;
+      color: var(--text-tertiary);
+      margin-left: 2px;
+      font-family: var(--font-family);
+    }
+
+    .es-metric-note {
+      font-size: var(--font-2xs);
+      color: var(--success-dark);
+      margin-top: 3px;
+    }
+
+    .es-deviate {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      background: var(--bg-warm);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+      line-height: 1.5;
+    }
+
+    .es-deviate svg {
+      width: 14px;
+      height: 14px;
+      color: var(--success);
+      flex-shrink: 0;
+    }
+
+    /* --- 环境卡紧凑态（正常收起，点击展开） --- */
+    .es-compact {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .es-compact-score {
+      flex-shrink: 0;
+      width: 52px;
+      text-align: center;
+      background: var(--primary-50);
+      border: 1px solid var(--primary-100);
+      border-radius: var(--radius-md);
+      padding: 6px 0 5px;
+    }
+    .es-compact-score b {
+      display: block;
+      font-size: var(--font-lg);
+      font-weight: 800;
+      line-height: 1.1;
+      color: var(--primary-700);
+      font-family: var(--font-family-number);
+    }
+    .es-compact-score span { font-size: var(--font-2xs); color: var(--text-tertiary); }
+    .es-compact.is-deviate .es-compact-score { background: var(--error-light); border-color: #ffd6d3; }
+    .es-compact.is-deviate .es-compact-score b { color: var(--error-dark); }
+    .es-compact-mid { flex: 1; min-width: 0; }
+    .es-compact-verdict {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--font-base);
+      font-weight: 700;
+      color: var(--primary-700);
+    }
+    .es-compact.is-deviate .es-compact-verdict { color: var(--error-dark); }
+    .es-compact-metrics {
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      margin-top: 3px;
+      line-height: 1.5;
+      font-family: var(--font-family-number);
+    }
+    .es-compact-metrics .dev { color: var(--error-dark); font-weight: 700; }
+    .es-chevron {
+      width: 18px; height: 18px;
+      color: var(--text-tertiary);
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
+    }
+    .es-chevron.open { transform: rotate(180deg); }
+
+    /* --- 环境卡异常横幅 --- */
+    .es-alert {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      background: var(--error-light);
+      border: 1px solid #ffd6d3;
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+    }
+    .es-alert-info { flex: 1; min-width: 0; }
+    .es-alert-title {
+      font-size: var(--font-sm);
+      font-weight: 700;
+      color: var(--error-dark);
+    }
+    .es-alert-desc {
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      margin-top: 2px;
+      line-height: 1.5;
+    }
+    .es-alert .mb-btn { flex-shrink: 0; }
+
+    .es-detail { margin-top: 4px; }
+    .es-metric.is-deviate { background: var(--error-light); }
+    .es-metric.is-deviate .es-metric-value { color: var(--error-dark); }
+    .es-metric-note.is-deviate { color: var(--error-dark); font-weight: 600; }
+    .es-deviate.is-deviate { background: var(--error-light); color: var(--error-dark); }
+    .es-deviate.is-deviate svg { color: var(--error); }
+
+    /* --- 今日待办 --- */
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 12px 12px 16px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: var(--shadow-card);
+      transition: transform var(--transition-fast);
+    }
+
+    .todo-item:active { transform: scale(0.99); }
+
+    .todo-bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--primary);
+    }
+
+    .todo-bar.danger { background: var(--error); }
+    .todo-bar.warning { background: var(--warning); }
+    .todo-bar.success { background: var(--success); }
+    .todo-bar.info { background: var(--info); }
+
+    .todo-info { flex: 1; min-width: 0; }
+
+    .todo-title {
+      font-size: var(--font-base);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .todo-desc {
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      line-height: 1.45;
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .todo-due {
+      flex-shrink: 0;
+      font-size: var(--font-2xs);
+      font-weight: 600;
+      color: var(--primary-700);
+      background: var(--primary-50);
+      border-radius: var(--radius-full);
+      padding: 3px 8px;
+    }
+
+    .todo-due.is-overdue { color: var(--error-dark); background: var(--error-light); }
+    .todo-due.is-soon { color: var(--warning-dark); background: var(--warning-light); }
+
+    /* --- 常用服务九宫格 --- */
+    .quick-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .quick-tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 6px 12px;
+      box-shadow: var(--shadow-card);
+      cursor: pointer;
+      transition: transform var(--transition-fast);
+    }
+
+    .quick-tile:active { transform: scale(0.97); }
+
+    .quick-tile .mb-quick-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+    }
+
+    .quick-tile .mb-quick-icon svg { width: 24px; height: 24px; }
+    .quick-tile .mb-quick-icon.gray { background: var(--gray-100); color: var(--gray-500); }
+
+    .quick-tile-name {
+      font-size: var(--font-sm);
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    /* --- 今日动态三卡 --- */
+    .trend-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .trend-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px 10px;
+      box-shadow: var(--shadow-card);
+      min-width: 0;
+    }
+
+    .trend-label { font-size: var(--font-2xs); color: var(--text-tertiary); }
+
+    .trend-value {
+      font-size: var(--font-xl);
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text);
+      margin-top: 4px;
+      font-family: var(--font-family-number);
+      white-space: nowrap;
+    }
+
+    .trend-value.is-warn { color: var(--warning-dark); }
+
+    .trend-value small {
+      font-size: var(--font-2xs);
+      font-weight: 500;
+      color: var(--text-tertiary);
+      margin-left: 1px;
+      font-family: var(--font-family);
+    }
+
+    .trend-note {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .trend-note.is-good { color: var(--success-dark); font-weight: 600; }
+
+    /* --- 任务抽屉 --- */
+    .task-sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .task-type {
+      font-size: var(--font-2xs);
+      font-weight: 600;
+      background: var(--primary-50);
+      color: var(--primary-700);
+      padding: 3px 9px;
+      border-radius: var(--radius-full);
+    }
+
+    .task-due-lg {
+      font-size: var(--font-xs);
+      color: var(--error-dark);
+      font-weight: 600;
+    }
+
+    .task-meta {
+      background: var(--bg-warm);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 4px 12px;
+    }
+
+    .task-meta .kv {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 7px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: var(--font-sm);
+    }
+
+    .task-meta .kv:last-child { border-bottom: none; }
+    .task-meta .kv span { color: var(--text-tertiary); flex-shrink: 0; }
+    .task-meta .kv b { color: var(--text); font-weight: 500; text-align: right; }
+
+    .task-advice {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 12px;
+      background: var(--primary-50);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .task-advice b { color: var(--primary-700); }
+
+    /* --- 骨架屏 --- */
+    .skeleton-state { display: none; }
+    .mb-app.loading .real-content { display: none; }
+    .mb-app.loading .skeleton-state { display: block; }
+
+    .sk-header {
+      background: var(--gradient-header);
+      padding: calc(var(--safe-top) + 18px) 20px 22px;
+      border-radius: 0 0 20px 20px;
+    }
+
+    @media (max-width: 374px) {
+      .greet-hello { font-size: var(--font-xl); }
+      .es-ring, .es-ring svg { width: 66px; height: 66px; }
+      .es-score { font-size: var(--font-xl); }
+      .es-verdict-title { font-size: var(--font-md); }
+      .trend-value { font-size: var(--font-lg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="mb-app loading">
+    <!-- ===================== 骨架屏 ===================== -->
+    <div class="skeleton-state">
+      <div class="sk-header">
+        <div class="mb-skeleton" style="width: 148px; height: 22px;"></div>
+        <div class="mb-skeleton" style="width: 176px; height: 13px; margin-top: 14px;"></div>
+      </div>
+      <div style="padding: 12px 16px 0;">
+        <div class="mb-skeleton" style="width: 100%; height: 30px;"></div>
+      </div>
+      <div class="mb-section">
+        <div class="mb-skeleton-card">
+          <div class="mb-skeleton" style="width: 132px; height: 17px;"></div>
+          <div class="mb-skeleton" style="width: 190px; height: 12px; margin-top: 8px;"></div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:16px;">
+            <div class="mb-skeleton" style="width: 72px; height: 72px; border-radius: 50%;"></div>
+            <div style="flex:1;">
+              <div class="mb-skeleton" style="width: 84px; height: 20px;"></div>
+              <div class="mb-skeleton" style="width: 90%; height: 12px; margin-top: 10px;"></div>
+            </div>
+          </div>
+          <div class="mb-skeleton" style="width: 100%; height: 64px; margin-top: 16px;"></div>
+        </div>
+      </div>
+      <div class="mb-section">
+        <div class="mb-skeleton" style="width: 88px; height: 16px; margin-bottom: 12px;"></div>
+        <div class="quick-grid-3">
+          <div class="mb-skeleton" style="height: 92px;"></div>
+          <div class="mb-skeleton" style="height: 92px;"></div>
+          <div class="mb-skeleton" style="height: 92px;"></div>
+        </div>
+      </div>
+      <div class="mb-section">
+        <div class="mb-skeleton" style="width: 88px; height: 16px; margin-bottom: 12px;"></div>
+        <div class="trend-grid">
+          <div class="mb-skeleton" style="height: 76px;"></div>
+          <div class="mb-skeleton" style="height: 76px;"></div>
+          <div class="mb-skeleton" style="height: 76px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== 真实内容 ===================== -->
+    <div class="real-content">
+      <!-- 顶部问候区 -->
+      <div class="mb-header-home">
+        <div class="greet-row">
+          <div>
+            <div class="greet-hello"><span id="greetName">李国强</span>，您好</div>
+            <div class="greet-sub" id="greetRole">车间操作工 · 工号 C-023</div>
+          </div>
+          <div class="greet-side">
+            <div class="greet-date">
+              <span class="greet-date-md" id="greetDate">11月16日</span>
+              <span class="greet-date-dy" id="greetDay">星期日</span>
+            </div>
+            <button class="greet-bell" type="button" onclick="navigateTo('mb_news.html')" aria-label="消息通知">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              <span class="greet-bell-dot" id="greetBellDot" style="display:none;"></span>
+            </button>
+          </div>
+        </div>
+        <div class="greet-loc">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>一号出菇房 GF-01 · 出菇期 第 11 天</span>
+        </div>
+      </div>
+
+      <!-- 数据同步状态栏（离线待同步提示） -->
+      <div id="syncBar"></div>
+
+      <!-- 今日待办（行动导向，置于环境卡之前；环境异常时由 JS 将环境卡置顶） -->
+      <div class="mb-section" id="secTodo">
+        <div class="flex justify-between items-center mb-3">
+          <div class="mb-section-title" style="margin-bottom:0;"><span class="mb-section-dot"></span>今日待办</div>
+          <span class="text-xs text-secondary">2 项</span>
+        </div>
+        <div class="todo-list">
+          <div class="todo-item" onclick="openTask(0)">
+            <span class="todo-bar danger"></span>
+            <div class="todo-info">
+              <div class="todo-title">越限处置 · 1号房温度偏高</div>
+              <div class="todo-desc">当前 19.6℃，高于出菇期上限 18.4℃ 达 1.2℃</div>
+            </div>
+            <span class="todo-due is-overdue">截止 10:30</span>
+          </div>
+          <div class="todo-item" onclick="openTask(1)">
+            <span class="todo-bar info"></span>
+            <div class="todo-info">
+              <div class="todo-title">扫码开工 · 菌包批次待接种</div>
+              <div class="todo-desc">菌包批次 JB-20261116-03 灭菌完成，待接种登记</div>
+            </div>
+            <span class="todo-due">截止 11:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 当前菇房环境：紧凑状态条 + 可展开详情；有未处置越限时显示异常横幅 -->
+      <div class="mb-section" id="secEnv">
+        <div class="env-summary">
+          <div class="es-head">
+            <div class="es-title"><span class="mb-section-dot"></span>当前菇房环境</div>
+            <span class="stage-badge">出菇期 · 第 11 天</span>
+          </div>
+
+          <div class="es-compact" id="esCompact" onclick="toggleEnvDetail()" role="button" aria-expanded="false" aria-label="展开环境详情">
+            <div class="es-compact-score"><b id="esScoreMini">92</b><span>适宜度</span></div>
+            <div class="es-compact-mid">
+              <div class="es-compact-verdict" id="esVerdictMini">环境适宜 <span class="mb-tag success">适宜</span></div>
+              <div class="es-compact-metrics" id="esMetricsMini">温度 18.4℃ · 湿度 92.3% · CO₂ 685ppm · 光照 120lux</div>
+            </div>
+            <svg class="es-chevron" id="esChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+
+          <div class="es-alert" id="esAlert" style="display:none;">
+            <div class="es-alert-info">
+              <div class="es-alert-title" id="esAlertTitle"></div>
+              <div class="es-alert-desc" id="esAlertDesc"></div>
+            </div>
+            <button class="mb-btn mb-btn-sm mb-btn-primary" type="button" onclick="navigateTo('mb_alert.html')">去处置</button>
+          </div>
+
+          <div class="es-detail" id="esDetail" style="display:none;">
+            <div class="es-sub">一号出菇房 GF-01 · 控制器 4 点位 · 每 5 分钟自动刷新</div>
+
+            <div class="es-main">
+              <div class="es-ring">
+                <svg viewBox="0 0 78 78" role="img" aria-label="环境适宜度评分" id="esRingSvg">
+                  <defs>
+                    <linearGradient id="esRingGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0" stop-color="#A87C58"/>
+                      <stop offset="1" stop-color="#6B4B35"/>
+                    </linearGradient>
+                  </defs>
+                  <circle cx="39" cy="39" r="33" fill="none" stroke="var(--primary-100)" stroke-width="7"/>
+                  <circle id="esRingFg" cx="39" cy="39" r="33" fill="none" stroke="url(#esRingGrad)" stroke-width="7" stroke-linecap="round"
+                          stroke-dasharray="207.3" stroke-dashoffset="17" transform="rotate(-90 39 39)"/>
+                </svg>
+                <div class="es-ring-text">
+                  <span class="es-score" id="esScore">92</span>
+                  <span class="es-score-cap">适宜度</span>
+                </div>
+              </div>
+
+              <div class="es-verdict">
+                <div class="es-verdict-title" id="esVerdictTitle">环境适宜 <span class="mb-tag success">适宜</span></div>
+                <div class="es-verdict-desc" id="esVerdictDesc1">温度、湿度与 CO₂ 均在出菇期配方范围内</div>
+                <div class="es-verdict-desc" id="esVerdictDesc2">光照 120lux，符合催蕾补光要求</div>
+              </div>
+            </div>
+
+            <div class="es-metrics">
+              <div class="es-metric" id="esM_temp">
+                <div class="es-metric-label">温度</div>
+                <div class="es-metric-value" id="esV_temp">18.4<small>℃</small></div>
+                <div class="es-metric-note" id="esN_temp">适宜 16~20℃</div>
+              </div>
+              <div class="es-metric" id="esM_hum">
+                <div class="es-metric-label">湿度</div>
+                <div class="es-metric-value" id="esV_hum">92.3<small>%</small></div>
+                <div class="es-metric-note" id="esN_hum">适宜 88%~95%</div>
+              </div>
+              <div class="es-metric" id="esM_co2">
+                <div class="es-metric-label">CO₂ 浓度</div>
+                <div class="es-metric-value" id="esV_co2">685<small>ppm</small></div>
+                <div class="es-metric-note" id="esN_co2">适宜 ≤800ppm</div>
+              </div>
+              <div class="es-metric" id="esM_light">
+                <div class="es-metric-label">光照强度</div>
+                <div class="es-metric-value" id="esV_light">120<small>lux</small></div>
+                <div class="es-metric-note" id="esN_light">适宜 100~200lux</div>
+              </div>
+            </div>
+
+            <div class="es-deviate" id="esDeviate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>偏离项：无 · 阈值来源：出菇期配方 v3.2</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 常用服务（按登录角色显示高频入口，「全部」展开完整九宫格） -->
+      <div class="mb-section">
+        <div class="flex justify-between items-center mb-3">
+          <div class="mb-section-title" style="margin-bottom:0;"><span class="mb-section-dot"></span>常用服务</div>
+          <span class="text-xs text-secondary" id="svcRoleHint"></span>
+        </div>
+        <div class="quick-grid-3" id="svcGrid">
+          <div class="quick-tile" data-svc="device" onclick="navigateTo('mb_device.html')">
+            <div class="mb-quick-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></div>
+            <div class="quick-tile-name">设备控制</div>
+          </div>
+          <div class="quick-tile" data-svc="troubleshoot" onclick="navigateTo('mb_troubleshoot.html')">
+            <div class="mb-quick-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
+            <div class="quick-tile-name">设备报修</div>
+          </div>
+          <div class="quick-tile" data-svc="alert" onclick="navigateTo('mb_alert.html')">
+            <div class="mb-quick-icon gold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="quick-tile-name">预警处置</div>
+          </div>
+          <div class="quick-tile" data-svc="label" onclick="navigateTo('mb_label.html')">
+            <div class="mb-quick-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M21 14v7h-7"/></svg></div>
+            <div class="quick-tile-name">扫码开工</div>
+          </div>
+          <div class="quick-tile" data-svc="record" onclick="navigateTo('mb_record_task.html')">
+            <div class="mb-quick-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="14" y2="15"/></svg></div>
+            <div class="quick-tile-name">工序填报</div>
+          </div>
+          <div class="quick-tile" data-svc="yield" onclick="navigateTo('mb_yield.html')">
+            <div class="mb-quick-icon orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M6 7l-3 8h6z"/><path d="M18 7l-3 8h6z"/><path d="M12 3v4"/><path d="M6 21h12"/></svg></div>
+            <div class="quick-tile-name">采收过磅</div>
+          </div>
+          <div class="quick-tile" data-svc="material" onclick="navigateTo('mb_material.html')">
+            <div class="mb-quick-icon cyan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="4.2" y1="6.5" x2="19.8" y2="17.5"/><line x1="19.8" y1="6.5" x2="4.2" y2="17.5"/><path d="M9 4l3 2 3-2"/><path d="M9 20l3-2 3 2"/></svg></div>
+            <div class="quick-tile-name">冷库出入库</div>
+          </div>
+          <div class="quick-tile" data-svc="patrol" onclick="navigateTo('mb_patrol.html')">
+            <div class="mb-quick-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 14 11 16 15 12"/></svg></div>
+            <div class="quick-tile-name">质量抽检</div>
+          </div>
+          <div class="quick-tile" data-svc="disease" onclick="navigateTo('mb_disease.html')">
+            <div class="mb-quick-icon purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="quick-tile-name">杂菌识别</div>
+          </div>
+          <div class="quick-tile" id="svcAllTile" onclick="toggleAllServices()">
+            <div class="mb-quick-icon gray"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+            <div class="quick-tile-name" id="svcAllName">全部</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 今日动态 -->
+      <div class="mb-section">
+        <div class="mb-section-title"><span class="mb-section-dot"></span>今日动态</div>
+        <div class="trend-grid">
+          <div class="trend-card">
+            <div class="trend-label">今日产量</div>
+            <div class="trend-value">2.86<small>吨</small></div>
+            <div class="trend-note is-good">较昨日 +0.32</div>
+          </div>
+          <div class="trend-card">
+            <div class="trend-label">昨日预警</div>
+            <div class="trend-value is-warn">3<small>条</small></div>
+            <div class="trend-note">已处置 2 · 待处置 1</div>
+          </div>
+          <div class="trend-card">
+            <div class="trend-label">近7日合格率</div>
+            <div class="trend-value">98.6<small>%</small></div>
+            <div class="trend-note is-good">较上周 +0.4pp</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /real-content -->
+
+    <!-- 待办任务抽屉 -->
+    <div class="mb-modal-overlay is-sheet" id="taskOverlay">
+      <div class="mb-modal is-sheet">
+        <div class="task-sheet-head">
+          <span class="task-type" id="taskType">越限处置</span>
+          <span class="task-due-lg" id="taskDue">截止 10:30</span>
+        </div>
+        <div class="mb-modal-title" id="taskTitle" style="text-align:left;margin-bottom:10px;">任务标题</div>
+        <div class="mb-modal-body" id="taskDesc" style="margin-bottom:12px;">任务描述</div>
+        <div class="task-meta">
+          <div class="kv"><span>推荐时段</span><b id="taskBest">—</b></div>
+          <div class="kv"><span>适用菇房</span><b id="taskHouse">—</b></div>
+          <div class="kv"><span>任务来源</span><b id="taskSource">—</b></div>
+        </div>
+        <div class="task-advice">
+          <b>操作建议</b>
+          <span id="taskAdvice">—</span>
+        </div>
+        <div class="mb-modal-actions">
+          <button class="mb-btn mb-btn-secondary" type="button" onclick="closeTask()">关闭</button>
+          <button class="mb-btn mb-btn-secondary" type="button" onclick="adoptTask()">采纳</button>
+          <button class="mb-btn mb-btn-primary" type="button" onclick="execTask()">执行</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部导航：首页 / 监测 / 监控 / 我的 -->
+    <div class="mb-tab-bar">
+      <div class="mb-tab-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>首页</span>
+      </div>
+      <div class="mb-tab-item" onclick="navigateTo('mb_device.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>监测</span>
+      </div>
+      <div class="mb-tab-item" onclick="navigateTo('vr_panorama.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><polygon points="16 10 22 7 22 17 16 14"/></svg>
+        <span>监控</span>
+      </div>
+      <div class="mb-tab-item" onclick="navigateTo('mb_mine.html')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>我的</span>
+        <span class="mb-tab-badge" id="homeMineBadge" style="display:none;">0</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function navigateTo(page) {
+      window.location.href = page;
+    }
+
+    function toast(msg, type) {
+      if (window.MobileStore && typeof MobileStore.toast === 'function') {
+        MobileStore.toast(msg, type || 'success');
+      } else {
+        alert(msg);
+      }
+    }
+
+    // 问候区：姓名与岗位来自登录页写入的会话信息
+    (function () {
+      var name = sessionStorage.getItem('loginUser');
+      var role = sessionStorage.getItem('loginRole');
+      var nameEl = document.getElementById('greetName');
+      var roleEl = document.getElementById('greetRole');
+      if (name && nameEl) nameEl.textContent = name;
+      if (roleEl) roleEl.textContent = (role || '车间操作工') + ' · 工号 C-023';
+    })();
+
+    // 问候区日期：跟随系统当前日期
+    (function () {
+      var WEEK = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+      var now = new Date();
+      var mdEl = document.getElementById('greetDate');
+      var dyEl = document.getElementById('greetDay');
+      if (mdEl) { mdEl.textContent = (now.getMonth() + 1) + '月' + now.getDate() + '日'; }
+      if (dyEl) { dyEl.textContent = WEEK[now.getDay()]; }
+    })();
+
+    // 骨架屏加载模拟 — 实际项目中替换为真实数据加载逻辑
+    (function () {
+      var app = document.querySelector('.mb-app');
+      setTimeout(function () {
+        app.classList.remove('loading');
+      }, 600);
+    })();
+
+    // 初始化共享数据层同步状态栏（离线待同步提示）
+    (function () {
+      var syncEl = document.getElementById('syncBar');
+      if (window.MobileStore && syncEl) {
+        MobileStore.renderSyncBar(syncEl);
+      }
+    })();
+
+    // 铃铛未读红点与「我的」Tab 角标：跟随消息未读数
+    (function () {
+      var dot = document.getElementById('greetBellDot');
+      var badge = document.getElementById('homeMineBadge');
+      if (!window.MobileMessages) return;
+      function refreshBell() {
+        var n = MobileMessages.unreadCount();
+        if (dot) dot.style.display = n > 0 ? '' : 'none';
+        if (badge) {
+          badge.textContent = n > 99 ? '99+' : n;
+          badge.style.display = n > 0 ? '' : 'none';
+        }
+      }
+      refreshBell();
+      window.addEventListener('storage', function (e) {
+        if (!e.key || e.key.indexOf('mushroom_') === 0) refreshBell();
+      });
+      window.addEventListener('pageshow', refreshBell);
+    })();
+
+    /* ---------- 当前菇房环境：正常收起、异常放大 ----------
+     * 基线读数为演示值；越限状态取自预警台账（mushroom_alert_records），
+     * 与预警处置页互通：处置完成后首页自动恢复紧凑适宜态。 */
+    var ENV_METRICS = [
+      { key: 'temp', label: '温度', value: '18.4', unit: '℃', note: '适宜 16~20℃', match: '温度' },
+      { key: 'hum', label: '湿度', value: '92.3', unit: '%', note: '适宜 88%~95%', match: '湿度' },
+      { key: 'co2', label: 'CO₂', value: '685', unit: 'ppm', note: '适宜 ≤800ppm', match: 'CO₂' },
+      { key: 'light', label: '光照', value: '120', unit: 'lux', note: '适宜 100~200lux', match: '光照' }
+    ];
+    var ENV_LV_ORDER = { red: 0, orange: 1, yellow: 2, blue: 3 };
+
+    function envEsc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function toggleEnvDetail() {
+      var detail = document.getElementById('esDetail');
+      var chevron = document.getElementById('esChevron');
+      var compact = document.getElementById('esCompact');
+      var open = detail.style.display === 'none';
+      detail.style.display = open ? '' : 'none';
+      chevron.classList.toggle('open', open);
+      compact.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function renderEnv() {
+      if (!window.MobileMessages) return;
+      var openAlerts = MobileMessages.list('alert').map(function (m) { return m.raw; })
+        .filter(function (a) { return a && a.status !== 'done' && /GF-01/.test(a.house || ''); })
+        .sort(function (a, b) { return (ENV_LV_ORDER[a.level] || 9) - (ENV_LV_ORDER[b.level] || 9); });
+
+      var devMap = {};
+      openAlerts.forEach(function (a) {
+        ENV_METRICS.forEach(function (mt) {
+          if ((a.metric || '').indexOf(mt.match) > -1 && !devMap[mt.key]) devMap[mt.key] = a;
+        });
+      });
+      var devCount = openAlerts.length;
+      var hasDev = devCount > 0;
+      var score = Math.max(40, 92 - devCount * 12);
+
+      /* 紧凑态 */
+      var compact = document.getElementById('esCompact');
+      compact.classList.toggle('is-deviate', hasDev);
+      document.getElementById('esScoreMini').textContent = score;
+      document.getElementById('esVerdictMini').innerHTML = hasDev
+        ? devCount + ' 项越限 <span class="mb-tag error">异常</span>'
+        : '环境适宜 <span class="mb-tag success">适宜</span>';
+      document.getElementById('esMetricsMini').innerHTML = ENV_METRICS.map(function (mt) {
+        var a = devMap[mt.key];
+        var txt = mt.label + ' ' + (a ? a.current : mt.value + mt.unit);
+        return a ? '<span class="dev">' + envEsc(txt) + '</span>' : envEsc(txt);
+      }).join(' · ');
+
+      /* 异常横幅 */
+      var banner = document.getElementById('esAlert');
+      if (hasDev) {
+        var first = openAlerts[0];
+        document.getElementById('esAlertTitle').textContent = first.title + (devCount > 1 ? '（共 ' + devCount + ' 项待处置）' : '');
+        document.getElementById('esAlertDesc').textContent =
+          first.metric + ' 当前 ' + first.current + '（' + first.threshold + '）' +
+          (first.duration ? ' · 已持续 ' + first.duration : '');
+        banner.style.display = '';
+      } else {
+        banner.style.display = 'none';
+      }
+
+      /* 展开详情 */
+      document.getElementById('esScore').textContent = score;
+      document.getElementById('esRingSvg').setAttribute('aria-label', '环境适宜度 ' + score + ' 分');
+      document.getElementById('esRingFg').setAttribute('stroke-dashoffset', (207.3 * (1 - score / 100)).toFixed(1));
+      document.getElementById('esVerdictTitle').innerHTML = hasDev
+        ? '环境异常 <span class="mb-tag error">' + devCount + ' 项越限</span>'
+        : '环境适宜 <span class="mb-tag success">适宜</span>';
+      document.getElementById('esVerdictDesc1').textContent = hasDev
+        ? '存在未处置越限预警，请优先完成处置并回读确认'
+        : '温度、湿度与 CO₂ 均在出菇期配方范围内';
+      document.getElementById('esVerdictDesc2').textContent = hasDev
+        ? '处置入口：预警处置页或下方异常横幅'
+        : '光照 120lux，符合催蕾补光要求';
+      ENV_METRICS.forEach(function (mt) {
+        var a = devMap[mt.key];
+        var card = document.getElementById('esM_' + mt.key);
+        var valEl = document.getElementById('esV_' + mt.key);
+        var noteEl = document.getElementById('esN_' + mt.key);
+        card.classList.toggle('is-deviate', !!a);
+        noteEl.classList.toggle('is-deviate', !!a);
+        if (a) {
+          valEl.textContent = a.current;
+          noteEl.textContent = a.threshold + ' · 越限';
+        } else {
+          valEl.innerHTML = envEsc(mt.value) + '<small>' + envEsc(mt.unit) + '</small>';
+          noteEl.textContent = mt.note;
+        }
+      });
+      var deviate = document.getElementById('esDeviate');
+      deviate.classList.toggle('is-deviate', hasDev);
+      var devLabels = ENV_METRICS.filter(function (mt) { return devMap[mt.key]; }).map(function (mt) { return mt.label; });
+      var extra = openAlerts.filter(function (a) {
+        return !ENV_METRICS.some(function (mt) { return (a.metric || '').indexOf(mt.match) > -1; });
+      }).map(function (a) { return a.metric; });
+      var allLabels = devLabels.concat(extra);
+      deviate.innerHTML = hasDev
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>偏离项：' + envEsc(allLabels.join('、')) + ' · 阈值来源：出菇期配方 v3.2</span>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>偏离项：无 · 阈值来源：出菇期配方 v3.2</span>';
+
+      /* 异常时环境卡置顶到待办之前，正常时待办在前 */
+      var secEnv = document.getElementById('secEnv');
+      var secTodo = document.getElementById('secTodo');
+      var parent = secEnv.parentNode;
+      if (hasDev) parent.insertBefore(secEnv, secTodo);
+      else parent.insertBefore(secTodo, secEnv);
+    }
+
+    renderEnv();
+    window.addEventListener('storage', function (e) {
+      if (!e.key || e.key.indexOf('mushroom_') === 0) renderEnv();
+    });
+    window.addEventListener('pageshow', renderEnv);
+
+    /* ---------- 常用服务：按登录角色显示高频入口 ----------
+     * 角色来自登录会话 loginRole，按关键词匹配（后台账号角色命名不完全统一）；
+     * 管理员/访客/未知角色显示全部入口。销售、经营分析类入口不在移动端，
+     * 属于 PC 后台范围（见 README 关键产品决策）。 */
+    var ROLE_SERVICES = [
+      { test: /操作|工位|车间/, keys: ['label', 'record', 'yield', 'alert'] },
+      { test: /运维|维修|设备/, keys: ['device', 'troubleshoot', 'alert', 'record'] },
+      { test: /质检|质量|检验/, keys: ['patrol', 'disease', 'alert', 'yield'] },
+      { test: /仓储|冷库|库房/, keys: ['material', 'yield', 'patrol', 'alert'] }
+    ];
+    var SVC_ORDER = ['device', 'troubleshoot', 'alert', 'label', 'record', 'yield', 'material', 'patrol', 'disease'];
+    var svcExpanded = false;
+
+    function currentRoleKeys() {
+      var role = '';
+      try { role = sessionStorage.getItem('loginRole') || ''; } catch (e) { /* 忽略 */ }
+      if (/管理/.test(role)) return null;
+      for (var i = 0; i < ROLE_SERVICES.length; i++) {
+        if (ROLE_SERVICES[i].test.test(role)) return ROLE_SERVICES[i].keys;
+      }
+      return null;
+    }
+
+    function renderServices() {
+      var grid = document.getElementById('svcGrid');
+      var allTile = document.getElementById('svcAllTile');
+      var hint = document.getElementById('svcRoleHint');
+      var keys = currentRoleKeys();
+      var tiles = {};
+      grid.querySelectorAll('.quick-tile[data-svc]').forEach(function (t) {
+        tiles[t.getAttribute('data-svc')] = t;
+      });
+      var role = '';
+      try { role = sessionStorage.getItem('loginRole') || ''; } catch (e) { /* 忽略 */ }
+
+      if (!keys) {
+        /* 管理员/访客/未知角色：完整九宫格，无「全部」开关 */
+        SVC_ORDER.forEach(function (k) {
+          tiles[k].style.display = '';
+          grid.appendChild(tiles[k]);
+        });
+        allTile.style.display = 'none';
+        hint.textContent = role ? role + ' · 全部入口' : '全部入口';
+        return;
+      }
+
+      var showKeys = svcExpanded ? SVC_ORDER : keys;
+      SVC_ORDER.forEach(function (k) {
+        tiles[k].style.display = showKeys.indexOf(k) > -1 ? '' : 'none';
+      });
+      SVC_ORDER.forEach(function (k) {
+        if (showKeys.indexOf(k) > -1) grid.appendChild(tiles[k]);
+      });
+      grid.appendChild(allTile);
+      allTile.style.display = '';
+      document.getElementById('svcAllName').textContent = svcExpanded ? '收起' : '全部';
+      hint.textContent = '按「' + role + '」配置';
+    }
+
+    function toggleAllServices() {
+      svcExpanded = !svcExpanded;
+      renderServices();
+    }
+
+    renderServices();
+
+    /* ---------- 今日待办・底部抽屉 ---------- */
+    var TASKS = [
+      {
+        type: '越限处置',
+        due: '截止 10:30',
+        title: '1号房温度偏高，需立即处置',
+        desc: '温度传感器 T2 当前 19.6℃，高于出菇期温度上限 18.4℃ 达 1.2℃，已持续 18 分钟。',
+        best: '10:00 — 10:30（立即）',
+        house: '一号出菇房 GF-01',
+        source: '环境监测 · 温度传感器 T2',
+        advice: '先检查风冷热泵与循环风机运行状态，确认回读值后再决定是否下调阈值；必要时切换为手动降温。',
+        action: '立即处置',
+        link: 'mb_device.html'
+      },
+      {
+        type: '扫码开工',
+        due: '截止 11:00',
+        title: '菌包批次 JB-20261116-03 待接种',
+        desc: '该批次灭菌已完成并冷却至接种温度，需扫码登记接种开工，关联菌种批次与接种环境。',
+        best: '10:30 — 11:00',
+        house: '接种室 A',
+        source: '生产管理 · 菌包批次',
+        advice: '扫描菌包批次码完成开工登记，并记录接种室温度、消毒记录与菌种批次号。',
+        action: '扫码开工',
+        link: 'mb_label.html'
+      }
+    ];
+
+    var currentTask = 0;
+
+    function openTask(index) {
+      var t = TASKS[index];
+      if (!t) return;
+      currentTask = index;
+      document.getElementById('taskType').textContent = t.type;
+      document.getElementById('taskDue').textContent = t.due;
+      document.getElementById('taskTitle').textContent = t.title;
+      document.getElementById('taskDesc').textContent = t.desc;
+      document.getElementById('taskBest').textContent = t.best;
+      document.getElementById('taskHouse').textContent = t.house;
+      document.getElementById('taskSource').textContent = t.source;
+      document.getElementById('taskAdvice').textContent = t.advice;
+      document.getElementById('taskOverlay').classList.add('show');
+    }
+
+    function closeTask() {
+      document.getElementById('taskOverlay').classList.remove('show');
+    }
+
+    function adoptTask() {
+      var t = TASKS[currentTask];
+      closeTask();
+      toast('已采纳「' + (t ? t.type : '任务') + '」处置建议');
+    }
+
+    function execTask() {
+      var t = TASKS[currentTask];
+      closeTask();
+      if (t && t.link) navigateTo(t.link);
+    }
+
+    document.getElementById('taskOverlay').addEventListener('click', function (e) {
+      if (e.target === this) closeTask();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 采后处理</title>
+<!-- 使用设计系统: Design System v2.0 + sidebar-layout -->
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  /* 模块卡片 hover 效果 */
+  .module-card {
+    transition:all 0.2s ease;
+  }
+  .module-card:hover {
+    background:var(--bg-hover);
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-md);
+  }
+  /* 分页栏样式（与农事计划一致） */
+  #pagination-container { padding:12px 16px; }
+  .stat-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:16px; }
+  .stat-card { background:var(--bg-card, #fff); border:1px solid var(--border-color, #e8ece8); border-radius:var(--radius-card, 12px); padding:16px 18px; }
+  .stat-label { font-size:12px; color:var(--text-tertiary); margin-bottom:6px; }
+  .stat-value { font-size:22px; font-weight:600; line-height:1.2; }
+  .stat-value small { font-size:12px; font-weight:400; color:var(--text-tertiary); margin-left:4px; }
+  .stat-sub { margin-top:6px; font-size:12px; color:var(--text-tertiary); }
+  @media (max-width: 1100px) { .stat-grid { grid-template-columns:repeat(2, 1fr); } }
+
+  /* ===== 弹窗统一：宽度、栅格与间距 ===== */
+  #modal-create .modal-box { max-width:680px; }
+  #modal-inbound .modal-box { max-width:600px; }
+  #modal-standard .modal-box { max-width:560px; }
+  #modal-export .modal-box { max-width:520px; }
+  #modal-detail .detail-grid { gap:16px 20px !important; }
+
+  .modal-grid {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:16px 20px;
+    align-items:start;
+  }
+  .modal-grid.cols-3 { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+  .modal-grid > .form-item { margin:0; min-width:0; }
+  .modal-grid > .full,
+  .modal-grid > .modal-hint { grid-column:1 / -1; }
+  .modal-grid .form-input[readonly] {
+    background:#f5f7f5;
+    color:var(--text-secondary);
+    cursor:default;
+  }
+  .modal-grid .form-textarea { min-height:88px; }
+  .req-mark { color:var(--status-danger, #ff4d4f); margin-left:2px; font-weight:600; }
+
+  /* 弹窗内的说明条 */
+  .modal-hint {
+    display:flex;
+    align-items:flex-start;
+    gap:6px;
+    padding:9px 12px;
+    border-radius:8px;
+    background:#f2f8f2;
+    border:1px solid #e2efe2;
+    font-size:12px;
+    line-height:1.6;
+    color:var(--text-tertiary);
+  }
+  .modal-hint svg { width:14px; height:14px; flex:none; margin-top:1px; }
+  @media (max-width:640px) {
+    .modal-grid, .modal-grid.cols-3 { grid-template-columns:1fr; }
+  }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="harvest" data-active-submenu="harvest-process">
+
+<!-- ===== 整体布局容器 ===== -->
+<div class="app-layout">
+
+  <!-- ===== 主内容区 ===== -->
+  <div class="main-wrapper">
+
+    <!-- Tab 标签栏 -->
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <div class="content-wrapper">
+
+        <!-- 搜索栏区 -->
+        <div class="page-section search-section">
+          <div class="search-bar">
+            <select class="search-select" id="statusSelect">
+              <option value="">全部状态</option>
+              <option value="grading">分级中</option>
+              <option value="packaging">包装中</option>
+              <option value="stored">已入库</option>
+              <option value="abnormal">异常</option>
+            </select>
+            <input type="text" class="search-input" placeholder="搜索批次编号或地块..." id="searchInput">
+          <div class="search-actions"><button class="jg-btn jg-btn-primary" onclick="handleSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button><button class="jg-btn" onclick="smartReset()">重置</button></div>
+          </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="page-section">
+          <div class="stat-grid" id="statGrid"></div>
+        </div>
+
+        <!-- 操作按钮区 -->
+        <div class="page-section action-bar">
+          <button class="jg-btn jg-btn-primary" onclick="showCreate()">新建处理单</button>
+          <button class="jg-btn" onclick="Modal.show('modal-export')">导出记录</button>
+        </div>
+
+        <!-- 数据列表区 -->
+        <div class="page-section data-section">
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:60px;">序号</th>
+                  <th style="width:120px;">批次编号</th>
+                  <th style="width:140px;">关联批次</th>
+                  <th style="width:150px;">地块</th>
+                  <th style="width:80px;">等级</th>
+                  <th style="width:100px;">数量(kg)</th>
+                  <th style="width:90px;">状态</th>
+                  <th style="width:140px;">操作时间</th>
+                  <th style="width:90px;">操作人</th>
+                  <th style="width:190px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody">
+              </tbody>
+            </table>
+          </div>
+          <div id="pagination-container">
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 导出记录模态框 -->
+<div id="modal-export" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">导出采后处理记录</h3>
+      <button class="modal-close">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="form-item full">
+          <label>选择导出格式</label>
+          <select class="form-select" id="exportFormat">
+            <option value="excel">Excel (.xlsx)</option>
+            <option value="csv">CSV (.csv)</option>
+          </select>
+        </div>
+        <div class="form-item full">
+          <label>导出范围</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <label class="checkbox-label">
+              <input type="radio" name="exportScope" value="all" checked>
+              <span>全部数据</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="radio" name="exportScope" value="selected">
+              <span>当前筛选结果</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="Modal.hide('modal-export')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="handleExport()">导出</button>
+    </div>
+  </div>
+</div>
+
+<!-- 详情模态框 -->
+<div id="modal-detail" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">采后处理详情</h3>
+      <button class="modal-close">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">批次编号</span>
+          <span class="detail-value" id="detail-id"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">来源记录</span>
+          <span class="detail-value" id="detail-record"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">地块</span>
+          <span class="detail-value" id="detail-plot"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">等级</span>
+          <span class="detail-value" id="detail-grade"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">数量</span>
+          <span class="detail-value" id="detail-quantity"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">状态</span>
+          <span class="detail-value" id="detail-status"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">库位</span>
+          <span class="detail-value" id="detail-location"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">操作时间</span>
+          <span class="detail-value" id="detail-time"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">操作人</span>
+          <span class="detail-value" id="detail-operator"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">备注</span>
+          <span class="detail-value" id="detail-remark"></span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn jg-btn-primary" onclick="Modal.hide('modal-detail')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 标准处理模态框 -->
+<div id="modal-standard" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">标准处理</h3>
+      <button class="modal-close">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="form-item">
+          <label>批次编号</label>
+          <input type="text" class="form-input" id="std-id" readonly>
+        </div>
+        <div class="form-item">
+          <label>处理结果 <span class="req-mark">*</span></label>
+          <select class="form-select" id="std-result">
+            <option value="pass">合格（推进到下一环节）</option>
+            <option value="rework">返工（状态保持不变）</option>
+            <option value="discard">报废（转异常）</option>
+          </select>
+        </div>
+        <div class="form-item full">
+          <label>处理备注</label>
+          <textarea class="form-textarea" id="std-remark" placeholder="请输入处理备注"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="Modal.hide('modal-standard')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="submitStandard()">确认处理</button>
+    </div>
+  </div>
+</div>
+
+<!-- 入库模态框 -->
+<div id="modal-inbound" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">入库确认</h3>
+      <button class="modal-close">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid">
+        <div class="form-item full">
+          <label>批次编号</label>
+          <input type="text" class="form-input" id="in-id" readonly>
+        </div>
+        <div class="form-item">
+          <label>入库数量(kg) <span class="req-mark">*</span></label>
+          <input type="number" class="form-input" id="in-quantity" placeholder="请输入入库数量">
+        </div>
+        <div class="form-item">
+          <label>入库时间</label>
+          <input type="datetime-local" class="form-input" id="in-time">
+        </div>
+        <div class="form-item">
+          <label>库位 <span class="req-mark">*</span></label>
+          <select class="form-select" id="in-location">
+            <option value="">请选择库位</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label>操作人</label>
+          <select class="form-select" id="in-operator"></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="Modal.hide('modal-inbound')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="submitInbound()">确认入库</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新建处理单模态框 -->
+<div id="modal-create" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">新建采后处理单</h3>
+      <button class="modal-close">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-grid cols-3">
+        <div class="form-item full">
+          <label>关联采收记录 <span class="req-mark">*</span></label>
+          <select class="form-select" id="new-record" onchange="onRecordChange()">
+            <option value="">请选择已完成的采收记录</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label>批次号</label>
+          <input type="text" class="form-input" id="new-batch" placeholder="选择记录后自动带出" readonly>
+        </div>
+        <div class="form-item">
+          <label>处理量(kg) <span class="req-mark">*</span></label>
+          <input type="number" class="form-input" id="new-qty" placeholder="请输入处理量">
+        </div>
+        <div class="form-item">
+          <label>处理人</label>
+          <select class="form-select" id="new-operator"></select>
+        </div>
+        <div class="form-item full">
+          <label>备注</label>
+          <textarea class="form-textarea" id="new-remark" placeholder="请输入备注"></textarea>
+        </div>
+        <div class="modal-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>
+          </svg>
+          <span>创建后自动进入「分级中」，完成分级与包装后方可执行入库。</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="Modal.hide('modal-create')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="submitCreate()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 引入交互脚本 -->
+<script src="js/common-functions.js"></script>
+<script src="js/export-helper.js"></script>
+<script src="js/shared/harvest-store.js"></script>
+<script>
+// 数据统一来自共享数据源 harvest-store.js（采收管理唯一数据源）
+let currentBatchId = '';
+
+function allProcesses() { return HarvestStore.processes(); }
+
+function getStatusTag(status) {
+  return '<span class="status-tag ' + HarvestStore.statusTag('processes', status) + '">' + HarvestStore.statusText('processes', status) + '</span>';
+}
+
+function plotText(p) {
+  if (!p.plot) return '-';
+  return p.plotName ? p.plot + ' · ' + p.plotName : p.plot;
+}
+
+/** 数据写入后统一刷新统计卡与列表 */
+function refresh() {
+  renderStats();
+  handleSearch();
+}
+
+function renderStats() {
+  const list = allProcesses();
+  const grading = list.filter(p => p.status === 'grading').length;
+  const packaging = list.filter(p => p.status === 'packaging').length;
+  // 在库口径与储藏页保持一致：只算仍有库存的批次（已全部发货的不再计在库）
+  const inStock = HarvestStore.storages();
+  const storedQty = inStock.reduce((s, i) => s + Number(i.qty || 0), 0);
+  const cards = [
+    { label: '处理单总数', value: list.length, unit: '单', sub: '覆盖全部采收批次' },
+    { label: '分级中', value: grading, unit: '单', sub: '待完成分级' },
+    { label: '包装中', value: packaging, unit: '单', sub: '待执行入库' },
+    { label: '在库批次', value: inStock.length, unit: '批', sub: '在库 ' + storedQty.toLocaleString() + ' kg' }
+  ];
+  document.getElementById('statGrid').innerHTML = cards.map(c =>
+    '<div class="stat-card"><div class="stat-label">' + c.label + '</div>' +
+    '<div class="stat-value">' + c.value + ' <small>' + c.unit + '</small></div>' +
+    '<div class="stat-sub">' + c.sub + '</div></div>'
+  ).join('');
+}
+
+// 渲染表格行（操作按钮严格按状态流转显示）
+function renderRow(item, index) {
+  let actions = `<button class="action-btn detail" onclick="showDetail('${item.id}')">详情</button>`;
+  if (item.status === 'grading' || item.status === 'abnormal') {
+    actions += `<button class="action-btn edit" onclick="showStandard('${item.id}')">标准处理</button>`;
+  }
+  if (item.status === 'packaging') {
+    actions += `<button class="action-btn edit" onclick="showInbound('${item.id}')">入库</button>`;
+  }
+
+  return `<tr>
+    <td>${index + 1}</td>
+    <td><strong>${item.id}</strong></td>
+    <td>${item.batchNo || '-'}</td>
+    <td>${plotText(item)}</td>
+    <td>${item.grade || '-'}</td>
+    <td class="text-right">${Number(item.qty || 0).toLocaleString()}</td>
+    <td>${getStatusTag(item.status)}</td>
+    <td>${item.updatedAt || '-'}</td>
+    <td>${item.operator || '-'}</td>
+    <td><div class="action-btns">${actions}</div></td>
+  </tr>`;
+}
+
+function filteredProcesses() {
+  var status = document.getElementById('statusSelect').value;
+  var keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+  return allProcesses().filter(function (item) {
+    if (status && item.status !== status) return false;
+    if (keyword) {
+      var hay = [item.id, item.batchNo, item.plot, item.plotName, item.operator].join(' ').toLowerCase();
+      if (hay.indexOf(keyword) === -1) return false;
+    }
+    return true;
+  });
+}
+
+// 搜索：状态 + 关键词
+function handleSearch() {
+  var data = filteredProcesses();
+  Pagination.updateData(data);
+  Toast.info('找到 ' + data.length + ' 条记录');
+}
+
+// 订阅共享数据源（跨页改动后静默刷新，避免重复提示）
+function silentRefresh() {
+  renderStats();
+  Pagination.updateData(filteredProcesses());
+}
+
+function findProcess(id) {
+  return HarvestStore.get('processes', id);
+}
+
+// 详情（按行回填）
+function showDetail(id) {
+  const item = findProcess(id);
+  if (!item) return;
+  document.getElementById('detail-id').textContent = item.id;
+  document.getElementById('detail-record').textContent = item.recordId || '-';
+  document.getElementById('detail-plot').textContent = plotText(item);
+  document.getElementById('detail-grade').textContent = item.grade || '-';
+  document.getElementById('detail-quantity').textContent = Number(item.qty || 0).toLocaleString() + ' kg';
+  document.getElementById('detail-status').innerHTML = getStatusTag(item.status);
+  document.getElementById('detail-location').textContent = item.location || '-';
+  document.getElementById('detail-time').textContent = item.updatedAt || '-';
+  document.getElementById('detail-operator').textContent = item.operator || '-';
+  document.getElementById('detail-remark').textContent = item.remark || '-';
+  Modal.show('modal-detail');
+}
+
+// 标准处理：分级中 →（合格）包装中；异常 →（合格）重新分级
+function showStandard(id) {
+  const item = findProcess(id);
+  if (!item) return;
+  currentBatchId = id;
+  document.getElementById('std-id').value = item.id + ' · ' + HarvestStore.statusText('processes', item.status);
+  document.getElementById('std-result').value = 'pass';
+  document.getElementById('std-remark').value = '';
+  Modal.show('modal-standard');
+}
+
+function submitStandard() {
+  const item = findProcess(currentBatchId);
+  if (!item) { Modal.hide('modal-standard'); Toast.error('处理单不存在'); return; }
+  const result = document.getElementById('std-result').value;
+  const remark = document.getElementById('std-remark').value.trim();
+  const patch = remark ? { remark: remark } : null;
+  let r = { ok: true };
+
+  if (result === 'discard') {
+    r = HarvestStore.advance('processes', currentBatchId, 'abnormal', patch);
+  } else if (result === 'rework') {
+    r = HarvestStore.updateProcess(currentBatchId, patch || {});
+    if (r.ok) {
+      Modal.hide('modal-standard');
+      refresh();
+      Toast.info('已记录返工，状态保持「' + HarvestStore.statusText('processes', item.status) + '」');
+      return;
+    }
+  } else {
+    const to = item.status === 'grading' ? 'packaging' : (item.status === 'abnormal' ? 'grading' : '');
+    if (!to) {
+      Modal.hide('modal-standard');
+      Toast.info('该批次已完成包装，请在列表执行入库');
+      return;
+    }
+    r = HarvestStore.advance('processes', currentBatchId, to, patch);
+  }
+
+  if (!r.ok) {
+    Toast.error(r.message);
+    return;
+  }
+  Modal.hide('modal-standard');
+  refresh();
+  Toast.success('处理完成，当前状态：' + HarvestStore.statusText('processes', findProcess(currentBatchId).status));
+}
+
+// 入库：仅「包装中」可入库，数量/时间/库位全部写回
+function fillSlotOptions(selected) {
+  const used = {};
+  HarvestStore.storages().forEach(function (s) {
+    if (s.batchId !== currentBatchId) used[s.id] = (used[s.id] || 0) + Number(s.qty || 0);
+  });
+  const options = HarvestStore.slots().map(function (slot) {
+    const occupied = used[slot.id] || 0;
+    const label = slot.id + '（' + slot.type + ' · 已占 ' + occupied + '/' + slot.capacity + ' kg）';
+    return '<option value="' + slot.id + '"' + (occupied >= slot.capacity ? ' disabled' : '') +
+      (slot.id === selected ? ' selected' : '') + '>' + label + '</option>';
+  }).join('');
+  document.getElementById('in-location').innerHTML = '<option value="">请选择库位</option>' + options;
+}
+
+function showInbound(id) {
+  const item = findProcess(id);
+  if (!item) return;
+  currentBatchId = id;
+  document.getElementById('in-id').value = item.id;
+  document.getElementById('in-quantity').value = item.qty;
+  document.getElementById('in-time').value = toLocalInput(new Date());
+  fillSlotOptions('');
+  document.getElementById('in-operator').value = item.operator || '';
+  Modal.show('modal-inbound');
+}
+
+function submitInbound() {
+  const r = HarvestStore.inboundProcess(currentBatchId, {
+    qty: document.getElementById('in-quantity').value,
+    time: document.getElementById('in-time').value,
+    slot: document.getElementById('in-location').value,
+    operator: document.getElementById('in-operator').value,
+    remark: ''
+  });
+  if (!r.ok) { Toast.error(r.message); return; }
+  Modal.hide('modal-inbound');
+  refresh();
+  Toast.success('入库成功，库位 ' + r.item.location);
+}
+
+// 新建处理单：从「已完成且未建处理单」的采收记录生成
+function showCreate() {
+  const records = HarvestStore.processableRecords();
+  const options = records.map(function (r) {
+    return '<option value="' + r.id + '">' + r.id + ' · ' + (r.batchNo || '-') + ' · ' + (r.plotName || r.plot) + ' · ' + r.qty + 'kg</option>';
+  }).join('');
+  document.getElementById('new-record').innerHTML = '<option value="">请选择已完成的采收记录</option>' + options;
+  document.getElementById('new-batch').value = '';
+  document.getElementById('new-qty').value = '';
+  document.getElementById('new-remark').value = '';
+  if (!records.length) Toast.info('暂无可建处理单的已完成采收记录');
+  Modal.show('modal-create');
+}
+
+function onRecordChange() {
+  const rec = HarvestStore.get('records', document.getElementById('new-record').value);
+  document.getElementById('new-batch').value = rec ? (rec.batchNo || '') : '';
+  document.getElementById('new-qty').value = rec ? rec.qty : '';
+}
+
+function submitCreate() {
+  const recordId = document.getElementById('new-record').value;
+  const r = HarvestStore.createProcess(recordId, {
+    qty: document.getElementById('new-qty').value,
+    operator: document.getElementById('new-operator').value,
+    remark: document.getElementById('new-remark').value
+  });
+  if (!r.ok) { Toast.error(r.message); return; }
+  Modal.hide('modal-create');
+  refresh();
+  Toast.success('已建立处理单 ' + r.item.id + '，批次 ' + r.item.batchNo);
+}
+
+// 真实导出（Excel / CSV）
+async function handleExport() {
+  const scope = document.querySelector('input[name="exportScope"]:checked').value;
+  const rows = (scope === 'selected' ? Pagination.filteredData : allProcesses());
+  const result = await ExportHelper.exportData({
+    filename: '采后处理记录_' + ExportHelper.stamp(),
+    format: document.getElementById('exportFormat').value,
+    headers: ['批次编号', '来源记录', '批次号', '地块', '品种', '等级', '数量(kg)', '状态', '库位', '更新时间', '操作人', '备注'],
+    rows: rows.map(b => [b.id, b.recordId || '', b.batchNo || '', plotText(b), b.variety || '', b.grade || '', b.qty,
+      HarvestStore.statusText('processes', b.status), b.location || '', b.updatedAt || '', b.operator || '', b.remark || ''])
+  });
+  Modal.hide('modal-export');
+  Toast.success(result === 'csv-fallback' ? 'Excel 组件加载失败，已导出为 CSV' : '导出成功，文件已下载');
+}
+
+function toLocalInput(d) {
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('in-operator').innerHTML = buildUserOptionsHtml('');
+  document.getElementById('new-operator').innerHTML = buildUserOptionsHtml('');
+  renderStats();
+  Pagination.init({
+    currentPage: 1,
+    pageSize: 10,
+    data: allProcesses(),
+    containerId: 'pagination-container',
+    tbodyId: 'dataTableBody',
+    renderRow: renderRow
+  });
+  if (HarvestStore.subscribe) HarvestStore.subscribe(silentRefresh);
+});
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/search-helper.js"></script>
+<script src="js/typography.js"></script>
+</body>
+</html>

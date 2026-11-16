@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 预警设置</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .search-section {
+    background:linear-gradient(145deg, var(--bg-card) 0%, var(--gray-50) 100%);
+    border-radius:var(--radius-xl);
+    box-shadow:0 4px 20px rgba(24, 144, 255, 0.08), 0 1px 3px rgba(0,0,0,0.04);
+    padding:var(--space-2xl);
+    margin-bottom:var(--space-xl);
+    border:1px solid rgba(24, 144, 255, 0.08);
+    transition:all 0.3s ease;
+  }
+  .search-section:hover {
+    box-shadow:0 6px 24px rgba(24, 144, 255, 0.12), 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .search-bar {
+    display:flex;
+    align-items:center;
+    gap:var(--space-xl);
+    flex-wrap:wrap;
+  }
+  .search-item {
+    display:flex;
+    align-items:center;
+    gap:var(--space-md);
+  }
+  .search-label {
+    font-size:var(--font-size-sm);
+    color:var(--text-secondary);
+    font-weight:500;
+    min-width:60px;
+  }
+  .search-input, .search-select {
+    padding:11px 16px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-lg);
+    font-size:var(--font-size-base);
+    transition:all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background:var(--bg-card);
+  }
+  .search-input:hover, .search-select:hover {
+    border-color:var(--border-default);
+    box-shadow:0 2px 8px rgba(24, 144, 255, 0.08);
+  }
+  .search-input:focus, .search-select:focus {
+    border-color:var(--primary-500);
+    box-shadow:0 0 0 4px rgba(24, 144, 255, 0.12);
+    transform:translateY(-1px);
+  }
+  .search-select {
+    min-width:150px;
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c8c8c' stroke-width='2'%3E%3Cpath d='m6,9 6,6 6,-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+    appearance:none;
+  }
+  .search-input {
+    flex:1;
+    max-width:280px;
+  }
+  .search-input::placeholder {
+    color:var(--text-tertiary);
+  }
+  .action-bar {
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    margin-bottom:var(--space-xl);
+    padding:16px 20px;
+    background:var(--bg-card);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    border:1px solid var(--border-light);
+  }
+  .action-left, .action-right {
+    display:flex;
+    align-items:center;
+    gap:var(--space-lg);
+  }
+  .selected-info {
+    font-size:var(--font-size-sm);
+    color:var(--text-tertiary);
+    padding:8px 16px;
+    background:var(--primary-50);
+    border-radius:var(--radius-md);
+  }
+  .selected-info strong {
+    color:var(--primary-600);
+    font-weight:600;
+    font-size:15px;
+  }
+  .data-section {
+    background:var(--bg-card);
+    border-radius:var(--radius-xl);
+    box-shadow:0 4px 20px rgba(24, 144, 255, 0.06), 0 1px 3px rgba(0,0,0,0.04);
+    border:1px solid rgba(24, 144, 255, 0.06);
+    overflow:hidden;
+    transition:all 0.3s ease;
+  }
+  .data-section:hover {
+    box-shadow:0 6px 24px rgba(24, 144, 255, 0.08), 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .data-table-wrapper {
+    overflow-x:auto;
+  }
+  .data-table {
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+  }
+  /* 表格多选列 */
+  .col-check { width:44px; text-align:center; }
+  .col-check input { cursor:pointer; }
+  .action-btns {
+    display:flex;
+    gap:6px;
+    flex-wrap:nowrap;
+  }
+  .action-btn {
+    padding:4px 10px;
+    font-size:11.5px;
+    font-weight:500;
+    border:1px solid transparent;
+    border-radius:6px;
+    cursor:pointer;
+    transition:all 0.2s ease;
+    white-space:nowrap;
+  }
+  .action-btn.detail {
+    color:#2b6cb0;
+    background:#f5f8fc;
+    border-color:#c5d9f0;
+  }
+  .action-btn.detail:hover {
+    background:#edf2fa;
+    border-color:#90bce8;
+  }
+  .action-btn.edit {
+    color:var(--primary-600);
+    background:var(--gray-50);
+    border-color:var(--border-default);
+  }
+  .action-btn.edit:hover {
+    background:var(--primary-50);
+    border-color:var(--primary-300);
+  }
+  .action-btn.delete {
+    color:var(--error);
+    background:#fff8f7;
+    border-color:#ffd1d1;
+  }
+  .action-btn.delete:hover {
+    background:var(--error-bg);
+    border-color:var(--error-border);
+  }
+  .status-tag {
+    padding:4px 12px;
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-xs);
+    font-weight:var(--font-weight-medium);
+  }
+  .status-tag.active {
+    background:var(--success-bg);
+    color:var(--success);
+  }
+  .status-tag.inactive {
+    background:var(--gray-100);
+    color:var(--text-tertiary);
+  }
+  .pagination-wrapper {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:var(--space-xl);
+    border-top:1px solid var(--border-light);
+    background:var(--gray-50);
+  }
+  .pagination-info {
+    font-size:var(--font-size-sm);
+    color:var(--text-tertiary);
+  }
+  .pagination-info .num {
+    color:var(--primary-500);
+    font-weight:var(--font-weight-semibold);
+  }
+  .pagination {
+    display:flex;
+    align-items:center;
+    gap:var(--space-sm);
+  }
+  .modal-overlay {
+    position:fixed;
+    inset:0;
+    background:rgba(0, 0, 0, 0.45);
+    z-index:var(--z-modal-backdrop);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:var(--space-xl);
+    opacity:0;
+    visibility:hidden;
+    transition:all var(--transition-normal);
+  }
+  .modal-box {
+    background:var(--bg-card);
+    border-radius:var(--radius-xl);
+    box-shadow:var(--shadow-xl);
+    max-width:600px;
+    width:100%;
+    max-height:85vh;
+    overflow:hidden;
+    transform:scale(0.95);
+    transition:transform var(--transition-normal);
+  }
+  .modal-close:hover {
+    background:var(--gray-100);
+  }
+  .modal-body {
+    padding:var(--space-xl);
+    overflow-y:auto;
+    max-height:calc(85vh - 140px);
+  }
+  .detail-row {
+    display:flex;
+    padding:var(--space-md) 0;
+    border-bottom:1px solid var(--border-light);
+    align-items:flex-start;
+  }
+  .detail-label {
+    width:140px;
+    font-weight:var(--font-weight-medium);
+    color:var(--text-tertiary);
+    flex-shrink:0;
+  }
+  .detail-value {
+    color:var(--text-primary);
+    flex:1;
+  }
+  .form-row {
+    display:flex;
+    gap:var(--space-lg);
+    margin-bottom:var(--space-lg);
+  }
+  .form-group {
+    flex:1;
+    margin-bottom:var(--space-lg);
+  }
+  .form-group label {
+    display:block;
+    font-size:var(--font-size-base);
+    font-weight:var(--font-weight-medium);
+    color:var(--text-secondary);
+    margin-bottom:var(--space-sm);
+  }
+  .form-input, .form-select, .form-textarea {
+    width:100%;
+    padding:11px 14px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    background:var(--bg-card);
+  }
+  .form-select {
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c8c8c' stroke-width='2'%3E%3Cpath d='m6,9 6,6 6,-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+  }
+  .form-textarea {
+    min-height:80px;
+    resize:vertical;
+  }
+  .batch-info {
+    padding:var(--space-md);
+    background:var(--primary-50);
+    border-radius:var(--radius-md);
+    margin-bottom:var(--space-lg);
+  }
+  .batch-info .highlight {
+    color:var(--primary-600);
+    font-weight:var(--font-weight-semibold);
+    font-size:18px;
+  }
+  .confirm-modal {
+    max-width:480px;
+  }
+  .confirm-content {
+    text-align:center;
+    padding:var(--space-xl) 0;
+  }
+  .confirm-icon {
+    width:56px;
+    height:56px;
+    margin:0 auto var(--space-lg);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .confirm-icon.warning {
+    background:var(--warning-bg);
+    color:var(--warning);
+  }
+  .confirm-icon.error {
+    background:var(--error-bg);
+    color:var(--error);
+  }
+  .confirm-title {
+    font-size:var(--font-size-lg);
+    font-weight:var(--font-weight-semibold);
+    color:var(--text-primary);
+    margin-bottom:var(--space-md);
+  }
+  .confirm-desc {
+    font-size:var(--font-size-base);
+    color:var(--text-secondary);
+    line-height:var(--line-height-relaxed);
+  }
+  .upload-area {
+    border:2px dashed var(--border-default);
+    border-radius:var(--radius-lg);
+    padding:var(--space-2xl);
+    text-align:center;
+    cursor:pointer;
+    transition:all var(--transition-fast);
+    background:var(--gray-50);
+  }
+  .upload-area.dragover {
+    border-color:var(--primary-500);
+    background:var(--primary-50);
+    transform:scale(1.02);
+  }
+  .upload-icon {
+    width:48px;
+    height:48px;
+    margin:0 auto var(--space-lg);
+    border-radius:50%;
+    background:var(--primary-100);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--primary-500);
+  }
+  .upload-text {
+    font-size:var(--font-size-base);
+    color:var(--text-secondary);
+    margin-bottom:var(--space-sm);
+  }
+  /* 静默时段设置卡片 */
+  .settings-card {
+    background:var(--bg-card);
+    border:1px solid var(--border-light);
+    border-radius:var(--radius-xl);
+    padding:var(--space-xl);
+    margin-bottom:var(--space-xl);
+    box-shadow:0 4px 20px rgba(24, 144, 255, 0.06);
+  }
+  .settings-card h3 {
+    font-size:var(--font-size-base);
+    font-weight:600;
+    color:var(--text-primary);
+    margin:0 0 var(--space-lg);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .silence-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:var(--space-lg);
+    align-items:flex-end;
+  }
+  .silence-row .form-group { margin-bottom:0; flex:0 0 auto; min-width:160px; }
+  .silence-status {
+    margin-top:var(--space-md);
+    padding:10px 14px;
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-sm);
+    background:var(--gray-50);
+    color:var(--text-secondary);
+    border:1px solid var(--border-light);
+  }
+  .silence-status.on { background:var(--warning-bg); color:#ad8b00; border-color:var(--warning-border); }
+  .silence-status.off { background:var(--success-bg); color:var(--success); border-color:var(--success-border); }
+  /* SLA 分级配置 */
+  /* SLA 分级配置 与 预警源类型：两列并排，等宽等高 */
+  .settings-row {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:var(--space-lg);
+    align-items:stretch;
+    margin-bottom:var(--space-xl);
+  }
+  .settings-row > .settings-card {
+    display:flex;
+    flex-direction:column;
+    margin-bottom:0;
+  }
+  .settings-row .sla-grid,
+  .settings-row .source-list { flex:1 1 auto; justify-content:space-between; }
+  .settings-row .sla-actions-bar { margin-top:auto; padding-top:var(--space-lg); }
+  @media (max-width:1100px) {
+    .settings-row { grid-template-columns:minmax(0, 1fr); }
+  }
+  .sla-grid { display:flex; flex-direction:column; gap:var(--space-md); }
+  .sla-row {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:var(--space-lg);
+    padding:12px 14px;
+    border:1px solid var(--border-light);
+    border-radius:var(--radius-lg);
+    background:var(--gray-50);
+  }
+  .sla-row-head { display:flex; align-items:center; gap:8px; min-width:150px; }
+  .sla-level { font-size:var(--font-size-base); font-weight:600; color:var(--text-primary); }
+  .sla-row .form-group { margin-bottom:0; flex:0 0 auto; min-width:140px; }
+  .sla-actions { display:flex; margin-left:auto; }
+  /* 预警源接入状态 */
+  .source-list { display:flex; flex-direction:column; gap:var(--space-md); }
+  .source-item {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:var(--space-lg);
+    padding:10px 14px;
+    border:1px solid var(--border-light);
+    border-radius:var(--radius-md);
+    background:var(--gray-50);
+  }
+  .source-name { font-size:var(--font-size-sm); font-weight:600; color:var(--text-primary); }
+  .source-desc { font-size:var(--font-size-xs); color:var(--text-tertiary); margin-top:2px; }
+  .source-badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:var(--radius-full); font-size:var(--font-size-xs); font-weight:500; white-space:nowrap; }
+  .source-badge.connected { background:var(--success-bg); color:var(--success); border:1px solid var(--success-border); }
+  .source-badge.pending { background:var(--gray-100); color:var(--text-tertiary); border:1px solid var(--border-default); }
+  /* 阈值可视化区间组件 */
+  .range-comp { padding-top:4px; }
+  .range-track {
+    position:relative;
+    height:6px;
+    background:var(--gray-200);
+    border-radius:3px;
+    margin:16px 0 8px;
+  }
+  .range-fill {
+    position:absolute;
+    top:0;
+    height:6px;
+    background:var(--primary-500);
+    border-radius:3px;
+  }
+  .range-thumb {
+    position:absolute;
+    top:50%;
+    left:0;
+    width:100%;
+    height:6px;
+    transform:translateY(-50%);
+  }
+  .range-thumb input[type=range] {
+    position:absolute;
+    left:0;
+    top:-11px;
+    width:100%;
+    height:28px;
+    margin:0;
+    background:transparent;
+    -webkit-appearance:none;
+    appearance:none;
+    pointer-events:none;
+  }
+  .range-thumb input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none;
+    appearance:none;
+    pointer-events:auto;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#fff;
+    border:2px solid var(--primary-500);
+    box-shadow:0 1px 4px rgba(0,0,0,.2);
+    cursor:pointer;
+  }
+  .range-thumb input[type=range]::-moz-range-thumb {
+    pointer-events:auto;
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    background:#fff;
+    border:2px solid var(--primary-500);
+    cursor:pointer;
+  }
+  .range-vals {
+    display:flex;
+    flex-wrap:wrap;
+    gap:var(--space-lg);
+    align-items:center;
+    font-size:var(--font-size-sm);
+    color:var(--text-secondary);
+  }
+  .range-vals .range-num {
+    width:80px;
+    padding:6px 8px;
+    margin-left:4px;
+    display:inline-block;
+  }
+  .toast-container {
+    position:fixed;
+    top:80px;
+    right:20px;
+    z-index:var(--z-toast);
+    display:flex;
+    flex-direction:column;
+    gap:var(--space-sm);
+  }
+  .toast {
+    padding:12px 16px;
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-sm);
+    display:flex;
+    align-items:center;
+    gap:var(--space-sm);
+    min-width:240px;
+    animation:slideIn 0.3s ease;
+  }
+  .toast.success {
+    background:var(--success-bg);
+    color:var(--success);
+    border:1px solid var(--success-light);
+  }
+  .toast.warning {
+    background:var(--warning-bg);
+    color:var(--warning);
+    border:1px solid var(--warning-light);
+  }
+  .toast.info {
+    background:var(--info-bg);
+    color:var(--info);
+    border:1px solid var(--info-light);
+  }
+  .toast.error {
+    background:var(--error-bg);
+    color:var(--error);
+    border:1px solid var(--error-light);
+  }
+  @keyframes slideIn {
+    from {
+      opacity:0;
+      transform:translateX(100%);
+    }
+    to {
+      opacity:1;
+      transform:translateX(0);
+    }
+  }
+  @keyframes slideOut {
+    from {
+      opacity:1;
+      transform:translateX(0);
+    }
+    to {
+      opacity:0;
+      transform:translateX(100%);
+    }
+  }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="alert" data-active-submenu="alert-settings">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <main class="main-content">
+      <div class="content-wrapper">
+        <div class="settings-card">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;color:var(--warning);"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            静默时段设置
+          </h3>
+          <div class="silence-row">
+            <div class="form-group">
+              <label>静默开始时间</label>
+              <input type="time" class="form-input" id="silenceStart" value="22:00">
+            </div>
+            <div class="form-group">
+              <label>静默结束时间</label>
+              <input type="time" class="form-input" id="silenceEnd" value="07:00">
+            </div>
+            <div class="form-group">
+              <label>生效范围</label>
+              <select class="form-select" id="silenceScope">
+                <option value="all">全部预警</option>
+                <option value="notice">仅通知</option>
+                <option value="reminder">仅提醒</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <button class="jg-btn jg-btn-primary" id="btnSaveSilence">保存静默设置</button>
+            </div>
+          </div>
+          <div class="silence-status" id="silenceStatus">静默时段：22:00 - 07:00 · 生效范围：全部预警</div>
+        </div>
+
+        <!-- SLA 分级配置 与 预警源类型：两列并排 -->
+        <div class="settings-row">
+          <!-- SLA 分级配置 -->
+          <div class="settings-card">
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;color:var(--primary-500);"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              SLA 分级配置
+            </h3>
+            <div class="sla-grid" id="slaGrid"></div>
+            <div class="sla-actions-bar">
+              <button class="jg-btn jg-btn-primary" id="btnSaveSla">保存 SLA 配置</button>
+              <button class="jg-btn" id="btnResetSla">恢复默认</button>
+            </div>
+          </div>
+
+          <!-- 预警源类型与共享数据源接入状态 -->
+          <div class="settings-card">
+            <h3>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;color:var(--success);"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+              预警源类型
+            </h3>
+            <div class="source-list" id="alertSourceList"></div>
+            <div class="silence-status" style="margin-top:var(--space-lg);">共享数据源 AlertStore 统一管理 设备 / 人工上报 / 模型 / 库存 / 系统 / 资质到期 六类来源，规则与预警同源；状态按规则与预警的真实接入情况动态判定。</div>
+          </div>
+        </div>
+
+        <!-- 看板达标阈值（驾驶舱近 24h 指标判定口径） -->
+        <div class="settings-card">
+          <h3>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;color:var(--primary-500);"><path d="M3 3v18h18"/><path d="m7 15 4-5 3 3 5-7"/></svg>
+            看板达标阈值
+          </h3>
+          <div class="silence-row">
+            <div class="form-group">
+              <label>平均响应（分钟）</label>
+              <input type="number" class="form-input" id="targetRespond" min="1" step="1">
+            </div>
+            <div class="form-group">
+              <label>平均处置（分钟）</label>
+              <input type="number" class="form-input" id="targetHandle" min="1" step="1">
+            </div>
+            <div class="form-group">
+              <label>平均闭环（分钟）</label>
+              <input type="number" class="form-input" id="targetClose" min="1" step="1">
+            </div>
+            <div class="form-group">
+              <label>超时率上限（%）</label>
+              <input type="number" class="form-input" id="targetOverdue" min="1" max="100" step="1">
+            </div>
+            <div class="form-group">
+              <button class="jg-btn jg-btn-primary" id="btnSaveTargets">保存达标阈值</button>
+            </div>
+            <div class="form-group">
+              <button class="jg-btn" id="btnResetTargets">恢复默认</button>
+            </div>
+          </div>
+          <div class="silence-status" id="targetStatus">阈值仅作用于智能预警驾驶舱「近 24 小时」指标的达标判定，不影响预警生成与推送。</div>
+        </div>
+
+                <div class="search-section">
+          <div class="search-bar">
+            <select class="search-select" id="typeSelect">
+              <option value="">全部来源</option>
+              <option value="device">设备预警</option>
+              <option value="manual">人工上报</option>
+              <option value="model">模型预警</option>
+              <option value="inventory">库存预警</option>
+              <option value="system">系统预警</option>
+              <option value="cert">资质到期预警</option>
+            </select>
+            <select class="search-select" id="categorySelect">
+              <option value="">全部分类</option>
+              <option value="device">设备</option>
+              <option value="pest">病虫害</option>
+              <option value="weather">气象</option>
+              <option value="soil">土壤</option>
+              <option value="growth">生长</option>
+              <option value="environment">环境</option>
+              <option value="yield">产量</option>
+              <option value="inventory">库存</option>
+              <option value="quality">质量</option>
+            </select>
+            <select class="search-select" id="levelSelect">
+              <option value="">全部级别</option>
+              <option value="urgent">紧急</option>
+              <option value="important">重要</option>
+              <option value="reminder">提醒</option>
+              <option value="notice">通知</option>
+            </select>
+            <select class="search-select" id="statusSelect">
+              <option value="">全部状态</option>
+              <option value="active">启用</option>
+              <option value="inactive">停用</option>
+            </select>
+            <input type="text" class="search-input" placeholder="搜索规则名称、编号..." id="searchInput">
+
+          <div class="search-actions"><button class="jg-btn jg-btn-primary" id="btnSearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button><button class="jg-btn" id="btnReset">重置</button></div>
+          </div>
+        </div>
+        <div class="action-bar">
+          <div class="action-left">
+            <button class="jg-btn" id="btnBatchEnable">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+              批量启用
+            </button>
+            <button class="jg-btn" id="btnBatchDisable">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <circle cx="12" cy="12" r="9"/><line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+              批量停用
+            </button>
+            <button class="jg-btn" id="btnBatchDelete">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/>
+              </svg>
+              批量删除
+            </button>
+          </div>
+          <div class="action-right">
+            <button class="jg-btn jg-btn-primary" id="btnAddRule">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <path d="M12 5v14"/>
+                <path d="M5 12h14"/>
+              </svg>
+              + 新建规则
+            </button>
+            <button class="jg-btn" id="btnImportRule">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" x2="12" y1="15" y2="3"/>
+              </svg>
+              导入规则
+            </button>
+            <button class="jg-btn" id="btnExportRule">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" x2="12" y1="15" y2="3"/>
+              </svg>
+              导出规则
+            </button>
+          </div>
+        </div>
+        <div class="data-section">
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:60px;">序号</th>
+                  <th class="col-check"><input type="checkbox" id="selectAll" aria-label="全选"></th>
+                  <th>规则编号</th>
+                  <th>规则名称</th>
+                  <th style="width:110px;">预警来源</th>
+                  <th style="width:100px;">业务分类</th>
+                  <th style="width:90px;">预警级别</th>
+                  <th style="width:160px;">阈值设置</th>
+                  <th style="width:100px;">作用范围</th>
+                  <th style="width:90px;">响应时限</th>
+                  <th style="width:90px;">处置时限</th>
+                  <th style="width:130px;">通知方式</th>
+                  <th style="width:90px;">启用状态</th>
+                  <th style="width:160px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody">
+              </tbody>
+            </table>
+          </div>
+          <div id="pagination-container"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">规则详情</h3>
+      <button class="modal-close btn-cancel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-row">
+        <div class="detail-label">规则编号</div>
+        <div class="detail-value" id="detailCode">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">规则名称</div>
+        <div class="detail-value" id="detailName">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">预警来源</div>
+        <div class="detail-value" id="detailSource">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">业务分类</div>
+        <div class="detail-value" id="detailCategory">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">阈值设置</div>
+        <div class="detail-value" id="detailThreshold">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">作用范围</div>
+        <div class="detail-value" id="detailScope">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">响应时限</div>
+        <div class="detail-value" id="detailRespondSla">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">处置时限</div>
+        <div class="detail-value" id="detailHandleSla">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">通知方式</div>
+        <div class="detail-value" id="detailNotify">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">预警级别</div>
+        <div class="detail-value" id="detailLevel">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">通知人员</div>
+        <div class="detail-value" id="detailUsers">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">启用状态</div>
+        <div class="detail-value" id="detailStatus">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">创建时间</div>
+        <div class="detail-value" id="detailCreateTime">-</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-label">规则描述</div>
+        <div class="detail-value" id="detailDesc">-</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn btn-cancel">关闭</button>
+      <button class="jg-btn jg-btn-primary" id="btnEditFromDetail">编辑规则</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box" style="max-width:700px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="editModalTitle">新建预警规则</h3>
+      <button class="modal-close btn-cancel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <div class="form-group">
+          <label>规则名称</label>
+          <input type="text" class="form-input" id="editName" placeholder="请输入规则名称">
+        </div>
+        <div class="form-group">
+          <label>预警来源</label>
+          <select class="form-select" id="editSource">
+            <option value="device">设备预警</option>
+            <option value="manual">人工上报</option>
+            <option value="model">模型预警</option>
+            <option value="inventory">库存预警</option>
+            <option value="system">系统预警</option>
+            <option value="cert">资质到期预警</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>业务分类</label>
+          <select class="form-select" id="editCategory">
+            <option value="device">设备</option>
+            <option value="pest">病虫害</option>
+            <option value="weather">气象</option>
+            <option value="soil">土壤</option>
+            <option value="growth">生长</option>
+            <option value="environment">环境</option>
+            <option value="yield">产量</option>
+            <option value="inventory">库存</option>
+            <option value="quality">质量</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>预警级别</label>
+          <select class="form-select" id="editLevel">
+            <option value="notice">通知</option>
+            <option value="reminder">提醒</option>
+            <option value="important">重要</option>
+            <option value="urgent">紧急</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>监测指标</label>
+          <select class="form-select" id="editMetric">
+            <option value="">（不限，仅按来源/分类匹配）</option>
+            <option value="temperature">温度</option>
+            <option value="humidity">空气湿度</option>
+            <option value="soilMoisture">土壤湿度</option>
+            <option value="soilPh">土壤 pH</option>
+            <option value="soilEc">土壤电导率</option>
+            <option value="rainfall">降雨量</option>
+            <option value="windSpeed">风速</option>
+            <option value="pestCount">虫口密度</option>
+            <option value="riskIndex">风险指数</option>
+            <option value="deviationRate">产量偏差率</option>
+            <option value="stock">库存数量</option>
+            <option value="expireDays">剩余效期天数</option>
+            <option value="offlineMinutes">设备离线时长</option>
+            <option value="runtimeHours">运行时长</option>
+            <option value="faultCode">故障码</option>
+            <option value="flowDeviation">流量偏差</option>
+            <option value="soilNutrient">土壤养分</option>
+            <option value="maturity">成熟度</option>
+            <option value="phenologyStage">物候期</option>
+            <option value="birdCount">鸟害数量</option>
+            <option value="lightning">雷电次数</option>
+            <option value="radarEcho">雷达回波强度</option>
+            <option value="tempHumidity">温湿度异常</option>
+            <option value="overdueHours">逾期时长</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>比较方式</label>
+          <select class="form-select" id="editOp">
+            <option value="gt">大于</option>
+            <option value="gte">大于等于</option>
+            <option value="lt">小于</option>
+            <option value="lte">小于等于</option>
+            <option value="between">介于两值之间</option>
+            <option value="eq">等于</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>阈值数值</label>
+          <input type="number" class="form-input" id="editValue" placeholder="例如：5" step="any">
+        </div>
+        <div class="form-group">
+          <label>第二阈值（介于时使用）</label>
+          <input type="number" class="form-input" id="editValue2" placeholder="例如：35" step="any">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>单位</label>
+          <input type="text" class="form-input" id="editUnit" placeholder="例如：°C、mm、头/叶、kg">
+        </div>
+        <div class="form-group">
+          <label>作用范围</label>
+          <select class="form-select" id="editScopeType">
+            <option value="all">全部（全局生效）</option>
+            <option value="base">指定基地</option>
+            <option value="plot">指定地块</option>
+            <option value="device">指定设备</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" id="editScopeIdsGroup" style="display:none;">
+        <label>作用对象（多个用逗号分隔）</label>
+        <input type="text" class="form-input" id="editScopeIds" placeholder="例如：天水麦积区基地, 天水秦州基地">
+      </div>
+      <div class="form-group">
+        <label>阈值条件（自动生成，可微调）</label>
+        <input type="text" class="form-input" id="editThreshold" placeholder="例如：温度 &lt; 5°C" readonly>
+      </div>
+      <div class="form-group">
+        <label>通知方式</label>
+        <div style="display:flex; gap:var(--space-lg); flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" id="notifyInternal" checked> 站内消息
+          </label>
+          <label style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" id="notifySms"> 短信通知
+          </label>
+          <label style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" id="notifyPush"> 推送通知
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>通知人员</label>
+        <input type="text" class="form-input" id="editUsers" placeholder="请输入通知人员，多个用逗号分隔">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>响应时限</label>
+          <input type="text" class="form-input" id="editRespondSla" placeholder="默认取级别 SLA">
+        </div>
+        <div class="form-group">
+          <label>处置时限</label>
+          <input type="text" class="form-input" id="editHandleSla" placeholder="默认取级别 SLA">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>规则描述</label>
+        <textarea class="form-textarea" id="editDesc" placeholder="请输入规则描述"></textarea>
+      </div>
+      <div class="form-group">
+        <label>启用状态</label>
+        <select class="form-select" id="editStatus">
+          <option value="active">启用</option>
+          <option value="inactive">停用</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn btn-cancel">取消</button>
+      <button class="jg-btn jg-btn-primary" id="btnSaveRule">保存规则</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box confirm-modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="confirmTitle">确认操作</h3>
+      <button class="modal-close btn-cancel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-content">
+        <div class="confirm-icon" id="confirmIcon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
+            <circle cx="9" cy="9" r="1"/>
+            <circle cx="15" cy="9" r="1"/>
+          </svg>
+        </div>
+        <div class="confirm-title" id="confirmMessage">确认此操作？</div>
+        <div class="confirm-desc" id="confirmDesc"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn btn-cancel">取消</button>
+      <button class="jg-btn jg-btn-primary" id="confirmAction">确认</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="importModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">导入规则</h3>
+      <button class="modal-close btn-cancel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>选择文件</label>
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" x2="12" y1="15" y2="3"/>
+            </svg>
+          </div>
+          <div class="upload-text">点击或拖拽文件到此处上传</div>
+          <div class="upload-hint">支持 .json、.xml 格式文件</div>
+        </div>
+        <input type="file" id="importFile" accept=".json,.xml" style="display:none;">
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="importOverride">
+          覆盖已存在的规则（按规则编号匹配）
+        </label>
+      </div>
+      <div class="form-group" id="fileInfo" style="display:none;">
+        <div style="padding:var(--space-md); background:var(--gray-50); border-radius:var(--radius-md);">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span id="fileName"></span>
+            <button class="jg-btn jg-btn-sm jg-btn-danger" id="removeFile">移除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn btn-cancel">取消</button>
+      <button class="jg-btn jg-btn-primary" id="btnImport">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">导出规则</h3>
+      <button class="modal-close btn-cancel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>导出格式</label>
+        <select class="form-select" id="exportFormat">
+          <option value="json">JSON (.json)</option>
+          <option value="xml">XML (.xml)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="exportSelected">
+          仅导出选中规则（未选中则导出全部）
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn btn-cancel">取消</button>
+      <button class="jg-btn jg-btn-primary" id="btnExport">确认导出</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/shared/alert-data.js"></script>
+<script>
+  // ================================================================
+  // 预警规则设置（数据源统一为 AlertStore，规则与预警同源）
+  // ================================================================
+  const METRIC_LABELS = {
+    temperature: '温度', humidity: '空气湿度', soilMoisture: '土壤湿度', soilPh: '土壤 pH',
+    soilEc: '土壤电导率', soilNutrient: '土壤养分', rainfall: '降雨量', windSpeed: '风速',
+    pestCount: '虫口密度', riskIndex: '风险指数', deviationRate: '产量偏差率', stock: '库存数量',
+    expireDays: '剩余效期天数', offlineMinutes: '设备离线时长', runtimeHours: '运行时长',
+    faultCode: '故障码', flowDeviation: '流量偏差', maturity: '成熟度', phenologyStage: '物候期',
+    birdCount: '鸟害数量', lightning: '雷电次数', radarEcho: '雷达回波强度',
+    tempHumidity: '温湿度异常', overdueHours: '逾期时长'
+  };
+  const OP_LABELS = { gt: '大于', gte: '大于等于', lt: '小于', lte: '小于等于', between: '介于', eq: '等于' };
+  const OP_SYMBOLS = { gt: '>', gte: '≥', lt: '<', lte: '≤', between: '~', eq: '=' };
+  const SCOPE_TYPE_LABELS = { all: '全部', base: '基地', plot: '地块', device: '设备' };
+  const LEVEL_LABELS = { urgent: '紧急', important: '重要', reminder: '提醒', notice: '通知' };
+  const NOTIFY_LABELS = { internal: '站内', sms: '短信', push: '推送' };
+  const SCOPE_TEXT = { all: '全部预警', notice: '仅通知', reminder: '仅提醒' };
+
+  // SLA 默认值（与 AlertStore.DEFAULT_SLA 保持一致，用于「恢复默认」）
+  const SLA_DEFAULTS = {
+    urgent:    { respond: '15 分钟', handle: '2 小时',  escalate: '技术总监' },
+    important: { respond: '30 分钟', handle: '4 小时',  escalate: '园区主任' },
+    reminder:  { respond: '2 小时',  handle: '24 小时', escalate: '值班长' },
+    notice:    { respond: '4 小时',  handle: '无时限', escalate: '不升级' }
+  };
+  const SLA_LEVELS = [
+    { key: 'urgent', label: '紧急' },
+    { key: 'important', label: '重要' },
+    { key: 'reminder', label: '提醒' },
+    { key: 'notice', label: '通知' }
+  ];
+  const SLA_ESCALATE_OPTIONS = ['值班长', '园区主任', '技术总监', '不升级'];
+
+  let slaConfig = null;
+  let filteredData = [];
+  let currentAction = null;
+  let currentRuleId = null;
+  let currentDetailId = null;
+  let pendingBatchIds = [];
+
+  function esc(v) {
+    return String(v === null || v === undefined ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function metricText(metric) {
+    if (!metric) return '';
+    return METRIC_LABELS[metric] || metric;
+  }
+
+  function sourceText(source) {
+    const found = (AlertStore.SOURCES || []).find(function(s) { return s.key === source; });
+    return found ? found.text : '系统预警';
+  }
+
+  function categoryText(category) {
+    const found = (AlertStore.CATEGORIES || []).find(function(c) { return c.key === category; });
+    return found ? found.text : (category || '—');
+  }
+
+  function levelText(level) {
+    return LEVEL_LABELS[level] || '通知';
+  }
+
+  function notifyText(notify) {
+    if (!notify || typeof notify !== 'object') return String(notify || '站内');
+    const parts = [];
+    ['internal', 'sms', 'push'].forEach(function(k) {
+      if (notify[k]) parts.push(NOTIFY_LABELS[k]);
+    });
+    return parts.length ? parts.join('+') : '站内';
+  }
+
+  // 结构化阈值 → 人类可读文本
+  function formatThreshold(th) {
+    const t = th || {};
+    const name = metricText(t.metric);
+    const unit = t.unit || '';
+    const v1 = (t.value === null || t.value === undefined || t.value === '') ? null : t.value;
+    const v2 = (t.value2 === null || t.value2 === undefined || t.value2 === '') ? null : t.value2;
+    if (!name) return '不限（按来源/分类匹配）';
+    if (t.op === 'between' && v1 !== null && v2 !== null) {
+      return name + ' ' + v1 + unit + ' ~ ' + v2 + unit;
+    }
+    if (v1 === null) {
+      return name + (t.op === 'gt' || t.op === 'gte' ? ' 超出阈值' : ' 低于安全线');
+    }
+    return name + ' ' + (OP_SYMBOLS[t.op] || '=') + ' ' + v1 + unit;
+  }
+
+  function formatScope(scope) {
+    const s = scope || { type: 'all', ids: [] };
+    if (!s.type || s.type === 'all') return '全部';
+    const label = SCOPE_TYPE_LABELS[s.type] || s.type;
+    const ids = (s.ids || []).slice();
+    if (!ids.length) return label + '（未指定）';
+    return label + '：' + ids.join('、');
+  }
+
+  function reloadRules() {
+    filteredData = AlertStore.rules();
+    Pagination.updateData(filteredData);
+    const selAll = document.getElementById('selectAll');
+    if (selAll) selAll.checked = false;
+    updateSelectedCount();
+    renderAlertSources();
+  }
+
+  function applyFilter() {
+    const keyword = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+    const source = document.getElementById('typeSelect').value;
+    const category = document.getElementById('categorySelect').value;
+    const level = document.getElementById('levelSelect').value;
+    const status = document.getElementById('statusSelect').value;
+
+    const all = AlertStore.rules();
+    filteredData = all.filter(function(item) {
+      const matchKeyword = !keyword
+        || String(item.name || '').toLowerCase().indexOf(keyword) >= 0
+        || String(item.code || '').toLowerCase().indexOf(keyword) >= 0;
+      const matchSource = !source || item.source === source;
+      const matchCategory = !category || item.category === category;
+      const matchLevel = !level || item.level === level;
+      const matchStatus = !status || item.status === status;
+      return matchKeyword && matchSource && matchCategory && matchLevel && matchStatus;
+    });
+    Pagination.updateData(filteredData);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    slaConfig = readSlaConfig();
+
+    renderSlaConfig();
+    renderAlertSources();
+    renderTargets();
+    initSilence();
+
+    filteredData = AlertStore.rules();
+    Pagination.init({
+      currentPage: 1,
+      pageSize: 10,
+      data: filteredData,
+      containerId: 'pagination-container',
+      tbodyId: 'dataTableBody',
+      renderRow: renderRow
+    });
+
+    document.getElementById('btnSaveSla').addEventListener('click', saveSlaConfig);
+    document.getElementById('btnResetSla').addEventListener('click', resetSlaConfig);
+    document.getElementById('btnSaveTargets').addEventListener('click', saveTargets);
+    document.getElementById('btnResetTargets').addEventListener('click', resetTargets);
+    document.getElementById('btnSaveSilence').addEventListener('click', saveSilence);
+    document.querySelectorAll('#silenceStart, #silenceEnd, #silenceScope').forEach(function(el) {
+      el.addEventListener('change', renderSilenceStatus);
+    });
+
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.action-btn');
+      if (!btn) return;
+      if (btn.classList.contains('detail')) {
+        showDetailModal(btn.dataset.id);
+      } else if (btn.classList.contains('edit')) {
+        showEditModal(btn.dataset.id);
+      } else if (btn.classList.contains('delete')) {
+        currentRuleId = btn.dataset.id;
+        currentAction = 'delete';
+        showConfirmModal('确认删除', '确定要删除此规则吗？此操作不可撤销。', 'error');
+      }
+    });
+
+    document.getElementById('btnSearch').addEventListener('click', function() {
+      applyFilter();
+      showToast('搜索完成，共找到 ' + filteredData.length + ' 条规则');
+    });
+
+    document.getElementById('searchInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        applyFilter();
+        showToast('搜索完成，共找到 ' + filteredData.length + ' 条规则');
+      }
+    });
+
+    document.getElementById('btnReset').addEventListener('click', function() {
+      document.getElementById('typeSelect').value = '';
+      document.getElementById('categorySelect').value = '';
+      document.getElementById('levelSelect').value = '';
+      document.getElementById('statusSelect').value = '';
+      document.getElementById('searchInput').value = '';
+      filteredData = AlertStore.rules();
+      Pagination.updateData(filteredData);
+    });
+
+    document.getElementById('btnBatchEnable').addEventListener('click', function() {
+      const ids = collectSelectedIds();
+      if (!ids.length) { showToast('请先选择要启用的规则', 'warning'); return; }
+      pendingBatchIds = ids;
+      currentAction = 'enable';
+      showConfirmModal('确认启用', '确定要启用选中的 ' + ids.length + ' 条规则吗？', 'warning');
+    });
+
+    document.getElementById('btnBatchDisable').addEventListener('click', function() {
+      const ids = collectSelectedIds();
+      if (!ids.length) { showToast('请先选择要停用的规则', 'warning'); return; }
+      pendingBatchIds = ids;
+      currentAction = 'disable';
+      showConfirmModal('确认停用', '确定要停用选中的 ' + ids.length + ' 条规则吗？', 'warning');
+    });
+
+    document.getElementById('btnBatchDelete').addEventListener('click', function() {
+      const ids = collectSelectedIds();
+      if (!ids.length) { showToast('请先选择要删除的规则', 'warning'); return; }
+      pendingBatchIds = ids;
+      currentAction = 'batchDelete';
+      showConfirmModal('确认删除', '确定要删除选中的 ' + ids.length + ' 条规则吗？此操作不可撤销。', 'error');
+    });
+
+    document.getElementById('selectAll').addEventListener('change', function() {
+      const checked = this.checked;
+      document.querySelectorAll('.row-checkbox').forEach(function(cb) { cb.checked = checked; });
+      updateSelectedCount();
+    });
+
+    document.addEventListener('change', function(e) {
+      if (e.target && e.target.classList.contains('row-checkbox')) updateSelectedCount();
+    });
+
+    document.getElementById('btnAddRule').addEventListener('click', function() {
+      openCreateModal();
+    });
+
+    document.getElementById('btnSaveRule').addEventListener('click', saveRule);
+
+    document.getElementById('btnEditFromDetail').addEventListener('click', function() {
+      document.getElementById('detailModal').classList.remove('show');
+      if (currentDetailId) showEditModal(currentDetailId);
+    });
+
+    document.getElementById('btnImportRule').addEventListener('click', function() {
+      document.getElementById('importFile').value = '';
+      document.getElementById('fileInfo').style.display = 'none';
+      document.getElementById('importModal').classList.add('show');
+    });
+
+    document.getElementById('btnExportRule').addEventListener('click', function() {
+      document.getElementById('exportModal').classList.add('show');
+    });
+
+    document.getElementById('uploadArea').addEventListener('click', function() {
+      document.getElementById('importFile').click();
+    });
+
+    document.getElementById('importFile').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileInfo').style.display = 'block';
+      }
+    });
+
+    document.getElementById('removeFile').addEventListener('click', function() {
+      document.getElementById('importFile').value = '';
+      document.getElementById('fileInfo').style.display = 'none';
+    });
+
+    document.getElementById('btnImport').addEventListener('click', doImport);
+
+    document.getElementById('btnExport').addEventListener('click', function() {
+      const format = document.getElementById('exportFormat').value;
+      const selectedOnly = document.getElementById('exportSelected').checked;
+      const ok = doExport(format, selectedOnly);
+      document.getElementById('exportModal').classList.remove('show');
+      if (ok) showToast('规则导出成功', 'success');
+    });
+
+    document.getElementById('confirmAction').addEventListener('click', function() {
+      document.getElementById('confirmModal').classList.remove('show');
+      const ids = currentAction === 'enable' || currentAction === 'disable' || currentAction === 'batchDelete'
+        ? pendingBatchIds
+        : (currentRuleId ? [currentRuleId] : []);
+
+      if (currentAction === 'enable' || currentAction === 'disable') {
+        const status = currentAction === 'enable' ? 'active' : 'inactive';
+        ids.forEach(function(id) { AlertStore.toggleRule(id, status); });
+        showToast(currentAction === 'enable' ? '批量启用成功' : '批量停用成功', 'success');
+      } else if (currentAction === 'batchDelete' || currentAction === 'delete') {
+        ids.forEach(function(id) { AlertStore.removeRule(id); });
+        showToast(currentAction === 'delete' ? '删除成功' : '批量删除成功', 'success');
+      }
+      pendingBatchIds = [];
+      currentRuleId = null;
+      currentAction = null;
+      reloadRules();
+    });
+
+    // 编辑弹窗：阈值预览与作用对象联动
+    ['editMetric', 'editOp', 'editValue', 'editValue2', 'editUnit'].forEach(function(id) {
+      const el = document.getElementById(id);
+      el.addEventListener('input', refreshThresholdText);
+      el.addEventListener('change', refreshThresholdText);
+    });
+    document.getElementById('editOp').addEventListener('change', toggleValue2);
+    document.getElementById('editLevel').addEventListener('change', function() {
+      syncEditSlaFromLevel(false);
+    });
+    document.getElementById('editScopeType').addEventListener('change', toggleScopeIds);
+
+    document.querySelectorAll('.btn-cancel').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+          modal.classList.remove('show');
+        });
+      });
+    });
+  });
+
+  function collectSelectedIds() {
+    return Array.from(document.querySelectorAll('.row-checkbox:checked')).map(function(cb) { return cb.dataset.id; });
+  }
+
+  // ---------- 静默时段设置（AlertStore.config.silence）----------
+  function readSilence() {
+    const def = { start: '22:00', end: '07:00', scope: 'all' };
+    const cfg = AlertStore.config();
+    const s = cfg && cfg.silence;
+    if (!s || !s.start || !s.end) return def;
+    return { start: s.start, end: s.end, scope: s.scope || 'all' };
+  }
+
+  function initSilence() {
+    const s = readSilence();
+    document.getElementById('silenceStart').value = s.start;
+    document.getElementById('silenceEnd').value = s.end;
+    document.getElementById('silenceScope').value = s.scope;
+    renderSilenceStatus();
+  }
+
+  function isInSilence(start, end) {
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const toMin = function(t) {
+      const p = String(t).split(':');
+      return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0);
+    };
+    const s = toMin(start), e = toMin(end);
+    if (s === e) return false;
+    if (s < e) return cur >= s && cur < e;
+    return cur >= s || cur < e;
+  }
+
+  function renderSilenceStatus() {
+    const start = document.getElementById('silenceStart').value || '22:00';
+    const end = document.getElementById('silenceEnd').value || '07:00';
+    const scope = document.getElementById('silenceScope').value || 'all';
+    const on = isInSilence(start, end);
+    const el = document.getElementById('silenceStatus');
+    el.className = 'silence-status ' + (on ? 'on' : 'off');
+    el.textContent = '静默时段：' + start + ' - ' + end + ' · 生效范围：' + (SCOPE_TEXT[scope] || scope)
+      + ' · 当前状态：' + (on ? '静默生效中（预警暂缓推送）' : '非静默时段（正常推送）');
+  }
+
+  function saveSilence() {
+    const start = document.getElementById('silenceStart').value;
+    const end = document.getElementById('silenceEnd').value;
+    const scope = document.getElementById('silenceScope').value;
+    if (!start || !end) { showToast('请选择静默开始与结束时间', 'warning'); return; }
+    if (start === end) { showToast('静默开始与结束时间不能相同', 'warning'); return; }
+    AlertStore.saveConfig({ silence: { start: start, end: end, scope: scope } });
+    renderSilenceStatus();
+    showToast('静默时段设置已保存', 'success');
+  }
+
+  // ---------- SLA 分级配置（AlertStore.config.sla）----------
+  function readSlaConfig() {
+    const cfg = AlertStore.config();
+    const stored = (cfg && cfg.sla) || {};
+    const out = {};
+    SLA_LEVELS.forEach(function(l) {
+      const base = SLA_DEFAULTS[l.key];
+      out[l.key] = {
+        respond: (stored[l.key] && stored[l.key].respond) || base.respond,
+        handle: (stored[l.key] && stored[l.key].handle) || base.handle,
+        escalate: (stored[l.key] && stored[l.key].escalate) || base.escalate
+      };
+    });
+    return out;
+  }
+
+  function renderSlaConfig() {
+    const grid = document.getElementById('slaGrid');
+    if (!grid) return;
+    grid.innerHTML = SLA_LEVELS.map(function(l) {
+      const cfg = slaConfig[l.key];
+      return '<div class="sla-row">'
+        + '<div class="sla-row-head"><span class="sla-level">' + l.label + '</span></div>'
+        + '<div class="form-group"><label>响应时限</label>'
+        + '<input type="text" class="form-input" id="slaRespond-' + l.key + '" value="' + esc(cfg.respond) + '"></div>'
+        + '<div class="form-group"><label>处置时限</label>'
+        + '<input type="text" class="form-input" id="slaHandle-' + l.key + '" value="' + esc(cfg.handle) + '"></div>'
+        + '<div class="form-group"><label>升级至</label>'
+        + '<select class="form-select" id="slaEscalate-' + l.key + '">'
+        + SLA_ESCALATE_OPTIONS.map(function(o) {
+            return '<option value="' + o + '"' + (cfg.escalate === o ? ' selected' : '') + '>' + o + '</option>';
+          }).join('')
+        + '</select></div></div>';
+    }).join('');
+  }
+
+  function collectSlaConfig() {
+    const next = {};
+    SLA_LEVELS.forEach(function(l) {
+      const base = SLA_DEFAULTS[l.key];
+      const respond = document.getElementById('slaRespond-' + l.key);
+      const handle = document.getElementById('slaHandle-' + l.key);
+      const escalate = document.getElementById('slaEscalate-' + l.key);
+      next[l.key] = {
+        respond: (respond && respond.value.trim()) || base.respond,
+        handle: (handle && handle.value.trim()) || base.handle,
+        escalate: (escalate && escalate.value) || base.escalate
+      };
+    });
+    return next;
+  }
+
+  // 按级别把 SLA 时限回写到规则（规则表展示口径与 SLA 配置一致）
+  function applySlaToRules() {
+    AlertStore.rules().forEach(function(item) {
+      const cfg = slaConfig[item.level];
+      if (!cfg) return;
+      if (item.respondSla === cfg.respond && item.handleSla === cfg.handle && item.escalateTo === cfg.escalate) return;
+      const payload = Object.assign({}, item, {
+        respondSla: cfg.respond,
+        handleSla: cfg.handle,
+        escalateTo: cfg.escalate
+      });
+      AlertStore.saveRule(payload);
+    });
+  }
+
+  function saveSlaConfig() {
+    slaConfig = collectSlaConfig();
+    AlertStore.saveConfig({ sla: slaConfig });
+    applySlaToRules();
+    reloadRules();
+    showToast('SLA 分级配置已保存', 'success');
+  }
+
+  function resetSlaConfig() {
+    slaConfig = JSON.parse(JSON.stringify(SLA_DEFAULTS));
+    AlertStore.saveConfig({ sla: slaConfig });
+    renderSlaConfig();
+    applySlaToRules();
+    reloadRules();
+    showToast('已恢复默认 SLA 配置', 'success');
+  }
+
+  // ---------- 看板达标阈值（AlertStore.config.targets）----------
+  const TARGET_FIELDS = [
+    { key: 'avgRespond', input: 'targetRespond', label: '平均响应', unit: '分钟' },
+    { key: 'avgHandle', input: 'targetHandle', label: '平均处置', unit: '分钟' },
+    { key: 'avgClose', input: 'targetClose', label: '平均闭环', unit: '分钟' },
+    { key: 'overdueRate', input: 'targetOverdue', label: '超时率上限', unit: '%' }
+  ];
+
+  function readTargets() {
+    const cfg = AlertStore.config();
+    const stored = (cfg && cfg.targets) || {};
+    const defs = AlertStore.DEFAULT_TARGETS || {};
+    const out = {};
+    TARGET_FIELDS.forEach(function(f) {
+      const v = Number(stored[f.key]);
+      out[f.key] = (isFinite(v) && v > 0) ? v : (defs[f.key] || 0);
+    });
+    return out;
+  }
+
+  function renderTargets() {
+    const t = readTargets();
+    TARGET_FIELDS.forEach(function(f) {
+      const el = document.getElementById(f.input);
+      if (el) el.value = t[f.key];
+    });
+    const el = document.getElementById('targetStatus');
+    if (el) {
+      el.textContent = '当前阈值：平均响应 ≤ ' + t.avgRespond + ' 分钟 · 平均处置 ≤ ' + t.avgHandle
+        + ' 分钟 · 平均闭环 ≤ ' + t.avgClose + ' 分钟 · 超时率 ≤ ' + t.overdueRate
+        + '%　（仅作用于智能预警驾驶舱「近 24 小时」指标的达标判定）';
+    }
+  }
+
+  function collectTargets() {
+    const out = {};
+    for (let i = 0; i < TARGET_FIELDS.length; i++) {
+      const f = TARGET_FIELDS[i];
+      const el = document.getElementById(f.input);
+      const raw = el ? String(el.value).trim() : '';
+      if (!raw) { showToast(f.label + '阈值不能为空', 'warning'); return null; }
+      const v = Number(raw);
+      if (!isFinite(v) || v <= 0) { showToast(f.label + '阈值必须为正数', 'warning'); return null; }
+      if (f.key === 'overdueRate' && v > 100) { showToast('超时率上限不能超过 100%', 'warning'); return null; }
+      out[f.key] = v;
+    }
+    return out;
+  }
+
+  function saveTargets() {
+    const next = collectTargets();
+    if (!next) return;
+    const res = AlertStore.saveConfig({ targets: next });
+    if (!res || res.ok === false) {
+      showToast((res && res.message) || '看板阈值保存失败', 'error');
+      return;
+    }
+    renderTargets();
+    showToast('看板达标阈值已保存', 'success');
+  }
+
+  function resetTargets() {
+    const defs = AlertStore.DEFAULT_TARGETS || {};
+    const next = {};
+    TARGET_FIELDS.forEach(function(f) { next[f.key] = defs[f.key]; });
+    const res = AlertStore.saveConfig({ targets: next });
+    if (!res || res.ok === false) {
+      showToast((res && res.message) || '看板阈值保存失败', 'error');
+      return;
+    }
+    renderTargets();
+    showToast('已恢复默认看板阈值', 'success');
+  }
+
+  // ---------- 预警源类型与共享数据源接入状态 ----------
+  function renderAlertSources() {
+    const box = document.getElementById('alertSourceList');
+    if (!box) return;
+    const rules = AlertStore.rules();
+    box.innerHTML = (AlertStore.SOURCES || []).map(function(s) {
+      const ruleCount = rules.filter(function(r) { return r.source === s.key; }).length;
+      const alertCount = AlertStore.bySource(s.key).length;
+      const connected = ruleCount > 0 || alertCount > 0;
+      return '<div class="source-item">'
+        + '<div><div class="source-name">' + esc(s.text) + '</div>'
+        + '<div class="source-desc">' + esc(s.desc) + ' · 规则 ' + ruleCount + ' 条 · 预警 ' + alertCount + ' 条</div></div>'
+        + '<span class="source-badge ' + (connected ? 'connected' : 'pending') + '">'
+        + (connected ? '已接入' : '待接入') + '</span></div>';
+    }).join('');
+  }
+
+  // ---------- 表格 ----------
+  function renderRow(item, index) {
+    const isActive = item.status === 'active';
+    return '<tr>'
+      + '<td>' + (index + 1) + '</td>'
+      + '<td class="col-check"><input type="checkbox" class="row-checkbox" data-id="' + esc(item.id) + '" aria-label="选择该规则"></td>'
+      + '<td>' + esc(item.code) + '</td>'
+      + '<td><strong>' + esc(item.name) + '</strong></td>'
+      + '<td><span class="source-tag src-' + esc(item.source) + '">' + esc(sourceText(item.source)) + '</span></td>'
+      + '<td><span class="category-tag cat-' + esc(item.category) + '">' + esc(categoryText(item.category)) + '</span></td>'
+      + '<td><span class="level-tag level-' + esc(item.level) + '">' + esc(levelText(item.level)) + '</span></td>'
+      + '<td>' + esc(formatThreshold(item.threshold)) + '</td>'
+      + '<td>' + esc(formatScope(item.scope)) + '</td>'
+      + '<td>' + esc(item.respondSla || '—') + '</td>'
+      + '<td>' + esc(item.handleSla || '无时限') + '</td>'
+      + '<td>' + esc(notifyText(item.notify)) + '</td>'
+      + '<td><span class="status-tag ' + (isActive ? 'st-closed' : 'st-ignored') + '">' + (isActive ? '启用' : '停用') + '</span></td>'
+      + '<td><div class="action-btns">'
+      + '<button class="action-btn detail" data-id="' + esc(item.id) + '">详情</button>'
+      + '<button class="action-btn edit" data-id="' + esc(item.id) + '">编辑</button>'
+      + '<button class="action-btn delete" data-id="' + esc(item.id) + '">删除</button>'
+      + '</div></td>'
+      + '</tr>';
+  }
+
+  function renderTag(cls, text) {
+    return '<span class="' + cls + '">' + esc(text) + '</span>';
+  }
+
+  function showDetailModal(id) {
+    const item = AlertStore.rule(id);
+    if (!item) return;
+    currentDetailId = item.id;
+    document.getElementById('detailCode').textContent = item.code;
+    document.getElementById('detailName').textContent = item.name;
+    document.getElementById('detailSource').innerHTML = renderTag('source-tag src-' + item.source, sourceText(item.source));
+    document.getElementById('detailCategory').innerHTML = renderTag('category-tag cat-' + item.category, categoryText(item.category));
+    document.getElementById('detailThreshold').textContent = formatThreshold(item.threshold);
+    document.getElementById('detailScope').textContent = formatScope(item.scope);
+    document.getElementById('detailRespondSla').textContent = item.respondSla || '—';
+    document.getElementById('detailHandleSla').textContent = item.handleSla || '无时限';
+    document.getElementById('detailNotify').textContent = notifyText(item.notify);
+    document.getElementById('detailLevel').innerHTML = renderTag('level-tag level-' + item.level, levelText(item.level));
+    document.getElementById('detailUsers').textContent = (item.assignees && item.assignees.length) ? item.assignees.join('、') : '—';
+    document.getElementById('detailStatus').innerHTML = renderTag(
+      'status-tag ' + (item.status === 'active' ? 'st-closed' : 'st-ignored'),
+      item.status === 'active' ? '启用' : '停用'
+    );
+    document.getElementById('detailCreateTime').textContent = item.createTime || '—';
+    document.getElementById('detailDesc').textContent = item.desc || '—';
+    document.getElementById('detailModal').classList.add('show');
+  }
+
+  function openCreateModal() {
+    document.getElementById('editModalTitle').textContent = '新建预警规则';
+    document.getElementById('editId').value = '';
+    document.getElementById('editName').value = '';
+    document.getElementById('editSource').value = 'device';
+    document.getElementById('editCategory').value = 'device';
+    document.getElementById('editLevel').value = 'reminder';
+    document.getElementById('editMetric').value = '';
+    document.getElementById('editOp').value = 'gt';
+    document.getElementById('editValue').value = '';
+    document.getElementById('editValue2').value = '';
+    document.getElementById('editUnit').value = '';
+    document.getElementById('editScopeType').value = 'all';
+    document.getElementById('editScopeIds').value = '';
+    document.getElementById('editRespondSla').value = slaConfig.reminder.respond;
+    document.getElementById('editHandleSla').value = slaConfig.reminder.handle;
+    document.getElementById('notifyInternal').checked = true;
+    document.getElementById('notifySms').checked = false;
+    document.getElementById('notifyPush').checked = false;
+    document.getElementById('editUsers').value = '';
+    document.getElementById('editDesc').value = '';
+    document.getElementById('editStatus').value = 'active';
+    toggleValue2();
+    toggleScopeIds();
+    refreshThresholdText();
+    document.getElementById('editModal').classList.add('show');
+  }
+
+  function showEditModal(id) {
+    const item = AlertStore.rule(id);
+    if (!item) return;
+    const th = item.threshold || {};
+    const scope = item.scope || { type: 'all', ids: [] };
+
+    document.getElementById('editModalTitle').textContent = '编辑预警规则';
+    document.getElementById('editId').value = item.id;
+    document.getElementById('editName').value = item.name || '';
+    document.getElementById('editSource').value = item.source || 'system';
+    document.getElementById('editCategory').value = item.category || 'growth';
+    document.getElementById('editLevel').value = item.level || 'notice';
+    document.getElementById('editMetric').value = th.metric || '';
+    document.getElementById('editOp').value = th.op || 'gt';
+    document.getElementById('editValue').value = (th.value === null || th.value === undefined) ? '' : th.value;
+    document.getElementById('editValue2').value = (th.value2 === null || th.value2 === undefined) ? '' : th.value2;
+    document.getElementById('editUnit').value = th.unit || '';
+    document.getElementById('editScopeType').value = scope.type || 'all';
+    document.getElementById('editScopeIds').value = (scope.ids || []).join(', ');
+
+    const cfg = slaConfig[item.level] || SLA_DEFAULTS.notice;
+    document.getElementById('editRespondSla').value = item.respondSla || cfg.respond;
+    document.getElementById('editHandleSla').value = item.handleSla || cfg.handle;
+
+    const notify = item.notify || {};
+    document.getElementById('notifyInternal').checked = !!notify.internal;
+    document.getElementById('notifySms').checked = !!notify.sms;
+    document.getElementById('notifyPush').checked = !!notify.push;
+    document.getElementById('editUsers').value = (item.assignees || []).join(', ');
+    document.getElementById('editDesc').value = item.desc || '';
+    document.getElementById('editStatus').value = item.status || 'active';
+
+    toggleValue2();
+    toggleScopeIds();
+    refreshThresholdText();
+    document.getElementById('editModal').classList.add('show');
+  }
+
+  function toggleValue2() {
+    const op = document.getElementById('editOp').value;
+    const input = document.getElementById('editValue2');
+    const between = op === 'between';
+    input.disabled = !between;
+    if (!between) input.value = '';
+  }
+
+  function toggleScopeIds() {
+    const type = document.getElementById('editScopeType').value;
+    const group = document.getElementById('editScopeIdsGroup');
+    group.style.display = type === 'all' ? 'none' : 'block';
+  }
+
+  function syncEditSlaFromLevel(force) {
+    const level = document.getElementById('editLevel').value;
+    const cfg = slaConfig[level] || SLA_DEFAULTS.notice;
+    const respondEl = document.getElementById('editRespondSla');
+    const handleEl = document.getElementById('editHandleSla');
+    const isDefault = !respondEl.value || SLA_LEVELS.some(function(l) {
+      return respondEl.value === slaConfig[l.key].respond;
+    });
+    if (force || isDefault) {
+      respondEl.value = cfg.respond;
+      handleEl.value = cfg.handle;
+    }
+  }
+
+  // 结构化阈值 → 只读阈值文本
+  function refreshThresholdText() {
+    const metric = document.getElementById('editMetric').value;
+    const op = document.getElementById('editOp').value;
+    const v1raw = document.getElementById('editValue').value;
+    const v2raw = document.getElementById('editValue2').value;
+    const unit = document.getElementById('editUnit').value.trim();
+    const v1 = v1raw === '' ? null : Number(v1raw);
+    const v2 = v2raw === '' ? null : Number(v2raw);
+
+    let text = '';
+    if (!metric) {
+      text = '不限（仅按来源/分类匹配）';
+    } else if (op === 'between' && v1 !== null && v2 !== null) {
+      text = metricText(metric) + ' ' + v1 + unit + ' ~ ' + v2 + unit;
+    } else if (v1 === null) {
+      text = metricText(metric) + ' ' + (OP_LABELS[op] || '') + ' 阈值';
+    } else {
+      text = metricText(metric) + ' ' + (OP_SYMBOLS[op] || '=') + ' ' + v1 + unit;
+    }
+    document.getElementById('editThreshold').value = text;
+  }
+
+  function saveRule() {
+    const name = document.getElementById('editName').value.trim();
+    if (!name) { showToast('请填写规则名称', 'warning'); return; }
+
+    const metric = document.getElementById('editMetric').value;
+    const op = document.getElementById('editOp').value;
+    const v1raw = document.getElementById('editValue').value;
+    const v2raw = document.getElementById('editValue2').value;
+    const value = v1raw === '' ? null : Number(v1raw);
+    const value2 = v2raw === '' ? null : Number(v2raw);
+
+    if (metric && value === null) { showToast('请填写阈值数值', 'warning'); return; }
+    if (metric && op === 'between' && value2 === null) { showToast('「介于」需填写第二阈值', 'warning'); return; }
+
+    const level = document.getElementById('editLevel').value;
+    const cfg = slaConfig[level] || SLA_DEFAULTS.notice;
+    const scopeType = document.getElementById('editScopeType').value;
+    const scopeIds = scopeType === 'all'
+      ? []
+      : String(document.getElementById('editScopeIds').value).split(/[,，]/).map(function(s) {
+          return s.trim();
+        }).filter(Boolean);
+
+    if (scopeType !== 'all' && !scopeIds.length) {
+      showToast('请填写作用对象', 'warning');
+      return;
+    }
+
+    const payload = {
+      id: document.getElementById('editId').value || undefined,
+      name: name,
+      source: document.getElementById('editSource').value,
+      category: document.getElementById('editCategory').value,
+      level: level,
+      threshold: {
+        metric: metric,
+        op: op,
+        value: value,
+        value2: value2,
+        unit: document.getElementById('editUnit').value.trim()
+      },
+      scope: { type: scopeType, ids: scopeIds },
+      notify: {
+        internal: document.getElementById('notifyInternal').checked,
+        sms: document.getElementById('notifySms').checked,
+        push: document.getElementById('notifyPush').checked
+      },
+      assignees: String(document.getElementById('editUsers').value).split(/[,，]/).map(function(s) {
+        return s.trim();
+      }).filter(Boolean),
+      respondSla: document.getElementById('editRespondSla').value.trim() || cfg.respond,
+      handleSla: document.getElementById('editHandleSla').value.trim() || cfg.handle,
+      escalateTo: cfg.escalate,
+      status: document.getElementById('editStatus').value,
+      desc: document.getElementById('editDesc').value.trim()
+    };
+
+    const res = AlertStore.saveRule(payload);
+    if (!res || !res.ok) {
+      showToast((res && res.message) || '规则保存失败', 'error');
+      return;
+    }
+    document.getElementById('editModal').classList.remove('show');
+    reloadRules();
+    showToast(res.message, 'success');
+  }
+
+  // ---------- 导入 / 导出 ----------
+  function doExport(format, selectedOnly) {
+    const ids = collectSelectedIds();
+    let list = AlertStore.rules();
+    if (selectedOnly && ids.length) {
+      list = list.filter(function(r) { return ids.indexOf(r.id) >= 0; });
+    }
+    if (!list.length) { showToast('暂无可导出的规则', 'warning'); return false; }
+
+    const stamp = formatStamp(new Date());
+    if (format === 'xml') {
+      const body = list.map(function(r) {
+        const th = r.threshold || {};
+        const scope = r.scope || { type: 'all', ids: [] };
+        const notify = r.notify || {};
+        return '  <rule>'
+          + '<code>' + xmlEsc(r.code) + '</code>'
+          + '<name>' + xmlEsc(r.name) + '</name>'
+          + '<source>' + xmlEsc(r.source) + '</source>'
+          + '<category>' + xmlEsc(r.category) + '</category>'
+          + '<level>' + xmlEsc(r.level) + '</level>'
+          + '<metric>' + xmlEsc(th.metric) + '</metric>'
+          + '<op>' + xmlEsc(th.op) + '</op>'
+          + '<value>' + xmlEsc(th.value) + '</value>'
+          + '<value2>' + xmlEsc(th.value2) + '</value2>'
+          + '<unit>' + xmlEsc(th.unit) + '</unit>'
+          + '<scopeType>' + xmlEsc(scope.type) + '</scopeType>'
+          + '<scopeIds>' + xmlEsc((scope.ids || []).join(',')) + '</scopeIds>'
+          + '<notifyInternal>' + (!!notify.internal) + '</notifyInternal>'
+          + '<notifySms>' + (!!notify.sms) + '</notifySms>'
+          + '<notifyPush>' + (!!notify.push) + '</notifyPush>'
+          + '<assignees>' + xmlEsc((r.assignees || []).join(',')) + '</assignees>'
+          + '<respondSla>' + xmlEsc(r.respondSla) + '</respondSla>'
+          + '<handleSla>' + xmlEsc(r.handleSla) + '</handleSla>'
+          + '<status>' + xmlEsc(r.status) + '</status>'
+          + '<desc>' + xmlEsc(r.desc) + '</desc>'
+          + '</rule>';
+      }).join('\n');
+      downloadText('<?xml version="1.0" encoding="UTF-8"?>\n<rules>\n' + body + '\n</rules>\n',
+        'alert-rules-' + stamp + '.xml', 'application/xml;charset=utf-8;');
+      return true;
+    }
+
+    downloadText(JSON.stringify({ version: 2, exportTime: nowStamp(), rules: list }, null, 2),
+      'alert-rules-' + stamp + '.json', 'application/json;charset=utf-8;');
+    return true;
+  }
+
+  function doImport() {
+    const file = document.getElementById('importFile').files[0];
+    if (!file) { showToast('请先选择要导入的文件', 'warning'); return; }
+    const override = document.getElementById('importOverride').checked;
+
+    const reader = new FileReader();
+    reader.onload = function() {
+      let list;
+      try {
+        list = parseRulesText(String(reader.result || ''), file.name);
+      } catch (e) {
+        showToast('文件解析失败：' + e.message, 'error');
+        return;
+      }
+      if (!Array.isArray(list) || !list.length) {
+        showToast('文件中未解析到规则', 'warning');
+        return;
+      }
+
+      let created = 0, updated = 0, skipped = 0;
+      list.forEach(function(raw) {
+        const rule = normalizeImportedRule(raw);
+        if (!rule || !rule.name) { skipped++; return; }
+        const exist = rule.code ? AlertStore.rule(rule.code) : null;
+        if (exist && !override) { skipped++; return; }
+        const payload = exist
+          ? Object.assign({}, exist, rule, { id: exist.id, code: exist.code })
+          : rule;
+        const res = AlertStore.saveRule(payload);
+        if (res && res.ok) { exist ? updated++ : created++; } else { skipped++; }
+      });
+
+      document.getElementById('importModal').classList.remove('show');
+      reloadRules();
+      showToast('导入完成：新增 ' + created + ' 条，覆盖 ' + updated + ' 条，跳过 ' + skipped + ' 条', 'success');
+    };
+    reader.onerror = function() { showToast('文件读取失败', 'error'); };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  function parseRulesText(text, filename) {
+    if (/^\s*</.test(text)) {
+      const doc = new DOMParser().parseFromString(text, 'application/xml');
+      if (doc.querySelector('parsererror')) throw new Error('XML 格式不正确');
+      const nodes = Array.from(doc.querySelectorAll('rule'));
+      return nodes.map(function(node) {
+        const get = function(tag) {
+          const el = node.querySelector(tag);
+          return el ? el.textContent.trim() : '';
+        };
+        return {
+          code: get('code'),
+          name: get('name'),
+          source: get('source'),
+          category: get('category'),
+          level: get('level'),
+          threshold: {
+            metric: get('metric'),
+            op: get('op') || 'gt',
+            value: get('value') === '' ? null : Number(get('value')),
+            value2: get('value2') === '' ? null : Number(get('value2')),
+            unit: get('unit')
+          },
+          scope: {
+            type: get('scopeType') || 'all',
+            ids: get('scopeIds') ? get('scopeIds').split(',').map(function(s) { return s.trim(); }).filter(Boolean) : []
+          },
+          notify: {
+            internal: get('notifyInternal') !== 'false',
+            sms: get('notifySms') === 'true',
+            push: get('notifyPush') === 'true'
+          },
+          assignees: get('assignees') ? get('assignees').split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [],
+          respondSla: get('respondSla'),
+          handleSla: get('handleSla'),
+          status: get('status') || 'active',
+          desc: get('desc')
+        };
+      });
+    }
+
+    const data = JSON.parse(text);
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.rules)) return data.rules;
+    throw new Error('文件中未找到 rules 数组（' + filename + '）');
+  }
+
+  function normalizeImportedRule(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    const rule = Object.assign({}, raw);
+    if (!rule.name) return null;
+    if (!rule.threshold || typeof rule.threshold !== 'object') {
+      rule.threshold = { metric: '', op: 'gt', value: null, value2: null, unit: '' };
+    }
+    if (!rule.scope || typeof rule.scope !== 'object') rule.scope = { type: 'all', ids: [] };
+    if (!rule.notify || typeof rule.notify !== 'object') {
+      const parts = String(rule.notify || '').split('+');
+      rule.notify = {
+        internal: parts.indexOf('站内') >= 0,
+        sms: parts.indexOf('短信') >= 0,
+        push: parts.indexOf('推送') >= 0
+      };
+    }
+    if (!Array.isArray(rule.assignees)) {
+      rule.assignees = rule.users
+        ? String(rule.users).split(/[,，]/).map(function(s) { return s.trim(); }).filter(Boolean)
+        : [];
+    }
+    return rule;
+  }
+
+  function xmlEsc(v) {
+    return String(v === null || v === undefined ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  }
+
+  function formatStamp(d) {
+    const pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+    return '' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes());
+  }
+
+  function nowStamp() {
+    const d = new Date();
+    const pad = function(n) { return n < 10 ? '0' + n : '' + n; };
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
+      + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  function downloadText(content, filename, mime) {
+    try {
+      const blob = new Blob([content], { type: mime || 'text/plain;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+      return true;
+    } catch (e) {
+      showToast('导出失败', 'error');
+      return false;
+    }
+  }
+
+  // ---------- 通用 ----------
+  function showConfirmModal(title, message, type) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmIcon').className = 'confirm-icon ' + (type || 'warning');
+
+    const iconHtml = type === 'error' ? `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M15 9l-6 6M9 9l6 6"/>
+      </svg>
+    ` : `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 16v-4M12 8h.01"/>
+      </svg>
+    `;
+    document.getElementById('confirmIcon').innerHTML = iconHtml;
+    document.getElementById('confirmModal').classList.add('show');
+  }
+
+  function showToast(message, type) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + (type || 'success');
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    setTimeout(function() {
+      toast.style.animation = 'slideOut 0.3s ease forwards';
+      setTimeout(function() { toast.remove(); }, 300);
+    }, 3000);
+  }
+
+  function updateSelectedCount() {
+    const count = document.querySelectorAll('.row-checkbox:checked').length;
+    const el = document.getElementById('selectedCount');
+    if (el) el.textContent = count;
+  }
+</script>
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/common-functions.js"></script>
+  <script src="js/search-helper.js"></script>
+  <script src="js/typography.js"></script>
+</body>
+</html>

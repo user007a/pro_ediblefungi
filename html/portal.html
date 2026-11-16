@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>托克逊县食用菌工厂 · 统一登录入口</title>
+  <meta name="description" content="食用菌工厂化农业数据管理平台统一登录入口：管理后台、移动应用端、生产数据大屏与消费者溯源 H5 按角色聚合，认证在各端完成。">
+  <meta name="theme-color" content="#F1F0E8">
+  <link rel="icon" type="image/svg+xml" href="common/images/logo_mushroom.svg">
+  <style>
+    @font-face{
+      font-family:'YouSheBiaoTiHei';
+      src:url('fonts/YouSheBiaoTiHei.woff2') format('woff2'),url('fonts/YouSheBiaoTiHei.woff') format('woff');
+      font-weight:400;font-style:normal;font-display:swap;
+    }
+    :root{
+      --paper:#F1F0E8;
+      --surface:#FAFAF4;
+      --card:#FFFFFF;
+      --ink:#182720;
+      --ink-2:#3D4E44;
+      --muted:#66756A;
+      --faint:#8B9689;
+      --line:#DCDFCF;
+      --line-2:#C6CBB8;
+      --pine:#1E4634;
+      --pine-deep:#132E22;
+      --pine-2:#3E7A57;
+      --pine-soft:#E7EEE3;
+      --amber:#B4690E;
+      --amber-bright:#E8A23D;
+      --amber-soft:#FBF3E2;
+      --amber-line:#EAD9B4;
+      --red:#BF4426;
+      --blue:#2E6E8E;
+      --blue-soft:#E1EBEF;
+      --idle:#98A192;
+      --r:6px;
+      --disp:'YouSheBiaoTiHei','Microsoft YaHei',sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    html{scrollbar-color:var(--line-2) var(--paper);scrollbar-width:thin}
+    body{
+      font-family:"Microsoft YaHei","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+      background:var(--paper);color:var(--ink);
+      -webkit-font-smoothing:antialiased;line-height:1.7;font-size:14px;
+    }
+    body::before{
+      content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+      background:
+        repeating-linear-gradient(0deg,rgba(30,70,52,.045) 0 1px,transparent 1px 28px),
+        repeating-linear-gradient(90deg,rgba(30,70,52,.045) 0 1px,transparent 1px 28px);
+    }
+    ::-webkit-scrollbar{width:10px;height:8px}
+    ::-webkit-scrollbar-track{background:var(--paper)}
+    ::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:5px;border:2px solid var(--paper)}
+    ::-webkit-scrollbar-thumb:hover{background:var(--pine-2)}
+    a{color:inherit}
+    button{font:inherit;color:inherit}
+    :focus-visible{outline:2px solid var(--pine-2);outline-offset:2px}
+    .shell{max-width:1240px;margin:0 auto;padding:0 32px}
+    .num{font-variant-numeric:tabular-nums}
+
+    /* ===== 顶栏 ===== */
+    .topbar{
+      position:sticky;top:0;z-index:20;height:64px;
+      display:flex;align-items:center;justify-content:space-between;gap:20px;
+      background:rgba(241,240,232,.94);backdrop-filter:blur(6px);
+      border-bottom:1px solid var(--line-2);
+    }
+    .brand{display:flex;align-items:center;gap:11px;text-decoration:none;min-width:0}
+    .brand-logo{width:36px;height:36px;flex:none;border-radius:8px;display:block}
+    .brand-text{min-width:0;display:block}
+    .brand-text strong{display:block;font-size:15px;line-height:1.3;letter-spacing:.01em;white-space:nowrap}
+    .brand-text em{display:block;font-style:normal;font-size:10.5px;color:var(--faint);letter-spacing:.06em;white-space:nowrap}
+    .top-right{display:flex;align-items:center;gap:16px}
+    .clock{display:flex;align-items:baseline;gap:9px}
+    .clock b{font-family:var(--disp);font-weight:400;font-size:21px;line-height:1;color:var(--pine);font-variant-numeric:tabular-nums}
+    .clock span{font-size:11.5px;color:var(--muted);white-space:nowrap}
+    .syspill{
+      display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+      padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;
+      background:var(--pine-soft);color:var(--pine);border:1px solid #CBDCC6;
+    }
+    .syspill i{width:7px;height:7px;border-radius:50%;background:var(--pine-2);box-shadow:0 0 0 3px rgba(62,122,87,.15)}
+    .syspill.warn{background:var(--amber-soft);color:var(--amber);border-color:var(--amber-line)}
+    .syspill.warn i{background:var(--amber-bright);box-shadow:0 0 0 3px rgba(232,162,61,.18)}
+    .nav-btn{
+      padding:8px 18px;border-radius:var(--r);background:var(--amber-bright);color:#2A1804;
+      font-weight:700;font-size:13px;text-decoration:none;white-space:nowrap;transition:background .18s;
+    }
+    .nav-btn:hover{background:#F2B350}
+
+    /* ===== 门厅主区 ===== */
+    .gate{display:grid;grid-template-columns:352px minmax(0,1fr);gap:34px;align-items:start;padding:30px 0 34px;animation:gateIn .45s ease both}
+    @keyframes gateIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+    .brandcol{position:sticky;top:84px}
+    .kicker{display:inline-flex;align-items:center;gap:9px;font-size:12px;letter-spacing:.14em;color:var(--pine-2);font-weight:600}
+    .kicker::before{content:"";width:22px;height:1px;background:var(--pine-2)}
+    h1{margin:12px 0 0;font-family:var(--disp);font-weight:400;font-size:clamp(32px,3.2vw,44px);line-height:1.18;letter-spacing:.02em;color:var(--pine-deep)}
+    .brand-sub{margin:6px 0 0;font-size:14px;font-weight:600;color:var(--ink-2)}
+    .brand-photo{position:relative;margin:18px 0 0;overflow:hidden;border-radius:var(--r);border:1px solid var(--line-2);aspect-ratio:4/3;background:#E7EEE4}
+    .bp-view{position:absolute;inset:0;overflow:hidden;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
+    .bp-view:active{cursor:grabbing}
+    .bp-track{display:flex;height:100%;transition:transform .65s cubic-bezier(.22,.61,.21,1);will-change:transform}
+    .bp-slide{position:relative;flex:0 0 100%;height:100%;overflow:hidden}
+    .bp-slide img{width:100%;height:100%;object-fit:cover;display:block;transform:scale(1.02);transition:transform 7s linear;user-select:none;-webkit-user-drag:none}
+    .bp-slide.is-on img{transform:scale(1.09)}
+    .bp-slide::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(19,46,34,.10),rgba(19,46,34,0) 32%,rgba(19,46,34,0) 55%,rgba(19,46,34,.66))}
+    .bp-slide figcaption{position:absolute;left:12px;bottom:10px;z-index:2;font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,.92);max-width:62%;text-shadow:0 1px 2px rgba(19,46,34,.5)}
+    .bp-hud{position:absolute;top:9px;right:9px;z-index:3;display:flex;align-items:center;gap:6px}
+    .bp-toggle{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:4px;background:rgba(19,46,34,.66);color:var(--paper);cursor:pointer;transition:background .18s,color .18s}
+    .bp-toggle:hover{background:var(--amber);color:#fff}
+    .bp-toggle svg{width:11px;height:11px;fill:currentColor}
+    .bp-count{font-family:var(--disp);font-size:12.5px;letter-spacing:.08em;line-height:1;color:var(--paper);background:rgba(19,46,34,.66);padding:5px 8px 4px;border-radius:4px}
+    .bp-arrow{position:absolute;top:50%;translate:0 -50%;z-index:3;width:28px;height:28px;border-radius:50%;border:1px solid var(--line-2);background:rgba(250,250,244,.92);color:var(--pine);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .2s,background .18s,color .18s,border-color .18s;box-shadow:0 2px 8px rgba(19,46,34,.18)}
+    .bp-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .bp-arrow.prev{left:8px}
+    .bp-arrow.next{right:8px}
+    .brand-photo:hover .bp-arrow,.brand-photo:focus-within .bp-arrow{opacity:1}
+    .bp-arrow:hover{background:var(--amber-bright);color:#2A1804;border-color:var(--amber-bright)}
+    @media (hover:none){.bp-arrow{opacity:1}}
+    .bp-dots{position:absolute;right:8px;bottom:8px;z-index:3;display:flex;gap:4px}
+    .bp-dots button{width:18px;height:18px;padding:0;border:0;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+    .bp-dots button i{display:block;width:12px;height:3px;border-radius:2px;background:rgba(255,255,255,.5);transition:width .25s,background .25s}
+    .bp-dots button:hover i{background:#fff}
+    .bp-dots button[aria-current="true"] i{width:22px;background:var(--amber-bright)}
+    .bp-progress{position:absolute;left:0;bottom:0;z-index:3;height:2px;width:100%;background:var(--amber-bright);transform-origin:0 50%;transform:scaleX(0)}
+    .brand-kv{margin:16px 0 0;display:grid;gap:6px}
+    .brand-kv div{display:flex;justify-content:space-between;gap:12px;font-size:12px;border-bottom:1px dashed var(--line);padding-bottom:5px}
+    .brand-kv span{color:var(--faint);flex:none}
+    .brand-kv b{font-weight:600;color:var(--ink-2);text-align:right}
+    .syslist{margin:16px 0 0;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+    .syslist h2{margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
+    .syslist ul{margin:0;padding:0;list-style:none;display:grid;gap:7px}
+    .syslist li{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
+    .syslist i{width:7px;height:7px;border-radius:50%;background:var(--pine-2);flex:none}
+    .syslist li.warn i{background:var(--amber-bright)}
+    .syslist em{font-style:normal;margin-left:auto;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+    .syslist b{font-weight:600}
+
+    /* ===== 入口矩阵 ===== */
+    .group-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 12px;padding-top:4px;border-top:1px solid var(--line-2)}
+    .group-head .idx{font-family:var(--disp);font-size:19px;color:var(--amber);line-height:1;padding-top:9px}
+    .group-head h2{margin:0;padding-top:7px;font-size:16.5px;font-weight:700}
+    .group + .group{margin-top:26px}
+    .card-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
+    .card{
+      position:relative;display:flex;flex-direction:column;min-width:0;
+      background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+      padding:18px;transition:border-color .18s, box-shadow .18s;
+    }
+    .card:hover{border-color:var(--pine-2);box-shadow:0 10px 26px rgba(31,74,58,.08)}
+    .c-head{display:flex;align-items:flex-start;gap:12px}
+    .c-ico{width:40px;height:40px;flex:none;border-radius:var(--r);background:var(--pine);display:grid;place-items:center}
+    .c-ico svg{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+    .c-titles{min-width:0;flex:1}
+    .c-titles h3{margin:0;font-size:16.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .c-fav{font-size:10px;font-weight:600;color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-line);border-radius:3px;padding:1px 6px}
+    .c-fav[hidden]{display:none}
+    .c-role{margin:2px 0 0;font-size:11.5px;color:var(--muted)}
+    .nb{white-space:nowrap}
+    .c-state{display:inline-flex;align-items:center;gap:6px;flex:none;font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums;padding-top:3px}
+    .c-state i{width:7px;height:7px;border-radius:50%;background:var(--pine-2)}
+    .c-state.warn i{background:var(--amber-bright)}
+    .c-method{
+      display:flex;align-items:center;gap:8px;margin:13px 0 0;padding:7px 11px;
+      background:var(--pine-soft);border:1px solid #CBDCC6;border-radius:4px;
+      font-size:12px;font-weight:600;color:var(--pine);
+    }
+    .c-method svg{width:14px;height:14px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .c-feats{margin:12px 0 16px;padding:0;list-style:none;display:grid;gap:6px}
+    .c-feats li{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-2);line-height:1.6}
+    .c-feats svg{width:13px;height:13px;flex:none;margin-top:4px;stroke:var(--pine-2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .c-demo{
+      display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 16px;
+      font-size:11.5px;color:var(--faint);
+    }
+    .c-demo code{
+      font-family:Consolas,"Courier New",monospace;font-size:11.5px;color:var(--ink-2);
+      background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:2px 8px;
+    }
+    .copybtn{
+      border:1px solid var(--line-2);background:var(--card);border-radius:4px;cursor:pointer;
+      font-size:11px;font-weight:600;color:var(--pine);padding:2px 10px;transition:background .18s,border-color .18s;
+    }
+    .copybtn:hover{border-color:var(--pine-2);background:var(--pine-soft)}
+    .copybtn.ok{background:var(--pine-2);border-color:var(--pine-2);color:#fff}
+    .copybtn.fail{background:var(--amber-soft);border-color:var(--amber-line);color:var(--amber)}
+    .c-cta{
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      margin:auto 0 0;padding:11px 16px;border-radius:var(--r);
+      background:var(--pine);color:#fff;font-weight:700;font-size:14px;text-decoration:none;
+      transition:background .18s;
+    }
+    .c-cta:hover{background:#17392C}
+    .c-cta svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
+    .c-cta:hover svg{transform:translateX(3px)}
+
+    /* 带二维码的卡：内容 + 侧栏 */
+    .c-split{display:flex;gap:16px;align-items:stretch}
+    .c-main{flex:1;min-width:0;display:flex;flex-direction:column}
+    .c-qr{flex:none;width:104px;margin:2px 0 0;text-align:center;align-self:start}
+    .c-qr .qr-frame{border:1px solid var(--line);border-radius:var(--r);padding:6px;background:#fff}
+    .c-qr svg{display:block;width:100%;height:auto}
+    .c-qr figcaption{margin:6px 0 0;font-size:10px;line-height:1.5;color:var(--faint)}
+    .c-qr .copybtn{margin-top:7px}
+
+    /* 大屏深色卡 */
+    .card-dark{background:linear-gradient(165deg,#1C4433 0%,var(--pine-deep) 80%);border-color:#0E241B;color:#EDF3EA}
+    .card-dark:hover{border-color:var(--pine-2)}
+    .card-dark .c-ico{background:rgba(255,255,255,.12)}
+    .card-dark .c-titles h3{color:#fff}
+    .card-dark .c-role{color:rgba(237,243,234,.62)}
+    .card-dark .c-state{color:rgba(237,243,234,.55)}
+    .card-dark .c-state i{background:#6FCF97}
+    .card-dark .c-method{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#F2D9A8}
+    .card-dark .c-feats li{color:rgba(237,243,234,.85)}
+    .card-dark .c-feats svg{stroke:var(--amber-bright)}
+    .card-dark .c-cta{background:var(--amber-bright);color:#2A1804}
+    .card-dark .c-cta:hover{background:#F2B350}
+    .views{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 16px}
+    .views span{font-size:11px;padding:2px 9px;border-radius:4px;border:1px solid rgba(255,255,255,.24);color:rgba(237,243,234,.82)}
+
+    /* ===== 页脚 ===== */
+    .footer{
+      display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;
+      border-top:1px solid var(--line-2);padding:18px 0 30px;font-size:12px;color:var(--faint);
+    }
+    .footer .sep{margin:0 8px;color:var(--line-2)}
+
+    /* ===== 响应式 ===== */
+    @media (max-width:1080px){
+      .shell{padding:0 24px}
+      .gate{grid-template-columns:minmax(0,1fr);gap:26px}
+      .brandcol{position:static;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"text photo" "kv sys";gap:0 26px;align-items:start}
+      .brandcol .bc-text{grid-area:text}
+      .brand-photo{grid-area:photo;margin:0}
+      .brand-kv{grid-area:kv}
+      .syslist{grid-area:sys;margin:14px 0 0}
+    }
+    @media (max-width:760px){
+      .shell{padding:0 18px}
+      .clock span{display:none}
+      .brand-text em{display:none}
+      .brandcol{display:block}
+      .brand-photo{margin:16px 0 0;aspect-ratio:16/8}
+      .syslist{margin:14px 0 0}
+      .card-grid{grid-template-columns:minmax(0,1fr)}
+      .c-qr{display:none}
+      .syspill{display:none}
+    }
+    @media (max-width:560px){
+      .topbar{gap:10px}
+      .top-right{gap:10px}
+      .brand{gap:8px}
+      .brand-logo{width:30px;height:30px}
+      .brand-text strong{font-size:13.5px}
+      .clock b{font-size:15px}
+      .nav-btn{padding:7px 12px;font-size:12px}
+      .syspill{padding:4px 9px;font-size:11px}
+      .c-split{display:block}
+    }
+    @media (prefers-reduced-motion:reduce){
+      *{animation:none !important;transition:none !important}
+      .bp-slide img{transform:none}
+      .bp-progress{display:none}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="portal.html" aria-label="返回统一入口首页">
+        <img class="brand-logo" src="common/images/logo_mushroom.svg" alt="平台标识">
+        <span class="brand-text">
+          <strong>托克逊县食用菌工厂</strong>
+          <em>工厂化农业数据管理平台 · TXS-2026-KJXN-07</em>
+        </span>
+      </a>
+      <div class="top-right">
+        <div class="clock num" aria-label="当前时间">
+          <b id="clkTime">--:--:--</b>
+          <span id="clkDate"></span>
+        </div>
+        <span class="syspill" id="sysPill"><i aria-hidden="true"></i><span id="sysPillText">系统状态检测中</span></span>
+        <a class="nav-btn" data-sys="admin" data-name="管理后台" href="applefarm_backhand/login.html">管理登录</a>
+      </div>
+    </header>
+
+    <main class="gate">
+      <!-- 品牌区 -->
+      <aside class="brandcol" aria-label="平台信息">
+        <div class="bc-text">
+          <p class="kicker">统一登录入口</p>
+          <h1>托克逊县<br>食用菌工厂</h1>
+          <p class="brand-sub">工厂化农业数据管理平台</p>
+        </div>
+        <figure class="brand-photo" id="brandPhoto" aria-roledescription="轮播" aria-label="工厂场景示意，共 4 张">
+          <div class="bp-view" id="bpView"><div class="bp-track" id="bpTrack"></div></div>
+          <span class="bp-hud">
+            <button type="button" class="bp-toggle" id="bpToggle" aria-label="暂停轮播"></button>
+            <span class="bp-count" id="bpCount">01 / 04</span>
+          </span>
+          <button type="button" class="bp-arrow prev" id="bpPrev" aria-label="上一张"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="14 6 8 12 14 18"/></svg></button>
+          <button type="button" class="bp-arrow next" id="bpNext" aria-label="下一张"><svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="10 6 16 12 10 18"/></svg></button>
+          <div class="bp-dots" id="bpDots"></div>
+          <span class="bp-progress" id="bpProg" aria-hidden="true"></span>
+        </figure>
+        <div class="brand-kv" id="brandKv"></div>
+        <div class="syslist">
+          <h2>系统服务状态</h2>
+          <ul id="sysList"></ul>
+        </div>
+      </aside>
+
+      <!-- 入口矩阵 -->
+      <div class="entries">
+        <section class="group" aria-label="需登录入口">
+          <div class="group-head">
+            <span class="idx" aria-hidden="true">壹</span>
+            <h2>需登录 · 厂内员工</h2>
+          </div>
+          <div class="card-grid" id="authGrid"></div>
+        </section>
+
+        <section class="group" aria-label="免登录入口">
+          <div class="group-head">
+            <span class="idx" aria-hidden="true">贰</span>
+            <h2>免登录 · 直开</h2>
+          </div>
+          <div class="card-grid" id="openGrid"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div>© 2026 托克逊县 2026 年科技兴农项目<span class="sep">|</span>食用菌工厂化农业数据管理平台</div>
+      <div id="footMeta"></div>
+    </footer>
+  </div>
+
+  <script src="common/js/qrcode.js"></script>
+  <script src="common/js/portal_data.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var D = window.PortalData;
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var LAST_KEY = 'portal_last_sys';
+
+    /* ---- 时钟 ---- */
+    var WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function tick() {
+      var d = new Date();
+      $('clkTime').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+      $('clkDate').textContent = (d.getMonth() + 1) + '月' + d.getDate() + '日 周' + WEEK[d.getDay()];
+    }
+    tick(); setInterval(tick, 1000);
+
+    /* ---- 服务状态 ---- */
+    var bad = D.systems.filter(function (s) { return s.state !== 'ok'; });
+    var pill = $('sysPill');
+    if (bad.length) {
+      pill.className = 'syspill warn';
+      $('sysPillText').textContent = bad.length + ' 个系统维护中';
+    } else {
+      $('sysPillText').textContent = '全部系统服务正常';
+    }
+    $('sysList').innerHTML = D.systems.map(function (s) {
+      return '<li class="' + (s.state === 'ok' ? '' : 'warn') + '"><i aria-hidden="true"></i><b>' + esc(s.name) + '</b><em>' +
+        esc(s.version) + ' · ' + (s.state === 'ok' ? '正常' : '维护') + '</em></li>';
+    }).join('');
+    $('brandKv').innerHTML =
+      '<div><span>项目编号</span><b>' + esc(D.meta.code) + '</b></div>' +
+      '<div><span>平台版本</span><b>' + esc(D.meta.version) + ' · ' + esc(D.meta.updated) + '</b></div>' +
+      '<div><span>覆盖规模</span><b>' + esc(D.meta.scale) + '</b></div>';
+    $('footMeta').innerHTML = '平台版本 ' + esc(D.meta.version) + '<span class="sep">|</span>建议使用 Chrome / Edge 浏览器';
+
+    /* ---- 二维码（真实可扫） ---- */
+    function qrSvg(text) {
+      if (typeof window.qrcode !== 'function') return null;
+      try {
+        var qr = window.qrcode(0, 'M');
+        qr.addData(text);
+        qr.make();
+        var n = qr.getModuleCount(), q = 2, cell = 4, size = (n + q * 2) * cell, out = '';
+        for (var r = 0; r < n; r++) {
+          for (var c = 0; c < n; c++) {
+            if (qr.isDark(r, c)) {
+              out += '<rect x="' + ((c + q) * cell) + '" y="' + ((r + q) * cell) + '" width="' + cell + '" height="' + cell + '"/>';
+            }
+          }
+        }
+        return '<svg viewBox="0 0 ' + size + ' ' + size + '" fill="#1E4634" role="img" aria-label="二维码">' + out + '</svg>';
+      } catch (e) { return null; }
+    }
+    function absUrl(href) { return new URL(href, location.href).href; }
+    var isFile = location.protocol === 'file:';
+
+    /* ---- 上次进入（仅驱动"常用"徽标） ---- */
+    var last = null;
+    try { last = JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); } catch (e) { last = null; }
+    if (!last || typeof last !== 'object') last = null;
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a[data-sys]');
+      if (!a) return;
+      try {
+        localStorage.setItem(LAST_KEY, JSON.stringify({
+          id: a.getAttribute('data-sys'), name: a.getAttribute('data-name'),
+          href: a.getAttribute('href'), ts: Date.now()
+        }));
+      } catch (err) { /* 隐私模式等场景忽略 */ }
+    });
+
+    /* ---- 复制 ---- */
+    function copyText(text, btn) {
+      function done(ok) {
+        var old = btn.textContent;
+        if (ok) {
+          btn.textContent = '已复制 ✓';
+          btn.classList.add('ok');
+        } else {
+          var code = btn.parentElement.querySelector('code');
+          if (code && window.getSelection) {
+            var range = document.createRange();
+            range.selectNodeContents(code);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            btn.textContent = '已选中 · Ctrl+C';
+          } else {
+            btn.textContent = '复制失败';
+          }
+          btn.classList.add('fail');
+        }
+        setTimeout(function () {
+          btn.textContent = old;
+          btn.classList.remove('ok');
+          btn.classList.remove('fail');
+        }, 2200);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(fallback(text)); });
+      } else {
+        done(fallback(text));
+      }
+    }
+    function fallback(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      return ok;
+    }
+    document.addEventListener('click', function (e) {
+      var btn = e.target.closest('.copybtn');
+      if (btn) copyText(btn.getAttribute('data-copy'), btn);
+    });
+
+    /* ---- 卡片 ---- */
+    var ICO = {
+      admin: '<svg viewBox="0 0 24 24"><rect x="2.8" y="4" width="18.4" height="12.4" rx="1.6"/><line x1="12" y1="16.4" x2="12" y2="19.4"/><line x1="8.2" y1="20" x2="15.8" y2="20"/><path d="M6.6 12.6l3-3.4 2.6 2.4 4.6-5"/></svg>',
+      mobile: '<svg viewBox="0 0 24 24"><rect x="6.6" y="2.2" width="10.8" height="19.6" rx="2.6"/><line x1="10.6" y1="18.8" x2="13.4" y2="18.8"/><path d="M10.4 6.6v4.8"/><circle cx="10.4" cy="13" r="1.6"/><path d="M14.8 6.6c0 1.4 1.2 1.9 1.2 2.9a1.2 1.2 0 0 1-2.4 0c0-1 1.2-1.5 1.2-2.9z"/></svg>',
+      screen: '<svg viewBox="0 0 24 24"><rect x="2.6" y="3.6" width="18.8" height="11.8" rx="1.6"/><rect x="5.8" y="9.4" width="2.4" height="3.6" rx=".6"/><rect x="9.4" y="7" width="2.4" height="6" rx=".6"/><rect x="13" y="10.2" width="2.4" height="2.8" rx=".6"/><rect x="16.6" y="6" width="2.4" height="7" rx=".6"/><line x1="12" y1="15.4" x2="12" y2="18.2"/><line x1="8.4" y1="18.8" x2="15.6" y2="18.8"/></svg>',
+      trace: '<svg viewBox="0 0 24 24"><rect x="3.4" y="3.4" width="6.2" height="6.2" rx="1.1"/><rect x="5.4" y="5.4" width="2.2" height="2.2" rx=".4"/><rect x="14.4" y="3.4" width="6.2" height="6.2" rx="1.1"/><rect x="16.4" y="5.4" width="2.2" height="2.2" rx=".4"/><rect x="3.4" y="14.4" width="6.2" height="6.2" rx="1.1"/><rect x="5.4" y="16.4" width="2.2" height="2.2" rx=".4"/><rect x="14.4" y="14.4" width="2.6" height="2.6" rx=".5"/><rect x="18.2" y="18.2" width="2.4" height="2.4" rx=".5"/></svg>'
+    };
+    var KEY_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="14.5" r="4"/><path d="M11.3 11.7 19 4"/><path d="M16 7l2.4 2.4"/><path d="M13.4 9.6l2 2"/></svg>';
+    var CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 12.5 9.5 18 20 6.5"/></svg>';
+    var ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>';
+
+    function nbSeg(text) {
+      return text.split(' · ').map(function (t, i) {
+        return i === 0 ? '<span class="nb">' + esc(t) + '</span>' : '<span class="nb"> · ' + esc(t) + '</span>';
+      }).join('');
+    }
+
+    function qrBlock(s, caption) {
+      var url = absUrl(s.href);
+      var svg = qrSvg(url);
+      if (!svg) return '';
+      return '<figure class="c-qr"><span class="qr-frame">' + svg + '</span>' +
+        '<figcaption>' + nbSeg(caption) + '</figcaption>' +
+        '<button type="button" class="copybtn" data-copy="' + esc(url) + '">复制链接</button></figure>';
+    }
+
+    function card(s) {
+      var dark = s.id === 'screen';
+      var fav = last && last.id === s.id;
+      var head =
+        '<div class="c-head"><span class="c-ico" aria-hidden="true">' + ICO[s.id] + '</span>' +
+        '<span class="c-titles"><h3>' + esc(s.name) +
+        '<span class="c-fav"' + (fav ? '' : ' hidden') + '>常用</span></h3>' +
+        '<p class="c-role">' + nbSeg(s.role) + '</p></span>' +
+        '<span class="c-state' + (s.state === 'ok' ? '' : ' warn') + '"><i aria-hidden="true"></i>' + esc(s.version) + '</span></div>';
+      var method = '<p class="c-method">' + KEY_ICO + esc(s.method) + '</p>';
+      var body;
+      if (s.views) {
+        body = '<div class="views">' + s.views.map(function (v) { return '<span>' + esc(v) + '</span>'; }).join('') + '</div>';
+      } else {
+        body = '<ul class="c-feats">' + s.features.map(function (f) { return '<li>' + CHECK + esc(f) + '</li>'; }).join('') + '</ul>';
+      }
+      var demo = s.demo ?
+        '<div class="c-demo"><span>演示账号</span><code>' + esc(s.demo.u + ' / ' + s.demo.p) + '</code>' +
+        '<button type="button" class="copybtn" data-copy="' + esc(s.demo.u + ' / ' + s.demo.p) + '">复制</button></div>' : '';
+      var cta = '<a class="c-cta" data-sys="' + s.id + '" data-name="' + esc(s.name) + '" href="' + s.href + '">' +
+        (s.group === 'auth' ? '进入登录' : '直接打开') + ' ' + ARROW + '</a>';
+      var inner;
+      if (s.qr) {
+        var cap = s.id === 'mobile' ?
+          (isFile ? '本地预览 · 部署后扫码生效' : '手机扫码直达移动登录') :
+          (isFile ? '本地预览 · 部署后扫码生效' : '扫码打开溯源示例');
+        inner = '<div class="c-split"><div class="c-main">' + head + method + body + demo + cta + '</div>' +
+          qrBlock(s, cap) + '</div>';
+      } else {
+        inner = head + method + body + demo + cta;
+      }
+      return '<article class="card' + (dark ? ' card-dark' : '') + '">' + inner + '</article>';
+    }
+
+    $('authGrid').innerHTML = D.systems.filter(function (s) { return s.group === 'auth'; }).map(card).join('');
+    $('openGrid').innerHTML = D.systems.filter(function (s) { return s.group === 'open'; }).map(card).join('');
+  })();
+
+  /* 品牌区场景轮播：接种 → 培养 → 出菇 → 冷库 */
+  (function () {
+    var scenes = (window.PortalData && PortalData.meta.scenes) || [];
+    var fig = document.getElementById('brandPhoto');
+    if (!fig || !scenes.length) return;
+    var $ = function (id) { return document.getElementById(id); };
+    var esc = function (t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+    var track = $('bpTrack'), view = $('bpView'), count = $('bpCount'), dots = $('bpDots'),
+      prog = $('bpProg'), toggle = $('bpToggle');
+    var N = scenes.length, idx = 0, elapsed = 0, lastTs = null;
+    var DUR = 6000;
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var hover = false, focused = false, userPause = false;
+    var ICO_PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1.5" width="3" height="9" rx="1"/><rect x="7" y="1.5" width="3" height="9" rx="1"/></svg>';
+    var ICO_PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5 L10.5 6 L3 10.5 Z"/></svg>';
+
+    track.innerHTML = scenes.map(function (s, i) {
+      return '<div class="bp-slide' + (i === 0 ? ' is-on' : '') + '" role="group" aria-roledescription="幻灯片" aria-label="第 ' + (i + 1) + ' 张，共 ' + N + ' 张：' + esc(s.cap) + '"' + (i === 0 ? '' : ' aria-hidden="true"') + '>' +
+        '<img src="' + s.img + '" alt="' + esc(s.alt) + '" decoding="async"' + (i === 0 ? ' fetchpriority="high"' : '') + ' draggable="false">' +
+        '<figcaption>' + esc(s.cap) + '</figcaption></div>';
+    }).join('');
+    dots.innerHTML = scenes.map(function (s, i) {
+      return '<button type="button" data-i="' + i + '" aria-label="第 ' + (i + 1) + ' 张：' + esc(s.cap) + '"' + (i === 0 ? ' aria-current="true"' : '') + '><i></i></button>';
+    }).join('');
+    var slides = track.children, dotBtns = dots.children;
+
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+    function render() {
+      track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+      count.textContent = pad(idx + 1) + ' / ' + pad(N);
+      for (var i = 0; i < N; i++) {
+        slides[i].classList.toggle('is-on', i === idx);
+        slides[i].setAttribute('aria-hidden', i === idx ? 'false' : 'true');
+        if (i === idx) dotBtns[i].setAttribute('aria-current', 'true');
+        else dotBtns[i].removeAttribute('aria-current');
+      }
+    }
+    function go(i) { idx = ((i % N) + N) % N; elapsed = 0; render(); }
+    function running() { return !reduce && !userPause && !hover && !focused && !document.hidden; }
+    function syncToggle() {
+      var paused = userPause || reduce;
+      toggle.innerHTML = paused ? ICO_PLAY : ICO_PAUSE;
+      toggle.setAttribute('aria-label', paused ? '播放轮播' : '暂停轮播');
+      toggle.setAttribute('aria-pressed', paused ? 'true' : 'false');
+    }
+    function tick(ts) {
+      requestAnimationFrame(tick);
+      if (lastTs == null) lastTs = ts;
+      var dt = Math.min(100, ts - lastTs);
+      lastTs = ts;
+      if (running()) {
+        elapsed += dt;
+        if (elapsed >= DUR) go(idx + 1);
+      }
+      prog.style.transform = 'scaleX(' + (reduce ? 0 : Math.min(1, elapsed / DUR)).toFixed(4) + ')';
+    }
+
+    $('bpPrev').addEventListener('click', function () { go(idx - 1); });
+    $('bpNext').addEventListener('click', function () { go(idx + 1); });
+    dots.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-i]');
+      if (b) go(+b.getAttribute('data-i'));
+    });
+    toggle.addEventListener('click', function () { userPause = !userPause; elapsed = 0; syncToggle(); });
+    fig.addEventListener('mouseenter', function () { hover = true; });
+    fig.addEventListener('mouseleave', function () { hover = false; });
+    fig.addEventListener('focusin', function () { focused = true; });
+    fig.addEventListener('focusout', function (e) { focused = fig.contains(e.relatedTarget); });
+    fig.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowLeft') { go(idx - 1); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { go(idx + 1); e.preventDefault(); }
+    });
+    var sx = null;
+    view.addEventListener('pointerdown', function (e) {
+      if (e.target.closest('button')) return;
+      sx = e.clientX;
+      if (view.setPointerCapture) view.setPointerCapture(e.pointerId);
+    });
+    view.addEventListener('pointerup', function (e) {
+      if (sx == null) return;
+      var dx = e.clientX - sx;
+      sx = null;
+      if (Math.abs(dx) > 40) go(idx + (dx < 0 ? 1 : -1));
+    });
+    view.addEventListener('pointercancel', function () { sx = null; });
+
+    syncToggle();
+    render();
+    requestAnimationFrame(tick);
+  })();
+  </script>
+</body>
+</html>

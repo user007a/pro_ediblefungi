@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌环境监测系统 - 冷库出入库</title>
+  <!-- H5设计系统 -->
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <!-- 共享数据层（toast） -->
+  <script src="js/mobile-store.js"></script>
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+
+    body { background: var(--bg); }
+    .mb-app { padding-bottom: calc(var(--space-8) + var(--safe-bottom)); }
+
+    /* --- 卡片 --- */
+    .card {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      padding: var(--space-4);
+      margin-bottom: var(--space-4);
+    }
+    .card-head {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--font-md);
+      font-weight: var(--font-semibold);
+      color: var(--text);
+      margin-bottom: var(--space-3);
+    }
+    .card-head .mb-tag { margin-left: auto; }
+
+    /* --- 冷库状态 --- */
+    .refresh-btn {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      background: var(--bg-white);
+      color: var(--text-secondary);
+      font-size: var(--font-xs);
+      cursor: pointer;
+    }
+    .refresh-btn:active { background: var(--primary-50); }
+    .refresh-btn svg { width: 13px; height: 13px; }
+
+    .cold-main { display: flex; align-items: center; gap: var(--space-4); }
+    .cold-temp {
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+      color: var(--primary-700);
+      font-size: 40px;
+      font-weight: var(--font-extrabold);
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+    .cold-temp small { font-size: var(--font-md); font-weight: var(--font-semibold); }
+    .cold-metrics { flex: 1; min-width: 0; }
+    .metric {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      padding: 4px 0;
+      font-size: var(--font-xs);
+      color: var(--text-secondary);
+      border-bottom: 1px dashed var(--border-light);
+    }
+    .metric:last-child { border-bottom: none; }
+    .metric b { color: var(--text); font-weight: var(--font-semibold); }
+
+    .cold-warn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: var(--space-3);
+      padding: 9px 10px;
+      border-left: 3px solid var(--error);
+      border-radius: var(--radius-md);
+      background: var(--error-light);
+      color: var(--error-dark);
+      font-size: var(--font-sm);
+      font-weight: var(--font-semibold);
+    }
+    .cold-warn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* --- 库存汇总 --- */
+    .summary-grid { display: flex; }
+    .summary-item {
+      flex: 1;
+      text-align: center;
+      border-right: 1px solid var(--border-light);
+    }
+    .summary-item:last-child { border-right: none; }
+    .summary-num {
+      font-size: var(--font-2xl);
+      font-weight: var(--font-extrabold);
+      color: var(--primary-700);
+      line-height: 1.2;
+    }
+    .summary-num.warn { color: var(--error-dark); }
+    .summary-label { font-size: var(--font-xs); color: var(--text-secondary); margin-top: 2px; }
+
+    /* --- 分段 Tab --- */
+    .seg-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: var(--space-4);
+      background: var(--primary-50);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+    }
+    .seg-tab {
+      flex: 1;
+      padding: 9px 0;
+      text-align: center;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: background var(--transition-fast), color var(--transition-fast);
+    }
+    .seg-tab.active {
+      background: var(--bg-white);
+      color: var(--primary-700);
+      font-weight: var(--font-semibold);
+      box-shadow: 0 1px 4px var(--primary-200);
+    }
+
+    /* --- 表单 --- */
+    .form-group { margin-bottom: var(--space-3); }
+    .form-label {
+      display: block;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .form-label em { color: var(--error); font-style: normal; margin-left: 2px; }
+    .form-input, .form-select {
+      width: 100%;
+      height: 46px;
+      padding: 0 var(--space-3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      color: var(--text);
+      font-size: var(--font-base);
+      font-family: inherit;
+      outline: none;
+      transition: border-color var(--transition-fast);
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--primary-400); }
+    .form-input[readonly] {
+      background: var(--primary-50);
+      color: var(--text-secondary);
+    }
+    .form-row { display: flex; gap: var(--space-3); }
+    .form-row .form-group { flex: 1; min-width: 0; }
+    .form-hint { font-size: var(--font-xs); color: var(--text-tertiary); margin-top: 4px; }
+    .form-hint.error { color: var(--error-dark); }
+
+    .trace-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 46px;
+      padding: 10px var(--space-3);
+      border: 1px dashed var(--primary-200);
+      border-radius: var(--radius-md);
+      background: var(--primary-50);
+      color: var(--primary-700);
+      font-size: var(--font-sm);
+      word-break: break-all;
+    }
+    .trace-box.empty { color: var(--text-tertiary); }
+
+    .submit-btn { margin-top: var(--space-2); }
+
+    /* --- 流水 --- */
+    .log-item {
+      padding: 11px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .log-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .log-top { display: flex; align-items: center; gap: var(--space-2); }
+    .log-no { font-size: var(--font-xs); color: var(--text-secondary); font-weight: var(--font-medium); }
+    .log-time { margin-left: auto; font-size: var(--font-2xs); color: var(--text-tertiary); }
+    .log-mid {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-2);
+      margin-top: 5px;
+    }
+    .log-batch { font-size: var(--font-base); font-weight: var(--font-semibold); color: var(--text); }
+    .log-boxes { font-size: var(--font-sm); font-weight: var(--font-semibold); color: var(--success-dark); }
+    .log-boxes.out { color: var(--primary-700); }
+    .log-foot { font-size: var(--font-xs); color: var(--text-tertiary); margin-top: 3px; }
+
+    .empty-box {
+      padding: var(--space-6) var(--space-3);
+      text-align: center;
+      font-size: var(--font-sm);
+      color: var(--text-tertiary);
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <!-- 返回栏 -->
+    <div class="mb-back-bar">
+      <button class="mb-back-arrow" type="button" onclick="goHome()" aria-label="返回首页">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <div class="mb-back-title">冷库出入库</div>
+      <span class="mb-tag success" id="coldTag">正常</span>
+    </div>
+
+    <div class="mb-section">
+      <!-- 冷库实时状态 -->
+      <div class="card">
+        <div class="card-head">
+          <span class="mb-section-dot"></span>冷库实时状态
+          <button class="refresh-btn" type="button" onclick="refreshCold()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            刷新
+          </button>
+        </div>
+        <div class="cold-main">
+          <div class="cold-temp"><span id="coldTemp">3.2</span><small>℃</small></div>
+          <div class="cold-metrics">
+            <div class="metric"><span>湿度</span><b id="coldHumidity">88%</b></div>
+            <div class="metric"><span>温区</span><b id="coldZone">0~4℃</b></div>
+            <div class="metric"><span>更新时间</span><b id="coldUpdated">--:--</b></div>
+          </div>
+        </div>
+        <div class="cold-warn" id="coldWarn" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          温度越限，出库已阻断
+        </div>
+      </div>
+
+      <!-- 库存汇总 -->
+      <div class="card">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-num" id="sumBatches">0</div>
+            <div class="summary-label">在库批次</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-num" id="sumBoxes">0</div>
+            <div class="summary-label">总箱数（箱）</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-num warn" id="sumNear">0</div>
+            <div class="summary-label">近效期批次</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 分段 Tab -->
+      <div class="seg-tabs">
+        <div class="seg-tab active" data-tab="in" onclick="switchTab('in')">入库</div>
+        <div class="seg-tab" data-tab="out" onclick="switchTab('out')">出库</div>
+        <div class="seg-tab" data-tab="logs" onclick="switchTab('logs')">流水</div>
+      </div>
+
+      <!-- 入库 -->
+      <div class="card tab-panel" id="panel-in">
+        <div class="card-head"><span class="mb-section-dot"></span>入库登记</div>
+        <form id="inboundForm" onsubmit="submitInbound(event)">
+          <div class="form-group">
+            <label class="form-label" for="inBatch">批次号<em>*</em></label>
+            <input class="form-input" id="inBatch" type="text" maxlength="13" placeholder="例如 JB-20261116-01" autocomplete="off">
+            <div class="form-hint">格式：JB-YYYYMMDD-NN（如 JB-20261112-05）</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="inVariety">品种<em>*</em></label>
+              <select class="form-select" id="inVariety">
+                <option value="">请选择</option>
+                <option value="杏鲍菇">杏鲍菇</option>
+                <option value="蟹味菇">蟹味菇</option>
+                <option value="白玉菇">白玉菇</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inSpec">规格<em>*</em></label>
+              <input class="form-input" id="inSpec" type="text" value="2.5kg/箱" readonly>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="inLocation">库位<em>*</em></label>
+              <select class="form-select" id="inLocation">
+                <option value="">请选择</option>
+                <option value="A-01">A-01</option>
+                <option value="A-02">A-02</option>
+                <option value="A-03">A-03</option>
+                <option value="A-04">A-04</option>
+                <option value="A-05">A-05</option>
+                <option value="A-06">A-06</option>
+                <option value="B-01">B-01</option>
+                <option value="B-02">B-02</option>
+                <option value="B-03">B-03</option>
+                <option value="B-04">B-04</option>
+                <option value="B-05">B-05</option>
+                <option value="B-06">B-06</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inZone">温区<em>*</em></label>
+              <select class="form-select" id="inZone">
+                <option value="">请选择</option>
+                <option value="0~4℃">0~4℃</option>
+                <option value="2~6℃">2~6℃</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="inBoxes">箱数<em>*</em></label>
+              <input class="form-input" id="inBoxes" type="number" min="1" step="1" placeholder="正整数" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inProduction">生产日期<em>*</em></label>
+              <input class="form-input" id="inProduction" type="date">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="inShelf">保质期（天）<em>*</em></label>
+              <input class="form-input" id="inShelf" type="number" min="1" step="1" placeholder="如 15" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="inOperator">操作人<em>*</em></label>
+              <input class="form-input" id="inOperator" type="text" value="" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">追溯码段</label>
+            <div class="trace-box empty" id="traceBox">填写箱数与生产日期后自动生成</div>
+            <div class="form-hint">格式：SNJG-YYYYMMDD-0001 ~ 0XXX</div>
+          </div>
+
+          <button class="mb-btn mb-btn-primary mb-btn-block submit-btn" type="submit">提交入库</button>
+        </form>
+      </div>
+
+      <!-- 出库 -->
+      <div class="card tab-panel" id="panel-out" style="display:none;">
+        <div class="card-head"><span class="mb-section-dot"></span>出库登记</div>
+        <form id="outboundForm" onsubmit="submitOutbound(event)">
+          <div class="form-group">
+            <label class="form-label" for="outBatch">在库批次<em>*</em></label>
+            <select class="form-select" id="outBatch" onchange="onOutBatchChange()"></select>
+            <div class="form-hint" id="outStockHint">请选择需要出库的批次</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="outBoxes">出库箱数<em>*</em></label>
+              <input class="form-input" id="outBoxes" type="number" min="1" step="1" placeholder="不超过库存" inputmode="numeric">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="outChannel">去向渠道<em>*</em></label>
+              <select class="form-select" id="outChannel">
+                <option value="">请选择</option>
+                <option value="商超">商超</option>
+                <option value="批发">批发</option>
+                <option value="电商">电商</option>
+                <option value="餐饮">餐饮</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="outCarrier">承运方<em>*</em></label>
+              <input class="form-input" id="outCarrier" type="text" placeholder="如 鲜达冷链" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="outTruck">冷链车号<em>*</em></label>
+              <input class="form-input" id="outTruck" type="text" placeholder="如 甘A·D1234" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="outTemp">出库温度（℃）<em>*</em></label>
+            <input class="form-input" id="outTemp" type="number" step="0.1" value="3.2" inputmode="decimal" oninput="updateOutGate()">
+            <div class="form-hint">冷链要求 0~4℃，超过 4℃ 将阻断出库</div>
+          </div>
+
+          <div class="cold-warn" id="outWarn" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            冷链温度越限，出库阻断
+          </div>
+
+          <button class="mb-btn mb-btn-primary mb-btn-block submit-btn" id="outSubmitBtn" type="submit">提交出库</button>
+        </form>
+      </div>
+
+      <!-- 流水 -->
+      <div class="card tab-panel" id="panel-logs" style="display:none;">
+        <div class="card-head"><span class="mb-section-dot"></span>出入库流水</div>
+        <div id="logList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var STORAGE_KEY = 'mushroom_cold_storage';
+    var LOG_KEY = 'mushroom_cold_logs';
+    var NEAR_EXPIRY_DAYS = 7;
+
+    var coldState = { temp: 3.2, humidity: 88, updated: '' };
+
+    function goHome() {
+      window.location.href = 'mb_home.html';
+    }
+
+    function currentUser() {
+      try { return sessionStorage.getItem('loginUser') || '李国强'; } catch (e) { return '李国强'; }
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function readArr(key) {
+      try {
+        var v = JSON.parse(localStorage.getItem(key) || '[]');
+        return Array.isArray(v) ? v : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function writeArr(key, list) {
+      try {
+        localStorage.setItem(key, JSON.stringify(list));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function pad2(n) { return n < 10 ? '0' + n : String(n); }
+    function pad4(n) {
+      var s = String(n);
+      while (s.length < 4) s = '0' + s;
+      return s;
+    }
+
+    function fmtDate(d) {
+      var x = d instanceof Date ? d : new Date(d);
+      if (isNaN(x.getTime())) return '';
+      var p = function (n) { return n < 10 ? '0' + n : n; };
+      return x.getFullYear() + '-' + p(x.getMonth() + 1) + '-' + p(x.getDate());
+    }
+
+    function fmtDateTime(d) {
+      var x = d instanceof Date ? d : new Date(d);
+      if (isNaN(x.getTime())) return '';
+      var p = function (n) { return n < 10 ? '0' + n : n; };
+      return fmtDate(x) + ' ' + p(x.getHours()) + ':' + p(x.getMinutes());
+    }
+
+    function parseDate(str) {
+      if (!str) return null;
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
+      if (!m) return null;
+      var d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    /* 剩余保质天数（负数为已过期） */
+    function daysLeft(batch) {
+      var prod = parseDate(batch.productionDate);
+      if (!prod) return null;
+      var expire = new Date(prod.getTime());
+      expire.setDate(expire.getDate() + Number(batch.shelfLifeDays || 0));
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      expire.setHours(0, 0, 0, 0);
+      return Math.round((expire - today) / 86400000);
+    }
+
+    /* ---------- 初始示例库存 ---------- */
+    function seedStorage() {
+      var raw = null;
+      try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { raw = null; }
+      if (raw !== null) return;
+      var seeds = [
+        {
+          id: 'cs_seed_1', batch: 'JB-20261112-05', variety: '杏鲍菇', spec: '2.5kg/箱',
+          location: 'A-03', zone: '0~4℃', boxes: 120, productionDate: '2026-11-12',
+          shelfLifeDays: 20, traceStart: 'SNJG-20261112-0001', traceEnd: 'SNJG-20261112-0120',
+          operator: '张敏', inboundNo: 'RK-20261112-01', createdAt: '2026-11-12 09:20'
+        },
+        {
+          id: 'cs_seed_2', batch: 'JB-20261110-02', variety: '蟹味菇', spec: '2.5kg/箱',
+          location: 'B-02', zone: '2~6℃', boxes: 80, productionDate: '2026-11-10',
+          shelfLifeDays: 30, traceStart: 'SNJG-20261110-0001', traceEnd: 'SNJG-20261110-0080',
+          operator: '李强', inboundNo: 'RK-20261110-02', createdAt: '2026-11-10 15:40'
+        },
+        {
+          id: 'cs_seed_3', batch: 'JB-20261108-03', variety: '白玉菇', spec: '2.5kg/箱',
+          location: 'A-05', zone: '0~4℃', boxes: 60, productionDate: '2026-11-08',
+          shelfLifeDays: 10, traceStart: 'SNJG-20261108-0001', traceEnd: 'SNJG-20261108-0060',
+          operator: '王芳', inboundNo: 'RK-20261108-01', createdAt: '2026-11-08 11:05'
+        }
+      ];
+      writeArr(STORAGE_KEY, seeds);
+    }
+
+    /* ---------- 渲染 ---------- */
+    function renderCold() {
+      document.getElementById('coldTemp').textContent = coldState.temp.toFixed(1);
+      document.getElementById('coldHumidity').textContent = coldState.humidity + '%';
+      document.getElementById('coldUpdated').textContent = coldState.updated;
+      var over = coldState.temp > 4;
+      document.getElementById('coldWarn').style.display = over ? 'flex' : 'none';
+      var tag = document.getElementById('coldTag');
+      tag.className = 'mb-tag ' + (over ? 'error' : 'success');
+      tag.textContent = over ? '越限' : '正常';
+    }
+
+    function renderSummary() {
+      var list = readArr(STORAGE_KEY).filter(function (b) { return Number(b.boxes) > 0; });
+      var total = 0, near = 0;
+      list.forEach(function (b) {
+        total += Number(b.boxes) || 0;
+        var left = daysLeft(b);
+        if (left !== null && left <= NEAR_EXPIRY_DAYS) near++;
+      });
+      document.getElementById('sumBatches').textContent = list.length;
+      document.getElementById('sumBoxes').textContent = total;
+      document.getElementById('sumNear').textContent = near;
+    }
+
+    function renderOutOptions() {
+      var sel = document.getElementById('outBatch');
+      var prev = sel.value;
+      var list = readArr(STORAGE_KEY).filter(function (b) { return Number(b.boxes) > 0; });
+      var html = '<option value="">请选择在库批次</option>';
+      list.forEach(function (b) {
+        html += '<option value="' + esc(b.batch) + '">' +
+          esc(b.batch) + ' · ' + esc(b.variety) + ' · 库存 ' + esc(b.boxes) + ' 箱' +
+          '</option>';
+      });
+      if (!list.length) {
+        html = '<option value="">暂无可出库批次</option>';
+      }
+      sel.innerHTML = html;
+      if (prev && list.some(function (b) { return b.batch === prev; })) sel.value = prev;
+      onOutBatchChange();
+    }
+
+    function findBatch(batchNo) {
+      var list = readArr(STORAGE_KEY);
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].batch === batchNo) return list[i];
+      }
+      return null;
+    }
+
+    function onOutBatchChange() {
+      var no = document.getElementById('outBatch').value;
+      var hint = document.getElementById('outStockHint');
+      var qty = document.getElementById('outBoxes');
+      var b = no ? findBatch(no) : null;
+      if (b) {
+        hint.className = 'form-hint';
+        hint.textContent = '可用库存 ' + b.boxes + ' 箱 · 库位 ' + b.location + ' · 温区 ' + b.zone;
+        qty.max = b.boxes;
+      } else {
+        hint.className = 'form-hint';
+        hint.textContent = '请选择需要出库的批次';
+        qty.removeAttribute('max');
+      }
+      updateOutGate();
+    }
+
+    function updateOutGate() {
+      var t = parseFloat(document.getElementById('outTemp').value);
+      var blocked = coldState.temp > 4 || (!isNaN(t) && t > 4);
+      document.getElementById('outWarn').style.display = blocked ? 'flex' : 'none';
+      document.getElementById('outSubmitBtn').disabled = blocked;
+    }
+
+    function renderLogs() {
+      var box = document.getElementById('logList');
+      var list = readArr(LOG_KEY);
+      if (!list.length) {
+        box.innerHTML = '<div class="empty-box">暂无出入库流水<br>完成一次入库或出库后自动记录</div>';
+        return;
+      }
+      box.innerHTML = list.map(function (l) {
+        var isIn = l.type === 'in';
+        var foot = '操作人：' + esc(l.operator || '');
+        if (isIn && l.location) foot += ' · 库位 ' + esc(l.location);
+        if (!isIn && l.channel) foot += ' · 去向 ' + esc(l.channel);
+        return '<div class="log-item">' +
+          '<div class="log-top">' +
+            '<span class="mb-tag ' + (isIn ? 'success' : 'info') + '">' + (isIn ? '入库' : '出库') + '</span>' +
+            '<span class="log-no">' + esc(l.no) + '</span>' +
+            '<span class="log-time">' + esc(l.time) + '</span>' +
+          '</div>' +
+          '<div class="log-mid">' +
+            '<span class="log-batch">' + esc(l.batch) + '</span>' +
+            '<span class="log-boxes ' + (isIn ? '' : 'out') + '">' + (isIn ? '+' : '-') + esc(l.boxes) + ' 箱</span>' +
+          '</div>' +
+          '<div class="log-foot">' + foot + '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function renderAll() {
+      renderSummary();
+      renderOutOptions();
+      renderLogs();
+    }
+
+    /* ---------- 刷新冷库数据 ---------- */
+    function refreshCold() {
+      coldState.updated = fmtDateTime(new Date()).slice(11);
+      renderCold();
+      updateOutGate();
+      MobileStore.toast('温湿度已刷新：' + coldState.temp.toFixed(1) + '℃ / ' + coldState.humidity + '%', 'success');
+    }
+
+    /* ---------- Tab ---------- */
+    function switchTab(name) {
+      var panels = { in: 'panel-in', out: 'panel-out', logs: 'panel-logs' };
+      Object.keys(panels).forEach(function (k) {
+        document.getElementById(panels[k]).style.display = k === name ? 'block' : 'none';
+      });
+      var tabs = document.querySelectorAll('.seg-tab');
+      Array.prototype.forEach.call(tabs, function (t) {
+        t.classList.toggle('active', t.getAttribute('data-tab') === name);
+      });
+      if (name === 'out') {
+        renderOutOptions();
+      }
+      if (name === 'logs') {
+        renderLogs();
+      }
+    }
+
+    /* ---------- 入库 ---------- */
+    function nextNo(prefix) {
+      var ymd = fmtDate(new Date()).replace(/-/g, '');
+      var p = prefix + '-' + ymd + '-';
+      var max = 0;
+      readArr(LOG_KEY).forEach(function (l) {
+        var no = String((l && l.no) || '');
+        if (no.indexOf(p) === 0) {
+          var n = parseInt(no.slice(p.length), 10);
+          if (!isNaN(n) && n > max) max = n;
+        }
+      });
+      return p + pad2(max + 1);
+    }
+
+    function buildTrace(productionDate, boxes) {
+      var d = parseDate(productionDate);
+      if (!d || !boxes) return '';
+      var ymd = fmtDate(d).replace(/-/g, '');
+      return 'SNJG-' + ymd + '-' + pad4(1) + ' ~ ' + pad4(boxes);
+    }
+
+    function updateTrace() {
+      var raw = document.getElementById('inBoxes').value.trim();
+      var boxes = /^\d+$/.test(raw) ? parseInt(raw, 10) : 0;
+      var prod = document.getElementById('inProduction').value;
+      var box = document.getElementById('traceBox');
+      var text = '';
+      if (prod && boxes > 0) text = buildTrace(prod, boxes);
+      if (text) {
+        box.className = 'trace-box';
+        box.textContent = text;
+      } else {
+        box.className = 'trace-box empty';
+        box.textContent = '填写箱数与生产日期后自动生成';
+      }
+    }
+
+    function submitInbound(e) {
+      e.preventDefault();
+      var batch = document.getElementById('inBatch').value.trim().toUpperCase();
+      var variety = document.getElementById('inVariety').value;
+      var spec = document.getElementById('inSpec').value;
+      var location = document.getElementById('inLocation').value;
+      var zone = document.getElementById('inZone').value;
+      var boxesRaw = document.getElementById('inBoxes').value.trim();
+      var production = document.getElementById('inProduction').value;
+      var shelfRaw = document.getElementById('inShelf').value.trim();
+      var operator = document.getElementById('inOperator').value.trim();
+
+      if (!batch) { MobileStore.toast('请填写批次号', 'warning'); return; }
+      if (!/^JB-\d{8}-\d{2}$/.test(batch)) {
+        MobileStore.toast('批次号格式应为 JB-YYYYMMDD-NN', 'error');
+        return;
+      }
+      if (findBatch(batch)) {
+        MobileStore.toast('批次号 ' + batch + ' 已在库，请勿重复入库', 'error');
+        return;
+      }
+      if (!variety) { MobileStore.toast('请选择品种', 'warning'); return; }
+      if (!location) { MobileStore.toast('请选择库位', 'warning'); return; }
+      if (!zone) { MobileStore.toast('请选择温区', 'warning'); return; }
+
+      var boxes = Number(boxesRaw);
+      if (!/^\d+$/.test(boxesRaw) || !isFinite(boxes) || boxes <= 0) {
+        MobileStore.toast('箱数必须为正整数', 'error');
+        return;
+      }
+      if (!production) { MobileStore.toast('请选择生产日期', 'warning'); return; }
+      var shelf = Number(shelfRaw);
+      if (!/^\d+$/.test(shelfRaw) || !isFinite(shelf) || shelf <= 0) {
+        MobileStore.toast('保质期必须为正整数天数', 'error');
+        return;
+      }
+      if (!operator) { MobileStore.toast('请填写操作人', 'warning'); return; }
+
+      var no = nextNo('RK');
+      var now = new Date();
+      var trace = buildTrace(production, boxes);
+      var batchRecord = {
+        id: 'cs_' + Date.now(),
+        batch: batch,
+        variety: variety,
+        spec: spec,
+        location: location,
+        zone: zone,
+        boxes: boxes,
+        productionDate: production,
+        shelfLifeDays: shelf,
+        traceStart: trace.split(' ~ ')[0],
+        traceEnd: trace.split(' ~ ')[1],
+        operator: operator,
+        inboundNo: no,
+        createdAt: fmtDateTime(now)
+      };
+
+      var storage = readArr(STORAGE_KEY);
+      storage.unshift(batchRecord);
+      if (!writeArr(STORAGE_KEY, storage)) {
+        MobileStore.toast('入库保存失败，请检查存储空间', 'error');
+        return;
+      }
+
+      var logs = readArr(LOG_KEY);
+      logs.unshift({
+        id: 'cl_' + Date.now(),
+        no: no,
+        type: 'in',
+        batch: batch,
+        boxes: boxes,
+        operator: operator,
+        location: location,
+        zone: zone,
+        variety: variety,
+        time: fmtDateTime(now)
+      });
+      writeArr(LOG_KEY, logs);
+
+      MobileStore.toast('入库成功 · 单号 ' + no, 'success');
+      document.getElementById('inboundForm').reset();
+      document.getElementById('inSpec').value = '2.5kg/箱';
+      document.getElementById('inOperator').value = currentUser();
+      updateTrace();
+      renderAll();
+      switchTab('logs');
+    }
+
+    /* ---------- 出库 ---------- */
+    function submitOutbound(e) {
+      e.preventDefault();
+      if (coldState.temp > 4) {
+        MobileStore.toast('冷库温度越限，出库阻断', 'error');
+        return;
+      }
+      var batchNo = document.getElementById('outBatch').value;
+      var boxesRaw = document.getElementById('outBoxes').value.trim();
+      var channel = document.getElementById('outChannel').value;
+      var carrier = document.getElementById('outCarrier').value.trim();
+      var truck = document.getElementById('outTruck').value.trim();
+      var tempRaw = document.getElementById('outTemp').value.trim();
+
+      if (!batchNo) { MobileStore.toast('请选择在库批次', 'warning'); return; }
+      var batch = findBatch(batchNo);
+      if (!batch || Number(batch.boxes) <= 0) {
+        MobileStore.toast('该批次已无库存，请重新选择', 'error');
+        return;
+      }
+      var boxes = Number(boxesRaw);
+      if (!/^\d+$/.test(boxesRaw) || !isFinite(boxes) || boxes <= 0) {
+        MobileStore.toast('出库箱数必须为正整数', 'error');
+        return;
+      }
+      if (boxes > Number(batch.boxes)) {
+        MobileStore.toast('出库箱数不能超过库存 ' + batch.boxes + ' 箱', 'error');
+        return;
+      }
+      if (!channel) { MobileStore.toast('请选择去向渠道', 'warning'); return; }
+      if (!carrier) { MobileStore.toast('请填写承运方', 'warning'); return; }
+      if (!truck) { MobileStore.toast('请填写冷链车号', 'warning'); return; }
+
+      var temp = Number(tempRaw);
+      if (tempRaw === '' || !isFinite(temp)) {
+        MobileStore.toast('请填写出库温度', 'warning');
+        return;
+      }
+      if (temp > 4) {
+        updateOutGate();
+        MobileStore.toast('冷链温度越限，出库阻断', 'error');
+        return;
+      }
+
+      var no = nextNo('CK');
+      var now = new Date();
+
+      batch.boxes = Number(batch.boxes) - boxes;
+      var storage = readArr(STORAGE_KEY).map(function (b) {
+        return b.batch === batchNo ? batch : b;
+      });
+      if (!writeArr(STORAGE_KEY, storage)) {
+        MobileStore.toast('库存扣减失败，请检查存储空间', 'error');
+        return;
+      }
+
+      var logs = readArr(LOG_KEY);
+      logs.unshift({
+        id: 'cl_' + Date.now(),
+        no: no,
+        type: 'out',
+        batch: batchNo,
+        boxes: boxes,
+        operator: currentUser(),
+        channel: channel,
+        carrier: carrier,
+        truckNo: truck,
+        temp: temp,
+        time: fmtDateTime(now)
+      });
+      writeArr(LOG_KEY, logs);
+
+      MobileStore.toast('出库成功 · 单号 ' + no, 'success');
+      document.getElementById('outboundForm').reset();
+      document.getElementById('outTemp').value = '3.2';
+      renderAll();
+      switchTab('logs');
+    }
+
+    /* ---------- 初始化 ---------- */
+    document.addEventListener('DOMContentLoaded', function () {
+      seedStorage();
+      var now = new Date();
+      coldState.temp = 3.2;
+      coldState.humidity = 88;
+      coldState.updated = fmtDateTime(now).slice(11);
+      document.getElementById('inBoxes').addEventListener('input', updateTrace);
+      document.getElementById('inProduction').addEventListener('change', updateTrace);
+      document.getElementById('inOperator').value = currentUser();
+      renderCold();
+      renderAll();
+      updateOutGate();
+    });
+  </script>
+</body>
+</html>

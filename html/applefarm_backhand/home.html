@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食用菌工厂化农业数据管理平台 - 系统首页</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/page-content.css">
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+<style>
+  /* ============================================================
+     系统首页布局层 —— 参考 demo/index.html（工作台）布局方式
+     原则：只管布局与视觉（栅格 / 卡片 / 间距 / 圆角 / 阴影 / 配色），
+     字体字号交由 typography.css；统计卡基础样式由 design-system.css
+     「05. 统计卡片组件」（扁平风）提供，本页不重复定义；
+     内容文案零改动（2026-09-22 布局对齐 demo）。
+     ============================================================ */
+  html, body { margin:0; padding:0; width:100%; height:100%; }
+  body { background:#F0F2F5; }
+
+  /* ---- 页面骨架：区块间统一 16px 纵向节奏（demo: space-y） ---- */
+  /* !important：home 无 .main-content 外壳，需覆盖 unified-theme 7.1 的 padding:0 */
+  .content-wrapper {
+    width:100%;
+    padding:12px 16px 20px !important;
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  /* ===== 欢迎区（demo Welcome Section：白卡 + 左头像问候 + 右操作） ===== */
+  .welcome-bar {
+    background:var(--bg-card, #fff);
+    border:1px solid #f0f0f0;
+    border-radius:12px;
+    padding:18px 24px;
+    display:flex;
+    align-items:center;
+    box-shadow:0 1px 3px rgba(16,24,40,0.06);
+    margin-bottom:0;
+  }
+  .welcome-left { display:flex; align-items:center; gap:16px; flex:1; min-width:0; }
+  .welcome-avatar {
+    width:52px; height:52px; flex-shrink:0;
+    background:#e6f4ff; color:#1890ff;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .welcome-avatar svg { width:24px; height:24px; }
+  .welcome-text { min-width:0; }
+  .welcome-text h2 { font-size:20px; font-weight:700; color:#262626; margin:0 0 4px; letter-spacing:-0.2px; line-height:1.3; }
+  .welcome-text p { font-size:13px; color:#8c8c8c; margin:0; }
+  .welcome-info { display:flex; align-items:center; gap:12px; margin-left:16px; }
+  .welcome-weather {
+    display:flex; align-items:center; gap:10px;
+    padding:8px 14px;
+    background:#fafafa;
+    border:1px solid #f0f0f0;
+    border-radius:8px;
+    box-sizing:border-box;
+    margin-right:4px;
+  }
+  .weather-temp { font-size:16px; font-weight:700; color:#262626; line-height:1.3; }
+  .weather-desc { font-size:12px; color:#8c8c8c; line-height:1.3; }
+  .phenology-tag {
+    display:inline-flex; align-items:center; gap:5px;
+    padding:7px 14px;
+    background:#f6ffed;
+    border:1px solid #b7eb8f;
+    border-radius:16px;
+    font-size:13px; color:#52c41a;
+    font-weight:500;
+    white-space:nowrap;
+  }
+  /* 摄像头"实时"叠加层 */
+  .camera-live {
+    position:absolute; top:8px; left:8px; display:flex; align-items:center; gap:6px;
+    padding:3px 8px; border-radius:12px; background:rgba(0,0,0,0.55); color:#fff;
+    font-size:11px; font-variant-numeric:tabular-nums;
+  }
+  .camera-live .dot { width:6px; height:6px; border-radius:50%; background:#ff4d4f; box-shadow:0 0 6px rgba(255,77,79,0.8); animation:blink 1s infinite; }
+  .camera-fullscreen .camera-live-fs {
+    position:absolute; top:20px; left:20px; display:flex; align-items:center; gap:8px;
+    padding:6px 12px; border-radius:16px; background:rgba(0,0,0,0.55); color:#fff;
+    font-size:13px; font-variant-numeric:tabular-nums;
+  }
+  .camera-fullscreen-exit {
+    position:absolute; top:20px; right:20px; height:40px; padding:0 16px;
+    background:rgba(255,255,255,0.2); border:none; border-radius:20px; color:#fff;
+    font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px;
+  }
+  .camera-fullscreen-exit:hover { background:rgba(255,255,255,0.32); }
+
+  /* ===== 指标卡（demo KPI：6 列一行；卡片视觉由 design-system 05 扁平风提供） ===== */
+  .metrics-row {
+    display:grid;
+    grid-template-columns:repeat(6, minmax(0, 1fr));
+    gap:12px !important; /* 覆盖 page-content.css 的 8px !important */
+    margin-bottom:0;
+  }
+  /* unified-theme 的 .stat-card + .stat-card 纵向 margin 在栅格中会造成卡片错位 */
+  .metrics-row .stat-card { margin-top: 0 !important; }
+  .metrics-row .stat-footer { flex-wrap:wrap; row-gap:2px; }
+  .metrics-row .stat-footer > span { white-space:nowrap; }
+
+  /* ===== 双联面板行（监控 / 模型快讯） ===== */
+  .duo-row {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:16px;
+  }
+
+  /* ===== 面板（demo 卡片：白底 + 浅边框 + 标题行，无彩色顶条/标题底） ===== */
+  .panel {
+    background:var(--bg-card, #fff);
+    border:1px solid #f0f0f0;
+    border-radius:12px;
+    box-shadow:0 1px 3px rgba(16,24,40,0.06);
+    overflow:hidden;
+    min-width:0;
+  }
+  .panel-header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 18px 12px;
+    background:#fff;
+    border-bottom:none;
+  }
+  .panel-title {
+    display:flex; align-items:center; gap:8px;
+    font-size:16px; font-weight:600; color:#262626;
+  }
+  .panel-title svg { width:17px; height:17px; color:#1890ff; flex-shrink:0; }
+  .panel-badge {
+    min-width:18px; height:18px;
+    padding:0 6px;
+    border-radius:9px;
+    background:#ff4d4f; color:#fff;
+    font-size:12px; font-weight:600;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .panel-link { font-size:13px; color:#1890ff; text-decoration:none; font-weight:500; white-space:nowrap; }
+  .panel-link:hover { color:#40a9ff; }
+  .panel-body { padding:2px 18px 16px; }
+  .panel-camera { display:flex; flex-direction:column; }
+  .panel-camera .panel-body { flex:1; display:flex; flex-direction:column; }
+
+  /* ---- 基地实景监控 ---- */
+  .camera-grid {
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:12px;
+    grid-auto-rows:1fr;
+    flex:1;
+  }
+  .camera-card {
+    border-radius:10px;
+    overflow:hidden;
+    cursor:pointer;
+    background:#111;
+    box-shadow:0 1px 3px rgba(16,24,40,0.08);
+    transition:box-shadow 0.2s, transform 0.2s;
+    display:flex; flex-direction:column;
+  }
+  .camera-card:hover { transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,0.18); }
+  .camera-thumb { position:relative; width:100%; aspect-ratio:100/58; flex:1; min-height:0; }
+  .camera-thumb img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
+  .camera-info {
+    position:absolute; bottom:0; left:0; right:0;
+    padding:8px 12px;
+    background:linear-gradient(transparent, rgba(0,0,0,0.72));
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+  }
+  .camera-name { color:#fff; font-size:13px; font-weight:500; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .camera-status { width:8px; height:8px; border-radius:50%; }
+  .camera-status.online { background:#52c41a; box-shadow:0 0 6px rgba(82,196,26,0.6); }
+
+  /* ---- 模型预测快讯 ---- */
+  .model-grid {
+    display:grid;
+    grid-template-columns:repeat(4, minmax(0, 1fr));
+    gap:12px;
+    overflow:visible;
+  }
+  .model-card {
+    background:#fafafa;
+    padding:14px;
+    border-radius:10px;
+    border:1px solid transparent;
+    transition:all 0.2s;
+    min-width:0;
+  }
+  .model-card:hover { background:#fff; border-color:#e6f4ff; box-shadow:0 4px 14px rgba(24,144,255,0.1); }
+  .model-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .model-icon {
+    width:32px; height:32px; flex-shrink:0;
+    border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    background:#e6f4ff; color:#1890ff;
+  }
+  .model-icon svg { width:15px; height:15px; }
+  .model-grid .model-title { font-size:13px !important; font-weight:500 !important; color:#8c8c8c !important; }
+  .model-content { font-size:15px; font-weight:700; color:#262626; margin-bottom:4px; line-height:1.35; }
+  .model-footer { font-size:12px; font-weight:500; }
+  .model-footer.danger { color:#ff4d4f; }
+  .model-footer.warning { color:#fa8c16; }
+  .model-footer.success { color:#52c41a; }
+
+  /* ===== 主网格（三列等宽） ===== */
+  .main-grid {
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:16px;
+    margin-top:0;
+    align-items:start;
+  }
+  .right-column { display:flex; flex-direction:column; gap:16px; }
+
+  /* ---- 列表项统一（demo 待办项：灰底圆角 + 悬停浅蓝） ---- */
+  .alert-item, .task-item, .notice-item {
+    display:flex; align-items:flex-start; gap:10px;
+    padding:12px 14px;
+    background:#fafafa;
+    border:1px solid transparent;
+    border-radius:10px;
+    border-left:none;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .alert-item:hover, .task-item:hover, .notice-item:hover {
+    background:#f0f7ff;
+    border-color:#d6e8ff;
+  }
+
+  .alert-list { display:flex; flex-direction:column; gap:8px; }
+  #homeAlertList .alert-desc { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .alert-list::-webkit-scrollbar { width:6px; }
+  .alert-list::-webkit-scrollbar-track { background:#f5f5f5; border-radius:3px; }
+  .alert-list::-webkit-scrollbar-thumb { background:#d9d9d9; border-radius:3px; }
+  .alert-group { margin-bottom:4px; }
+  .alert-group + .alert-group { margin-top:8px; }
+  .alert-group-title {
+    font-size:12px;
+    font-weight:600;
+    color:#8c8c8c;
+    padding:2px 0;
+    margin-bottom:6px;
+  }
+  .alert-group-title::after {
+    content:'';
+    display:block;
+    height:1px;
+    background:#f0f0f0;
+    margin-top:4px;
+  }
+  .alert-level { width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .alert-level.red { background:#ff4d4f; }
+  .alert-level.orange { background:#fa8c16; }
+  .alert-level.yellow { background:#fadb14; }
+  .alert-level.blue { background:#1890ff; }
+  .alert-content { flex:1; min-width:0; }
+  .alert-list .alert-title { font-size:14px !important; font-weight:600 !important; color:#262626 !important; margin-bottom:3px; }
+  .alert-desc { font-size:12px; color:#8c8c8c; margin-bottom:3px; line-height:1.5; }
+  .alert-meta { font-size:11px; color:#bfbfbf; }
+  .alert-time { font-size:12px; color:#bfbfbf; white-space:nowrap; flex-shrink:0; margin-top:2px; }
+
+  /* ---- 待办任务 ---- */
+  .task-list { display:flex; flex-direction:column; gap:8px; }
+  .task-checkbox {
+    width:18px; height:18px; flex-shrink:0;
+    border:2px solid #d9d9d9;
+    border-radius:4px;
+    display:flex; align-items:center; justify-content:center;
+    margin-top:1px;
+    background:#fff;
+  }
+  .task-checkbox svg { width:12px; height:12px; }
+  .task-content { flex:1; min-width:0; }
+  .task-list .task-title { font-size:14px !important; font-weight:600 !important; color:#262626 !important; }
+  .task-desc { font-size:12px; color:#8c8c8c; margin-top:2px; }
+  .task-meta { display:flex; gap:8px; margin-top:6px; align-items:center; }
+  .task-priority { padding:1px 8px; border-radius:4px; font-size:12px; font-weight:500; }
+  .task-priority.urgent { background:#fff1f0; color:#ff4d4f; }
+  .task-priority.normal { background:#fff7e6; color:#fa8c16; }
+  .task-priority.low { background:#e6f4ff; color:#1890ff; }
+  .task-time { font-size:12px; color:#bfbfbf; }
+
+  /* ---- 系统通知 ---- */
+  .notice-list { display:flex; flex-direction:column; gap:8px; }
+  .notice-item.unread { background:#f0f7ff; border-color:#d6e8ff; }
+  .notice-item.unread:hover { background:#e6f4ff; }
+  .notice-icon {
+    width:32px; height:32px; flex-shrink:0;
+    border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    background:#e6f4ff; color:#1890ff;
+  }
+  .notice-icon svg { width:15px; height:15px; }
+  .notice-item.unread .notice-icon { background:#1890ff; color:#fff; }
+  .notice-list .notice-title { font-size:14px !important; font-weight:600 !important; color:#262626 !important; }
+  .notice-desc { font-size:12px; color:#8c8c8c; margin-top:2px; }
+  .notice-time { font-size:12px; color:#bfbfbf; margin-top:4px; }
+
+  /* ===== 动效与功能样式（保留） ===== */
+  @keyframes weatherPulse {
+    0%, 100% { transform:scale(1); }
+    50% { transform:scale(1.05); }
+  }
+  .weather-icon-animate { animation:weatherPulse 3s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+
+  .panel-toggle {
+    cursor:pointer;
+    display:flex; align-items:center; gap:4px;
+    transition:all 0.2s;
+    color:#bfbfbf;
+  }
+  .panel-toggle:hover { color:#1890ff; }
+  .panel-toggle .toggle-icon { transition:transform 0.3s ease; font-size:12px; }
+  .panel-toggle.collapsed .toggle-icon { transform:rotate(-90deg); }
+  .panel-content { overflow:hidden; transition:max-height 0.3s ease, opacity 0.3s ease; }
+  .panel-content.collapsed { max-height:0; opacity:0; }
+
+  .camera-fullscreen {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.9);
+    z-index:1000;
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+  }
+  .camera-fullscreen.active { display:flex; }
+  .camera-fullscreen img { max-width:90%; max-height:80%; border-radius:8px; }
+  .camera-fullscreen-close {
+    position:absolute; top:20px; right:20px;
+    width:40px; height:40px;
+    background:rgba(255,255,255,0.2);
+    border:none; border-radius:50%;
+    color:#fff; font-size:20px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .camera-fullscreen-close:hover { background:rgba(255,255,255,0.3); }
+  .camera-fullscreen-name { color:#fff; font-size:18px; margin-top:16px; }
+
+  .task-item.completed { opacity:0.6; }
+  .task-item.completed .task-title { text-decoration:line-through; }
+  .task-item.completed .task-checkbox { background:#52c41a; border-color:#52c41a; }
+  .task-item.completed .task-checkbox::after { content:'✓'; color:#fff; font-size:12px; }
+
+  .toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; }
+  .toast {
+    background:#1f2937; color:#fff;
+    padding:12px 20px;
+    border-radius:8px;
+    margin-top:8px;
+    font-size:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    display:flex; align-items:center; gap:8px;
+    animation:toastIn 0.3s ease;
+  }
+  .toast.info { border-left:3px solid #1890ff; }
+  .toast.success { border-left:3px solid #52c41a; }
+  .toast.warning { border-left:3px solid #fa8c16; }
+  @keyframes toastIn {
+    from { transform:translateX(100%); opacity:0; }
+    to { transform:translateX(0); opacity:1; }
+  }
+
+  /* 窄屏降级（断点按 iframe 实际宽度设定，1344px 宽不受影响） */
+  @media (max-width: 1280px) {
+    .metrics-row { grid-template-columns:repeat(3, minmax(0, 1fr)); }
+    .duo-row { grid-template-columns:1fr; }
+  }
+  @media (max-width: 1000px) {
+    .main-grid { grid-template-columns:1fr; }
+    .camera-grid, .model-grid { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+    .welcome-info { display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="content-wrapper">
+
+        <!-- 欢迎区 -->
+        <div class="welcome-bar">
+          <div class="welcome-left">
+            <div class="welcome-avatar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;">
+                <path d="M3 11c0-5 4-8 9-8s9 3 9 8c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2z"/>
+                <path d="M9 13v5a3 3 0 0 0 6 0v-5"/>
+              </svg>
+            </div>
+            <div class="welcome-text">
+              <h2>您好，<span id="welcomeUser">平台管理员</span>！</h2>
+              <p>今天是 <span id="currentDate"></span> · 数据更新：<span id="lastUpdateTime">--:--:--</span></p>
+            </div>
+            <div class="welcome-info">
+              <div class="welcome-weather">
+                <svg class="weather-icon-animate" viewBox="0 0 24 24" fill="none" stroke="#1890ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:22px;height:22px;">
+                  <circle cx="12" cy="12" r="4"/>
+                  <path d="M12 2v2"/>
+                  <path d="M12 20v2"/>
+                  <path d="m4.93 4.93 1.41 1.41"/>
+                  <path d="m17.66 17.66 1.41 1.41"/>
+                  <path d="M2 12h2"/>
+                  <path d="M20 12h2"/>
+                  <path d="m6.34 17.66-1.41 1.41"/>
+                  <path d="m19.07 4.93-1.41 1.41"/>
+                </svg>
+                <div>
+                  <div class="weather-temp">12°C</div>
+                  <div class="weather-desc">多云 | 北风 3级</div>
+                </div>
+              </div>
+              <div class="phenology-tag">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#52c41a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                当前生产阶段：出菇期 · 第2潮
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 指标卡片 -->
+        <div class="metrics-row">
+          <div class="stat-card green">
+            <div class="stat-header">
+              <span class="stat-label">在产批次</span>
+              <span class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                  <path d="m3.3 7 8.7 5 8.7-5"/>
+                  <path d="M12 22V12"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-value" id="kpiBatch">36<span style="font-size:12px;color:#6b7280;">批</span></div>
+            <div class="stat-footer">
+              <span class="stat-trend up">覆盖七道工序</span>
+            </div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-header">
+              <span class="stat-label">环境达标率</span>
+              <span class="stat-icon" style="background:#e6f4ff;color:#1890ff;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-value" id="kpiEnv">97.6<span style="font-size:12px;color:#6b7280;">%</span></div>
+            <div class="stat-footer">
+              <span class="stat-trend up">8间菇房</span>
+              <span class="stat-sub">6项指标</span>
+            </div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-header">
+              <span class="stat-label">待处置预警</span>
+              <span class="stat-icon" style="background:#fff7e6;color:#fa8c16;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+                  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-value" id="kpiAlert">--<span style="font-size:12px;color:#6b7280;">条</span></div>
+            <div class="stat-footer">
+              <span class="stat-trend" id="kpiAlertTrend">--</span>
+            </div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-header">
+              <span class="stat-label">今日采收量</span>
+              <span class="stat-icon" style="background:#f5f0ff;color:#722ed1;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/>
+                  <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/>
+                  <path d="M7 21h10"/>
+                  <path d="M12 3v18"/>
+                  <path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-value" id="kpiHarvest">1,286<span style="font-size:12px;color:#6b7280;">kg</span></div>
+            <div class="stat-footer">
+              <span class="stat-trend up" id="kpiHarvestTrend">一级菇82.4%</span>
+              <span class="stat-sub" id="kpiHarvestSub">较昨日+6.2%</span>
+            </div>
+          </div>
+          <div class="stat-card cyan">
+            <div class="stat-header">
+              <span class="stat-label">追溯码数</span>
+              <span class="stat-icon" style="background:#e6fffb;color:#13c2c2;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-value" id="kpiTrace">12,480<span style="font-size:12px;color:#6b7280;">个</span></div>
+            <div class="stat-footer">
+              <span class="stat-trend up">本月新增 1,860 个</span>
+            </div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-header">
+              <span class="stat-label">在产菇房数</span>
+              <span class="stat-icon" style="background:#e6f4ff;color:#1890ff;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M3 21h18"/>
+                  <path d="M5 21V7l7-4 7 4v14"/>
+                  <path d="M9 21v-4h6v4"/>
+                  <path d="M9 10h.01"/>
+                  <path d="M15 10h.01"/>
+                  <path d="M9 14h.01"/>
+                  <path d="M15 14h.01"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-value" id="kpiHouse">6<span style="font-size:12px;color:#6b7280;">间</span></div>
+            <div class="stat-footer">
+              <span class="stat-trend up">2间空置 · 消杀中</span>
+              <span class="stat-sub">共8间</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 监控与模型 -->
+        <div class="duo-row">
+          <div class="panel panel-camera">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#1890ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;">
+                  <path d="M22 12h-2"/>
+                  <path d="M18 6h-2"/>
+                  <path d="M14 18h-2"/>
+                  <path d="M10 12H8"/>
+                  <path d="M16 16.99A5 5 0 0 1 7 12a5 5 0 0 1 9-3.99L16 16.99z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                菇房实景监控
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span style="font-size:12px;color:#8c8c8c;">实时</span>
+                <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:#52c41a;animation: blink 1s infinite;"></span>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="camera-grid">
+                <div class="camera-card" onclick="openCameraFullscreen('GF-01 平菇出菇房', 'images/fungi_house_oyster.png')">
+                  <div class="camera-thumb">
+                    <img src="images/fungi_house_oyster.png" alt="GF-01 平菇出菇房">
+                    <span class="camera-live"><span class="dot"></span><span class="live-clock">--:--:--</span></span>
+                    <div class="camera-info">
+                      <span class="camera-name">GF-01 平菇出菇房</span>
+                      <span class="camera-status online"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="camera-card" onclick="openCameraFullscreen('GF-02 杏鲍菇出菇房', 'images/fungi_house_king.png')">
+                  <div class="camera-thumb">
+                    <img src="images/fungi_house_king.png" alt="GF-02 杏鲍菇出菇房">
+                    <span class="camera-live"><span class="dot"></span><span class="live-clock">--:--:--</span></span>
+                    <div class="camera-info">
+                      <span class="camera-name">GF-02 杏鲍菇出菇房</span>
+                      <span class="camera-status online"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="camera-card" onclick="openCameraFullscreen('GF-03 金针菇出菇房', 'images/fungi_house_enoki.png')">
+                  <div class="camera-thumb">
+                    <img src="images/fungi_house_enoki.png" alt="GF-03 金针菇出菇房">
+                    <span class="camera-live"><span class="dot"></span><span class="live-clock">--:--:--</span></span>
+                    <div class="camera-info">
+                      <span class="camera-name">GF-03 金针菇出菇房</span>
+                      <span class="camera-status online"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="camera-card" onclick="openCameraFullscreen('GF-04 香菇出菇房', 'images/fungi_house_shiitake.png')">
+                  <div class="camera-thumb">
+                    <img src="images/fungi_house_shiitake.png" alt="GF-04 香菇出菇房">
+                    <span class="camera-live"><span class="dot"></span><span class="live-clock">--:--:--</span></span>
+                    <div class="camera-info">
+                      <span class="camera-name">GF-04 香菇出菇房</span>
+                      <span class="camera-status online"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="camera-card" onclick="openCameraFullscreen('GF-05 平菇出菇房', 'images/fungi_house_oyster.png')">
+                  <div class="camera-thumb">
+                    <img src="images/fungi_house_oyster.png" alt="GF-05 平菇出菇房" style="filter:brightness(1.12) saturate(0.88);">
+                    <span class="camera-live"><span class="dot"></span><span class="live-clock">--:--:--</span></span>
+                    <div class="camera-info">
+                      <span class="camera-name">GF-05 平菇出菇房</span>
+                      <span class="camera-status online"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="camera-card" onclick="openCameraFullscreen('GF-06 杏鲍菇出菇房', 'images/fungi_house_king.png')">
+                  <div class="camera-thumb">
+                    <img src="images/fungi_house_king.png" alt="GF-06 杏鲍菇出菇房" style="filter:brightness(0.9) hue-rotate(8deg);">
+                    <span class="camera-live"><span class="dot"></span><span class="live-clock">--:--:--</span></span>
+                    <div class="camera-info">
+                      <span class="camera-name">GF-06 杏鲍菇出菇房</span>
+                      <span class="camera-status online"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="camera-card" onclick="openCameraFullscreen('菌丝培养车间', 'images/fungi_culture_room.png')">
+                  <div class="camera-thumb">
+                    <img src="images/fungi_culture_room.png" alt="菌丝培养车间">
+                    <span class="camera-live"><span class="dot"></span><span class="live-clock">--:--:--</span></span>
+                    <div class="camera-info">
+                      <span class="camera-name">菌丝培养车间</span>
+                      <span class="camera-status online"></span>
+                    </div>
+                  </div>
+                </div>
+                <div class="camera-card" onclick="openCameraFullscreen('预冷冷库', 'images/fungi_cold_storage.png')">
+                  <div class="camera-thumb">
+                    <img src="images/fungi_cold_storage.png" alt="预冷冷库">
+                    <span class="camera-live"><span class="dot"></span><span class="live-clock">--:--:--</span></span>
+                    <div class="camera-info">
+                      <span class="camera-name">预冷冷库</span>
+                      <span class="camera-status online"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#1890ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;">
+                  <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 1.156 6.526 4.5 4.5 0 0 0 5.39-2.02l.022-.033.022.033a4.5 4.5 0 0 0 5.39 2.02 4 4 0 0 0 1.155-6.526 4 4 0 0 0-2.526-5.77A3 3 0 1 0 12 5"/>
+                </svg>
+                生产智能快讯
+              </div>
+              <a href="material_io.html" onclick="gotoPage('material_io.html','菌包制备管理');return false;" class="panel-link">工序台账 →</a>
+            </div>
+            <div class="panel-body">
+              <div class="model-grid">
+                <div class="model-card">
+                  <div class="model-header">
+                    <div class="model-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                    </div>
+                    <span class="model-title">菌丝培养</span>
+                  </div>
+                  <div class="model-content">满袋率 92.6%</div>
+                  <div class="model-footer success">3批可推进出菇</div>
+                </div>
+                <div class="model-card">
+                  <div class="model-header">
+                    <div class="model-icon" style="background:#fff1f0;color:#ff4d4f;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                        <path d="M12 9v4"/>
+                        <path d="M12 17h.01"/>
+                        <path d="M12 22a10 10 0 1 1 10-10 10 10 0 0 1-10 10z"/>
+                      </svg>
+                    </div>
+                    <span class="model-title">污染风险</span>
+                  </div>
+                  <div class="model-content">污染率 2.8%</div>
+                  <div class="model-footer warning">GF-04 · 阈值 3.0%</div>
+                </div>
+                <div class="model-card">
+                  <div class="model-header">
+                    <div class="model-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                        <path d="M3 3v18h18"/>
+                        <path d="M18 17l-5-5-3 3-5-5"/>
+                      </svg>
+                    </div>
+                    <span class="model-title">出菇进度</span>
+                  </div>
+                  <div class="model-content">第2潮菇蕾分化</div>
+                  <div class="model-footer success">预计 5 天后采收</div>
+                </div>
+                <div class="model-card">
+                  <div class="model-header">
+                    <div class="model-icon" style="background:#f6ffed;color:#52c41a;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                    </div>
+                    <span class="model-title">产量预估</span>
+                  </div>
+                  <div class="model-content">本月预估 42.5 吨</div>
+                  <div class="model-footer success">↑ 6.3% 较上月</div>
+                </div>
+                <div class="model-card">
+                  <div class="model-header">
+                    <div class="model-icon" style="background:#e6fffb;color:#13c2c2;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                        <path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.4-1.5A4 4 0 0 0 6 19h11.5z"/>
+                      </svg>
+                    </div>
+                    <span class="model-title">环境调控</span>
+                  </div>
+                  <div class="model-content">CO₂ 全部达标</div>
+                  <div class="model-footer success">达标率 97.6%</div>
+                </div>
+                <div class="model-card">
+                  <div class="model-header">
+                    <div class="model-icon" style="background:#fff7e6;color:#fa8c16;">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                        <path d="M12 2v20"/>
+                        <path d="m17 7-5-5-5 5"/>
+                        <path d="m17 17-5 5-5-5"/>
+                        <path d="M2 12h20"/>
+                      </svg>
+                    </div>
+                    <span class="model-title">冷链库存</span>
+                  </div>
+                  <div class="model-content">预冷区 3.2 吨</div>
+                  <div class="model-footer warning">2批临期需先出库</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 主网格 -->
+        <div class="main-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#1890ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9 3 9s9-2 9-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                实时预警
+              </div>
+              <a href="alert_overview.html" onclick="gotoPage('alert_overview.html','预警管理');return false;" class="panel-link">全部预警 →</a>
+            </div>
+            <div class="panel-body">
+              <div class="alert-list" id="homeAlertList"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#1890ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                    <rect width="18" height="14" x="3" y="4" rx="2"/>
+                    <path d="M3 10h18"/>
+                    <path d="M8 2v4"/>
+                    <path d="M16 2v4"/>
+                  </svg>
+                  待办任务
+                </div>
+                <div class="panel-toggle" onclick="togglePanel(this)">
+                  <span class="toggle-icon">▼</span>
+                </div>
+              </div>
+              <div class="panel-content">
+                <div class="panel-body">
+                  <div class="task-list">
+                  <div class="task-item urgent" onclick="gotoPage('harvest_report.html','高压灭菌管理')">
+                    <div class="task-content">
+                      <div class="task-title">复判灭菌曲线缺口批次</div>
+                      <div class="task-desc">MJ-261115-03 灭菌中途断电缺口 12min，需人工复判并归档</div>
+                      <div class="task-meta">
+                        <span class="task-priority urgent">紧急</span>
+                        <span class="task-time">今天 14:00</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="task-item normal" onclick="gotoPage('device_control.html','设备运行监控')">
+                    <div class="task-content">
+                      <div class="task-title">GF-02 CO₂ 联动复核</div>
+                      <div class="task-desc">新风风机联动运行 30min，复核浓度回落至 800ppm 以内</div>
+                      <div class="task-meta">
+                        <span class="task-priority normal">普通</span>
+                        <span class="task-time">今天 16:00</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="task-item low" onclick="gotoPage('material_info.html','物料种质')">
+                    <div class="task-content">
+                      <div class="task-title">菌种采购申请审批</div>
+                      <div class="task-desc">审核杏鲍菇栽培种采购申请单 #PR-20261116-001（2000 袋）</div>
+                      <div class="task-meta">
+                        <span class="task-priority low">低</span>
+                        <span class="task-time">明天 10:00</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <div class="panel-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#1890ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                    <path d="M8 21h8"/>
+                    <path d="M12 21V7"/>
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                  </svg>
+                  系统通知
+              </div>
+                <div class="panel-toggle" onclick="togglePanel(this)">
+                  <span class="toggle-icon">▼</span>
+                </div>
+              </div>
+              <div class="panel-content">
+                <div class="panel-body">
+                  <div class="notice-list">
+                  <div class="notice-item unread" onclick="gotoPage('system_settings.html','系统设置')">
+                    <div class="notice-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="notice-title">系统升级通知</div>
+                      <div class="notice-desc">本周六晚22:00-00:00系统将进行升级维护</div>
+                      <div class="notice-time">10分钟前</div>
+                    </div>
+                  </div>
+                  <div class="notice-item unread" onclick="gotoPage('trace_blockchain.html','区块链存证')">
+                    <div class="notice-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                        <path d="M16 13h-5v5h5v-5z"/>
+                        <path d="M21 16v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1"/>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v3a2 2 0 0 1-2 2h20a2 2 0 0 1-2-2V4a2 2 0 0 0-2-2z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="notice-title">新功能上线</div>
+                      <div class="notice-desc">区块链存证新增链上验证与召回流向图谱</div>
+                      <div class="notice-time">1小时前</div>
+                    </div>
+                  </div>
+                  <div class="notice-item" onclick="gotoPage('data_source.html','监管对接')">
+                    <div class="notice-icon">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                        <path d="M9 12l2 2 4-4"/>
+                        <circle cx="12" cy="12" r="10"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="notice-title">监管上报回执</div>
+                      <div class="notice-desc">省监管平台 11 月批次数据对账通过，2 条死信待重发</div>
+                      <div class="notice-time">3小时前</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+    </div>
+<script src="js/shared/fungi-alert-data.js"></script>
+<script>
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('zh-CN', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  weekday: 'long'
+});
+
+function showToast(message, type = 'info') {
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function togglePanel(element) {
+  const panelToggle = element;
+  const panelContent = element.closest('.panel').querySelector('.panel-content');
+  panelToggle.classList.toggle('collapsed');
+  panelContent.classList.toggle('collapsed');
+}
+
+function openCameraFullscreen(name, imageUrl) {
+  let fs = document.querySelector('.camera-fullscreen');
+  if (!fs) {
+    fs = document.createElement('div');
+    fs.className = 'camera-fullscreen';
+    fs.innerHTML = `
+      <button class="camera-fullscreen-exit" onclick="closeCameraFullscreen()">⤢ 退出全屏</button>
+      <span class="camera-live-fs"><span style="width:8px;height:8px;border-radius:50%;background:#ff4d4f;box-shadow:0 0 8px rgba(255,77,79,0.9);"></span><span class="live-clock">--:--:--</span></span>
+      <img src="" alt="">
+      <div class="camera-fullscreen-name"></div>
+    `;
+    document.body.appendChild(fs);
+  }
+  fs.querySelector('img').src = imageUrl;
+  fs.querySelector('.camera-fullscreen-name').textContent = name;
+  fs.classList.add('active');
+  updateLiveClocks();
+}
+
+function closeCameraFullscreen() {
+  const fs = document.querySelector('.camera-fullscreen');
+  if (fs) fs.classList.remove('active');
+}
+
+// ===== 系统内跳转（兼容 index.html iframe 与独立打开） =====
+function gotoPage(url, title) {
+  if (window.parent && window.parent !== window && typeof window.parent.openPage === 'function') {
+    window.parent.openPage(url, title || '');
+  } else {
+    window.location.href = url;
+  }
+}
+
+
+// ===== 摄像头"实时"时钟 & KPI 30 秒自动刷新（PC-B-005 / PC-B-008） =====
+function updateLiveClocks() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  const t = p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  document.querySelectorAll('.live-clock').forEach(function(el) { el.textContent = t; });
+}
+function updateLastUpdate() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  const el = document.getElementById('lastUpdateTime');
+  if (el) el.textContent = p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+}
+const HOME_KPI = {
+  kpiEnv:     { base: 97.6,   unit: '%',  digits: 1 },
+  kpiHarvest: { base: 1286,   unit: 'kg', digits: 0 },
+  kpiTrace:   { base: 12480,  unit: '个', digits: 0 }
+};
+
+/** 待处置预警 KPI + 实时预警列表：统一取菌菇演示预警数据源 */
+function refreshAlertKPI() {
+  const el = document.getElementById('kpiAlert');
+  const trend = document.getElementById('kpiAlertTrend');
+  if (!el || !window.FungiAlertData) return;
+  try {
+    const st = FungiAlertData.stats();
+    el.innerHTML = st.pending + '<span style="font-size:12px;color:#6b7280;">条</span>';
+    if (trend) {
+      const now = new Date();
+      const todayKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+      const todayNew = FungiAlertData.list().filter(function (a) { return String(a.time || '').slice(0, 10) === todayKey; }).length;
+      trend.className = 'stat-trend';
+      trend.textContent = '处理中 ' + st.processing + ' 条 · 今日新增 ' + todayNew + ' 条';
+    }
+  } catch (e) {
+    el.innerHTML = '--<span style="font-size:12px;color:#6b7280;">条</span>';
+  }
+}
+
+const HOME_ALERT_LEVEL_CLS = { urgent:'red', important:'orange', reminder:'yellow', notice:'blue' };
+
+function renderHomeAlerts() {
+  const box = document.getElementById('homeAlertList');
+  if (!box || !window.FungiAlertData) return;
+  try {
+    const now = new Date();
+    const todayKey = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    const arr = FungiAlertData.byStatus(['pending', 'processing'])
+      .filter(function(x){ return String(x.time || '').slice(0, 10) === todayKey; })
+      .sort(function(a, b){ return String(b.time || '').localeCompare(String(a.time || '')); })
+      .slice(0, 3);
+    if (!arr.length) {
+      box.innerHTML = '<div class="alert-group"><div class="alert-group-title">今天</div>'
+        + '<div class="alert-desc" style="padding:8px 0;">今日暂无待处理预警</div></div>';
+      return;
+    }
+    const groups = {};
+    arr.forEach(function(x){
+      const day = String(x.time || '').slice(0, 10);
+      (groups[day] = groups[day] || []).push(x);
+    });
+    box.innerHTML = Object.keys(groups).sort().reverse().map(function(day){
+      return '<div class="alert-group"><div class="alert-group-title">'
+        + (day === todayKey ? '今天' : day) + '</div>'
+        + groups[day].map(function(x){
+          return '<div class="alert-item" onclick="gotoPage(\'alert_overview.html\',\'预警管理\')">'
+            + '<span class="alert-level ' + (HOME_ALERT_LEVEL_CLS[x.level] || 'blue') + '"></span>'
+            + '<div class="alert-content">'
+            + '<div class="alert-title">' + escapeHtml(x.title) + '</div>'
+            + '<div class="alert-desc" title="' + escapeHtml(x.desc || '') + '">' + escapeHtml(x.desc || '') + '</div>'
+            + '<div class="alert-meta">' + escapeHtml(x.statusText || '') + (x.location ? ' | ' + escapeHtml(x.location) : '') + '</div>'
+            + '</div>'
+            + '<div class="alert-time">' + escapeHtml(String(x.time || '').slice(11, 16)) + '</div>'
+            + '</div>';
+        }).join('') + '</div>';
+    }).join('');
+  } catch (e) {
+    box.innerHTML = '<div class="alert-desc" style="padding:8px 0;">预警数据加载失败</div>';
+  }
+}
+
+function escapeHtml(v) {
+  return String(v === null || v === undefined ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function refreshHomeKPI() {
+  // 环境达标率小幅波动；采收量 / 追溯码随时间累计增长
+  const env = HOME_KPI.kpiEnv;
+  const envEl = document.getElementById('kpiEnv');
+  if (envEl) {
+    let v = env.base + (Math.random() - 0.5) * 0.8;
+    v = Math.min(100, Math.max(90, v));
+    envEl.innerHTML = v.toFixed(1) + '<span style="font-size:12px;color:#6b7280;">%</span>';
+  }
+  HOME_KPI.kpiHarvest.base += Math.floor(Math.random() * 7);
+  HOME_KPI.kpiTrace.base += Math.floor(Math.random() * 3);
+  ['kpiHarvest', 'kpiTrace'].forEach(function(id) {
+    const cfg = HOME_KPI[id];
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = Math.round(cfg.base).toLocaleString('zh-CN') + '<span style="font-size:12px;color:#6b7280;">' + cfg.unit + '</span>';
+  });
+  refreshAlertKPI();
+  renderHomeAlerts();
+  updateLastUpdate();
+}
+setInterval(refreshHomeKPI, 30000);   // 30 秒自动刷新 KPI
+setInterval(updateLiveClocks, 1000);  // 每秒刷新摄像头时间戳
+
+// ===== 初始化：当前用户、时钟、更新时间 =====
+(function initHomeMeta() {
+  try {
+    const u = JSON.parse(sessionStorage.getItem('snzg_user') || '{}');
+    if (u && u.realName) {
+      const w = document.getElementById('welcomeUser'); if (w) w.textContent = u.realName;
+    }
+  } catch (e) {}
+  updateLiveClocks();
+  updateLastUpdate();
+  refreshHomeKPI();
+})();
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/common-functions.js"></script>
+  <script src="js/typography.js"></script>
+<script>
+  // 生产智能快讯卡片点击跳转对应工序 / 管理页
+  (function() {
+    const targets = ['harvest_record.html', 'alert_overview.html', 'harvest_plan.html', 'harvest_process.html', 'device_control.html', 'harvest_storage.html'];
+    const labels = ['菌丝培养管理', '预警管理', '出菇培育管理', '采收分拣管理', '设备运行监控', '仓储冷链管理'];
+    const cards = document.querySelectorAll('.model-grid .model-card');
+    cards.forEach((card, i) => {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => {
+        if (window.parent && window.parent.openPage) {
+          window.parent.openPage(targets[i], labels[i]);
+        } else {
+          location.href = targets[i];
+        }
+      });
+    });
+  })();
+</script>
+</body>
+</html>

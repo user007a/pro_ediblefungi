@@ -1,0 +1,672 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌数字履历 - 产品溯源</title>
+  <link rel="stylesheet" href="../applefarm_mobile/css/mobile-design-system.css">
+  <style>
+    /* ========== 菌菇自然色主题（覆盖设计系统默认绿色） ========== */
+    :root {
+      --primary: #8C6244;
+      --primary-50: #F8F2E9;
+      --primary-100: #EFE2D0;
+      --primary-200: #DCC3A5;
+      --gradient-header: linear-gradient(150deg, #453023 0%, #6B4B35 42%, #93684A 76%, #A87C58 100%);
+      --text-on-primary: #FBF4E8;
+      --bg: #FBF5EC;
+      --text: #3B2C1F;
+      --text-secondary: #7C6650;
+      --text-tertiary: #A08A72;
+      --border: #E9DDCC;
+      --border-light: #F2E9DC;
+      --success-light: #EFE3D2;
+      --success-dark: #7A5233;
+      --warning-light: #FAE8DB;
+      --warning-dark: #A85A31;
+      --info-light: #F1EBE3;
+      --info-dark: #6B5A48;
+    }
+    body { background: var(--bg); }
+    .mb-app { padding-bottom: 0; }
+    .mb-section-title { justify-content: center; }
+
+    /* ========== 页面专属样式 ========== */
+    /* 溯源头部（免登录，无返回箭头） */
+    .trace-header {
+      background: var(--gradient-header);
+      padding: calc(var(--safe-top) + 22px) var(--space-4) var(--space-5);
+      color: var(--text-on-primary);
+      border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+      box-shadow: var(--shadow-header);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    .trace-header::before {
+      content: '';
+      position: absolute;
+      top: -30%; right: -15%;
+      width: 70%; height: 120%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.10) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .trace-header > * { position: relative; z-index: 1; }
+    .trace-brand {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: var(--font-xs);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.16);
+      margin: 0 auto var(--space-3);
+    }
+    .trace-title { font-size: var(--font-xl); font-weight: var(--font-bold); margin-bottom: var(--space-1); }
+    .trace-subtitle { font-size: var(--font-sm); opacity: 0.85; }
+
+    /* 溯源信息卡（图片在上、文字居中） */
+    .trace-product {
+      background: var(--bg-white);
+      border-radius: var(--radius-xl);
+      margin: var(--space-4);
+      position: relative;
+      z-index: 1;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      overflow: hidden;
+      padding-bottom: var(--space-4);
+    }
+    .trace-product-img {
+      width: 100%;
+      height: 190px;
+      background: var(--primary-50);
+      position: relative;
+      overflow: hidden;
+    }
+    .trace-product-img img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .trace-product-info { width: 100%; padding: var(--space-3) var(--space-4) 0; }
+    .trace-product-name { font-size: var(--font-md); font-weight: var(--font-bold); color: var(--text); margin-bottom: var(--space-1); }
+    .trace-product-batch { font-size: var(--font-xs); color: var(--text-secondary); font-family: var(--font-family-mono); }
+    .trace-product-tags { display: flex; gap: var(--space-1); margin-top: var(--space-2); flex-wrap: wrap; justify-content: center; }
+    /* 卡内扫码提示 */
+    .trace-scan { align-self: stretch; padding: var(--space-2) var(--space-4) 0; }
+    .trace-scan .scan-tip { background: var(--primary-50); }
+
+    /* 溯源时间线 */
+    .timeline { padding: var(--space-4); }
+    .timeline-item {
+      display: flex;
+      gap: var(--space-3);
+      position: relative;
+      padding-bottom: var(--space-5);
+    }
+    .timeline-item:last-child { padding-bottom: 0; }
+    .timeline-dot-line {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .timeline-dot {
+      width: 12px; height: 12px;
+      border-radius: var(--radius-full);
+      background: var(--primary);
+      box-shadow: 0 0 0 4px var(--primary-100);
+      flex-shrink: 0;
+      z-index: 1;
+    }
+    .timeline-dot.pending { background: var(--gray-400); box-shadow: 0 0 0 4px var(--gray-100); }
+    .timeline-line {
+      width: 2px;
+      flex: 1;
+      background: var(--border);
+      margin-top: 4px;
+    }
+    .timeline-item:last-child .timeline-line { display: none; }
+    .timeline-content {
+      flex: 1;
+      background: var(--bg-white);
+      border-radius: var(--radius-lg);
+      padding: var(--space-3);
+      border: 1px solid var(--border);
+      min-width: 0;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .timeline-content:active { transform: scale(0.98); border-color: var(--primary-200); }
+    .timeline-label {
+      font-size: var(--font-sm);
+      font-weight: var(--font-semibold);
+      color: var(--text);
+      margin-bottom: var(--space-0.5);
+      display: flex; align-items: center; gap: var(--space-2);
+    }
+    .timeline-time { font-size: var(--font-xs); color: var(--text-tertiary); }
+    .timeline-desc { font-size: var(--font-sm); color: var(--text-secondary); line-height: 1.5; }
+    .timeline-thumb {
+      width: 100%;
+      height: 80px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      margin-top: var(--space-2);
+    }
+    .timeline-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .timeline-detail-btn {
+      font-size: var(--font-xs);
+      color: var(--primary);
+      margin-top: var(--space-2);
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+    .timeline-detail-btn svg { width: 12px; height: 12px; }
+
+    /* ========== 通用卡片（检测报告 / 出菇房环境 / 存证） ========== */
+    .h5-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .h5-card h4 {
+      font-size: 14px;
+      color: var(--text);
+      margin: 0 0 8px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .kv { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px dashed #F4EADC; }
+    .kv:last-child { border-bottom: none; }
+    .kv .k { color: var(--text-tertiary); flex-shrink: 0; }
+    .kv .v { color: var(--text); font-weight: 500; text-align: right; word-break: break-all; }
+    .chip { display: inline-block; background: var(--primary-50); color: var(--success-dark); border-radius: 20px; padding: 2px 10px; font-size: 11px; margin: 3px 4px 0 0; }
+    .chip.bad { background: #fdecec; color: #c0392b; }
+    .scan-tip {
+      display: flex; gap: 8px; align-items: flex-start;
+      background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--primary);
+      border-radius: 10px; padding: 10px 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+    }
+    .scan-tip.warn { border-left-color: #ef4444; }
+    .env-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .env-item { background: var(--primary-50); border-radius: 10px; padding: 8px 10px; text-align: center; }
+    .env-item .lab { font-size: 11px; color: var(--text-tertiary); }
+    .env-item .val { font-size: 15px; color: var(--text); font-weight: 600; margin-top: 2px; }
+    .env-item .val small { font-size: 11px; font-weight: 400; color: var(--text-tertiary); }
+    .gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 8px; }
+    .gallery figure { margin: 0; }
+    .gallery img { width: 100%; height: 88px; object-fit: cover; border-radius: 8px; }
+    .gallery figcaption { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+    .video-box video { width: 100%; border-radius: 10px; display: block; background: #000; }
+    .chain-event { border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 8px; font-size: 12px; }
+    .chain-event:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+    .mono { font-family: monospace; font-size: 11px; word-break: break-all; }
+    .trace-footer {
+      padding: 6px var(--space-4) calc(var(--space-6, 24px) + var(--safe-bottom));
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <!-- 顶部标题（免登录，无返回箭头） -->
+    <header class="trace-header">
+      <div class="trace-brand">🍄 食用菌数字履历</div>
+      <div class="trace-title">产品溯源</div>
+      <div class="trace-subtitle">扫描追溯码即可查看 · 无需注册登录</div>
+    </header>
+
+    <!-- 产品信息卡（含扫码验证提示） -->
+    <div class="trace-product">
+      <div class="trace-product-img">
+        <img id="productImg" src="images/mushroom_pack.jpg" alt="鲜品杏鲍菇" onerror="this.style.display='none'">
+      </div>
+      <div class="trace-product-info">
+        <div class="trace-product-name" id="productName">鲜品杏鲍菇</div>
+        <div class="trace-product-batch" id="productBatch">批次号: —</div>
+        <div class="trace-product-origin" id="productOrigin" style="font-size:12px;color:var(--text-tertiary);margin:2px 0 6px;"></div>
+        <div class="trace-product-tags" id="productTags">
+          <span class="mb-tag success">出厂检测合格</span>
+          <span class="mb-tag info">工厂化栽培</span>
+          <span class="mb-tag warning">全程可追溯</span>
+        </div>
+      </div>
+      <!-- 扫码验证提示（首查 / 重复查询 / 风控） -->
+      <div class="trace-scan" id="scanSection" style="display:none;">
+        <div class="scan-tip" id="scanTip"></div>
+      </div>
+    </div>
+
+    <!-- 生产主体 -->
+    <div class="mb-section">
+      <div class="mb-section-title"><span class="mb-section-dot"></span>生产主体</div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;color:var(--text-secondary);line-height:1.8;">
+        <div>企业名称：菇乡源生物科技（示例）有限公司</div>
+        <div>生产地址：新疆维吾尔自治区吐鲁番市托克逊县 · 工厂化食用菌产业园 1 号厂区</div>
+        <div>生产许可：SC11665212300000（示例）</div>
+        <div>本页面展示内容由该企业提供，溯源数据已在区块链存证。</div>
+      </div>
+    </div>
+
+    <!-- 检测报告 -->
+    <div class="mb-section">
+      <div class="mb-section-title"><span class="mb-section-dot"></span>出厂检测报告</div>
+      <div class="h5-card" id="inspectionBox">加载中...</div>
+    </div>
+
+    <!-- 溯源时间线 -->
+    <div class="mb-section">
+      <div class="mb-section-title"><span class="mb-section-dot"></span>全链条溯源信息</div>
+    </div>
+    <div class="timeline" id="timelineBox">
+      <div style="text-align:center;color:var(--text-tertiary);font-size:13px;padding:20px;">溯源信息加载中...</div>
+    </div>
+
+    <!-- 出菇房环境 -->
+    <div class="mb-section">
+      <div class="mb-section-title"><span class="mb-section-dot"></span>出菇房环境</div>
+      <div class="h5-card" id="environmentBox">加载中...</div>
+    </div>
+
+    <!-- 区块链存证（精简为两条信息） -->
+    <div class="mb-section">
+      <div class="mb-section-title"><span class="mb-section-dot"></span>区块链存证</div>
+      <div id="h5Blockchain" style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;line-height:1.6;">
+        <div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;">
+          <span style="color:var(--text-secondary);flex-shrink:0;">数据指纹</span>
+          <span id="h5Hash" style="font-family:monospace;font-size:11px;color:var(--text);text-align:right;word-break:break-all;">加载中...</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-top:1px solid var(--border-light);">
+          <span style="color:var(--text-secondary);flex-shrink:0;">上链记录</span>
+          <span id="h5ChainInfo" style="color:var(--text);text-align:right;">—</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <button onclick="downloadEvidencePack()" style="flex:1;background:#fff;color:var(--primary);border:1px solid var(--primary);padding:8px 10px;border-radius:8px;font-size:12px;">下载存证包</button>
+          <button onclick="verifyOnChain()" style="flex:1;background:var(--primary);color:#fff;border:none;padding:8px 10px;border-radius:8px;font-size:12px;">链上验证</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 页脚（无底部导航） -->
+    <div class="trace-footer">
+      本页面为食用菌工厂化农业数据管理平台对外溯源展示页<br>
+      查询时间：<span id="queryTime">—</span>
+    </div>
+  </div>
+
+  <script src="../applefarm_backhand/js/shared/harvest-store.js"></script>
+  <script src="../applefarm_backhand/js/shared/trace-store.js"></script>
+  <script src="js/trace-stages.js"></script>
+  <script>
+    /* ============================================================
+     * H5 溯源页 —— 扫码即进入，无需登录，无底部导航
+     * 访问方式：trace_h5.html?code=SNJG-20261112-0001
+     *           trace_h5.html?c=<短码>
+     * 数据统一来自 TraceStore（与后台批次、检测报告、追溯码、存证同源）
+     * 环节定义使用食用菌七环节；后台「C 端展示配置」按同名 key 控制显隐
+     * ============================================================ */
+
+    /* 食用菌七环节（与《需求说明书》追溯链一致） */
+    var STAGES = [
+      { key:'material',  name:'原料进厂', icon:'🌾', desc:'棉籽壳、玉米芯、麸皮等主辅料逐批验收，含水率与杂质抽检合格后入库',
+        img:'images/trace_material.jpg' },
+      { key:'substrate', name:'菌包制备', icon:'🧱', desc:'按配方自动计量拌料，含水率 62.3%、pH 7.2，装袋并称重抽检',
+        img:'images/trace_substrate.jpg' },
+      { key:'sterilize', name:'灭菌接种', icon:'♨️', desc:'121℃ 高压灭菌保温 120 分钟，冷却后于 A 级无菌接种室接种',
+        img:'images/trace_sterilize.jpg' },
+      { key:'incubate',  name:'发菌培养', icon:'🌡️', desc:'培养房 23.4℃ 避光培养 30 天，菌丝满袋率 98.6%，污染率 0.79%',
+        img:'images/trace_incubate.jpg' },
+      { key:'fruiting',  name:'出菇采收', icon:'🍄', desc:'出菇房 18.0℃、湿度 92.3%、CO₂ 685ppm，菇体成熟后人工采收',
+        img:'images/trace_fruiting.jpg' },
+      { key:'grading',   name:'分级预冷', icon:'📦', desc:'按菌盖直径与形态分级，一级率 91.3%，0~4℃ 强制预冷至中心温度 3.2℃',
+        img:'images/trace_grading.jpg' },
+      { key:'coldchain', name:'冷链流通', icon:'🚚', desc:'全程 2~8℃ 冷链配送，车厢温度 5 分钟一采，运输曲线可查',
+        img:'images/trace_coldchain.jpg' }
+    ];
+
+    /* 产品档案（原型展示用固定口径） */
+    var PRODUCT = {
+      name: '鲜品杏鲍菇',
+      variety: '杏鲍菇',
+      spec: '2.5kg/箱 · 一级品',
+      house: '一号出菇房 GF-01'
+    };
+
+    /* 环境快照（与数据大屏口径一致） */
+    var ENV_SNAPSHOT = {
+      house: '一号出菇房 GF-01',
+      stage: '出菇期 · 第 11 天',
+      temp: '18.4', humidity: '92.3', co2: '685', lux: '120',
+      source: '出菇房控制器 GF-01 / 环境传感器 4 点',
+      updatedAt: ''
+    };
+
+    /* 出厂检测项（食用菌口径） */
+    var INSPECTION_ITEMS = ['铅（Pb）0.05mg/kg', '镉（Cd）0.02mg/kg', '总汞（Hg）未检出', '总砷（As）未检出', '菌落总数 1.2×10³CFU/g', '大肠菌群 未检出', '农药残留 49 项 未检出'];
+
+    /* 以批次采收日期为基准推算各环节时间 */
+    var DAY_OFFSET = { material:-45, substrate:-40, sterilize:-35, incubate:-32, fruiting:-1, grading:0, coldchain:2 };
+
+    /* 地区与品类口径统一：历史数据中残留的其他产区/品类字眼在此收敛 */
+    var TEXT_ALIAS = [
+      [/天水市|天水/g, '托克逊县'],
+      [/甘肃省|甘肃/g, '新疆维吾尔自治区'],
+      [/花牛苹果|红富士苹果|苹果/g, '杏鲍菇']
+    ];
+    function cleanText(s) {
+      var t = String(s == null ? '' : s);
+      for (var i = 0; i < TEXT_ALIAS.length; i++) t = t.replace(TEXT_ALIAS[i][0], TEXT_ALIAS[i][1]);
+      return t;
+    }
+
+    function escHtml(s) {
+      return cleanText(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function formatDate(d) { return d ? d.replace(/-/g, '.') : '—'; }
+
+    function shiftDate(dateStr, days) {
+      if (!dateStr) return '—';
+      var d = new Date(dateStr + 'T00:00:00');
+      if (isNaN(d.getTime())) return '—';
+      d.setDate(d.getDate() + days);
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+    }
+
+    /* 环节显隐：后台「C 端展示配置」按同名 key 控制；无配置时全部展示 */
+    function getStages() {
+      return STAGES.filter(function (s) {
+        try {
+          if (window.TraceStages && typeof TraceStages.get === 'function') {
+            var st = TraceStages.get(s.key);
+            if (st && st.enabled === false) return false;
+          }
+        } catch (e) {}
+        return true;
+      });
+    }
+
+    function renderNotFound(code) {
+      document.getElementById('productName').textContent = '未找到该追溯码';
+      document.getElementById('productBatch').textContent = '批次号: —';
+      document.getElementById('productOrigin').textContent = '';
+      document.getElementById('productImg').style.display = 'none';
+      var imgBox = document.querySelector('.trace-product-img');
+      if (imgBox) imgBox.style.display = 'none';
+      document.getElementById('inspectionBox').innerHTML =
+        '<div style="color:#c0392b;font-weight:600;">未查询到检测报告</div>' +
+        '<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;">请确认追溯码来源，或联系生产企业核实。</div>';
+      document.getElementById('environmentBox').innerHTML =
+        '<div style="font-size:12px;color:var(--text-tertiary);">暂无出菇房环境数据。</div>';
+      document.getElementById('timelineBox').innerHTML =
+        '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;font-size:13px;color:var(--text-tertiary);">未查询到该追溯码对应的溯源信息，请确认追溯码来源。</div>';
+    }
+
+    function renderTrace(code) {
+      var timelineBox = document.getElementById('timelineBox');
+      var item = (window.TraceStore && code) ? TraceStore.code(code) : null;
+
+      if (!item) {
+        renderNotFound(code);
+        return;
+      }
+
+      currentTraceCode = item.code;
+      var batch = (window.TraceStore ? TraceStore.batch(item.batch) : null) || {};
+
+      document.getElementById('productName').textContent = PRODUCT.name;
+      document.getElementById('productBatch').textContent = '批次号：' + (item.batch || '—');
+      document.getElementById('productOrigin').textContent =
+        ENV_SNAPSHOT.house + ' · 品种：' + PRODUCT.variety + ' · 规格：' + PRODUCT.spec;
+
+      /* 缓存批次采收日期，供详情页按同一规则推算各环节时间 */
+      try {
+        var cache = JSON.parse(sessionStorage.getItem('trace_batch_cache') || '{}');
+        cache[item.code] = batch.harvestDate || null;
+        sessionStorage.setItem('trace_batch_cache', JSON.stringify(cache));
+      } catch (e) {}
+
+      var ins = TraceStore.inspectionState(item.batch);
+      document.getElementById('productTags').innerHTML =
+        (ins.hasValid
+          ? '<span class="mb-tag success">出厂检测合格</span>'
+          : '<span class="mb-tag" style="background:#fdecec;color:#c0392b;">检测报告待补</span>') +
+        '<span class="mb-tag info">工厂化栽培</span>' +
+        '<span class="mb-tag warning">全程可追溯</span>';
+
+      renderInspection(item.batch);
+      renderEnvironment(item.batch);
+      renderH5Blockchain(item.code);
+
+      var stages = getStages();
+      if (!stages.length) {
+        timelineBox.innerHTML = '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;font-size:13px;color:var(--text-tertiary);">该批次暂未开放展示环节。</div>';
+        return;
+      }
+
+      timelineBox.innerHTML = stages.map(function (s) {
+        var time = formatDate(shiftDate(batch.harvestDate, DAY_OFFSET[s.key] || 0));
+        return '' +
+        '<div class="timeline-item">' +
+          '<div class="timeline-dot-line">' +
+            '<div class="timeline-dot"></div>' +
+            '<div class="timeline-line"></div>' +
+          '</div>' +
+          '<div class="timeline-content" onclick="showTraceDetail(\'' + s.key + '\',\'' + escHtml(code) + '\')">' +
+            '<div class="timeline-label">' +
+              '<span>' + escHtml(s.icon) + ' ' + escHtml(s.name) + '</span>' +
+              '<span class="timeline-time">' + escHtml(time) + '</span>' +
+            '</div>' +
+            '<div class="timeline-desc">' + escHtml(s.desc) + '</div>' +
+            '<div class="timeline-thumb">' +
+              '<img src="' + escHtml(s.img) + '" alt="' + escHtml(s.name) + '" onerror="this.style.display=\'none\';" loading="lazy">' +
+            '</div>' +
+            '<div class="timeline-detail-btn">查看环节详情<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function showTraceDetail(type, code) {
+      window.location.href = 'h5_trace_detail.html?type=' + type + '&code=' + encodeURIComponent(code || '');
+    }
+
+    /* ========== 检测报告 ========== */
+    function renderInspection(batchNo) {
+      var box = document.getElementById('inspectionBox');
+      if (!window.TraceStore) { box.textContent = '溯源数据加载失败'; return; }
+      var st = TraceStore.inspectionState(batchNo);
+      var latest = st.latest;
+      if (!latest) {
+        box.innerHTML =
+          '<div style="color:#c0392b;font-weight:600;">该批次未上传检测报告</div>' +
+          '<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;">检测报告是追溯码赋码的前置条件，缺失时不应生成追溯码。</div>';
+        return;
+      }
+      var statusMap = { expired: '已过期', revoked: '已撤销', invalid: '不合格', pending: '待出报告' };
+      var statusText = st.hasValid ? '检测合格' : (statusMap[latest.status] || '待补录');
+      var statusCls = st.hasValid ? 'chip' : 'chip bad';
+      var attach = latest.attachment;
+      var attachHtml = attach
+        ? (attach.dataUrl
+            ? '<a href="' + escHtml(attach.dataUrl) + '" target="_blank" style="color:var(--primary);">查看检测报告附件</a>'
+            : '<span style="color:var(--text-tertiary);">' + escHtml(attach.name || '') + '</span>')
+        : '<span style="color:var(--text-tertiary);">暂无附件</span>';
+      var items = INSPECTION_ITEMS.map(function (t) {
+        return '<span class="chip">' + escHtml(t) + '</span>';
+      }).join('');
+      box.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+          '<h4 style="margin:0;">' + escHtml(latest.institution || '检测机构') + '</h4>' +
+          '<span class="' + statusCls + '">' + escHtml(statusText) + '</span>' +
+        '</div>' +
+        '<div class="kv"><span class="k">报告编号</span><span class="v">' + escHtml(latest.reportNo || '—') + '</span></div>' +
+        '<div class="kv"><span class="k">报告类型</span><span class="v">' + escHtml(latest.reportType || '出厂检验') + '</span></div>' +
+        '<div class="kv"><span class="k">检测结论</span><span class="v">' + escHtml(latest.conclusion || '符合食品安全国家标准') + '</span></div>' +
+        '<div class="kv"><span class="k">抽样日期</span><span class="v">' + escHtml(latest.sampleDate || '—') + '</span></div>' +
+        '<div class="kv"><span class="k">签发日期</span><span class="v">' + escHtml(latest.issueDate || '—') + '</span></div>' +
+        '<div class="kv"><span class="k">有效期至</span><span class="v">' + escHtml(latest.validUntil || '长期') + '</span></div>' +
+        '<div class="kv"><span class="k">报告附件</span><span class="v">' + attachHtml + '</span></div>' +
+        '<div style="margin-top:8px;">' + items + '</div>' +
+        (st.hasValid ? '' : '<div style="margin-top:8px;color:#c0392b;font-size:12px;">' + escHtml(st.message) + '</div>');
+    }
+
+    /* ========== 出菇房环境 ========== */
+    function renderEnvironment(batchNo) {
+      var box = document.getElementById('environmentBox');
+      if (!window.TraceStore) { box.textContent = '溯源数据加载失败'; return; }
+      var cfg = TraceStore.config() || {};
+      var now = new Date();
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      var snapAt = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
+        ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+      ENV_SNAPSHOT.updatedAt = snapAt;
+      var html = '';
+
+      if (cfg.showVideo !== false) {
+        html += '<div style="position:relative;margin-bottom:10px;">' +
+          '<img src="images/trace_monitor.jpg" alt="出菇房监控快照" style="width:100%;height:150px;object-fit:cover;border-radius:10px;" onerror="this.style.display=\'none\';" loading="lazy">' +
+          '<span style="position:absolute;left:8px;top:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;">● 出菇房监控快照</span></div>' +
+          '<div style="font-size:11px;color:var(--text-tertiary);margin:0 0 10px;">' + escHtml(ENV_SNAPSHOT.house) + ' · 采收期现场画面</div>';
+      }
+
+      if (cfg.showEnvironment !== false) {
+        html += '<div style="background:#FBF1E2;border:1px solid #E9D3AE;border-radius:8px;padding:8px 10px;font-size:11px;color:#8A6640;margin-bottom:8px;">' +
+          '批次环境快照 · 非实时<span style="opacity:.75">（采样时间 ' + escHtml(snapAt) + '，来源 ' + escHtml(ENV_SNAPSHOT.source) + '）</span><br>' +
+          '仅用于本批次溯源展示，不参与生产指挥实时指标。</div>' +
+          '<h4>🍄 出菇房实时环境</h4><div class="env-grid">' +
+          '<div class="env-item"><div class="lab">温度</div><div class="val">' + escHtml(ENV_SNAPSHOT.temp) + '<small> ℃</small></div></div>' +
+          '<div class="env-item"><div class="lab">相对湿度</div><div class="val">' + escHtml(ENV_SNAPSHOT.humidity) + '<small> %RH</small></div></div>' +
+          '<div class="env-item"><div class="lab">CO₂ 浓度</div><div class="val">' + escHtml(ENV_SNAPSHOT.co2) + '<small> ppm</small></div></div>' +
+          '<div class="env-item"><div class="lab">光照强度</div><div class="val">' + escHtml(ENV_SNAPSHOT.lux) + '<small> lux</small></div></div>' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--text-tertiary);margin:6px 0 4px;">' + escHtml(ENV_SNAPSHOT.house) + ' · ' + escHtml(ENV_SNAPSHOT.stage) + ' · 更新于 ' + escHtml(snapAt) + '</div>';
+      }
+
+      box.innerHTML = html || '<div style="font-size:12px;color:var(--text-tertiary);">暂无环境数据。</div>';
+    }
+
+    /* ========== 区块链存证 ========== */
+    var currentChainEvent = null;
+    var currentTraceCode = '';
+    function downloadEvidencePack() {
+      if (!window.TraceStore || !currentTraceCode) return;
+      var item = TraceStore.code(currentTraceCode);
+      if (!item) return;
+      var data = TraceStore.exportEvidence(item.batch);
+      if (!data) return;
+      var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'trace_evidence_' + item.batch + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function renderH5Blockchain(codeStr) {
+      var hashEl = document.getElementById('h5Hash');
+      var infoEl = document.getElementById('h5ChainInfo');
+      if (!window.TraceStore) {
+        if (hashEl) hashEl.textContent = '存证数据加载失败';
+        return;
+      }
+      var item = TraceStore.code(codeStr);
+      var evs = [];
+      if (item) {
+        var all = TraceStore.events();
+        evs = all.filter(function (e) { return e.code === item.code; });
+        if (!evs.length) evs = all.filter(function (e) { return e.batchNo === item.batch; });
+      }
+      evs.sort(function (a, b) { return (a.blockHeight || 0) - (b.blockHeight || 0); });
+      currentChainEvent = evs.length ? evs[evs.length - 1] : null;
+
+      if (!currentChainEvent) {
+        if (hashEl) hashEl.textContent = '暂无存证记录';
+        if (infoEl) infoEl.textContent = '—';
+        return;
+      }
+
+      var h = String(currentChainEvent.hash || '');
+      if (hashEl) {
+        hashEl.textContent = h.length > 28 ? h.slice(0, 18) + '…' + h.slice(-8) : h;
+        hashEl.title = h;
+      }
+      if (infoEl) infoEl.innerHTML = '#' + currentChainEvent.blockHeight + ' · ' + escHtml(currentChainEvent.chainTime) + ' · 已确认';
+    }
+
+    function verifyOnChain() {
+      var info = document.getElementById('h5ChainInfo');
+      if (!info) return;
+      if (!currentChainEvent) { info.innerHTML = '<span style="color:#c0392b;">暂无可验证的存证事件</span>'; return; }
+      info.innerHTML = '<span style="color:#f59e0b;">验证中...</span>';
+      setTimeout(function () {
+        var r = window.TraceStore ? TraceStore.verifyEvent(currentChainEvent.id) : { ok: false, reason: '存证数据不可用' };
+        info.innerHTML = r.ok
+          ? '<span style="color:var(--success-dark);">✓ 链上验证通过</span> · 事件哈希与前序区块连续'
+          : '<span style="color:#c0392b;">✕ 验证失败：' + escHtml(r.reason) + '</span>';
+      }, 600);
+    }
+
+    /* ========== 扫码验证（首查 / 重复查询 / 风控） ========== */
+    function recordH5Scan(codeStr) {
+      if (!window.TraceStore) return;
+      var item = TraceStore.code(codeStr);
+      if (!item) return;
+      var res = TraceStore.recordScan(item.code, { source: 'H5', device: 'H5 扫码', region: '消费者扫码查询' });
+      var sec = document.getElementById('scanSection');
+      var tip = document.getElementById('scanTip');
+      if (!sec || !tip || !res.ok) return;
+      sec.style.display = 'block';
+      tip.className = 'scan-tip' + (res.risk ? ' warn' : '');
+      tip.innerHTML = res.firstScan
+        ? '<span style="font-size:16px;">✅</span><div><b style="color:var(--success-dark);">首次查询，验证为正品首次查询</b><br>查询时间：' + escHtml(res.lastQuery || '') + '</div>'
+        : '<span style="font-size:16px;">ℹ️</span><div>该码已累计查询 <b>' + res.queries + '</b> 次，最后查询：' + escHtml(res.lastQuery || '') +
+          (res.risk ? '<br><span style="color:#ef4444;">' + escHtml(res.riskReason) + '</span>' : '') + '</div>';
+    }
+
+    /* 追溯码解析：?code= 完整码 / ?c= 短码；缺省时取示例首个码 */
+    function resolveTraceCode(params) {
+      var raw = (params.get('code') || params.get('c') || '').trim();
+      if (raw) return raw;
+      var codes = window.TraceStore ? TraceStore.codes() : [];
+      return codes.length ? codes[0].code : '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var params = new URLSearchParams(window.location.search);
+      var raw = resolveTraceCode(params);
+      var item = (window.TraceStore && raw) ? TraceStore.code(raw) : null;
+      var code = item ? item.code : raw;
+
+      var now = new Date();
+      var pad = function (n) { return String(n).padStart(2, '0'); };
+      document.getElementById('queryTime').textContent =
+        now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) +
+        ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+
+      renderTrace(code);
+      if (item) recordH5Scan(item.code);
+    });
+  </script>
+</body>
+</html>

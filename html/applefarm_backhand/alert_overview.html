@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 预警总览</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  /* KPI 行：四列统计卡片（与全站统计卡片栅格一致） */
+  .kpi-row { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:16px; margin-bottom:20px; }
+  @media (max-width:1100px){ .kpi-row { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+
+  /* unified-theme 的 .stat-card + .stat-card 纵向 margin 在栅格中会造成卡片错位 */
+  .kpi-row .stat-card { margin-top:0 !important; }
+
+  /* 来源视角 Tab（与 farming_patrol 的 .view-tabs 口径一致） */
+  .view-tabs {
+    display:flex; gap:8px; margin-bottom:16px;
+    border-bottom:1px solid var(--border-light);
+    overflow-x:auto;
+  }
+  .view-tab {
+    padding:10px 20px; border:none; background:none;
+    font-size:14px; font-family:inherit; color:var(--text-secondary);
+    cursor:pointer; border-bottom:2px solid transparent; transition:all .2s; white-space:nowrap;
+  }
+  .view-tab:hover { color:var(--primary-500); }
+  .view-tab.active { color:var(--primary-500); font-weight:600; border-bottom-color:var(--primary-500); }
+  .view-tab .cnt {
+    display:inline-block; margin-left:6px; padding:0 6px; border-radius:999px;
+    background:var(--gray-100); color:var(--text-tertiary); font-size:11px; font-weight:500;
+  }
+  .view-tab.active .cnt { background:var(--primary-50); color:var(--primary-600); }
+
+  /* Tab 说明条 */
+  .tab-desc {
+    display:flex; align-items:center; gap:8px; margin-bottom:16px;
+    padding:10px 14px; border-radius:var(--radius-lg);
+    background:var(--primary-50); border:1px solid var(--primary-100);
+    font-size:13px; color:var(--text-secondary);
+  }
+  .tab-desc svg { width:15px; height:15px; color:var(--primary-500); flex-shrink:0; }
+
+  /* 模型 Tab 的二级分类筛选 */
+  .sub-filter { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .sub-chip {
+    padding:5px 14px; border-radius:var(--radius-full); font-size:12px; cursor:pointer;
+    border:1px solid var(--border-light); background:#fff; color:var(--text-secondary); transition:all .2s;
+  }
+  .sub-chip:hover { border-color:var(--primary-300); color:var(--primary-600); }
+  .sub-chip.active { background:var(--primary-500); border-color:var(--primary-500); color:#fff; }
+
+  .grid-2 { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:20px; }
+  @media (max-width:1100px){ .grid-2 { grid-template-columns:1fr; } }
+
+  /* 面板：白底 + 浅灰描边 + 极轻投影，与全站面板统一 */
+  .panel {
+    background:var(--bg-card);
+    border:1px solid #f0f0f0;
+    border-radius:12px;
+    padding:18px 20px;
+    box-shadow:0 1px 3px rgba(16,24,40,0.06);
+    min-width:0;
+  }
+  .panel-title {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding-bottom:12px; margin-bottom:14px;
+    border-bottom:1px solid #f0f0f0;
+    font-size:15px; font-weight:600; color:var(--text-primary);
+  }
+  .panel-title > span:first-child { display:inline-flex; align-items:center; gap:8px; }
+  .panel-title svg { width:16px; height:16px; color:var(--primary-500); flex-shrink:0; }
+  .panel-title .meta { font-size:12px; font-weight:normal; color:var(--text-tertiary); }
+  .panel-title .live-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--success); margin-right:5px; vertical-align:middle; }
+
+  /* 今日预警列表：扁平行式，分隔线代替色块底 */
+  .top-list { display:flex; flex-direction:column; }
+  .top-item {
+    display:grid; grid-template-columns:auto 1fr auto; gap:12px;
+    padding:12px 0; align-items:start;
+    border-bottom:1px solid #f0f0f0;
+  }
+  .top-item:last-child { border-bottom:none; padding-bottom:0; }
+  .top-item .txt { font-size:14px; font-weight:600; color:#262626; line-height:1.5; }
+  .top-item .src { font-size:12px; color:#8c8c8c; margin-top:2px; }
+  .top-item .tm { font-size:12px; color:#bfbfbf; white-space:nowrap; }
+
+  #alertTrend, #levelDonut { width:100%; height:200px; }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="alert" data-active-submenu="alert-overview">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <main class="main-content">
+      <div class="content-wrapper">
+
+        <!-- 来源视角 Tab -->
+        <div class="view-tabs" id="sourceTabs"></div>
+        <div class="tab-desc" id="tabDesc"></div>
+        <div class="sub-filter" id="subFilter" style="display:none;"></div>
+
+        <!-- KPI 行 -->
+        <div class="kpi-row">
+          <div class="stat-card danger">
+            <div class="stat-header">
+              <span class="stat-label">待处理预警</span>
+              <span class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-value" id="kpiPending">0</div>
+            <div class="stat-footer">含紧急 <span id="kpiUrgent">0</span> 条 · 较昨日 <span id="kpiDelta">—</span></div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-header">
+              <span class="stat-label">未闭环总量</span>
+              <span class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
+                  <path d="M12 5v14"/>
+                  <path d="M5 12h14"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-value" id="kpiOpen">0</div>
+            <div class="stat-footer">待处理 <span id="kpiPending2">0</span> · 处理中 <span id="kpiProcessing">0</span> · 已转工单 <span id="kpiTransferred">0</span></div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-header">
+              <span class="stat-label">闭环率</span>
+              <span class="stat-icon" style="background:var(--primary-50);color:var(--primary-500);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
+                  <path d="M20 6 9 17l-5-5"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-value" id="kpiRate">0%</div>
+            <div class="stat-footer">已闭环 <span id="kpiDone">0</span> / <span id="kpiTotal">0</span> · 已忽略 <span id="kpiIgnored">0</span></div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-header">
+              <span class="stat-label">平均响应</span>
+              <span class="stat-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;">
+                  <circle cx="12" cy="12" r="9"/>
+                  <path d="M12 7v5l3 2"/>
+                </svg>
+              </span>
+            </div>
+            <div class="stat-value" id="kpiRespTime">—</div>
+            <div class="stat-footer" id="kpiRespFoot">按告警创建至首次处理的时差估算</div>
+          </div>
+        </div>
+
+        <!-- 中部两栏：待处理 Top + 级别分布 -->
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-title">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span id="topTitle">待处理预警 Top 3</span>
+              </span>
+              <span class="meta"><span class="live-dot"></span>实时</span>
+            </div>
+            <div class="top-list" id="topList"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"/>
+                  <path d="M12 3a9 9 0 0 1 9 9h-9z"/>
+                </svg>
+                告警级别分布
+              </span>
+              <span class="meta" id="donutMeta">全量</span>
+            </div>
+            <div id="levelDonut"></div>
+          </div>
+        </div>
+
+        <!-- 趋势图 -->
+        <div class="panel" style="margin-bottom:20px;">
+          <div class="panel-title">
+            <span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              预警趋势
+            </span>
+            <span class="meta">近 30 天</span>
+          </div>
+          <div id="alertTrend"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="js/shared/alert-data.js"></script>
+<script>
+  var LEVEL_LABEL = { urgent:'紧急', important:'重要', reminder:'提醒', notice:'通知' };
+  var SOURCE_LABEL = { device:'设备预警', manual:'人工上报', model:'模型预警', inventory:'库存预警', system:'系统预警', cert:'资质到期预警' };
+  var CATEGORY_LABEL = { device:'设备', pest:'病虫害', weather:'气象', soil:'土壤', growth:'生长', environment:'环境', yield:'产量', inventory:'库存', quality:'质量' };
+
+  // 当前来源视角：'all' 或 AlertStore.SOURCES 的 key
+  var currentSource = 'all';
+  // 模型 Tab 的二级分类筛选
+  var currentCategory = '';
+
+  function fmtTimeShort(t){
+    if (!t) return '';
+    var m = String(t).match(/(\d{2})-(\d{2})[ T](\d{2}:\d{2})/);
+    return m ? (m[1] + '-' + m[2] + ' ' + m[3]) : t;
+  }
+
+  function parseTime(str){
+    var m = String(str || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+    if (!m) return null;
+    var d = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], 0, 0);
+    return isNaN(d.getTime()) ? null : d.getTime();
+  }
+
+  function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+
+  // 当前视角下的预警集合
+  function currentList(){
+    var list = currentSource === 'all' ? AlertStore.all() : AlertStore.bySource(currentSource);
+    if (currentSource === 'model' && currentCategory){
+      list = list.filter(function(a){ return a.category === currentCategory; });
+    }
+    return list;
+  }
+
+  // ---------- 来源 Tab ----------
+  function renderTabs(){
+    var s = AlertStore.stats();
+    var tabs = [{ key:'all', text:'全部来源', desc:'汇总全部来源的预警，KPI 与分布均为全域口径。' }];
+    AlertStore.SOURCES.forEach(function(src){
+      var st = s.bySource[src.key] || { total:0, pending:0 };
+      tabs.push({ key: src.key, text: src.text, desc: src.desc, count: st.total, pending: st.pending });
+    });
+    var html = tabs.map(function(t){
+      var cnt = t.key === 'all' ? s.total : (t.count || 0);
+      return '<button class="view-tab' + (currentSource === t.key ? ' active' : '') + '" data-source="' + t.key + '">' +
+        t.text + '<span class="cnt">' + cnt + '</span></button>';
+    }).join('');
+    var box = document.getElementById('sourceTabs');
+    box.innerHTML = html;
+    box.querySelectorAll('.view-tab').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        currentSource = btn.dataset.source;
+        currentCategory = '';
+        refresh();
+      });
+    });
+
+    var cur = tabs.filter(function(t){ return t.key === currentSource; })[0] || tabs[0];
+    var descHtml = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>' +
+      '<span>' + cur.text + '：' + cur.desc + '</span>';
+    if (currentSource !== 'all' && cur.pending !== undefined){
+      descHtml += '<span style="margin-left:auto;color:var(--text-tertiary);">待处理 ' + cur.pending + ' 条</span>';
+    }
+    document.getElementById('tabDesc').innerHTML = descHtml;
+
+    // 模型 Tab 的二级分类筛选
+    var subBox = document.getElementById('subFilter');
+    if (currentSource === 'model'){
+      var cats = [
+        { key:'', text:'全部' },
+        { key:'weather', text:'气象' },
+        { key:'environment', text:'环境' },
+        { key:'pest', text:'病虫害' },
+        { key:'yield', text:'产量' },
+        { key:'soil', text:'土壤' }
+      ];
+      subBox.style.display = 'flex';
+      subBox.innerHTML = cats.map(function(c){
+        var cnt = c.key ? AlertStore.byCategory(c.key).filter(function(a){ return a.source === 'model'; }).length
+                      : AlertStore.bySource('model').length;
+        return '<span class="sub-chip' + (currentCategory === c.key ? ' active' : '') + '" data-cat="' + c.key + '">' +
+          c.text + '（' + cnt + '）</span>';
+      }).join('');
+      subBox.querySelectorAll('.sub-chip').forEach(function(chip){
+        chip.addEventListener('click', function(){
+          currentCategory = chip.dataset.cat;
+          refresh();
+        });
+      });
+    } else {
+      subBox.style.display = 'none';
+      subBox.innerHTML = '';
+    }
+  }
+
+  // ---------- Top 列表 ----------
+  function renderTopList(){
+    var list = currentList().filter(function(a){ return a.status === 'pending'; });
+    list.sort(function(a,b){
+      var lvOrder = { urgent:0, important:1, reminder:2, notice:3 };
+      var la = lvOrder[a.level] !== undefined ? lvOrder[a.level] : 9;
+      var lb = lvOrder[b.level] !== undefined ? lvOrder[b.level] : 9;
+      if (la !== lb) return la - lb;
+      return (b.time || '').localeCompare(a.time || '');
+    });
+    var top = list.slice(0,3);
+    document.getElementById('topTitle').textContent = '待处理预警 Top 3';
+    if (!top.length){
+      document.getElementById('topList').innerHTML =
+        '<div style="padding:20px;text-align:center;color:var(--text-tertiary);font-size:13px;">当前无待处理预警</div>';
+      return;
+    }
+    var html = top.map(function(a){
+      var src = (SOURCE_LABEL[a.source] || '系统预警') + ' · ' + (a.base || (a.location || '').split(' - ')[0]);
+      return '<div class="top-item">'+
+        '<span class="level-tag level-'+a.level+'">'+(LEVEL_LABEL[a.level]||a.levelText)+'</span>'+
+        '<div><div class="txt">'+a.title+'</div><div class="src">'+src+'</div></div>'+
+        '<span class="tm">'+fmtTimeShort(a.time)+'</span>'+
+      '</div>';
+    }).join('');
+    document.getElementById('topList').innerHTML = html;
+  }
+
+  // ---------- KPI ----------
+  function renderKpis(){
+    var s = currentSource === 'all' ? AlertStore.stats() : AlertStore.statsBySource(currentSource);
+    var list = currentList();
+
+    document.getElementById('kpiPending').textContent = s.pending;
+    document.getElementById('kpiUrgent').textContent = s.urgent;
+    document.getElementById('kpiOpen').textContent = s.open;
+    document.getElementById('kpiPending2').textContent = s.pending;
+    document.getElementById('kpiProcessing').textContent = s.processing;
+    document.getElementById('kpiTransferred').textContent = s.transferred;
+    document.getElementById('kpiDone').textContent = s.closed;
+    document.getElementById('kpiIgnored').textContent = s.ignored;
+    document.getElementById('kpiTotal').textContent = s.total;
+    document.getElementById('kpiRate').textContent = (s.closedRate !== undefined ? s.closedRate : s.rate) + '%';
+
+    // 较昨日：按 time 实算
+    var today = new Date();
+    var todayKey = today.getFullYear() + '-' + pad2(today.getMonth()+1) + '-' + pad2(today.getDate());
+    var y = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    var yKey = y.getFullYear() + '-' + pad2(y.getMonth()+1) + '-' + pad2(y.getDate());
+    var todayCount = list.filter(function(a){ return String(a.time||'').substring(0,10) === todayKey; }).length;
+    var yCount = list.filter(function(a){ return String(a.time||'').substring(0,10) === yKey; }).length;
+    var deltaEl = document.getElementById('kpiDelta');
+    var diff = todayCount - yCount;
+    if (diff > 0){
+      deltaEl.textContent = '+' + diff;
+      deltaEl.style.color = 'var(--error)';
+    } else if (diff < 0){
+      deltaEl.textContent = String(diff);
+      deltaEl.style.color = 'var(--success)';
+    } else {
+      deltaEl.textContent = '持平';
+      deltaEl.style.color = 'var(--text-tertiary)';
+    }
+
+    // 平均响应：按 acceptedAt - time 实算
+    var avg = s.avgResponseMinutes;
+    var respondedCount = s.respondedCount || 0;
+    if (avg === null || avg === undefined){
+      // 回退：由 history 中带时间戳的处置记录推导
+      var durations = [];
+      list.forEach(function(a){
+        var created = parseTime(a.time);
+        if (created === null) return;
+        var handledAt = null;
+        (a.history || []).forEach(function(h){
+          if (handledAt !== null) return;
+          var m = String(h).match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2})/);
+          if (!m) return;
+          var t = parseTime(m[1]);
+          if (t !== null && t >= created) handledAt = t;
+        });
+        if (handledAt !== null) durations.push((handledAt - created) / 60000);
+      });
+      avg = durations.length ? Math.round(durations.reduce(function(a2,b){ return a2+b; },0) / durations.length) : null;
+      respondedCount = durations.length;
+    }
+    var valEl = document.getElementById('kpiRespTime');
+    var footEl = document.getElementById('kpiRespFoot');
+    if (avg === null){
+      valEl.textContent = '—';
+      footEl.textContent = '暂无受理记录，无法计算响应时长';
+    } else {
+      valEl.innerHTML = (avg >= 60 ? (Math.round(avg / 6) / 10).toFixed(1) + ' 小时' : Math.round(avg) + '<span style="font-size:12px;color:#6b7280;">分钟</span>');
+      footEl.textContent = '基于 ' + respondedCount + ' 条已受理预警的创建-受理时差';
+    }
+  }
+
+  // ---------- 图表 ----------
+  function renderCharts(){
+    if (!window.Chart) return;
+    window.Chart.loadECharts().then(function(){
+      // 近 30 天真实分箱
+      var trend = AlertStore.typeTrend(30, currentSource === 'all' ? '' : currentSource);
+      if (currentSource === 'model' && currentCategory){
+        // 模型 + 分类：逐日按分类统计
+        var byDate = {};
+        AlertStore.byCategory(currentCategory).forEach(function(a){
+          if (a.source !== 'model') return;
+          var k = String(a.time||'').substring(0,10);
+          if (!byDate[k]) byDate[k] = 0;
+          byDate[k]++;
+        });
+        trend = trend.map(function(d){ return { date:d.date, total: byDate[d.date] || 0 }; });
+      }
+      var cats = trend.map(function(d){ return d.date.substring(5); });
+      var series;
+      if (currentSource === 'all'){
+        series = [
+          { name:'设备预警', data: trend.map(function(d){ return d.device; }) },
+          { name:'人工上报', data: trend.map(function(d){ return d.manual; }) },
+          { name:'模型预警', data: trend.map(function(d){ return d.model; }) },
+          { name:'库存预警', data: trend.map(function(d){ return d.inventory; }) },
+          { name:'系统预警', data: trend.map(function(d){ return d.system; }) }
+        ];
+      } else if (currentSource === 'model' && currentCategory){
+        series = [ { name:'预警量', data: trend.map(function(d){ return d.total; }) } ];
+      } else {
+        series = [ { name:'预警量', data: trend.map(function(d){ return d.total; }) } ];
+      }
+      Chart.line('#alertTrend', { categories: cats, series: series });
+
+      var dist = AlertStore.levelDistribution(currentSource === 'all' ? '' : currentSource);
+      if (currentSource === 'model' && currentCategory){
+        dist = { urgent:0, important:0, reminder:0, notice:0 };
+        AlertStore.byCategory(currentCategory).forEach(function(a){
+          if (a.source !== 'model') return;
+          if (dist[a.level] !== undefined) dist[a.level]++;
+        });
+      }
+      Chart.donut('#levelDonut', {
+        series:[
+          {name:'紧急', value:dist.urgent},
+          {name:'重要', value:dist.important},
+          {name:'提醒', value:dist.reminder},
+          {name:'通知', value:dist.notice}
+        ]
+      });
+      document.getElementById('donutMeta').textContent =
+        currentSource === 'all' ? '全量' : (SOURCE_LABEL[currentSource] || currentSource);
+    });
+  }
+
+  function refresh(){
+    renderTabs();
+    renderKpis();
+    renderTopList();
+    renderCharts();
+  }
+
+  function openPage(url, title){
+    if (window.parent && window.parent.openPage) {
+      window.parent.openPage(url, title);
+    } else {
+      window.location.href = url;
+    }
+  }
+
+  // URL 参数直达来源 Tab（顶栏通知按来源跳转）
+  function initFromQuery(){
+    try {
+      var m = String(location.search || '').match(/[?&]source=([^&]+)/);
+      if (!m) return;
+      var key = decodeURIComponent(m[1]);
+      var valid = ['all'].concat(AlertStore.SOURCES.map(function(s){ return s.key; }));
+      if (valid.indexOf(key) >= 0) currentSource = key;
+      var c = String(location.search || '').match(/[?&]category=([^&]+)/);
+      if (c && currentSource === 'model') currentCategory = decodeURIComponent(c[1]);
+    } catch(e){ /* 参数异常时保持默认视角 */ }
+  }
+
+  // 初始渲染 + 订阅数据变更
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){
+      initFromQuery();
+      refresh();
+      AlertStore.subscribe(refresh);
+    });
+  } else {
+    initFromQuery();
+    refresh();
+    AlertStore.subscribe(refresh);
+  }
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/common-functions.js"></script>
+<script src="js/search-helper.js"></script>
+<script src="js/typography.js"></script>
+<script src="js/components/chart.js"></script>
+</body>
+</html>

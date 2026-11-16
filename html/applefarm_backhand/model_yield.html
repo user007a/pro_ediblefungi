@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 产量模型</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  /* 影响因子（横向紧凑） */
+  .factor-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .factor-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:#fff; border-radius:8px; border:1px solid rgba(0,0,0,0.06); transition:all 0.2s; }
+  .factor-row:hover { border-color:rgba(24,144,255,0.2); box-shadow:0 2px 6px rgba(0,0,0,0.05); }
+  .factor-icon { width:30px; height:30px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .factor-icon.positive { background:linear-gradient(135deg,#d4f4dd,#91d5ff); color:var(--primary-600); }
+  .factor-icon.negative { background:linear-gradient(135deg,#ffd1d1,#ffccc7); color:#cf1322; }
+  .factor-name { font-weight:500; color:var(--text-primary); font-size:13px; }
+  .factor-desc { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+  .factor-impact { font-size:15px; font-weight:700; }
+  .factor-impact.positive { color:var(--success); }
+  .factor-impact.negative { color:var(--error); }
+  /* 表格强化 */
+  .plot-yield { color:var(--primary-600); font-weight:600; }
+  /* 偏差率 */
+  .deviation-cell { display:inline-flex; align-items:center; gap:4px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .deviation-cell.up { color:var(--success); }
+  .deviation-cell.down { color:var(--error); }
+  .deviation-cell.flat { color:var(--text-secondary); }
+  .deviation-note {
+    padding:12px 16px; background:linear-gradient(135deg,#fff9f0,#fff5e6);
+    border:1px solid #ffe4b8; border-radius:10px; font-size:13px; color:var(--text-secondary); line-height:1.7;
+  }
+  .deviation-note strong { color:#b37c00; }
+</style>
+<style id="standalone-fix">.main-wrapper{margin-left:0!important;width:100%!important;}</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+<link rel="stylesheet" href="css/model-page.css">
+</head>
+<body data-active-menu="model" data-active-submenu="model-yield">
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <main class="main-content">
+<div class="page-container">
+  <div class="mp-header">
+    <div class="mp-header-main">
+      <div class="mp-header-icon"><i data-uicon="chartBar"></i></div>
+      <div>
+        <div class="mp-title">产量模型</div>
+        <div class="mp-subtitle">多因子融合 · 产量预估与偏差复核</div>
+      </div>
+    </div>
+    <div class="mp-header-actions">
+      <span class="mp-live">模型运行中</span>
+    </div>
+  </div>
+
+  <!-- 顶部 4 指标 -->
+  <div class="patrol-stats">
+    <div class="patrol-stat-card green"><div class="stat-value">450<small style="font-size:16px;font-weight:400;">吨</small></div><div class="stat-label">预估总产量</div><div class="stat-trend" style="font-size:12px;color:var(--success);">↑ 7.1% 较去年</div></div>
+    <div class="patrol-stat-card blue"><div class="stat-value">168<small style="font-size:16px;font-weight:400;">吨</small></div><div class="stat-label">天水基地</div><div class="stat-trend" style="font-size:12px;color:var(--success);">占37.3%</div></div>
+    <div class="patrol-stat-card orange"><div class="stat-value">95<small style="font-size:16px;font-weight:400;">吨</small></div><div class="stat-label">麦积区基地</div><div class="stat-trend" style="font-size:12px;color:var(--success);">占21.1%</div></div>
+    <div class="patrol-stat-card purple"><div class="stat-value">315<small style="font-size:16px;font-weight:400;">吨</small></div><div class="stat-label">花牛苹果品种</div><div class="stat-trend" style="font-size:12px;color:var(--text-tertiary);">70% 占比</div></div>
+  </div>
+
+  <!-- 页签 -->
+  <div class="mp-tabs">
+    <button class="mp-tab active" data-tab="overview" onclick="mpSwitchTab('overview')"><i data-uicon="chartBar"></i>产量总览</button>
+    <button class="mp-tab" data-tab="compare" onclick="mpSwitchTab('compare')"><i data-uicon="chartTree"></i>预估与偏差</button>
+    <button class="mp-tab" data-tab="plot" onclick="mpSwitchTab('plot')"><i data-uicon="table"></i>地块下钻</button>
+  </div>
+
+  <div class="mp-panel active" data-panel="overview">
+  <!-- 各基地产量对比 + 影响因子（左右） -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;">
+    <div class="chart-section">
+      <h2 class="section-title">各基地产量对比</h2>
+      <div id="chart-bar" class="chart-container" style="height:280px;"></div>
+    </div>
+    <div class="chart-section">
+      <h2 class="section-title">影响因子分析</h2>
+      <div class="factor-grid" style="padding:8px 0;"></div>
+    </div>
+  </div>
+  </div>
+
+  <div class="mp-panel" data-panel="compare">
+  <!-- 产量对比（模型预估 vs 上年度实采） -->
+  <div class="chart-section" style="margin-bottom:20px;">
+    <h2 class="section-title">模型预估 vs 上年度实采</h2>
+    <div id="chart-yield-compare" class="chart-container" style="height:300px;"></div>
+    <div class="deviation-note" id="deviationNote" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- 果径分布 -->
+  <div class="chart-section" style="margin-bottom:20px;">
+    <h2 class="section-title">果径分布</h2>
+    <div id="chart-fruit-size" class="chart-container" style="height:260px;"></div>
+  </div>
+  </div>
+
+  <div class="mp-panel" data-panel="plot">
+  <div class="chart-section" style="margin-bottom:20px;">
+    <h2 class="section-title">地块产量下钻</h2>
+    <table class="data-table">
+      <thead><tr><th>地块</th><th>品种</th><th>面积</th><th>预估产量</th><th>上年度实采</th><th>偏差率</th><th>置信度</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody id="plotYieldBody"></tbody>
+    </table>
+  </div>
+  </div>
+</div>
+    </main>
+  </div>
+</div>
+
+<script>
+  /* 模型页面通用页签切换 */
+  function mpSwitchTab(name) {
+    document.querySelectorAll('.mp-tab').forEach(function (t) { t.classList.toggle('active', t.dataset.tab === name); });
+    document.querySelectorAll('.mp-panel').forEach(function (p) { p.classList.toggle('active', p.dataset.panel === name); });
+    requestAnimationFrame(function () { window.dispatchEvent(new Event('resize')); });
+  }
+</script>
+<script src="js/shared/model-store.js"></script>
+<script src="js/components/modal.js"></script>
+<script src="js/components/chart.js"></script>
+<script src="js/shared/alert-data.js"></script>
+<script>
+// 产量模型数据统一取自 ModelStore（与移动端/大屏共用）
+const YIELD_MODEL = ModelStore.get('yield');
+// 各基地产量（模型预估 + 上年度实采，用于对比图与偏差率说明）
+const baseYieldData = YIELD_MODEL.lists.baseYield;
+
+// 偏差率着色：|偏差| ≤3% success / 3-7% warning / >7% error
+function deviationClass(dev) {
+  const abs = Math.abs(dev);
+  if (abs <= 3) return 'success';
+  if (abs <= 7) return 'warning';
+  return 'error';
+}
+
+function renderDeviationNote() {
+  const box = document.getElementById('deviationNote');
+  if (!box) return;
+  const note = YIELD_MODEL.lists.deviationNote;
+  const items = baseYieldData.map(b => ({
+    base: b.base,
+    dev: ((b.predict - b.actual) / b.actual) * 100
+  }));
+  const avg = items.reduce((s, i) => s + i.dev, 0) / items.length;
+  const max = items.reduce((a, b) => (Math.abs(b.dev) > Math.abs(a.dev) ? b : a));
+  const avgClass = deviationClass(avg);
+  const maxClass = deviationClass(max.dev);
+  const colorOf = c => c === 'success' ? 'var(--success)' : (c === 'warning' ? 'var(--warning)' : 'var(--error)');
+  box.innerHTML =
+    '<strong>偏差率说明：</strong>' +
+    note.formula +
+    `当前 ${items.length} 个基地的<strong>平均偏差率</strong>为 <strong style="color:${colorOf(avgClass)}">${avg >= 0 ? '+' : ''}${avg.toFixed(1)}%</strong>，` +
+    `<strong>偏差最大基地</strong>为 ${max.base}（<strong style="color:${colorOf(maxClass)}">${max.dev >= 0 ? '+' : ''}${max.dev.toFixed(1)}%</strong>）。` +
+    note.rule;
+}
+
+// 影响因子（数据来自 ModelStore）
+function renderYieldFactors(M) {
+  const grid = document.querySelector('.factor-grid');
+  if (!grid) return;
+  grid.innerHTML = M.lists.factors.map(function(f) {
+    return '<div class="factor-row">' +
+      '<div style="flex:1;min-width:0;"><div class="factor-name">' + f.name + '</div><div class="factor-desc">' + f.desc + '</div></div>' +
+      '<span class="factor-impact ' + f.tone + '">' + f.impact + '</span>' +
+    '</div>';
+  }).join('');
+}
+
+// 地块产量下钻表（数据来自 ModelStore）
+function renderPlotYieldTable(M) {
+  const tbody = document.getElementById('plotYieldBody');
+  if (!tbody) return;
+  const colorOf = c => c === 'success' ? 'var(--success)' : (c === 'warning' ? 'var(--warning)' : 'var(--error)');
+  tbody.innerHTML = M.lists.plots.map(function(p) {
+    return '<tr>' +
+      '<td>' + p.plot + '</td>' +
+      '<td>' + p.variety + '</td>' +
+      '<td>' + p.area + '</td>' +
+      '<td class="plot-yield">' + p.predict + '</td>' +
+      '<td>' + p.actual + '</td>' +
+      '<td><span class="deviation-cell ' + p.deviationTone + '">' + p.deviation + '</span></td>' +
+      '<td><span style="color:' + colorOf(p.confidenceTone) + ';font-weight:600;">' + p.confidence + '</span></td>' +
+      '<td><span style="color:' + colorOf(p.statusTone) + ';">' + p.status + '</span></td>' +
+      '<td><a href="enterprise_plot.html" target="mainFrame" style="color:var(--primary-500);text-decoration:none;font-size:13px;">详情 →</a></td>' +
+    '</tr>';
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  ModelStore.hydrateKpi('.patrol-stats', 'yield');
+  renderYieldFactors(YIELD_MODEL);
+  renderPlotYieldTable(YIELD_MODEL);
+
+  // 各基地产量对比
+  Chart.bar('#chart-bar', YIELD_MODEL.charts.baseYield);
+
+  // 模型预估 vs 上年度实采（分组柱状图）
+  Chart.bar('#chart-yield-compare', YIELD_MODEL.charts.yieldCompare);
+
+  renderDeviationNote();
+
+  // 产量模型偏差预警 → AlertStore（source=model / category=yield）
+  if (window.AlertStore && typeof AlertStore.syncSource === 'function') {
+    const items = [];
+    baseYieldData.forEach(function (b) {
+      const dev = (b.predict - b.actual) / b.actual * 100;
+      const abs = Math.abs(dev);
+      if (abs <= 3) return;                     // |偏差|≤3% 视为模型可信，不产警
+      items.push({
+        dedupeKey: 'model:yield:' + b.base,
+        category: 'yield',
+        level: abs > 7 ? 'important' : 'reminder',
+        title: '产量预测偏差：' + b.base + '基地 ' + (dev > 0 ? '+' : '') + dev.toFixed(1) + '%',
+        desc: '模型预估 ' + b.predict + ' 吨，上年度实采 ' + b.actual + ' 吨，偏差 '
+              + (dev > 0 ? '+' : '') + dev.toFixed(1) + '%，建议'
+              + (abs > 7 ? '校准模型参数并复核样本。' : '关注该基地挂果情况。'),
+        base: b.base,
+        value: Number(dev.toFixed(1)),
+        threshold: '|偏差率| > 3%'
+      });
+    });
+    AlertStore.syncSource('model', items, 'model:yield:');
+  }
+
+  // 果径分布
+  Chart.bar('#chart-fruit-size', YIELD_MODEL.charts.fruitSize);
+
+  // 表格行点击 → 跳地块详情
+  document.querySelectorAll('#plotYieldBody tr').forEach(tr => {
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', () => {
+      const name = tr.querySelector('td').textContent.trim();
+      const f = window.parent.document.querySelector('iframe[name="mainFrame"]');
+      if (f) f.src = 'enterprise_plot.html?plot=' + encodeURIComponent(name);
+      else location.href = 'enterprise_plot.html?plot=' + encodeURIComponent(name);
+    });
+  });
+});
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/typography.js"></script>
+</body>
+</html>

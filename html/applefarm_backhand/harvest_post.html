@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 采收发货</title>
+<!-- 使用设计系统: Design System v2.0 + sidebar-layout -->
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  /* 模块卡片 hover 效果 */
+  .module-card {
+    transition:all 0.2s ease;
+  }
+  .module-card:hover {
+    background:var(--bg-hover);
+    transform:translateY(-2px);
+    box-shadow:var(--shadow-md);
+  }
+  /* 分页栏样式（与农事计划一致） */
+  #pagination-container { padding:12px 16px; }
+  .stat-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:16px; }
+  .stat-card { background:var(--bg-card, #fff); border:1px solid var(--border-color, #e8ece8); border-radius:var(--radius-card, 12px); padding:16px 18px; }
+  .stat-label { font-size:12px; color:var(--text-tertiary); margin-bottom:6px; }
+  .stat-value { font-size:22px; font-weight:600; line-height:1.2; }
+  .stat-value small { font-size:12px; font-weight:400; color:var(--text-tertiary); margin-left:4px; }
+  .stat-sub { margin-top:6px; font-size:12px; color:var(--text-tertiary); }
+  @media (max-width: 1100px) { .stat-grid { grid-template-columns:repeat(2, 1fr); } }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="harvest" data-active-submenu="harvest-post">
+
+<!-- ===== 整体布局容器 ===== -->
+<div class="app-layout">
+
+  <!-- ===== 主内容区 ===== -->
+  <div class="main-wrapper">
+
+    <!-- Tab 标签栏 -->
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <div class="content-wrapper">
+
+        <!-- 搜索栏区 -->
+        <div class="page-section search-section">
+          <div class="search-bar">
+            <select class="search-select" id="statusSelect">
+              <option value="">全部状态</option>
+              <option value="pending">待发货</option>
+              <option value="shipped">已发货</option>
+              <option value="transit">运输中</option>
+              <option value="signed">已签收</option>
+              <option value="abnormal">异常</option>
+            </select>
+            <input type="date" class="search-input date-input" id="startDate" placeholder="开始日期">
+            <span class="date-separator">至</span>
+            <input type="date" class="search-input date-input" id="endDate" placeholder="结束日期">
+            <input type="text" class="search-input" placeholder="搜索发货单号或客户..." id="searchInput">
+          <div class="search-actions"><button class="jg-btn jg-btn-primary" onclick="handleSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button><button class="jg-btn" onclick="smartReset()">重置</button></div>
+          </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="page-section">
+          <div class="stat-grid" id="statGrid"></div>
+        </div>
+
+        <!-- 操作按钮区 -->
+        <div class="page-section action-bar">
+          <button class="jg-btn jg-btn-primary" onclick="showAdd()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+              <path d="M8 3V13M3 8H13"/>
+            </svg>
+            新建发货
+          </button>
+          <button class="jg-btn" onclick="Modal.show('modal-export')">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+              <path d="M3 10L8 15L13 10"/><path d="M8 15V3"/>
+            </svg>
+            导出发货单
+          </button>
+        </div>
+
+        <!-- 数据列表区 -->
+        <div class="page-section data-section">
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:60px;">序号</th>
+                  <th style="width:120px;">发货单号</th>
+                  <th style="width:120px;">来源批次</th>
+                  <th style="width:140px;">关联批次</th>
+                  <th style="width:170px;">客户/收货方</th>
+                  <th style="width:200px;">收货地址</th>
+                  <th style="width:110px;">发货数量(kg)</th>
+                  <th style="width:140px;">物流单号</th>
+                  <th style="width:110px;">发货日期</th>
+                  <th style="width:90px;">状态</th>
+                  <th style="width:160px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody">
+              </tbody>
+            </table>
+          </div>
+          <div id="pagination-container">
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 新建发货模态框 -->
+<div id="modal-add-ship" class="modal-overlay">
+  <div class="modal-box" style="max-width:600px;">
+    <div class="modal-header">
+      <h3 class="modal-title">新建发货</h3>
+      <button class="modal-close">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="form-add-ship" class="modal-form">
+        <div class="form-group">
+          <label>客户/收货方</label>
+          <input type="text" class="form-control" id="add-customer" placeholder="请输入客户或收货方名称">
+        </div>
+        <div class="form-group">
+          <label>联系电话</label>
+          <input type="text" class="form-control" id="add-phone" placeholder="请输入联系电话">
+        </div>
+        <div class="form-group">
+          <label>收货地址</label>
+          <input type="text" class="form-control" id="add-address" placeholder="请输入收货地址">
+        </div>
+        <div class="form-group">
+          <label>来源批次</label>
+          <select class="form-control" id="add-source" onchange="onSourceChange()"></select>
+        </div>
+        <div class="form-group">
+          <label>关联订单</label>
+          <select class="form-control" id="add-order"></select>
+        </div>
+        <div class="form-group">
+          <label>发货数量(kg) <span style="color:var(--status-danger);">*</span></label>
+          <input type="number" class="form-control" id="add-quantity" placeholder="请输入发货数量">
+        </div>
+        <div class="form-group">
+          <label>发货日期</label>
+          <input type="date" class="form-control" id="add-date">
+        </div>
+        <div class="form-group">
+          <label>备注</label>
+          <textarea class="form-control" rows="3" id="add-remark" placeholder="请输入备注信息"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="Modal.hide('modal-add-ship')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="submitAdd()">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 发货详情模态框 -->
+<div id="modal-detail" class="modal-overlay">
+  <div class="modal-box" style="max-width:640px;">
+    <div class="modal-header">
+      <h3 class="modal-title">发货详情</h3>
+      <button class="modal-close">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">发货单号</span>
+          <span class="detail-value" id="detail-id"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">状态</span>
+          <span class="detail-value" id="detail-status"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">来源批次</span>
+          <span class="detail-value" id="detail-source"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">关联订单</span>
+          <span class="detail-value" id="detail-order"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">客户</span>
+          <span class="detail-value" id="detail-customer"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">联系电话</span>
+          <span class="detail-value" id="detail-phone"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">收货地址</span>
+          <span class="detail-value" id="detail-address"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">发货数量</span>
+          <span class="detail-value" id="detail-quantity"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">发货日期</span>
+          <span class="detail-value" id="detail-date"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">物流公司</span>
+          <span class="detail-value" id="detail-logistics"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">物流单号</span>
+          <span class="detail-value" id="detail-tracking"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">操作人</span>
+          <span class="detail-value" id="detail-operator"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">签收人</span>
+          <span class="detail-value" id="detail-sign-person"></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">签收时间</span>
+          <span class="detail-value" id="detail-sign-time"></span>
+        </div>
+      </div>
+      <div style="margin-top:16px; padding:12px; background:var(--gray-50); border-radius:8px;">
+        <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">备注</div>
+        <div style="font-weight:500;" id="detail-remark">-</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn jg-btn-primary" onclick="Modal.hide('modal-detail')">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 确认发货模态框 -->
+<div id="modal-confirm" class="modal-overlay">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <h3 class="modal-title">确认发货</h3>
+      <button class="modal-close">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-item">
+          <label>发货单号</label>
+          <input type="text" class="form-input" id="confirm-id" readonly>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item">
+          <label>物流公司</label>
+          <select class="form-select" id="confirm-logistics">
+            <option value="顺丰速运">顺丰速运</option>
+            <option value="京东物流">京东物流</option>
+            <option value="中通快递">中通快递</option>
+            <option value="德邦物流">德邦物流</option>
+            <option value="自有冷链车队">自有冷链车队</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item">
+          <label>物流单号</label>
+          <input type="text" class="form-input" id="confirm-tracking" placeholder="请输入物流单号">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item">
+          <label>发货时间</label>
+          <input type="datetime-local" class="form-input" id="confirm-time">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="Modal.hide('modal-confirm')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="submitConfirm()">确认发货</button>
+    </div>
+  </div>
+</div>
+
+<!-- 签收模态框 -->
+<div id="modal-sign" class="modal-overlay">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <h3 class="modal-title">签收确认</h3>
+      <button class="modal-close">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-item">
+          <label>发货单号</label>
+          <input type="text" class="form-input" id="sign-id" readonly>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item">
+          <label>签收人</label>
+          <input type="text" class="form-input" id="sign-person" placeholder="请输入签收人">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item">
+          <label>签收时间</label>
+          <input type="datetime-local" class="form-input" id="sign-time">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item">
+          <label>备注</label>
+          <textarea class="form-textarea" id="sign-remark" placeholder="请输入备注信息"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="Modal.hide('modal-sign')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="submitSign()">确认签收</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导出发货单模态框 -->
+<div id="modal-export" class="modal-overlay">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <h3 class="modal-title">导出发货单</h3>
+      <button class="modal-close">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4L12 12M12 4L4 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-item">
+          <label>选择导出格式</label>
+          <select class="form-select" id="exportFormat">
+            <option value="excel">Excel (.xlsx)</option>
+            <option value="csv">CSV (.csv)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item">
+          <label>导出范围</label>
+          <div style="display:flex;gap:16px;">
+            <label class="checkbox-label">
+              <input type="radio" name="exportScope" value="all" checked>
+              <span>全部数据</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="radio" name="exportScope" value="selected">
+              <span>当前筛选结果</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="Modal.hide('modal-export')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="handleExport()">导出</button>
+    </div>
+  </div>
+</div>
+
+<!-- 引入交互脚本 -->
+<script src="js/common-functions.js"></script>
+<script src="js/export-helper.js"></script>
+<script src="js/shared/harvest-store.js"></script>
+<script>
+// 数据统一来自共享数据源 harvest-store.js；发货单来源批次必须是「已入库」的处理单
+const ORDER_OPTIONS = [
+  { value: 'XS-2026-001', label: 'XS-2026-001 · 销售订单' },
+  { value: 'XS-2026-002', label: 'XS-2026-002 · 销售订单' },
+  { value: 'XS-2026-003', label: 'XS-2026-003 · 销售订单' },
+  { value: 'XS-2026-004', label: 'XS-2026-004 · 销售订单' },
+  { value: 'XS-2026-005', label: 'XS-2026-005 · 销售订单' },
+  { value: 'RY-2026-001', label: 'RY-2026-001 · 认养订单' },
+  { value: 'RY-2026-002', label: 'RY-2026-002 · 认养订单' }
+];
+
+let currentShipId = '';
+
+function allShipments() { return HarvestStore.shipments(); }
+
+function getStatusTag(status) {
+  return '<span class="status-tag ' + HarvestStore.statusTag('shipments', status) + '">' + HarvestStore.statusText('shipments', status) + '</span>';
+}
+
+function findShipment(id) {
+  return HarvestStore.get('shipments', id);
+}
+
+/** 数据写入后统一刷新统计卡与列表 */
+function refresh() {
+  renderStats();
+  handleSearch();
+}
+
+function renderStats() {
+  const list = allShipments();
+  const pending = list.filter(s => s.status === 'pending').length;
+  const onWay = list.filter(s => s.status === 'shipped' || s.status === 'transit').length;
+  const signedQty = list.filter(s => s.status === 'signed').reduce((sum, s) => sum + Number(s.qty || 0), 0);
+  const cards = [
+    { label: '发货单总数', value: list.length, unit: '单', sub: '含待发与在途' },
+    { label: '待发货', value: pending, unit: '单', sub: '待安排物流' },
+    { label: '运输在途', value: onWay, unit: '单', sub: '已发货 + 运输中' },
+    { label: '已签收量', value: signedQty.toLocaleString(), unit: 'kg', sub: '客户已确认收货' }
+  ];
+  document.getElementById('statGrid').innerHTML = cards.map(c =>
+    '<div class="stat-card"><div class="stat-label">' + c.label + '</div>' +
+    '<div class="stat-value">' + c.value + ' <small>' + c.unit + '</small></div>' +
+    '<div class="stat-sub">' + c.sub + '</div></div>'
+  ).join('');
+}
+
+// 渲染表格行（操作按钮严格按状态流转显示）
+function renderRow(item, index) {
+  let actions = `<button class="action-btn detail" onclick="showDetail('${item.id}')">详情</button>`;
+  if (item.status === 'pending') {
+    actions += `<button class="action-btn edit" onclick="showConfirm('${item.id}')">确认发货</button>`;
+  }
+  if (item.status === 'shipped') {
+    actions += `<button class="action-btn edit" onclick="markTransit('${item.id}')">转运输中</button>`;
+  }
+  if (item.status === 'transit') {
+    actions += `<button class="action-btn edit" onclick="showSign('${item.id}')">签收</button>`;
+  }
+  if (item.status === 'abnormal') {
+    actions += `<button class="action-btn edit" onclick="recoverShipment('${item.id}')">恢复待发货</button>`;
+  } else if (item.status !== 'signed') {
+    actions += `<button class="action-btn delete" onclick="markAbnormal('${item.id}')">标记异常</button>`;
+  }
+
+  return `<tr>
+    <td>${index + 1}</td>
+    <td><strong>${item.id}</strong></td>
+    <td title="${item.sourceId}">${item.sourceId}</td>
+    <td>${item.batchNo || '-'}</td>
+    <td>${item.customer || '-'}</td>
+    <td title="${item.address || ''}">${item.address || '-'}</td>
+    <td class="text-right">${Number(item.qty || 0).toLocaleString()}</td>
+    <td>${item.tracking || '-'}</td>
+    <td>${item.date || '-'}</td>
+    <td>${getStatusTag(item.status)}</td>
+    <td><div class="action-btns">${actions}</div></td>
+  </tr>`;
+}
+
+// 搜索：状态 + 发货日期范围 + 关键词
+function filteredShipments() {
+  var status = document.getElementById('statusSelect').value;
+  var startDate = document.getElementById('startDate').value;
+  var endDate = document.getElementById('endDate').value;
+  var keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  return allShipments().filter(function (item) {
+    if (status && item.status !== status) return false;
+    if (startDate && item.date < startDate) return false;
+    if (endDate && item.date > endDate) return false;
+    if (keyword) {
+      var hay = [item.id, item.customer, item.tracking, item.batchNo].join(' ').toLowerCase();
+      if (hay.indexOf(keyword) === -1) return false;
+    }
+    return true;
+  });
+}
+
+function handleSearch() {
+  var data = filteredShipments();
+  Pagination.updateData(data);
+  Toast.info('找到 ' + data.length + ' 条记录');
+}
+
+function silentRefresh() {
+  renderStats();
+  Pagination.updateData(filteredShipments());
+}
+
+// 详情（按行回填）
+function showDetail(id) {
+  const item = findShipment(id);
+  if (!item) return;
+  document.getElementById('detail-id').textContent = item.id;
+  document.getElementById('detail-status').innerHTML = getStatusTag(item.status);
+  document.getElementById('detail-source').textContent = item.sourceId + (item.batchNo ? ' · ' + item.batchNo : '');
+  document.getElementById('detail-order').textContent = item.orderNo || '-';
+  document.getElementById('detail-customer').textContent = item.customer || '-';
+  document.getElementById('detail-phone').textContent = item.phone || '-';
+  document.getElementById('detail-address').textContent = item.address || '-';
+  document.getElementById('detail-quantity').textContent = Number(item.qty || 0).toLocaleString() + ' kg';
+  document.getElementById('detail-date').textContent = item.date || '-';
+  document.getElementById('detail-logistics').textContent = item.logistics || '-';
+  document.getElementById('detail-tracking').textContent = item.tracking || '-';
+  document.getElementById('detail-operator').textContent = item.operator || '-';
+  document.getElementById('detail-sign-person').textContent = item.signPerson || '-';
+  document.getElementById('detail-sign-time').textContent = item.signTime || '-';
+  document.getElementById('detail-remark').textContent = item.remark || '-';
+  Modal.show('modal-detail');
+}
+
+// 新建发货：来源批次只列出已入库且有可发量的处理单
+function showAdd() {
+  document.getElementById('form-add-ship').reset();
+  const options = HarvestStore.processes().filter(function (p) {
+    return p.status === 'stored' && HarvestStore.allocatableOfProcess(p.id) > 0;
+  }).map(function (p) {
+    const alloc = HarvestStore.allocatableOfProcess(p.id);
+    const plot = p.plotName ? p.plot + ' · ' + p.plotName : (p.plot || '');
+    return `<option value="${p.id}">${p.id} · ${p.batchNo || '-'} · ${plot} · 可发 ${alloc} kg</option>`;
+  }).join('');
+  document.getElementById('add-source').innerHTML = '<option value="">请选择来源批次</option>' + options;
+  document.getElementById('add-date').value = todayStr();
+  document.getElementById('add-quantity').value = '';
+  if (!options) Toast.info('暂无可发货的已入库批次');
+  Modal.show('modal-add-ship');
+}
+
+function onSourceChange() {
+  const sourceId = document.getElementById('add-source').value;
+  if (!sourceId) return;
+  document.getElementById('add-quantity').value = HarvestStore.allocatableOfProcess(sourceId);
+}
+
+function submitAdd() {
+  const r = HarvestStore.saveShipment({
+    sourceId: document.getElementById('add-source').value,
+    customer: document.getElementById('add-customer').value,
+    phone: document.getElementById('add-phone').value,
+    address: document.getElementById('add-address').value,
+    orderNo: document.getElementById('add-order').value,
+    qty: document.getElementById('add-quantity').value,
+    date: document.getElementById('add-date').value,
+    remark: document.getElementById('add-remark').value
+  });
+  if (!r.ok) { Toast.error(r.message); return; }
+  Modal.hide('modal-add-ship');
+  refresh();
+  Toast.success('发货单 ' + r.item.id + ' 创建成功');
+}
+
+// 确认发货
+function showConfirm(id) {
+  const item = findShipment(id);
+  if (!item) return;
+  currentShipId = id;
+  document.getElementById('confirm-id').value = item.id;
+  document.getElementById('confirm-logistics').value = item.logistics || '顺丰速运';
+  document.getElementById('confirm-tracking').value = item.tracking || '';
+  document.getElementById('confirm-time').value = toLocalInput(new Date());
+  Modal.show('modal-confirm');
+}
+
+function submitConfirm() {
+  const r = HarvestStore.confirmShipment(currentShipId, {
+    logistics: document.getElementById('confirm-logistics').value,
+    tracking: document.getElementById('confirm-tracking').value,
+    time: document.getElementById('confirm-time').value
+  });
+  if (!r.ok) { Toast.error(r.message); return; }
+  Modal.hide('modal-confirm');
+  refresh();
+  Toast.success('确认发货成功，库存已扣减');
+}
+
+// 已发货 → 运输中
+function markTransit(id) {
+  const r = HarvestStore.advance('shipments', id, 'transit');
+  if (!r.ok) { Toast.error(r.message); return; }
+  refresh();
+  Toast.success('已更新为「运输中」');
+}
+
+// 签收
+function showSign(id) {
+  const item = findShipment(id);
+  if (!item) return;
+  currentShipId = id;
+  document.getElementById('sign-id').value = item.id;
+  document.getElementById('sign-person').value = '';
+  document.getElementById('sign-time').value = toLocalInput(new Date());
+  document.getElementById('sign-remark').value = '';
+  Modal.show('modal-sign');
+}
+
+function submitSign() {
+  const r = HarvestStore.signShipment(currentShipId, {
+    person: document.getElementById('sign-person').value,
+    time: document.getElementById('sign-time').value,
+    remark: document.getElementById('sign-remark').value
+  });
+  if (!r.ok) { Toast.error(r.message); return; }
+  Modal.hide('modal-sign');
+  refresh();
+  Toast.success('签收成功，签收信息已记录');
+}
+
+// 标记异常 / 恢复
+function markAbnormal(id) {
+  const r = HarvestStore.advance('shipments', id, 'abnormal', { remark: '人工标记异常，待处理' });
+  if (!r.ok) { Toast.error(r.message); return; }
+  refresh();
+  Toast.warning('已标记为异常，可在异常单上恢复待发货');
+}
+
+function recoverShipment(id) {
+  const r = HarvestStore.advance('shipments', id, 'pending');
+  if (!r.ok) { Toast.error(r.message); return; }
+  refresh();
+  Toast.success('已恢复为「待发货」');
+}
+
+// 真实导出（Excel / CSV）
+async function handleExport() {
+  const scope = document.querySelector('input[name="exportScope"]:checked').value;
+  const rows = (scope === 'selected' ? Pagination.filteredData : allShipments());
+  const result = await ExportHelper.exportData({
+    filename: '采收发货单_' + ExportHelper.stamp(),
+    format: document.getElementById('exportFormat').value,
+    headers: ['发货单号', '来源批次', '关联批次', '客户/收货方', '联系电话', '收货地址', '关联订单', '发货数量(kg)', '发货日期', '物流公司', '物流单号', '状态', '签收人', '签收时间', '操作人', '备注'],
+    rows: rows.map(s => [s.id, s.sourceId, s.batchNo || '', s.customer || '', s.phone || '', s.address || '', s.orderNo || '',
+      s.qty, s.date || '', s.logistics || '', s.tracking || '', HarvestStore.statusText('shipments', s.status),
+      s.signPerson || '', s.signTime || '', s.operator || '', s.remark || ''])
+  });
+  Modal.hide('modal-export');
+  Toast.success(result === 'csv-fallback' ? 'Excel 组件加载失败，已导出为 CSV' : '导出成功，文件已下载');
+}
+
+// 工具
+function todayStr() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+function toLocalInput(d) {
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('add-order').innerHTML = ORDER_OPTIONS.map(o =>
+    `<option value="${o.value}">${o.label}</option>`).join('');
+  renderStats();
+  Pagination.init({
+    currentPage: 1,
+    pageSize: 10,
+    data: allShipments(),
+    containerId: 'pagination-container',
+    tbodyId: 'dataTableBody',
+    renderRow: renderRow
+  });
+  if (HarvestStore.subscribe) HarvestStore.subscribe(silentRefresh);
+});
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/search-helper.js"></script>
+<script src="js/typography.js"></script>
+</body>
+</html>

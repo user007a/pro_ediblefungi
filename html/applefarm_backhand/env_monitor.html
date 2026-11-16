@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工厂化农业数据管理系统 - 设备环境数据</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .modal-close { width:28px; height:28px; border:none; background:var(--gray-100); border-radius:6px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; }
+  .modal-close:hover { background:var(--error-bg); color:var(--error); }
+
+  .status-tag { display:inline-flex; align-items:center; padding:3px 10px; font-size:11.5px;
+    font-weight:500; border-radius:20px; white-space:nowrap; }
+  .status-tag.online { background:#d9f7be; color:#3a8618; border:1px solid #b7eb8f; }
+  .status-tag.offline { background:var(--error-bg); color:#cf1322; border:1px solid #ffccc7; }
+  .status-tag.processing { background:var(--info-bg); color:var(--primary-500); border:1px solid var(--info-border); }
+  .status-tag.warning { background:var(--warning-bg); color:#ad8b00; border:1px solid var(--warning-border); }
+  .status-tag.idle { background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border-default); }
+  .level-tag { display:inline-block; padding:2px 8px; border-radius:var(--radius-sm); font-size:11.5px; font-weight:500; white-space:nowrap; }
+  .level-tag.level-urgent { background:var(--error-bg); color:#cf1322; border:1px solid #ffccc7; }
+  .level-tag.level-important { background:var(--warning-bg); color:#ad6800; border:1px solid var(--warning-border); }
+  .level-tag.level-reminder { background:var(--info-bg); color:var(--primary-600); border:1px solid var(--info-border); }
+
+  .stat-card-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:16px; }
+  .stat-card-row .stat-card { margin-top:0 !important; cursor:default; }
+  .stat-card-row .stat-card:hover { transform:none; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .stat-label { font-size:12px; color:var(--text-tertiary); margin-bottom:6px; }
+  .stat-value { font-size:26px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; }
+  .stat-value .unit { font-size:13px; font-weight:500; color:var(--text-tertiary); margin-left:4px; }
+  .stat-sub { margin-top:6px; font-size:12px; color:var(--text-tertiary); }
+  .stat-sub.warn { color:var(--warning); }
+  .stat-sub.err { color:var(--error); }
+
+  .env-toolbar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:14px 16px;
+    background:#fff; border:1px solid #eef0ee; border-radius:12px; margin-bottom:16px; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .env-toolbar label { font-size:13px; color:var(--text-secondary); font-weight:500; }
+  .env-toolbar select { padding:8px 12px; border:1px solid var(--border-default); border-radius:8px; font-size:13px;
+    background:#fff; color:var(--text-primary); min-width:180px; }
+  .env-toolbar select:focus { outline:none; border-color:var(--primary-400); box-shadow:0 0 0 3px rgba(24,144,255,.1); }
+  .refresh-note { margin-left:auto; font-size:12px; color:var(--text-tertiary); display:flex; align-items:center; gap:6px; }
+  .pulse-dot { width:8px; height:8px; border-radius:50%; background:#52c41a; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+  .realtime-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:16px; }
+  .rt-card { background:#fff; border:1px solid #eef0ee; border-radius:12px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,.04); position:relative; }
+  .rt-card.violated { border-color:#ffccc7; background:linear-gradient(180deg,#fff5f5,#fff); }
+  .rt-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .rt-name { font-size:13px; color:var(--text-secondary); font-weight:500; }
+  .rt-value { font-size:30px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .rt-value .unit { font-size:13px; font-weight:500; color:var(--text-tertiary); margin-left:4px; }
+  .rt-limit { margin-top:6px; font-size:11.5px; color:var(--text-tertiary); }
+
+  .chart-card { background:#fff; border:1px solid #eef0ee; border-radius:12px; padding:16px;
+    box-shadow:0 1px 3px rgba(0,0,0,.04); margin-bottom:16px; }
+  .chart-head { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+  .chart-title { font-weight:600; font-size:14px; color:var(--text-primary); }
+  .chart-legend { display:flex; flex-wrap:wrap; gap:6px 16px; font-size:12px; color:var(--text-secondary); }
+  .chart-legend .lg { display:inline-flex; align-items:center; gap:6px; }
+  .chart-legend .dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+  .chart-note { font-size:11.5px; color:var(--text-tertiary); margin-top:8px; }
+
+  .section-title { font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 10px; display:flex; align-items:center; gap:8px; }
+  .section-title .count { font-size:12px; font-weight:500; color:var(--text-tertiary); }
+
+  .data-table { min-width:900px; }
+  .data-table th { white-space:nowrap; }
+  .data-table tbody tr { cursor:pointer; }
+  .data-table tbody tr:hover { background:#f7fbff; }
+  .data-table tbody tr.row-active { background:#e6f4ff; }
+  .empty-row td { text-align:center; color:var(--text-tertiary); padding:32px 0; cursor:default; }
+  .num-cell { font-variant-numeric:tabular-nums; }
+  .num-cell.bad { color:#cf1322; font-weight:600; }
+  .action-btn { padding:4px 10px; font-size:11.5px; font-weight:500; border:1px solid #c5d9f0;
+    border-radius:6px; cursor:pointer; white-space:nowrap; background:#f5f8fc; color:#2b6cb0; }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="device" data-active-submenu="env-monitor">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <main class="main-content">
+      <nav class="device-tabs" aria-label="设备管理">
+        <a href="device_info.html">设备管理</a>
+        <a href="env_monitor.html" class="active">设备环境数据</a>
+        <a href="device_control.html">设备运行监控</a>
+        <a href="device_maintain.html">设备运维工单</a>
+        <a href="device_spare.html">备品备件</a>
+      </nav>
+
+      <div class="stat-card-row" id="statCards"></div>
+
+      <div class="env-toolbar">
+        <label for="roomSelect">监测区</label>
+        <select id="roomSelect"></select>
+        <label for="hoursSelect">时长</label>
+        <select id="hoursSelect" style="min-width:110px;">
+          <option value="12">近 12 小时</option>
+          <option value="24" selected>近 24 小时</option>
+          <option value="48">近 48 小时</option>
+        </select>
+        <button class="jg-btn" onclick="refreshNow()">立即刷新</button>
+        <button class="jg-btn-outline" onclick="exportMatrix()">导出CSV</button>
+        <span class="refresh-note"><span class="pulse-dot"></span>每 30 秒自动刷新 · <span id="refreshTime">—</span></span>
+      </div>
+
+      <div class="realtime-row" id="realtimeCards"></div>
+
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title" id="chartTitle">环境趋势</div>
+          <div class="chart-legend" id="chartLegend"></div>
+        </div>
+        <div id="mainChart"></div>
+        <div class="chart-note">四条曲线按各自量程归一化绘制（温度 0–30°C · 湿度 50–100% · CO₂ 0–1500ppm · 光照 0–400lx）；虚线为阈值线，红点为越限采样点。阈值依据预警规则 AR-01/02/03/07 与各区设计指标推导。</div>
+      </div>
+
+      <div class="page-section data-section" style="margin-bottom:16px;">
+        <div class="section-title">越限事件 <span class="count" id="eventCount"></span></div>
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:150px;">时间段</th>
+                <th style="width:110px;">监测区</th>
+                <th style="width:110px;">指标</th>
+                <th style="width:130px;">峰值 / 谷值</th>
+                <th style="width:170px;">阈值</th>
+                <th style="width:90px;">级别</th>
+                <th style="width:120px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="eventBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page-section data-section">
+        <div class="section-title">全区环境矩阵 <span class="count">点击行切换上方监测区</span></div>
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:90px;">监测区</th>
+                <th>区域名称</th>
+                <th style="width:110px;">温度 (°C)</th>
+                <th style="width:110px;">湿度 (%)</th>
+                <th style="width:120px;">CO₂ (ppm)</th>
+                <th style="width:110px;">光照 (lx)</th>
+                <th style="width:100px;">状态</th>
+              </tr>
+            </thead>
+            <tbody id="matrixBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="js/components/modal.js"></script>
+<script src="js/shared/fungi-store.js"></script>
+<script src="js/shared/device-ui.js"></script>
+<script>
+/* ============================================================
+ * 设备环境数据（食用菌工厂化监测区）
+ * 数据源：FungiStore.envRooms / envCurrent / envSeries
+ * 阈值推导（store 无独立阈值表）：
+ *   出菇房按 zones.design 品种区间 + 规则 AR-01(CO₂>800) / AR-02(温度区间) / AR-03(RH<85)；
+ *   GF-03 金针菇 CO₂<600、RH90-95；GF-04 香菇 RH85-90；
+ *   PY-01 培养 22-25°C；YL-01 预冷 0-4°C（AR-07）；LK-A/B 冷藏 2-4°C。
+ * 采集在线率：按 devices 中 运行/联动/定时 台数占比推导。
+ * ============================================================ */
+var FS = window.FungiStore;
+var esc = DeviceUI.esc;
+var METRICS = [
+  { key:'temp',  name:'温度', unit:'°C',  color:'#1890ff', range:[0,30] },
+  { key:'hum',   name:'湿度', unit:'%',   color:'#52c41a', range:[50,100] },
+  { key:'co2',   name:'CO₂',  unit:'ppm', color:'#fa8c16', range:[0,1500] },
+  { key:'light', name:'光照', unit:'lx',  color:'#722ed1', range:[0,400] }
+];
+var LEVEL_BY_METRIC = { co2:'urgent', temp:'important', hum:'reminder', light:'notice' };
+var LEVEL_TEXT = { urgent:'紧急', important:'重要', reminder:'提醒', notice:'通知' };
+var curRoom = 'GF-02', curHours = 24;
+var refreshTimer = null;
+
+function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+function nowHMS(){ var d = new Date(); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()); }
+function openPage(url, title){ if (window.parent && window.parent !== window && window.parent.openPage) window.parent.openPage(url, title); else location.href = url; }
+function zoneName(id){ var z = FS.list('zones').filter(function(x){ return x.id === id; })[0]; return z ? z.name : id; }
+
+/* 每区阈值 [lo, hi]；null 表示该指标无阈值约束 */
+function limits(room){
+  var L = { temp:null, hum:null, co2:null, light:null };
+  if (/^GF-/.test(room)){
+    var ranges = { 'GF-01':[15,20], 'GF-05':[15,20], 'GF-02':[14,18], 'GF-06':[14,18], 'GF-03':[10,14], 'GF-04':[12,18] };
+    L.temp = ranges[room] || [15,20];
+    L.hum = room === 'GF-04' ? [85,90] : (room === 'GF-03' ? [90,95] : [85,95]);
+    L.co2 = [0, room === 'GF-03' ? 600 : 800];
+  } else if (room === 'PY-01'){ L.temp = [22,25]; }
+  else if (room === 'YL-01'){ L.temp = [0,4]; }
+  else if (room === 'LK-A' || room === 'LK-B'){ L.temp = [2,4]; }
+  return L;
+}
+function limitText(room, key){
+  var lim = limits(room)[key];
+  if (!lim) return '无阈值约束';
+  var m = METRICS.filter(function(x){ return x.key === key; })[0];
+  if (lim[0] <= 0 && key !== 'temp') return '≤ ' + lim[1] + m.unit;
+  if (key === 'hum') return lim[0] + '–' + lim[1] + '%';
+  return lim[0] + '–' + lim[1] + m.unit;
+}
+function violations(room, point){
+  var L = limits(room), out = [];
+  METRICS.forEach(function(m){
+    var lim = L[m.key];
+    if (!lim) return;
+    var v = point[m.key];
+    if (v < lim[0]) out.push({ key:m.key, value:v, dir:'low', limit:lim[0] });
+    else if (v > lim[1]) out.push({ key:m.key, value:v, dir:'high', limit:lim[1] });
+  });
+  return out;
+}
+function norm(key, v){
+  var m = METRICS.filter(function(x){ return x.key === key; })[0];
+  return Math.max(0, Math.min(1, (v - m.range[0]) / (m.range[1] - m.range[0])));
+}
+
+/* ---------- 统计卡 ---------- */
+function renderStats(){
+  var rooms = FS.envRooms;
+  var badRooms = rooms.filter(function(r){ return violations(r, FS.envCurrent(r)).length > 0; });
+  var devices = FS.list('devices');
+  var online = devices.filter(function(x){ return x.status === '运行' || x.status === '联动' || x.status === '定时'; }).length;
+  var rate = devices.length ? (online / devices.length * 100).toFixed(1) : '—';
+  document.getElementById('statCards').innerHTML =
+    '<div class="stat-card"><div class="stat-label">监测区数</div><div class="stat-value">' + rooms.length + '<span class="unit">个</span></div>' +
+    '<div class="stat-sub">出菇房 6 · 培养 1 · 冷链 3</div></div>' +
+    '<div class="stat-card"><div class="stat-label">越限区数</div><div class="stat-value" style="color:' + (badRooms.length ? '#ff4d4f' : '#52c41a') + ';">' + badRooms.length + '<span class="unit">个</span></div>' +
+    '<div class="stat-sub ' + (badRooms.length ? 'err' : '') + '">' + (badRooms.length ? esc(badRooms.join('、')) : '全部指标正常') + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">采集在线率</div><div class="stat-value">' + rate + '<span class="unit">%</span></div>' +
+    '<div class="stat-sub">在线 ' + online + ' / ' + devices.length + ' 台（按设备状态推导）</div></div>' +
+    '<div class="stat-card"><div class="stat-label">刷新时间</div><div class="stat-value" style="font-size:22px;" id="statRefreshTime">' + nowHMS() + '</div>' +
+    '<div class="stat-sub">30 秒自动轮询</div></div>';
+}
+
+/* ---------- 实时卡片 ---------- */
+function renderRealtime(){
+  var cur = FS.envCurrent(curRoom);
+  var L = limits(curRoom);
+  document.getElementById('realtimeCards').innerHTML = METRICS.map(function(m){
+    var v = cur[m.key];
+    var lim = L[m.key];
+    var bad = lim && (v < lim[0] || v > lim[1]);
+    var badge = !lim ? '<span class="status-tag idle">无约束</span>'
+      : (bad ? '<span class="status-tag offline">越限</span>' : '<span class="status-tag online">正常</span>');
+    return '<div class="rt-card' + (bad ? ' violated' : '') + '">' +
+      '<div class="rt-head"><span class="rt-name">' + m.name + '</span>' + badge + '</div>' +
+      '<div class="rt-value" style="color:' + (bad ? '#cf1322' : m.color) + ';">' + v + '<span class="unit">' + m.unit + '</span></div>' +
+      '<div class="rt-limit">阈值：' + limitText(curRoom, m.key) + '</div></div>';
+  }).join('');
+}
+
+/* ---------- 主图表：四色多曲线 SVG ---------- */
+function renderChart(){
+  var series = FS.envSeries(curRoom, curHours);
+  var L = limits(curRoom);
+  var W = 1100, H = 340, padL = 46, padR = 16, padT = 14, padB = 30;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+  function X(i){ return padL + (series.length > 1 ? i / (series.length - 1) : 0) * plotW; }
+  function Y(key, v){ return padT + (1 - norm(key, v)) * plotH; }
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block;">';
+  for (var g = 0; g <= 4; g++){
+    var gy = padT + g / 4 * plotH;
+    svg += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#f0f0f0"/>' +
+      '<text x="' + (padL - 8) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10" fill="#8c8c8c">' + (100 - g * 25) + '%</text>';
+  }
+  var tickStep = Math.max(1, Math.ceil(series.length / 8));
+  series.forEach(function(p, i){
+    if (i % tickStep === 0 || i === series.length - 1){
+      svg += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#8c8c8c">' + p.t + '</text>';
+    }
+  });
+  /* 阈值虚线（按各指标量程归一化位置） */
+  METRICS.forEach(function(m){
+    var lim = L[m.key];
+    if (!lim) return;
+    [lim[0], lim[1]].forEach(function(tv, ti){
+      if (tv <= m.range[0] && ti === 0) return;
+      var y = Y(m.key, tv);
+      if (y < padT - 1 || y > padT + plotH + 1) return;
+      svg += '<line x1="' + padL + '" y1="' + y.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + y.toFixed(1) +
+        '" stroke="' + m.color + '" stroke-width="1" stroke-dasharray="5 4" opacity="0.55"/>' +
+        '<text x="' + (W - padR - 4) + '" y="' + (y - 4).toFixed(1) + '" text-anchor="end" font-size="10" fill="' + m.color + '">' +
+        m.name + ' ' + tv + m.unit + '</text>';
+    });
+  });
+  /* 曲线 */
+  METRICS.forEach(function(m){
+    var d = series.map(function(p, i){ return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(m.key, p[m.key]).toFixed(1); }).join(' ');
+    svg += '<path d="' + d + '" fill="none" stroke="' + m.color + '" stroke-width="2" stroke-linejoin="round"/>';
+  });
+  /* 越限采样点标记 */
+  series.forEach(function(p, i){
+    violations(curRoom, p).forEach(function(v){
+      svg += '<circle cx="' + X(i).toFixed(1) + '" cy="' + Y(v.key, p[v.key]).toFixed(1) + '" r="3.5" fill="#ff4d4f" stroke="#fff" stroke-width="1.2">' +
+        '<title>' + p.t + ' ' + v.key + ' ' + p[v.key] + ' 越限</title></circle>';
+    });
+  });
+  svg += '</svg>';
+  document.getElementById('mainChart').innerHTML = svg;
+  document.getElementById('chartTitle').textContent = curRoom + ' · ' + zoneName(curRoom) + ' 环境趋势（近 ' + curHours + ' 小时）';
+  var cur = FS.envCurrent(curRoom);
+  document.getElementById('chartLegend').innerHTML = METRICS.map(function(m){
+    return '<span class="lg"><span class="dot" style="background:' + m.color + ';"></span>' + m.name + ' ' + cur[m.key] + m.unit + '</span>';
+  }).join('');
+}
+
+/* ---------- 越限事件（由序列 + 阈值推导，连续越限合并为一条） ---------- */
+function computeEvents(){
+  var series = FS.envSeries(curRoom, curHours);
+  var events = [], open = {};
+  series.forEach(function(p){
+    var vs = violations(curRoom, p);
+    METRICS.forEach(function(m){
+      var v = vs.filter(function(x){ return x.key === m.key; })[0];
+      if (v){
+        if (!open[m.key]){
+          open[m.key] = { metric:m.key, from:p.t, to:p.t, peak:v.value, dir:v.dir, limit:v.limit, points:1 };
+          events.push(open[m.key]);
+        } else {
+          var e = open[m.key];
+          e.to = p.t; e.points++;
+          if ((v.dir === 'high' && v.value > e.peak) || (v.dir === 'low' && v.value < e.peak)) e.peak = v.value;
+        }
+      } else if (open[m.key]){ delete open[m.key]; }
+    });
+  });
+  return events;
+}
+function renderEvents(){
+  var events = computeEvents();
+  document.getElementById('eventCount').textContent = '共 ' + events.length + ' 条（当前监测区 · 近 ' + curHours + ' 小时）';
+  var body = document.getElementById('eventBody');
+  if (!events.length){
+    body.innerHTML = '<tr class="empty-row"><td colspan="7">当前时段无越限事件</td></tr>';
+    return;
+  }
+  body.innerHTML = events.map(function(e){
+    var m = METRICS.filter(function(x){ return x.key === e.metric; })[0];
+    var lv = LEVEL_BY_METRIC[e.metric];
+    return '<tr onclick="openPage(\'alert_overview.html\',\'预警管理\')">' +
+      '<td>' + esc(e.from) + ' – ' + esc(e.to) + '</td>' +
+      '<td>' + esc(curRoom) + '</td>' +
+      '<td><span style="color:' + m.color + ';font-weight:600;">' + m.name + '</span></td>' +
+      '<td class="num-cell bad">' + e.peak + ' ' + m.unit + '（' + (e.dir === 'high' ? '超上限' : '低于下限') + '）</td>' +
+      '<td>' + limitText(curRoom, e.metric) + '</td>' +
+      '<td><span class="level-tag level-' + lv + '">' + LEVEL_TEXT[lv] + '</span></td>' +
+      '<td><button class="action-btn" onclick="event.stopPropagation();openPage(\'alert_overview.html\',\'预警管理\')">查看预警</button></td></tr>';
+  }).join('');
+}
+
+/* ---------- 全区矩阵 ---------- */
+function renderMatrix(){
+  var body = document.getElementById('matrixBody');
+  body.innerHTML = FS.envRooms.map(function(r){
+    var cur = FS.envCurrent(r);
+    var vs = violations(r, cur);
+    var badKeys = {};
+    vs.forEach(function(v){ badKeys[v.key] = true; });
+    function cell(key){
+      var m = METRICS.filter(function(x){ return x.key === key; })[0];
+      return '<td class="num-cell' + (badKeys[key] ? ' bad' : '') + '">' + cur[key] + '</td>';
+    }
+    var badge = vs.length ? '<span class="status-tag offline">越限</span>' : '<span class="status-tag online">正常</span>';
+    return '<tr class="' + (r === curRoom ? 'row-active' : '') + '" onclick="selectRoom(\'' + r + '\')">' +
+      '<td><strong>' + esc(r) + '</strong></td><td>' + esc(zoneName(r)) + '</td>' +
+      cell('temp') + cell('hum') + cell('co2') + cell('light') + '<td>' + badge + '</td></tr>';
+  }).join('');
+}
+function selectRoom(r){
+  curRoom = r;
+  document.getElementById('roomSelect').value = r;
+  renderRealtime(); renderChart(); renderEvents(); renderMatrix();
+}
+
+/* ---------- 刷新与定时器（单一计时器，防叠加） ---------- */
+function refreshNow(){
+  renderStats(); renderRealtime(); renderChart(); renderEvents(); renderMatrix();
+  var t = nowHMS();
+  document.getElementById('refreshTime').textContent = t;
+  var st = document.getElementById('statRefreshTime');
+  if (st) st.textContent = t;
+}
+function startTimer(){
+  stopTimer();
+  refreshTimer = setInterval(function(){ if (!document.hidden) refreshNow(); }, 30000);
+}
+function stopTimer(){
+  if (refreshTimer){ clearInterval(refreshTimer); refreshTimer = null; }
+}
+window.addEventListener('pagehide', stopTimer);
+window.addEventListener('beforeunload', stopTimer);
+document.addEventListener('visibilitychange', function(){ if (document.hidden) stopTimer(); else startTimer(); });
+
+/* ---------- 导出 ---------- */
+function exportMatrix(){
+  var headers = ['监测区','区域名称','温度(°C)','湿度(%)','CO₂(ppm)','光照(lx)','状态'];
+  var rows = FS.envRooms.map(function(r){
+    var cur = FS.envCurrent(r);
+    return [r, zoneName(r), cur.temp, cur.hum, cur.co2, cur.light, violations(r, cur).length ? '越限' : '正常'];
+  });
+  DeviceUI.exportCsv('环境矩阵_' + curRoom, headers, rows);
+}
+
+/* ---------- 初始化 ---------- */
+document.addEventListener('DOMContentLoaded', function(){
+  var sel = document.getElementById('roomSelect');
+  sel.innerHTML = FS.envRooms.map(function(r){
+    return '<option value="' + r + '">' + r + ' · ' + esc(zoneName(r)) + '</option>';
+  }).join('');
+  sel.value = curRoom;
+  sel.addEventListener('change', function(){ selectRoom(this.value); });
+  document.getElementById('hoursSelect').addEventListener('change', function(){
+    curHours = +this.value; renderChart(); renderEvents();
+  });
+  refreshNow();
+  startTimer();
+});
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/typography.js"></script>
+</body>
+</html>

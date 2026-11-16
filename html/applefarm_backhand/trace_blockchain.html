@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工厂化农业数据管理系统 - 区块链存证</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,21,41,0.5); display:flex; align-items:center; justify-content:center; z-index:1200; opacity:0; visibility:hidden; transition:all .25s ease; }
+  .modal-overlay.active { opacity:1; visibility:visible; }
+  .modal { background:var(--bg-card); border-radius:16px; width:520px; max-width:92vw; max-height:90vh; overflow:hidden; transform:scale(.92); transition:all .25s ease; display:flex; flex-direction:column; }
+  .modal-overlay.active .modal { transform:scale(1); }
+  .modal-header { padding:18px 24px; border-bottom:1px solid var(--border-default); display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#722ed1 0%,#1890ff 100%); color:#fff; flex-shrink:0; }
+  .modal-header h3 { font-size:17px; font-weight:600; margin:0; color:#fff; }
+  .modal-close { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.2); border:none; color:#fff; cursor:pointer; font-size:16px; line-height:1; }
+  .modal-close:hover { background:rgba(255,255,255,.32); }
+  .modal-body { padding:22px 24px; overflow-y:auto; }
+  .modal-footer { padding:14px 24px; border-top:1px solid var(--border-default); display:flex; justify-content:flex-end; gap:12px; flex-shrink:0; }
+  .form-group { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
+  .form-group label { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .form-group input, .form-group select { padding:9px 12px; border:1px solid var(--border-default); border-radius:8px; font-size:14px; transition:all .2s; background:#fff; color:var(--text-primary); }
+  .form-group input:focus, .form-group select:focus { outline:none; border-color:#1890ff; box-shadow:0 0 0 3px rgba(24,144,255,.12); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-hint { font-size:12px; color:var(--text-tertiary); }
+  .req { color:#ff4d4f; }
+  .detail-grid { display:grid; grid-template-columns:100px 1fr; gap:10px; padding:9px 0; border-bottom:1px dashed var(--border-light); font-size:13px; }
+  .detail-grid:last-child { border-bottom:none; }
+  .detail-label { color:var(--text-tertiary); }
+  .detail-value { color:var(--text-primary); font-weight:500; word-break:break-all; }
+  .drawer-overlay { position:fixed; inset:0; background:rgba(0,21,41,.45); z-index:1100; opacity:0; visibility:hidden; transition:all .25s; }
+  .drawer-overlay.active { opacity:1; visibility:visible; }
+  .drawer { position:fixed; top:0; right:0; bottom:0; width:480px; max-width:94vw; background:var(--bg-card); z-index:1101; transform:translateX(102%); transition:transform .3s ease; display:flex; flex-direction:column; box-shadow:-10px 0 34px rgba(0,21,41,.16); }
+  .drawer.active { transform:none; }
+  .drawer-header { padding:18px 22px; background:linear-gradient(135deg,#722ed1 0%,#1890ff 100%); color:#fff; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .drawer-header h3 { margin:0; font-size:16px; color:#fff; }
+  .drawer-body { flex:1; overflow-y:auto; padding:18px 22px; }
+  .drawer-footer { padding:12px 22px; border-top:1px solid var(--border-default); display:flex; gap:10px; justify-content:flex-end; flex-shrink:0; }
+  .drawer-body::-webkit-scrollbar, .modal-body::-webkit-scrollbar { width:6px; }
+  .drawer-body::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track { background:#f9f0ff; }
+  .drawer-body::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb { background:#d3adf7; border-radius:3px; }
+  .drawer-body::-webkit-scrollbar-thumb:hover, .modal-body::-webkit-scrollbar-thumb:hover { background:#722ed1; }
+  .toast { position:fixed; top:20px; right:20px; padding:13px 18px; background:var(--bg-card); border-radius:10px; box-shadow:0 6px 24px rgba(0,21,41,.18); display:flex; align-items:center; gap:10px; z-index:2000; transform:translateX(120%); transition:all .3s ease; border-left:4px solid #52c41a; max-width:min(480px,90vw); font-size:13px; }
+  .toast.show { transform:translateX(0); }
+  .toast.error { border-left-color:#ff4d4f; }
+  .toast.warning { border-left-color:#fa8c16; }
+  .toast.info { border-left-color:#1890ff; }
+  .toast-undo { border:1px solid #1890ff; color:#1890ff; background:#e6f4ff; border-radius:6px; padding:3px 12px; font-size:12px; cursor:pointer; flex-shrink:0; }
+  .toast-undo:hover { background:#1890ff; color:#fff; }
+  .stats-section { margin-bottom:16px; }
+  @media (max-width:1100px){ .stats-section { grid-template-columns:repeat(2,1fr); } }
+  .bulk-bar { display:none; align-items:center; gap:12px; padding:8px 14px; margin-bottom:10px; background:#e6f4ff; border:1px solid #91caff; border-radius:8px; font-size:13px; color:#0958d9; }
+  .bulk-bar.show { display:flex; }
+  th.sortable { cursor:pointer; user-select:none; }
+  th.sortable:hover { color:#1890ff; }
+  .empty-row td { text-align:center; color:var(--text-tertiary); padding:36px 0 !important; font-size:13px; }
+  .mono { font-family:Consolas,Menlo,monospace; font-size:12.5px; }
+  .section-title { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:600; color:var(--text-primary); margin:20px 0 12px; }
+  .section-title::before { content:''; width:4px; height:16px; border-radius:2px; background:linear-gradient(180deg,#722ed1,#1890ff); }
+  .chart-card { background:var(--bg-card); border:1px solid var(--border-default); border-radius:12px; padding:18px 20px; box-shadow:0 1px 3px rgba(16,24,40,.06); }
+  .chart-legend { display:flex; flex-wrap:wrap; gap:12px; margin-top:10px; font-size:12px; color:var(--text-secondary); }
+  .chart-legend span { display:inline-flex; align-items:center; gap:5px; }
+  .chart-legend i { width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .hash-full { background:#f9f0ff; border:1px solid #d3adf7; border-radius:8px; padding:10px 12px; font-family:Consolas,Menlo,monospace; font-size:12px; word-break:break-all; color:#531dab; line-height:1.7; }
+  .verify-ok { color:#52c41a; font-weight:600; }
+  .verify-bad { color:#ff4d4f; font-weight:600; }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="trace" data-active-submenu="trace-blockchain">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <main class="main-content">
+      <div class="content-wrapper">
+
+        <div class="stats-section metrics-row">
+          <div class="stat-card purple">
+            <div class="stat-header"><span class="stat-label">存证总数</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span></div>
+            <div class="stat-value" id="stTotal">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">联盟链 · 追溯存证通道</span></div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-header"><span class="stat-label">上链成功率</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span></div>
+            <div class="stat-value" id="stRate">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);" id="stOk">成功 — 条</span></div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-header"><span class="stat-label">失败待重试</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span></div>
+            <div class="stat-value" id="stFail">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">验证失败后可一键重试</span></div>
+          </div>
+          <div class="stat-card cyan">
+            <div class="stat-header"><span class="stat-label">存证节点类型</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/><path d="M6 6h4M14 6h4M6 18h4M14 18h4"/></svg></span></div>
+            <div class="stat-value" id="stNodes">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">9 类生产节点可上链</span></div>
+          </div>
+        </div>
+
+        <div class="search-section">
+          <div class="search-bar">
+            <select class="search-select" id="batchSelect" style="width:210px;"><option value="">全部批次</option></select>
+            <select class="search-select" id="nodeSelect" style="width:140px;">
+              <option value="">全部节点</option><option>菌种</option><option>装袋</option><option>灭菌</option><option>接种</option><option>培养</option><option>出菇</option><option>采收</option><option>分级</option><option>冷链</option>
+            </select>
+            <select class="search-select" id="statusSelect" style="width:130px;">
+              <option value="">全部状态</option><option>成功</option><option>失败</option>
+            </select>
+            <input type="text" class="search-input" placeholder="存证号 / 哈希搜索…" id="kwInput" style="width:200px;">
+            <div class="search-actions">
+              <button class="jg-btn jg-btn-primary" onclick="applyFilter(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button>
+              <button class="jg-btn" onclick="resetSearch()">重置</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <div class="action-left">
+            <button class="jg-btn jg-btn-primary" onclick="openAddModal()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 4v16m8-8H4"/></svg>手动存证
+            </button>
+            <button class="jg-btn" onclick="verifyAll()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>全部验证
+            </button>
+            <button class="jg-btn" onclick="exportCSV()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出 CSV
+            </button>
+          </div>
+          <div class="action-right"><span style="font-size:13px;color:var(--text-tertiary);" id="filterInfo"></span></div>
+        </div>
+
+        <div class="bulk-bar" id="bulkBar">
+          <span>已勾选 <strong id="bulkCount">0</strong> 条存证</span>
+          <button class="jg-btn" style="border-color:#ff4d4f;color:#ff4d4f;" onclick="bulkDelete()">批量删除</button>
+          <button class="jg-btn" onclick="clearSelection()">取消勾选</button>
+        </div>
+
+        <div class="data-section">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:44px;"><input type="checkbox" id="checkAll" onchange="toggleAll(this.checked)" aria-label="全选"></th>
+                <th style="width:56px;">序号</th>
+                <th>存证号</th>
+                <th>批次号</th>
+                <th>节点</th>
+                <th>存证哈希</th>
+                <th>区块高度</th>
+                <th class="sortable" onclick="toggleSort()" id="thTime">上链时间 <span id="sortArrow">↕</span></th>
+                <th>状态</th>
+                <th style="width:210px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody"></tbody>
+          </table>
+          <div id="pagination-container"></div>
+        </div>
+
+        <div class="section-title">节点存证分布</div>
+        <div class="chart-card">
+          <div id="nodeChart"></div>
+          <div class="chart-legend" id="chartLegend"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 存证详情抽屉 -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="bcDrawer" role="dialog" aria-label="存证详情">
+  <div class="drawer-header">
+    <h3>存证详情</h3>
+    <button class="modal-close" onclick="closeDrawer()" aria-label="关闭">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-footer" id="drawerFooter"></div>
+</div>
+
+<!-- 手动存证弹窗 -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header"><h3>手动上链存证</h3><button class="modal-close" onclick="closeModal('addModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>生产批次 <span class="req">*</span></label><select id="addBatch"><option value="">请选择批次</option></select></div>
+      <div class="form-group"><label>存证节点 <span class="req">*</span></label>
+        <select id="addNode"><option value="">请选择节点</option><option>菌种</option><option>装袋</option><option>灭菌</option><option>接种</option><option>培养</option><option>出菇</option><option>采收</option><option>分级</option><option>冷链</option></select>
+      </div>
+      <span class="form-hint">提交后生成 SHA-256 存证哈希并写入联盟链，区块高度自动递增。</span>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('addModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="confirmAdd()">提交上链</button>
+    </div>
+  </div>
+</div>
+
+<!-- 通用确认弹窗 -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="width:420px;">
+    <div class="modal-header" style="background:linear-gradient(135deg,#fa8c16 0%,#ff4d4f 100%);"><h3 id="confirmTitle">确认操作</h3><button class="modal-close" onclick="closeModal('confirmModal')">×</button></div>
+    <div class="modal-body"><div id="confirmText" style="font-size:14px;color:var(--text-secondary);line-height:1.7;"></div></div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('confirmModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toastMessage">操作成功</span>
+  <button class="toast-undo" id="toastUndo" style="display:none;">撤销</button>
+</div>
+
+<script src="js/shared/fungi-store.js"></script>
+<script>
+/* ============================================================
+ * 区块链存证 —— FungiStore.blockchain 单一真源
+ * 验证规则：哈希格式（0x + hex，截断或 64 位全文）且区块高度 > 0
+ * 失败行重试：重新生成随机 hex 哈希，高度 = 当前最大高度 + 1
+ * ============================================================ */
+'use strict';
+var FS = window.FungiStore;
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function pad(n,l){ n=String(n); while(n.length<(l||2)) n='0'+n; return n; }
+function nowHM(){ var d=new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function nowStr(){ return FS.at(0, nowHM()); }
+function goPage(url,title){ if(window.parent && typeof window.parent.openPage==='function') window.parent.openPage(url,title); else window.location.href=url; }
+function opLog(action, object){
+  try{
+    var u=JSON.parse(sessionStorage.getItem('snzg_user')||'null')||{};
+    var arr=JSON.parse(localStorage.getItem('mushroom_op_log')||'[]');
+    arr.unshift({ time:nowStr(), account:u.username||'admin', action:action, object:object||'—' });
+    if(arr.length>200) arr.length=200;
+    localStorage.setItem('mushroom_op_log', JSON.stringify(arr));
+  }catch(e){}
+}
+var toastTimer=null, undoFn=null;
+function showToast(msg,type,undo){
+  var t=document.getElementById('toast');
+  document.getElementById('toastMessage').textContent=msg;
+  var ub=document.getElementById('toastUndo');
+  undoFn=undo||null; ub.style.display=undo?'':'none';
+  t.className='toast '+(type||'success')+' show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.remove('show'); undoFn=null; }, undo?6000:3200);
+}
+document.getElementById('toastUndo').addEventListener('click',function(){
+  if(undoFn){ var f=undoFn; undoFn=null; f(); }
+  document.getElementById('toast').classList.remove('show');
+});
+function openModal(id){ document.getElementById(id).classList.add('active'); }
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+function askConfirm(title,html,onOk){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmText').innerHTML=html;
+  var btn=document.getElementById('confirmOk');
+  var nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
+  nb.addEventListener('click',function(){ closeModal('confirmModal'); onOk(); });
+  openModal('confirmModal');
+}
+function openDrawer(){ document.getElementById('drawerOverlay').classList.add('active'); document.getElementById('bcDrawer').classList.add('active'); }
+function closeDrawer(){ document.getElementById('drawerOverlay').classList.remove('active'); document.getElementById('bcDrawer').classList.remove('active'); }
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ document.querySelectorAll('.modal-overlay.active').forEach(function(o){ closeModal(o.id); }); closeDrawer(); }
+});
+document.querySelectorAll('.modal-overlay').forEach(function(o){
+  o.addEventListener('click',function(e){ if(e.target===o) closeModal(o.id); });
+});
+
+/* ---------- 哈希工具 ---------- */
+var HEX='0123456789abcdef';
+function randHex(n){ var s=''; for(var i=0;i<n;i++) s+=HEX[Math.floor(Math.random()*16)]; return s; }
+function fullHashOf(r){ return r.fullHash || r.hash; }
+function hashValid(h){
+  h=String(h||'');
+  return /^0x[0-9a-fA-F]{64}$/.test(h) || /^0x[0-9a-fA-F]{4}[…\.]{1,3}[0-9a-fA-F]{4}$/.test(h);
+}
+function maxHeight(){
+  return FS.list('blockchain').reduce(function(m,r){ return Math.max(m, Number(r.height)||0); }, 1842000);
+}
+function verifyRecord(r){
+  var okHash=hashValid(fullHashOf(r));
+  var okHeight=(Number(r.height)||0)>0;
+  return { ok:okHash&&okHeight, okHash:okHash, okHeight:okHeight };
+}
+
+/* ---------- 统计 ---------- */
+function renderStats(){
+  var rows=FS.list('blockchain');
+  var ok=rows.filter(function(r){ return r.status==='成功'; }).length;
+  var fail=rows.length-ok;
+  var nodes={}; rows.forEach(function(r){ nodes[r.node]=true; });
+  document.getElementById('stTotal').textContent=rows.length;
+  document.getElementById('stRate').textContent=rows.length?(ok/rows.length*100).toFixed(1)+'%':'—';
+  document.getElementById('stOk').textContent='成功 '+ok+' 条';
+  document.getElementById('stFail').textContent=fail;
+  document.getElementById('stNodes').textContent=Object.keys(nodes).length+' / 9';
+}
+
+/* ---------- 列表 ---------- */
+var sortDesc=true, selected={};
+var Pagination={
+  currentPage:1,pageSize:10,filteredData:[],
+  updateData:function(data){ this.filteredData=data; this.currentPage=1; this.render(); },
+  goToPage:function(p){ var tp=Math.max(1,Math.ceil(this.filteredData.length/this.pageSize)); if(p<1||p>tp) return; this.currentPage=p; this.render(); },
+  render:function(){
+    var total=this.filteredData.length, tp=Math.max(1,Math.ceil(total/this.pageSize));
+    if(this.currentPage>tp) this.currentPage=tp;
+    var start=(this.currentPage-1)*this.pageSize;
+    var rows=this.filteredData.slice(start,start+this.pageSize);
+    var tbody=document.getElementById('dataTableBody');
+    tbody.innerHTML=rows.length?rows.map(function(r,i){ return renderRow(r,start+i+1); }).join('')
+      :'<tr class="empty-row"><td colspan="10">暂无符合条件的存证记录，点击「手动存证」上链</td></tr>';
+    var html='<div class="pagination">';
+    html+='<button class="page-btn '+(this.currentPage<=1?'disabled':'')+'" onclick="Pagination.goToPage('+(this.currentPage-1)+')">‹</button>';
+    for(var i=1;i<=tp;i++){
+      if(i===1||i===tp||Math.abs(i-this.currentPage)<=1) html+='<button class="page-btn '+(i===this.currentPage?'active':'')+'" onclick="Pagination.goToPage('+i+')">'+i+'</button>';
+      else if(Math.abs(i-this.currentPage)===2) html+='<span style="padding:0 6px;color:#9aa5b1;">…</span>';
+    }
+    html+='<button class="page-btn '+(this.currentPage>=tp?'disabled':'')+'" onclick="Pagination.goToPage('+(this.currentPage+1)+')">›</button>';
+    html+='<span style="margin-left:14px;font-size:13px;color:#6b7b6b;">第 '+this.currentPage+' / '+tp+' 页 · 共 '+total+' 条</span></div>';
+    document.getElementById('pagination-container').innerHTML=html;
+    syncCheckAll();
+  }
+};
+function currentFiltered(){
+  var b=document.getElementById('batchSelect').value;
+  var nd=document.getElementById('nodeSelect').value;
+  var s=document.getElementById('statusSelect').value;
+  var kw=document.getElementById('kwInput').value.trim().toLowerCase();
+  var rows=FS.list('blockchain').filter(function(r){
+    if(b && r.batch!==b) return false;
+    if(nd && r.node!==nd) return false;
+    if(s && r.status!==s) return false;
+    if(kw && r.id.toLowerCase().indexOf(kw)<0 && String(r.hash).toLowerCase().indexOf(kw)<0) return false;
+    return true;
+  });
+  rows.sort(function(a,b2){ var r=String(a.time).localeCompare(String(b2.time)); return sortDesc?-r:r; });
+  return rows;
+}
+function applyFilter(notify){
+  var rows=currentFiltered();
+  Pagination.updateData(rows);
+  document.getElementById('filterInfo').textContent='筛选结果 '+rows.length+' 条';
+  if(notify) showToast('找到 '+rows.length+' 条存证','info');
+}
+function resetSearch(){
+  ['batchSelect','nodeSelect','statusSelect'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('kwInput').value='';
+  applyFilter(false); showToast('已重置筛选条件','info');
+}
+function toggleSort(){ sortDesc=!sortDesc; document.getElementById('sortArrow').textContent=sortDesc?'↓':'↑'; applyFilter(false); }
+function statusPill(s){
+  return s==='成功'
+    ? '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f;">成功</span>'
+    : '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:#fff1f0;color:#ff4d4f;border:1px solid #ffa39e;">失败</span>';
+}
+function renderRow(r,seq){
+  var acts='<button class="action-btn detail" onclick="verifyOne(\''+esc(r.id)+'\')">验证</button>';
+  if(r.status==='失败') acts+='<button class="action-btn" style="color:#fa8c16;" onclick="retryOne(\''+esc(r.id)+'\')">重试</button>';
+  acts+='<button class="action-btn qrcode" onclick="viewDetail(\''+esc(r.id)+'\')">详情</button>';
+  acts+='<button class="action-btn" style="color:#ff4d4f;" onclick="deleteOne(\''+esc(r.id)+'\')">删除</button>';
+  return '<tr>'+
+    '<td><input type="checkbox" '+(selected[r.id]?'checked':'')+' onchange="toggleRow(\''+esc(r.id)+'\',this.checked)" aria-label="勾选"></td>'+
+    '<td>'+seq+'</td>'+
+    '<td><strong class="mono">'+esc(r.id)+'</strong></td>'+
+    '<td class="mono">'+esc(r.batch)+'</td>'+
+    '<td>'+esc(r.node)+'</td>'+
+    '<td class="mono" style="color:#722ed1;">'+esc(r.hash)+'</td>'+
+    '<td class="mono">'+(Number(r.height)>0?Number(r.height).toLocaleString('zh-CN'):'<span style="color:#ff4d4f;">0</span>')+'</td>'+
+    '<td>'+esc(r.time)+'</td>'+
+    '<td>'+statusPill(r.status)+'</td>'+
+    '<td><div class="action-btns">'+acts+'</div></td></tr>';
+}
+function toggleRow(id,on){ if(on) selected[id]=true; else delete selected[id]; syncBulk(); }
+function toggleAll(on){
+  Pagination.filteredData.slice((Pagination.currentPage-1)*Pagination.pageSize,Pagination.currentPage*Pagination.pageSize).forEach(function(r){
+    if(on) selected[r.id]=true; else delete selected[r.id];
+  });
+  Pagination.render(); syncBulk();
+}
+function syncCheckAll(){
+  var rows=Pagination.filteredData.slice((Pagination.currentPage-1)*Pagination.pageSize,Pagination.currentPage*Pagination.pageSize);
+  document.getElementById('checkAll').checked=rows.length>0 && rows.every(function(r){ return selected[r.id]; });
+}
+function syncBulk(){
+  var n=Object.keys(selected).length;
+  document.getElementById('bulkCount').textContent=n;
+  document.getElementById('bulkBar').classList.toggle('show',n>0);
+}
+function clearSelection(){ selected={}; Pagination.render(); syncBulk(); }
+function removeRecords(ids){
+  var removed=[];
+  ids.forEach(function(id){
+    var idx=FS.list('blockchain').findIndex(function(x){ return x.id===id; });
+    var obj=FS.remove('blockchain',id);
+    if(obj) removed.push({obj:obj,idx:idx});
+    delete selected[id];
+  });
+  refresh();
+  showToast('已删除 '+removed.length+' 条存证','warning',function(){
+    removed.sort(function(a,b){ return a.idx-b.idx; }).forEach(function(r){ FS.restore('blockchain',r.obj,r.idx); });
+    refresh(); showToast('已撤销删除','success');
+  });
+  opLog('删除区块链存证',ids.join('、'));
+}
+function bulkDelete(){
+  var ids=Object.keys(selected); if(!ids.length) return;
+  askConfirm('批量删除存证','即将删除勾选的 <strong>'+ids.length+'</strong> 条存证记录（链上数据不受影响，仅移除本地索引），可撤销。是否继续？',function(){ removeRecords(ids); });
+}
+function deleteOne(id){
+  askConfirm('删除存证记录','确定删除存证 <strong class="mono">'+esc(id)+'</strong> 吗？删除后可撤销。',function(){ removeRecords([id]); });
+}
+
+/* ---------- 验证 / 重试 ---------- */
+function verifyOne(id){
+  var r=FS.get('blockchain',id); if(!r) return;
+  var v=verifyRecord(r);
+  if(v.ok){
+    FS.update('blockchain',id,{ verifiedAt:nowStr() });
+    opLog('验证存证',id+' 通过');
+    showToast('验证通过：'+id+' · 高度 '+Number(r.height).toLocaleString('zh-CN'),'success');
+  }else{
+    var why=[];
+    if(!v.okHash) why.push('哈希格式异常');
+    if(!v.okHeight) why.push('区块高度为 0（未入块）');
+    opLog('验证存证',id+' 失败');
+    showToast('验证失败：'+id+' · '+why.join('、')+'，请点击「重试」重新上链','error');
+  }
+  refresh();
+}
+function verifyAll(){
+  var rows=FS.list('blockchain');
+  var ok=0,bad=[];
+  rows.forEach(function(r){ if(verifyRecord(r).ok) ok++; else bad.push(r.id); });
+  opLog('批量验证存证',ok+' 通过 / '+bad.length+' 失败');
+  if(bad.length) showToast('验证完成：'+ok+' 条通过，'+bad.length+' 条失败（'+bad.join('、')+'），可逐条重试','warning');
+  else showToast('验证完成：全部 '+ok+' 条存证通过','success');
+}
+function retryOne(id){
+  var r=FS.get('blockchain',id); if(!r) return;
+  askConfirm('重试上链','存证 <strong class="mono">'+esc(id)+'</strong> 上次上链失败。重试将重新生成存证哈希并提交联盟链，是否继续？',function(){
+    var full='0x'+randHex(64);
+    var patch={
+      hash:'0x'+full.slice(2,6)+'…'+full.slice(-4),
+      fullHash:full,
+      height:maxHeight()+1,
+      tx:'0x'+randHex(4)+'…'+randHex(4),
+      status:'成功',
+      time:nowStr(),
+      verifiedAt:nowStr()
+    };
+    FS.update('blockchain',id,patch);
+    opLog('重试上链',id+' → 高度 '+patch.height);
+    refresh();
+    showToast('重试成功：'+id+' 已入块，高度 '+patch.height.toLocaleString('zh-CN'),'success');
+  });
+}
+
+/* ---------- 手动存证 ---------- */
+function openAddModal(){
+  var sel=document.getElementById('addBatch');
+  sel.innerHTML='<option value="">请选择批次</option>'+FS.list('batches').map(function(b){
+    return '<option value="'+esc(b.id)+'">'+esc(b.id)+' · '+esc(b.variety)+'</option>';
+  }).join('');
+  document.getElementById('addNode').value='';
+  openModal('addModal');
+}
+function confirmAdd(){
+  var batch=document.getElementById('addBatch').value;
+  var node=document.getElementById('addNode').value;
+  if(!batch){ showToast('请选择生产批次','error'); return; }
+  if(!node){ showToast('请选择存证节点','error'); return; }
+  var full='0x'+randHex(64);
+  var rec=FS.add('blockchain',{
+    batch:batch, node:node,
+    hash:'0x'+full.slice(2,6)+'…'+full.slice(-4),
+    fullHash:full,
+    height:maxHeight()+1,
+    tx:'0x'+randHex(4)+'…'+randHex(4),
+    time:nowStr(), status:'成功', verifiedAt:nowStr()
+  });
+  closeModal('addModal');
+  opLog('手动上链存证',rec.id+' · '+batch+' · '+node);
+  refresh();
+  showToast('上链成功：'+rec.id+' · 高度 '+rec.height.toLocaleString('zh-CN'),'success');
+}
+
+/* ---------- 抽屉 ---------- */
+function viewDetail(id){
+  var r=FS.get('blockchain',id); if(!r) return;
+  var v=verifyRecord(r);
+  document.getElementById('drawerBody').innerHTML=
+    '<div class="detail-grid"><span class="detail-label">存证号</span><span class="detail-value mono">'+esc(r.id)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">批次 / 节点</span><span class="detail-value mono">'+esc(r.batch)+' · '+esc(r.node)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">状态</span><span class="detail-value">'+statusPill(r.status)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">区块高度</span><span class="detail-value mono">'+(Number(r.height)>0?Number(r.height).toLocaleString('zh-CN'):'0（未入块）')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">交易号</span><span class="detail-value mono">'+esc(r.tx||'—')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">上链时间</span><span class="detail-value">'+esc(r.time)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">最近验证</span><span class="detail-value">'+esc(r.verifiedAt||'尚未验证')+'</span></div>'+
+    '<div style="margin:14px 0 6px;font-size:13px;font-weight:600;color:var(--text-primary);">存证哈希全文（SHA-256）</div>'+
+    '<div class="hash-full">'+esc(fullHashOf(r))+'</div>'+
+    '<div style="margin-top:12px;font-size:13px;">本地校验：'+
+      '<span class="'+(v.okHash?'verify-ok':'verify-bad')+'">哈希格式 '+(v.okHash?'✓ 通过':'✕ 异常')+'</span> · '+
+      '<span class="'+(v.okHeight?'verify-ok':'verify-bad')+'">区块高度 '+(v.okHeight?'✓ 通过':'✕ 为 0')+'</span>'+
+    '</div>'+
+    '<div style="margin-top:14px;font-size:12px;color:var(--text-tertiary);line-height:1.7;">存证内容为该批次节点的生产记录摘要，哈希上链后不可篡改；消费者扫码可核验一致性。</div>';
+  var f='<button class="jg-btn" onclick="copyHash(\''+esc(id)+'\')">复制哈希</button>'+
+        '<button class="jg-btn" onclick="verifyOne(\''+esc(id)+'\');viewDetail(\''+esc(id)+'\')">验证</button>';
+  if(r.status==='失败') f+='<button class="jg-btn jg-btn-primary" onclick="closeDrawer();retryOne(\''+esc(id)+'\')">重试上链</button>';
+  document.getElementById('drawerFooter').innerHTML=f;
+  openDrawer();
+}
+function copyHash(id){
+  var r=FS.get('blockchain',id); if(!r) return;
+  var text=fullHashOf(r);
+  function done(){ showToast('哈希已复制到剪贴板','success'); }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done,function(){ fallback(); });
+  }else fallback();
+  function fallback(){
+    var ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ showToast('复制失败，请手动选择复制','warning'); }
+    ta.remove();
+  }
+}
+
+/* ---------- 节点分布 SVG ---------- */
+var NODE_NAMES=['菌种','装袋','灭菌','接种','培养','出菇','采收','分级','冷链'];
+var PALETTE=['#1890ff','#52c41a','#fa8c16','#ff4d4f','#722ed1','#13c2c2','#1890ff','#52c41a','#fa8c16'];
+function renderChart(){
+  var rows=FS.list('blockchain');
+  var counts=NODE_NAMES.map(function(n){ return rows.filter(function(r){ return r.node===n; }).length; });
+  var max=Math.max.apply(null,counts.concat([1]));
+  var top=Math.max(2,Math.ceil(max/2)*2);
+  var W=860,H=240,L=44,B=34,T=16,R=12;
+  var pw=W-L-R, ph=H-T-B;
+  var bw=Math.min(46,pw/NODE_NAMES.length*0.52);
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="各节点存证数柱状图" style="display:block;">';
+  for(var g=0;g<=top;g+=Math.max(1,top/4)){
+    var y=T+ph-(g/top)*ph;
+    svg+='<line x1="'+L+'" y1="'+y+'" x2="'+(W-R)+'" y2="'+y+'" stroke="#eef2f7" stroke-width="1"/>';
+    svg+='<text x="'+(L-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="11" fill="#8c9bab">'+g+'</text>';
+  }
+  NODE_NAMES.forEach(function(n,i){
+    var x=L+(i+0.5)*pw/NODE_NAMES.length-bw/2;
+    var h=counts[i]/top*ph;
+    var y=T+ph-h;
+    svg+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(h,0)+'" rx="4" fill="'+PALETTE[i]+'"><title>'+n+'：'+counts[i]+' 条</title></rect>';
+    if(counts[i]>0) svg+='<text x="'+(x+bw/2)+'" y="'+(y-6)+'" text-anchor="middle" font-size="11" font-weight="600" fill="'+PALETTE[i]+'">'+counts[i]+'</text>';
+    svg+='<text x="'+(x+bw/2)+'" y="'+(H-12)+'" text-anchor="middle" font-size="12" fill="#5a6b7b">'+n+'</text>';
+  });
+  svg+='<line x1="'+L+'" y1="'+(T+ph)+'" x2="'+(W-R)+'" y2="'+(T+ph)+'" stroke="#d9e2ec" stroke-width="1.5"/>';
+  svg+='</svg>';
+  document.getElementById('nodeChart').innerHTML=svg;
+  document.getElementById('chartLegend').innerHTML=NODE_NAMES.map(function(n,i){
+    return '<span><i style="background:'+PALETTE[i]+';"></i>'+n+' '+counts[i]+'</span>';
+  }).join('');
+}
+
+/* ---------- 导出 ---------- */
+function exportCSV(){
+  var rows=Pagination.filteredData;
+  if(!rows.length){ showToast('当前没有可导出的数据','warning'); return; }
+  var head=['存证号','批次号','节点','哈希','区块高度','交易号','上链时间','状态'];
+  var lines=[head.join(',')].concat(rows.map(function(r){
+    return [r.id,r.batch,r.node,fullHashOf(r),r.height,r.tx||'',r.time,r.status].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+  }));
+  var blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='区块链存证_'+FS.dayKey(0)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },1500);
+  opLog('导出存证CSV',rows.length+' 条');
+  showToast('已导出 '+rows.length+' 条存证','success');
+}
+
+function refresh(){ renderStats(); applyFilter(false); renderChart(); }
+document.addEventListener('DOMContentLoaded',function(){
+  var sel=document.getElementById('batchSelect');
+  FS.list('batches').forEach(function(b){
+    var o=document.createElement('option'); o.value=b.id; o.textContent=b.id+' · '+b.variety; sel.appendChild(o);
+  });
+  ['batchSelect','nodeSelect','statusSelect'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(){ applyFilter(false); }); });
+  document.getElementById('kwInput').addEventListener('input',function(){ applyFilter(false); });
+  window.addEventListener('fungiStoreChange',function(){ renderStats(); renderChart(); });
+  refresh();
+});
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/typography.js"></script>
+</body>
+</html>

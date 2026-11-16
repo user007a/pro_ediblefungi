@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌环境监测系统 - 消息通知</title>
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <script src="js/mobile-store.js"></script>
+  <script src="js/mobile-messages.js"></script>
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+
+    body { background: var(--bg); }
+
+    /* --- 顶栏右侧动作 --- */
+    .ntop-action {
+      margin-left: auto;
+      border: none;
+      background: none;
+      color: var(--primary-600);
+      font-size: var(--font-sm);
+      font-family: var(--font-family);
+      cursor: pointer;
+      padding: 8px 4px;
+      min-height: 44px;
+    }
+    .ntop-action:active { opacity: 0.7; }
+
+    /* --- 分类 Tab --- */
+    .ncat-tabs {
+      display: flex;
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 15;
+    }
+    .ncat-tab {
+      flex: 1;
+      position: relative;
+      border: none;
+      background: none;
+      font-family: var(--font-family);
+      font-size: var(--font-base);
+      color: var(--text-secondary);
+      padding: 13px 0 11px;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    .ncat-tab.active {
+      color: var(--primary-600);
+      font-weight: 600;
+    }
+    .ncat-tab.active::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 28px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--gradient-primary);
+    }
+    .ncat-badge {
+      position: absolute;
+      top: 6px;
+      right: calc(50% - 34px);
+      min-width: 17px;
+      height: 17px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: var(--error);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* --- 未读筛选 --- */
+    .nfilter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px 2px;
+    }
+    .nchip {
+      padding: 6px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-white);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      font-family: var(--font-family);
+      cursor: pointer;
+      min-height: 32px;
+    }
+    .nchip.active {
+      background: var(--primary-500);
+      border-color: var(--primary-500);
+      color: var(--text-on-primary);
+      font-weight: 500;
+    }
+    .ncount-hint {
+      margin-left: auto;
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+    }
+
+    /* --- 消息卡片 --- */
+    .nlist {
+      padding: 12px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .ncard {
+      position: relative;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 13px 14px 12px 17px;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+    .ncard:active { transform: scale(0.985); }
+    .ncard::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+    }
+    .ncard.cat-alert.lv-red::before    { background: var(--error); }
+    .ncard.cat-alert.lv-orange::before { background: #E67E22; }
+    .ncard.cat-alert.lv-yellow::before { background: var(--warning); }
+    .ncard.cat-alert.lv-blue::before   { background: var(--info); }
+    .ncard.cat-device::before { background: var(--warning-dark); }
+    .ncard.cat-task::before   { background: var(--primary-400); }
+    .ncard.cat-system::before { background: var(--gray-300, #C9BBA8); }
+    .ncard.is-read { opacity: 0.72; }
+
+    .ncard-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+    .ncard-title {
+      flex: 1;
+      font-size: var(--font-base);
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .nunread-dot {
+      flex-shrink: 0;
+      width: 8px;
+      height: 8px;
+      margin-top: 6px;
+      border-radius: 50%;
+      background: var(--error);
+    }
+    .ncard-desc {
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 9px;
+    }
+    .ncard-foot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .ncard-time {
+      margin-left: auto;
+      font-size: var(--font-xs);
+      color: var(--text-tertiary);
+    }
+    .nbadge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+    .nbadge.lv-red    { background: var(--error-light); color: var(--error-dark); }
+    .nbadge.lv-orange { background: #FBEADB; color: #B4611F; }
+    .nbadge.lv-yellow { background: var(--warning-light); color: var(--warning-dark); }
+    .nbadge.lv-blue   { background: var(--info-light); color: var(--info-dark); }
+    .nbadge.cat       { background: var(--primary-50); color: var(--primary-700); }
+    .nbadge.st-pending   { background: var(--warning-light); color: var(--warning-dark); }
+    .nbadge.st-processing, .nbadge.st-repairing { background: var(--info-light); color: var(--info-dark); }
+    .nbadge.st-done      { background: var(--success-light); color: var(--success-dark); }
+
+    /* --- 空态 --- */
+    .nempty {
+      padding: 64px 24px;
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: var(--font-sm);
+    }
+    .nempty-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 12px;
+      border-radius: 50%;
+      background: var(--primary-50);
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* --- 预警处置抽屉 --- */
+    .nsheet-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .nsheet-title { font-size: var(--font-lg); font-weight: 700; color: var(--text); line-height: 1.4; }
+    .nsheet-sub { font-size: var(--font-xs); color: var(--text-tertiary); margin-top: 4px; }
+    .nsheet-close {
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: var(--primary-50);
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .ndetail-box {
+      background: var(--primary-50);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      margin-bottom: 14px;
+    }
+    .ndetail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 5px 0;
+      font-size: var(--font-sm);
+    }
+    .ndetail-row .k { color: var(--text-tertiary); flex-shrink: 0; }
+    .ndetail-row .v { color: var(--text); text-align: right; }
+    .nform-item { margin-bottom: 12px; }
+    .nform-label { font-size: var(--font-sm); color: var(--text-secondary); margin-bottom: 6px; }
+    .nform-label .req { color: var(--error); }
+    .nform-select, .nform-textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      font-size: var(--font-base);
+      font-family: var(--font-family);
+      color: var(--text);
+      padding: 10px 12px;
+    }
+    .nform-select { height: 46px; }
+    .nform-textarea { min-height: 76px; resize: vertical; }
+    .nform-hint { font-size: var(--font-xs); color: var(--text-tertiary); margin-top: 5px; }
+    .nsheet-actions { display: flex; gap: 10px; margin-top: 6px; }
+    .nsheet-actions .mb-btn { flex: 1; }
+    .nlink {
+      color: var(--primary-600);
+      font-size: var(--font-sm);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <div class="mb-back-bar">
+      <button class="mb-back-arrow" type="button" onclick="goBack()" aria-label="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="mb-back-title">消息通知</div>
+      <button class="ntop-action" type="button" onclick="markAllRead()">全部已读</button>
+    </div>
+
+    <!-- 分类 Tab：预警 / 设备故障 / 任务 / 系统 -->
+    <div class="ncat-tabs" id="catTabs"></div>
+
+    <!-- 二级筛选：全部 / 未读 -->
+    <div class="nfilter-row">
+      <button class="nchip active" type="button" data-unread="all" onclick="setUnread('all')">全部</button>
+      <button class="nchip" type="button" data-unread="unread" onclick="setUnread('unread')">未读</button>
+      <span class="ncount-hint" id="countHint"></span>
+    </div>
+
+    <!-- 消息列表 -->
+    <div class="nlist" id="msgList"></div>
+    <div class="nempty" id="emptyHint" style="display:none;">
+      <div class="nempty-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </div>
+      <div id="emptyText">暂无消息</div>
+    </div>
+  </div>
+
+  <!-- 预警处置底部抽屉 -->
+  <div class="mb-modal-overlay is-sheet" id="sheetOverlay" onclick="overlayClose(event)">
+    <div class="mb-modal is-sheet" id="sheet"></div>
+  </div>
+
+  <script>
+    /* ============================================================
+     * 消息通知中心（移动端）
+     * 数据源：MobileMessages 聚合层
+     *   预警 ← mushroom_alert_records（处置反馈直接回写，可转维修工单）
+     *   设备故障 ← mushroom_repair_orders
+     *   任务 ← mushroom_scan_jobs
+     *   系统 ← mushroom_sys_messages
+     * ============================================================ */
+
+    var CATS = [
+      { key: 'alert', text: '预警' },
+      { key: 'device', text: '设备故障' },
+      { key: 'task', text: '任务' },
+      { key: 'system', text: '系统' }
+    ];
+    var MM = window.MobileMessages;
+    var currentCat = 'alert';
+    var unreadOnly = false;
+    var currentAlertId = null;
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function toast(msg, type) {
+      if (window.MobileStore && typeof MobileStore.toast === 'function') {
+        MobileStore.toast(msg, type || 'info');
+        return;
+      }
+      var box = document.createElement('div');
+      box.className = 'mb-toast mb-toast-' + (type || 'info');
+      box.textContent = msg;
+      document.body.appendChild(box);
+      setTimeout(function () { box.classList.add('show'); }, 10);
+      setTimeout(function () {
+        box.classList.remove('show');
+        setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); }, 260);
+      }, 2200);
+    }
+
+    function goBack() {
+      if (window.history.length > 1) window.history.back();
+      else window.location.href = 'mb_home.html';
+    }
+
+    function navigateTo(url) { window.location.href = url; }
+
+    /* ---------- 渲染 ---------- */
+
+    function renderTabs() {
+      var bar = document.getElementById('catTabs');
+      bar.innerHTML = CATS.map(function (c) {
+        var n = MM.list(c.key, true).length;
+        return '<button class="ncat-tab' + (c.key === currentCat ? ' active' : '') + '" type="button" onclick="setCat(\'' + c.key + '\')">' +
+          esc(c.text) +
+          (n ? '<span class="ncat-badge">' + (n > 99 ? '99+' : n) + '</span>' : '') +
+        '</button>';
+      }).join('');
+    }
+
+    function statusBadge(m) {
+      var text = '';
+      if (m.cat === 'alert') text = MM.ALERT_STATUS_TEXT[m.status] || m.status;
+      else if (m.cat === 'device') text = MM.ORDER_STATUS_TEXT[m.status] || m.status;
+      else return '';
+      return '<span class="nbadge st-' + esc(m.status) + '">' + esc(text) + '</span>';
+    }
+
+    function renderList() {
+      var list = MM.list(currentCat, unreadOnly);
+      var box = document.getElementById('msgList');
+      var empty = document.getElementById('emptyHint');
+      var unread = MM.list(currentCat, true).length;
+      document.getElementById('countHint').textContent = unread ? unread + ' 条未读' : '全部已读';
+
+      if (!list.length) {
+        box.innerHTML = '';
+        empty.style.display = 'block';
+        document.getElementById('emptyText').textContent = unreadOnly
+          ? '没有未读消息'
+          : '暂无' + (MM.CAT_TEXT[currentCat] || '') + '消息';
+        return;
+      }
+      empty.style.display = 'none';
+
+      box.innerHTML = list.map(function (m) {
+        var lvCls = m.cat === 'alert' ? ' lv-' + esc(m.level) : '';
+        var lvBadge = m.cat === 'alert'
+          ? '<span class="nbadge lv-' + esc(m.level) + '">' + esc(MM.LEVEL_TEXT[m.level] || m.level) + '预警</span>'
+          : '<span class="nbadge cat">' + esc(MM.CAT_TEXT[m.cat]) + '</span>';
+        return '<div class="ncard cat-' + esc(m.cat) + lvCls + (m.read ? ' is-read' : '') + '" onclick="openMsg(\'' + esc(m.id) + '\')">' +
+          '<div class="ncard-head">' +
+            '<div class="ncard-title">' + esc(m.title) + '</div>' +
+            (m.read ? '' : '<span class="nunread-dot"></span>') +
+          '</div>' +
+          '<div class="ncard-desc">' + esc(m.desc) + '</div>' +
+          '<div class="ncard-foot">' +
+            lvBadge + statusBadge(m) +
+            '<span class="ncard-time">' + esc(MM.relTime(m.time)) + '</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function refresh() {
+      renderTabs();
+      renderList();
+    }
+
+    /* ---------- 交互 ---------- */
+
+    function setCat(cat) {
+      currentCat = cat;
+      refresh();
+    }
+
+    function setUnread(mode) {
+      unreadOnly = mode === 'unread';
+      document.querySelectorAll('.nchip').forEach(function (c) {
+        c.classList.toggle('active', c.getAttribute('data-unread') === mode);
+      });
+      renderList();
+    }
+
+    function markAllRead() {
+      if (!MM.unreadCount()) { toast('没有未读消息', 'info'); return; }
+      MM.markAllRead();
+      refresh();
+      toast('已全部标记为已读', 'success');
+    }
+
+    function openMsg(id) {
+      var m = MM.get(id);
+      if (!m) { toast('消息不存在或已失效', 'warning'); refresh(); return; }
+      MM.markRead(id);
+      if (m.cat === 'alert') {
+        openAlertSheet(m);
+      } else {
+        window.location.href = 'mb_news_detail.html?id=' + encodeURIComponent(id);
+      }
+    }
+
+    /* ---------- 预警处置抽屉 ---------- */
+
+    function alertDetailRows(a, handled) {
+      var html = '<div class="ndetail-box">' +
+        '<div class="ndetail-row"><span class="k">菇房</span><span class="v">' + esc(a.house || '—') + '</span></div>' +
+        '<div class="ndetail-row"><span class="k">指标</span><span class="v">' + esc(a.metric || '—') + '</span></div>' +
+        '<div class="ndetail-row"><span class="k">当前值</span><span class="v">' + esc(a.current || '—') + '</span></div>' +
+        '<div class="ndetail-row"><span class="k">阈值</span><span class="v">' + esc(a.threshold || '—') + '</span></div>' +
+        '<div class="ndetail-row"><span class="k">持续时长</span><span class="v">' + esc(a.duration || '—') + '</span></div>' +
+        '<div class="ndetail-row"><span class="k">预警来源</span><span class="v">' + esc(a.source || '—') + '</span></div>' +
+        '<div class="ndetail-row"><span class="k">预警时间</span><span class="v">' + esc(a.time || '—') + '</span></div>';
+      if (handled) {
+        html += '<div class="ndetail-row"><span class="k">处置措施</span><span class="v">' + esc(a.measure || '—') + '</span></div>' +
+          '<div class="ndetail-row"><span class="k">处置结果</span><span class="v">' + esc(MM.RESULT_TEXT[a.result] || a.result || '—') + '</span></div>' +
+          '<div class="ndetail-row"><span class="k">处置人</span><span class="v">' + esc(a.handledBy || '—') + '</span></div>' +
+          '<div class="ndetail-row"><span class="k">处置时间</span><span class="v">' + esc(a.handledAt || '—') + '</span></div>' +
+          (a.remark ? '<div class="ndetail-row"><span class="k">处置说明</span><span class="v">' + esc(a.remark) + '</span></div>' : '') +
+          (a.repairOrderNo ? '<div class="ndetail-row"><span class="k">关联工单</span><span class="v"><a class="nlink" href="mb_troubleshoot.html">' + esc(a.repairOrderNo) + ' ›</a></span></div>' : '');
+      }
+      return html + '</div>';
+    }
+
+    function sheetHead(a, sub) {
+      return '<div class="nsheet-head">' +
+        '<div>' +
+          '<div class="nsheet-title">' + esc(a.title) + '</div>' +
+          '<div class="nsheet-sub">' + esc(MM.LEVEL_TEXT[a.level] || a.level) + '预警 · ' + esc(sub) + '</div>' +
+        '</div>' +
+        '<button class="nsheet-close" type="button" onclick="closeSheet()" aria-label="关闭">×</button>' +
+      '</div>';
+    }
+
+    function openAlertSheet(m) {
+      currentAlertId = m.refId;
+      var a = m.raw;
+      var sheet = document.getElementById('sheet');
+      if (a.status === 'done') {
+        sheet.innerHTML = sheetHead(a, '已处置 · ' + (a.handledAt || '')) +
+          alertDetailRows(a, true) +
+          '<div class="nsheet-actions">' +
+            '<button class="mb-btn" type="button" style="border:1px solid var(--border);color:var(--text-secondary);" onclick="closeSheet()">关闭</button>' +
+            '<button class="mb-btn mb-btn-primary" type="button" onclick="navigateTo(\'mb_alert.html\')">查看预警处置</button>' +
+          '</div>';
+      } else {
+        sheet.innerHTML = sheetHead(a, MM.ALERT_STATUS_TEXT[a.status] || a.status) +
+          alertDetailRows(a, false) +
+          '<div class="nform-item">' +
+            '<div class="nform-label">处置措施 <span class="req">*</span></div>' +
+            '<select class="nform-select" id="fMeasure">' +
+              '<option value="">请选择处置措施</option>' +
+              '<option value="调整阈值">调整阈值</option>' +
+              '<option value="启停设备">启停设备</option>' +
+              '<option value="现场检修">现场检修</option>' +
+              '<option value="上报主管">上报主管</option>' +
+              '<option value="其他">其他</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="nform-item">' +
+            '<div class="nform-label">处置结果 <span class="req">*</span></div>' +
+            '<select class="nform-select" id="fResult" onchange="toggleRemarkHint()">' +
+              '<option value="">请选择处置结果</option>' +
+              '<option value="restored">已恢复</option>' +
+              '<option value="observe">待观察</option>' +
+              '<option value="repair">需转维修工单</option>' +
+            '</select>' +
+          '</div>' +
+          '<div class="nform-item">' +
+            '<div class="nform-label">处置说明</div>' +
+            '<textarea class="nform-textarea" id="fRemark" maxlength="200" placeholder="补充现场处置过程、复测结果等"></textarea>' +
+            '<div class="nform-hint" id="remarkHint">选填；处置结果为「需转维修工单」时必填</div>' +
+          '</div>' +
+          '<div class="nsheet-actions">' +
+            '<button class="mb-btn" type="button" style="border:1px solid var(--border);color:var(--text-secondary);" onclick="closeSheet()">取消</button>' +
+            '<button class="mb-btn mb-btn-primary" type="button" onclick="submitDispose()">提交处置</button>' +
+          '</div>';
+      }
+      document.getElementById('sheetOverlay').classList.add('show');
+      document.body.style.overflow = 'hidden';
+      refresh();
+    }
+
+    function closeSheet() {
+      document.getElementById('sheetOverlay').classList.remove('show');
+      document.body.style.overflow = '';
+      currentAlertId = null;
+    }
+
+    function overlayClose(e) {
+      if (e.target === document.getElementById('sheetOverlay')) closeSheet();
+    }
+
+    function toggleRemarkHint() {
+      var r = document.getElementById('fResult');
+      var hint = document.getElementById('remarkHint');
+      if (!r || !hint) return;
+      if (r.value === 'repair') {
+        hint.textContent = '转维修工单必填：请说明故障情况与现场处置';
+        hint.style.color = 'var(--error)';
+      } else {
+        hint.textContent = '选填；处置结果为「需转维修工单」时必填';
+        hint.style.color = '';
+      }
+    }
+
+    function submitDispose() {
+      if (!currentAlertId) return;
+      var measure = (document.getElementById('fMeasure') || {}).value || '';
+      var result = (document.getElementById('fResult') || {}).value || '';
+      var remarkEl = document.getElementById('fRemark');
+      var remark = remarkEl ? String(remarkEl.value || '').trim() : '';
+
+      if (!measure) { toast('请选择处置措施', 'warning'); return; }
+      if (!result) { toast('请选择处置结果', 'warning'); return; }
+      if (result === 'repair' && !remark) {
+        toast('转维修工单需填写处置说明', 'warning');
+        if (remarkEl) remarkEl.focus();
+        return;
+      }
+      if (!window.confirm('确认提交本次处置结果？提交后该预警将标记为已处置。')) return;
+
+      var res = MM.disposeAlert(currentAlertId, { measure: measure, result: result, remark: remark });
+      if (!res.ok) { toast(res.message, 'warning'); closeSheet(); refresh(); return; }
+      closeSheet();
+      refresh();
+      toast(res.message, result === 'repair' ? 'warning' : 'success');
+    }
+
+    /* ---------- 初始化 ---------- */
+
+    var params = new URLSearchParams(window.location.search || '');
+    var catParam = params.get('cat');
+    if (catParam && MM.CAT_TEXT[catParam]) currentCat = catParam;
+
+    refresh();
+
+    /* 其他标签页更新业务数据后实时刷新 */
+    window.addEventListener('storage', function (e) {
+      if (!e.key) return;
+      if (e.key.indexOf('mushroom_') === 0) refresh();
+    });
+  </script>
+</body>
+</html>

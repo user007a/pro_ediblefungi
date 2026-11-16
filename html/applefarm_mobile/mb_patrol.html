@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>食用菌环境监测系统 - 质量抽检</title>
+  <link rel="stylesheet" href="css/mobile-design-system.css">
+  <script src="js/mobile-store.js"></script>
+  <style>
+    /* ===== 菌菇工厂主题 v2.1：中性画布 + 品牌棕点缀（头部/主按钮/选中态）；
+       状态色用设计系统惯例绿/琥珀/红/蓝，全棕暖调仅消费者追溯 H5 使用 ===== */
+    :root {
+      --bg: #FAF9F7;
+      --text: #26221E;
+      --text-secondary: #55504A;
+      --text-tertiary: #7A7268;
+      --border: #E6E1D8;
+      --border-light: #F0EDE7;
+      --shadow-card: 0 2px 12px rgba(69, 48, 35, 0.08);
+    }
+    body { background: var(--bg); }
+
+    .mb-app { padding-bottom: 32px; }
+
+    /* ---------- 统计卡 ---------- */
+    .qc-stats {
+      margin: var(--space-4);
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-card);
+      padding: 14px 12px 12px;
+    }
+    .qc-stats-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px 10px;
+    }
+    .qc-stats-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-md);
+      font-weight: 700;
+      color: var(--text);
+    }
+    .qc-demo {
+      display: none;
+      font-size: var(--font-2xs);
+      font-weight: 600;
+      color: var(--warning-dark);
+      background: var(--warning-light);
+      border-radius: var(--radius-full);
+      padding: 1px 8px;
+    }
+    .qc-demo.show { display: inline-block; }
+    .qc-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .qc-stat {
+      background: var(--primary-50);
+      border-radius: var(--radius-md);
+      padding: 10px 6px;
+      text-align: center;
+    }
+    .qc-stat-value {
+      font-size: var(--font-xl);
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--primary-700);
+      font-family: var(--font-family-number);
+      white-space: nowrap;
+    }
+    .qc-stat-value small { font-size: var(--font-2xs); font-weight: 500; margin-left: 1px; color: var(--text-tertiary); }
+    .qc-stat-value.bad { color: var(--error-dark); }
+    .qc-stat-label { font-size: var(--font-2xs); color: var(--text-tertiary); margin-top: 3px; }
+
+    /* ---------- 卡片 ---------- */
+    .qc-card {
+      margin: var(--space-4);
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      box-shadow: var(--shadow-card);
+    }
+    .qc-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .qc-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--font-md);
+      font-weight: 700;
+      color: var(--text);
+    }
+    .qc-card-sub { font-size: var(--font-2xs); color: var(--text-tertiary); }
+
+    /* ---------- 表单 ---------- */
+    .qc-field { margin-bottom: 14px; }
+    .qc-field:last-child { margin-bottom: 0; }
+    .qc-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: var(--font-sm);
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .qc-label b { color: var(--error); font-weight: 600; }
+    .qc-label .hint { font-size: var(--font-2xs); color: var(--text-tertiary); }
+    .qc-input, .qc-select {
+      width: 100%;
+      height: 44px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      color: var(--text);
+      font-size: var(--font-base);
+      font-family: inherit;
+    }
+    .qc-input:focus, .qc-select:focus { outline: none; border-color: var(--primary); }
+    .qc-input[readonly] { background: var(--primary-50); color: var(--text-secondary); }
+    .qc-input.has-error { border-color: var(--error); background: var(--error-light); }
+    .qc-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .qc-row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .qc-err {
+      display: none;
+      font-size: var(--font-2xs);
+      color: var(--error-dark);
+      margin-top: 5px;
+      line-height: 1.4;
+    }
+    .qc-err.show { display: block; }
+
+    /* ---------- 感官判定 ---------- */
+    .qc-sense { padding: 10px 0; border-bottom: 1px dashed var(--border); }
+    .qc-sense[data-key="color"] { padding-top: 0; }
+    .qc-sense[data-key="impurity"] { border-bottom: none; padding-bottom: 0; }
+    .qc-sense-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .qc-sense-name { font-size: var(--font-sm); font-weight: 600; color: var(--text); }
+    .qc-sense-tip { font-size: var(--font-2xs); color: var(--text-tertiary); }
+    .qc-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .qc-seg-btn {
+      height: 38px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      font-family: inherit;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+    .qc-seg-btn:active { transform: scale(0.98); }
+    .qc-seg-btn.active.pass {
+      background: var(--success);
+      border-color: var(--success);
+      color: var(--text-inverse);
+      font-weight: 600;
+    }
+    .qc-seg-btn.active.fail {
+      background: var(--error);
+      border-color: var(--error);
+      color: var(--text-inverse);
+      font-weight: 600;
+    }
+    .qc-seg-btn.has-error { border-color: var(--error); }
+
+    /* ---------- 结论 ---------- */
+    .qc-conclusion {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin: 6px 0 12px;
+      background: var(--info-light);
+    }
+    .qc-conclusion-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-100);
+      color: var(--primary-700);
+    }
+    .qc-conclusion-icon svg { width: 22px; height: 22px; }
+    .qc-conclusion-main { flex: 1; min-width: 0; }
+    .qc-conclusion-title { font-size: var(--font-md); font-weight: 700; color: var(--text); }
+    .qc-conclusion-desc { font-size: var(--font-2xs); color: var(--text-secondary); margin-top: 2px; line-height: 1.5; word-break: break-all; }
+    .qc-conclusion.is-pass { background: var(--success-light); }
+    .qc-conclusion.is-pass .qc-conclusion-icon { background: var(--success); color: var(--text-inverse); }
+    .qc-conclusion.is-fail { background: var(--error-light); }
+    .qc-conclusion.is-fail .qc-conclusion-icon { background: var(--error); color: var(--text-inverse); }
+    .qc-conclusion.is-fail .qc-conclusion-title { color: var(--error-dark); }
+
+    /* ---------- 处置 ---------- */
+    .qc-disposal { display: none; }
+    .qc-disposal.show { display: block; }
+    .qc-chips { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .qc-chip {
+      height: 40px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      color: var(--text-secondary);
+      font-size: var(--font-sm);
+      font-family: inherit;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .qc-chip.active {
+      background: var(--warning-light);
+      border-color: var(--warning-dark);
+      color: var(--warning-dark);
+      font-weight: 600;
+    }
+    .qc-chip.has-error { border-color: var(--error); }
+
+    /* ---------- 记录列表 ---------- */
+    .qc-rec {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+    }
+    .qc-rec:last-child { border-bottom: none; }
+    .qc-rec:active { background: var(--primary-50); }
+    .qc-rec-main { flex: 1; min-width: 0; }
+    .qc-rec-id { font-size: var(--font-sm); font-weight: 700; color: var(--text); }
+    .qc-rec-desc {
+      font-size: var(--font-2xs);
+      color: var(--text-secondary);
+      margin-top: 3px;
+      line-height: 1.5;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .qc-rec-side { text-align: right; flex-shrink: 0; }
+    .qc-rec-time { font-size: var(--font-2xs); color: var(--text-tertiary); margin-top: 4px; }
+    .qc-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 8px;
+      border-radius: var(--radius-full);
+      font-size: var(--font-2xs);
+      font-weight: 600;
+      line-height: 1.7;
+    }
+    .qc-badge.pass { background: var(--success); color: var(--text-inverse); }
+    .qc-badge.fail { background: var(--error); color: var(--text-inverse); }
+    .qc-badge.pending { background: var(--warning); color: var(--text-inverse); margin-left: 4px; }
+    .qc-empty { padding: 26px 12px; text-align: center; font-size: var(--font-sm); color: var(--text-tertiary); }
+
+    /* ---------- 详情 ---------- */
+    .qc-detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: var(--font-sm);
+    }
+    .qc-detail-row:last-child { border-bottom: none; }
+    .qc-detail-row span { color: var(--text-tertiary); flex-shrink: 0; }
+    .qc-detail-row b { color: var(--text); font-weight: 600; text-align: right; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <div class="mb-app">
+    <div class="mb-back-bar">
+      <button class="mb-back-arrow" type="button" onclick="goHome()" aria-label="返回">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="mb-back-title">质量抽检</div>
+    </div>
+
+    <!-- 近 7 日统计 -->
+    <div class="qc-stats">
+      <div class="qc-stats-head">
+        <div class="qc-stats-title"><span class="mb-section-dot"></span>近 7 日抽检</div>
+        <span class="qc-demo" id="demoTag">示例数据</span>
+      </div>
+      <div class="qc-stats-grid">
+        <div class="qc-stat">
+          <div class="qc-stat-value" id="statBatches">0<small>批</small></div>
+          <div class="qc-stat-label">抽检批次</div>
+        </div>
+        <div class="qc-stat">
+          <div class="qc-stat-value" id="statRate">—</div>
+          <div class="qc-stat-label">合格率</div>
+        </div>
+        <div class="qc-stat">
+          <div class="qc-stat-value" id="statBad">0<small>批</small></div>
+          <div class="qc-stat-label">不合格批次</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="syncBar"></div>
+    <!-- 抽检表单 -->
+    <div class="qc-card">
+      <div class="qc-card-head">
+        <div class="qc-card-title"><span class="mb-section-dot"></span>采收前抽检</div>
+        <span class="qc-card-sub">重量 · 规格 · 感官</span>
+      </div>
+
+      <div class="qc-field">
+        <div class="qc-label"><span>批次号 <b>*</b></span><span class="hint">选择后联动菇房/品种</span></div>
+        <select class="qc-select" id="qBatch" onchange="onBatchChange()"></select>
+        <div class="qc-err" id="errBatch">请选择批次号</div>
+      </div>
+
+      <div class="qc-row2">
+        <div class="qc-field">
+          <div class="qc-label"><span>菇房</span></div>
+          <input class="qc-input" id="qHouse" readonly value="—">
+        </div>
+        <div class="qc-field">
+          <div class="qc-label"><span>品种</span></div>
+          <input class="qc-input" id="qVariety" readonly value="杏鲍菇">
+        </div>
+      </div>
+
+      <div class="qc-row3">
+        <div class="qc-field">
+          <div class="qc-label"><span>抽样数量<b>*</b></span></div>
+          <input class="qc-input" id="qCount" type="number" inputmode="numeric" min="1" max="200" step="1" placeholder="颗">
+          <div class="qc-err" id="errCount"></div>
+        </div>
+        <div class="qc-field">
+          <div class="qc-label"><span>单菇均重<b>*</b></span></div>
+          <input class="qc-input" id="qWeight" type="number" inputmode="decimal" min="5" max="500" step="0.1" placeholder="g">
+          <div class="qc-err" id="errWeight"></div>
+        </div>
+        <div class="qc-field">
+          <div class="qc-label"><span>菌盖直径<b>*</b></span></div>
+          <input class="qc-input" id="qDia" type="number" inputmode="decimal" min="1" max="15" step="0.1" placeholder="cm">
+          <div class="qc-err" id="errDia"></div>
+        </div>
+      </div>
+
+      <div class="qc-field">
+        <div class="qc-label"><span>感官判定 <b>*</b></span><span class="hint">每项二选一</span></div>
+        <div class="qc-sense" data-key="color">
+          <div class="qc-sense-head">
+            <span class="qc-sense-name">色泽</span>
+            <span class="qc-sense-tip">菌盖洁白、无水渍</span>
+          </div>
+          <div class="qc-seg">
+            <button class="qc-seg-btn" type="button" data-key="color" data-val="pass" onclick="setSense(this)">合格</button>
+            <button class="qc-seg-btn" type="button" data-key="color" data-val="fail" onclick="setSense(this)">不合格</button>
+          </div>
+        </div>
+        <div class="qc-sense" data-key="shape">
+          <div class="qc-sense-head">
+            <span class="qc-sense-name">形态</span>
+            <span class="qc-sense-tip">菌柄挺直、无畸形</span>
+          </div>
+          <div class="qc-seg">
+            <button class="qc-seg-btn" type="button" data-key="shape" data-val="pass" onclick="setSense(this)">合格</button>
+            <button class="qc-seg-btn" type="button" data-key="shape" data-val="fail" onclick="setSense(this)">不合格</button>
+          </div>
+        </div>
+        <div class="qc-sense" data-key="smell">
+          <div class="qc-sense-head">
+            <span class="qc-sense-name">气味</span>
+            <span class="qc-sense-tip">菌香正常、无异味</span>
+          </div>
+          <div class="qc-seg">
+            <button class="qc-seg-btn" type="button" data-key="smell" data-val="pass" onclick="setSense(this)">合格</button>
+            <button class="qc-seg-btn" type="button" data-key="smell" data-val="fail" onclick="setSense(this)">不合格</button>
+          </div>
+        </div>
+        <div class="qc-sense" data-key="impurity">
+          <div class="qc-sense-head">
+            <span class="qc-sense-name">杂质</span>
+            <span class="qc-sense-tip">无泥土、无培养料残留</span>
+          </div>
+          <div class="qc-seg">
+            <button class="qc-seg-btn" type="button" data-key="impurity" data-val="pass" onclick="setSense(this)">合格</button>
+            <button class="qc-seg-btn" type="button" data-key="impurity" data-val="fail" onclick="setSense(this)">不合格</button>
+          </div>
+        </div>
+        <div class="qc-err" id="errSense">请完成 4 项感官判定</div>
+      </div>
+
+      <div class="qc-conclusion" id="conclusionBox">
+        <div class="qc-conclusion-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <div class="qc-conclusion-main">
+          <div class="qc-conclusion-title" id="conclusionTitle">抽检结论：待判定</div>
+          <div class="qc-conclusion-desc" id="conclusionDesc">完成 4 项感官判定后自动生成结论</div>
+        </div>
+      </div>
+
+      <div class="qc-field qc-disposal" id="disposalField">
+        <div class="qc-label"><span>不合格处置 <b>*</b></span><span class="hint">结论不合格时必填</span></div>
+        <div class="qc-chips" id="disposalChips">
+          <button class="qc-chip" type="button" data-val="降级" onclick="setDisposal(this)">降级</button>
+          <button class="qc-chip" type="button" data-val="报废" onclick="setDisposal(this)">报废</button>
+          <button class="qc-chip" type="button" data-val="返工" onclick="setDisposal(this)">返工</button>
+        </div>
+        <div class="qc-err" id="errDisposal">请选择不合格处置方式</div>
+      </div>
+
+      <div class="qc-row2">
+        <div class="qc-field">
+          <div class="qc-label"><span>抽检人</span></div>
+          <input class="qc-input" id="qInspector" value="李国强">
+        </div>
+        <div class="qc-field">
+          <div class="qc-label"><span>抽检时间 <b>*</b></span></div>
+          <input class="qc-input" id="qTime" type="datetime-local">
+          <div class="qc-err" id="errTime">请选择抽检时间</div>
+        </div>
+      </div>
+
+      <button class="mb-btn mb-btn-primary mb-btn-block mb-btn-lg" type="button" onclick="submitForm()">提交抽检单</button>
+    </div>
+    <!-- 抽检记录 -->
+    <div class="qc-card" style="padding:0;overflow:hidden;">
+      <div class="qc-card-head" style="padding:14px 16px 10px;margin-bottom:0;">
+        <div class="qc-card-title"><span class="mb-section-dot"></span>今日抽检记录</div>
+        <span class="qc-card-sub" id="recCount">0 条</span>
+      </div>
+      <div id="recList"></div>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <div class="mb-modal-overlay is-sheet" id="detailModal">
+      <div class="mb-modal is-sheet">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:var(--font-lg);font-weight:700;color:var(--text);" id="detailId">抽检单详情</div>
+          <button class="mb-btn mb-btn-icon" type="button" onclick="closeDetail()" aria-label="关闭" style="background:var(--primary-50);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div id="detailBody"></div>
+        <div class="mb-modal-actions">
+          <button class="mb-btn mb-btn-secondary" type="button" onclick="closeDetail()">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    var KEY = 'mushroom_quality_records';
+    var BATCHES = {
+      'JB-20261116-01': { house: '一号出菇房 GF-01', variety: '杏鲍菇' },
+      'JB-20261116-02': { house: '二号出菇房 GF-02', variety: '杏鲍菇' },
+      'JB-20261115-06': { house: '三号出菇房 GF-03', variety: '杏鲍菇' }
+    };
+    var SENSES = [
+      { key: 'color', name: '色泽' },
+      { key: 'shape', name: '形态' },
+      { key: 'smell', name: '气味' },
+      { key: 'impurity', name: '杂质' }
+    ];
+    var senseState = {};
+    var disposal = '';
+
+    function $(id) { return document.getElementById(id); }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function toast(msg, type) {
+      if (window.MobileStore && MobileStore.toast) MobileStore.toast(msg, type || 'success');
+      else alert(msg);
+    }
+
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    function dateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+
+    function readRecords() {
+      try {
+        var v = JSON.parse(localStorage.getItem(KEY) || '[]');
+        return Array.isArray(v) ? v : [];
+      } catch (e) { return []; }
+    }
+
+    function saveRecords(arr) {
+      try { localStorage.setItem(KEY, JSON.stringify(arr)); }
+      catch (e) { toast('本地存储空间不足，保存失败', 'error'); }
+    }
+
+    function todayRecords() {
+      var today = dateKey(new Date());
+      return readRecords().filter(function (r) {
+        var d = new Date(String(r.time || '').replace(/-/g, '/'));
+        return !isNaN(d.getTime()) && dateKey(d) === today;
+      }).sort(function (a, b) {
+        return new Date(String(b.time).replace(/-/g, '/')) - new Date(String(a.time).replace(/-/g, '/'));
+      });
+    }
+
+    /* ---------- 批次联动 ---------- */
+    function initBatch() {
+      var html = '<option value="">请选择批次号</option>';
+      Object.keys(BATCHES).forEach(function (id) {
+        html += '<option value="' + esc(id) + '">' + esc(id) + '</option>';
+      });
+      $('qBatch').innerHTML = html;
+    }
+
+    function onBatchChange() {
+      var b = BATCHES[$('qBatch').value];
+      $('qHouse').value = b ? b.house : '—';
+      $('qVariety').value = b ? b.variety : '—';
+      setErr('errBatch', '', false);
+    }
+
+    function setErr(id, msg, show) {
+      var el = $(id);
+      if (!el) return;
+      el.textContent = msg || '';
+      el.classList.toggle('show', !!show);
+    }
+
+    /* ---------- 感官判定 ---------- */
+    function setSense(btn) {
+      var key = btn.getAttribute('data-key');
+      var val = btn.getAttribute('data-val');
+      senseState[key] = val;
+      document.querySelectorAll('.qc-seg-btn[data-key="' + key + '"]').forEach(function (b) {
+        b.classList.remove('active', 'pass', 'fail', 'has-error');
+        if (b.getAttribute('data-val') === val) b.classList.add('active', val);
+      });
+      setErr('errSense', '', false);
+      updateConclusion();
+    }
+
+    function setDisposal(btn) {
+      disposal = btn.getAttribute('data-val');
+      document.querySelectorAll('.qc-chip').forEach(function (b) {
+        b.classList.toggle('active', b === btn);
+        if (b === btn) b.classList.remove('has-error');
+      });
+      setErr('errDisposal', '', false);
+    }
+
+    function badSenseNames() {
+      return SENSES.filter(function (s) { return senseState[s.key] === 'fail'; })
+        .map(function (s) { return s.name; });
+    }
+
+    function hasConclusion() {
+      return SENSES.every(function (s) { return senseState[s.key] === 'pass' || senseState[s.key] === 'fail'; });
+    }
+
+    function currentConclusion() {
+      if (!hasConclusion()) return '';
+      return badSenseNames().length ? '不合格' : '合格';
+    }
+
+    function updateConclusion() {
+      var box = $('conclusionBox');
+      var title = $('conclusionTitle');
+      var desc = $('conclusionDesc');
+      box.classList.remove('is-pass', 'is-fail');
+
+      if (!hasConclusion()) {
+        title.textContent = '抽检结论：待判定';
+        desc.textContent = '完成 4 项感官判定后自动生成结论';
+        $('disposalField').classList.remove('show');
+        return;
+      }
+      var bad = badSenseNames();
+      if (!bad.length) {
+        box.classList.add('is-pass');
+        title.textContent = '抽检结论：合格';
+        desc.textContent = '色泽、形态、气味、杂质 4 项均合格，准予采收分级';
+        $('disposalField').classList.remove('show');
+        disposal = '';
+        document.querySelectorAll('.qc-chip').forEach(function (b) { b.classList.remove('active', 'has-error'); });
+        setErr('errDisposal', '', false);
+      } else {
+        box.classList.add('is-fail');
+        title.textContent = '抽检结论：不合格';
+        desc.textContent = '不合格项：' + bad.join('、');
+        $('disposalField').classList.add('show');
+      }
+    }
+
+    /* ---------- 数值校验 ---------- */
+    function checkNumber(id, min, max, label, errId, intOnly) {
+      var raw = $(id).value;
+      var v = parseFloat(raw);
+      if (raw === '') {
+        setErr(errId, '请输入' + label, true);
+        $(id).classList.add('has-error');
+        return false;
+      }
+      if (isNaN(v) || v < min || v > max) {
+        setErr(errId, label + '需在 ' + min + '~' + max + ' 之间', true);
+        $(id).classList.add('has-error');
+        return false;
+      }
+      if (intOnly && v % 1 !== 0) {
+        setErr(errId, label + '需为整数', true);
+        $(id).classList.add('has-error');
+        return false;
+      }
+      setErr(errId, '', false);
+      $(id).classList.remove('has-error');
+      return true;
+    }
+
+    function liveCheck() {
+      if ($('qCount').value !== '') checkNumber('qCount', 1, 200, '抽样数量（颗）', 'errCount', true);
+      if ($('qWeight').value !== '') checkNumber('qWeight', 5, 500, '单菇均重（g）', 'errWeight');
+      if ($('qDia').value !== '') checkNumber('qDia', 1, 15, '菌盖直径（cm）', 'errDia');
+    }
+
+    function validate() {
+      var ok = true;
+      if (!$('qBatch').value) { setErr('errBatch', '请选择批次号', true); ok = false; }
+      else setErr('errBatch', '', false);
+
+      if (!checkNumber('qCount', 1, 200, '抽样数量（颗）', 'errCount', true)) ok = false;
+      if (!checkNumber('qWeight', 5, 500, '单菇均重（g）', 'errWeight')) ok = false;
+      if (!checkNumber('qDia', 1, 15, '菌盖直径（cm）', 'errDia')) ok = false;
+
+      if (!hasConclusion()) {
+        setErr('errSense', '请完成 4 项感官判定', true);
+        document.querySelectorAll('.qc-seg-btn').forEach(function (b) {
+          var k = b.getAttribute('data-key');
+          if (!senseState[k]) b.classList.add('has-error');
+        });
+        ok = false;
+      } else { setErr('errSense', '', false); }
+
+      if (currentConclusion() === '不合格' && !disposal) {
+        setErr('errDisposal', '请选择不合格处置方式', true);
+        document.querySelectorAll('.qc-chip').forEach(function (b) { b.classList.add('has-error'); });
+        ok = false;
+      }
+
+      if (!$('qTime').value) { setErr('errTime', '请选择抽检时间', true); ok = false; }
+      else setErr('errTime', '', false);
+
+      return ok;
+    }
+
+    /* ---------- 提交 ---------- */
+    function genId() {
+      var prefix = 'ZJ-' + dateKey(new Date()).replace(/-/g, '') + '-';
+      var max = 0;
+      readRecords().forEach(function (r) {
+        if (String(r.id || '').indexOf(prefix) === 0) {
+          var n = parseInt(String(r.id).slice(prefix.length), 10);
+          if (!isNaN(n) && n > max) max = n;
+        }
+      });
+      return prefix + pad(max + 1);
+    }
+
+    function submitForm() {
+      if (!validate()) {
+        toast('请先修正表单中的错误项', 'warning');
+        return;
+      }
+      var batch = $('qBatch').value;
+      var meta = BATCHES[batch] || {};
+      var bad = badSenseNames();
+      var conclusion = bad.length ? '不合格' : '合格';
+      var online = !(window.MobileStore && MobileStore.isOnline && !MobileStore.isOnline());
+
+      var rec = {
+        id: genId(),
+        batch: batch,
+        house: meta.house || '',
+        variety: meta.variety || '杏鲍菇',
+        sampleCount: parseInt($('qCount').value, 10),
+        avgWeight: parseFloat($('qWeight').value),
+        diameter: parseFloat($('qDia').value),
+        senses: {
+          color: senseState.color,
+          shape: senseState.shape,
+          smell: senseState.smell,
+          impurity: senseState.impurity
+        },
+        conclusion: conclusion,
+        disposal: conclusion === '不合格' ? disposal : '',
+        inspector: $('qInspector').value.trim() || '李国强',
+        time: $('qTime').value.replace('T', ' '),
+        status: online ? 'submitted' : 'pending'
+      };
+      if (bad.length) rec.badItems = bad;
+
+      var arr = readRecords();
+      arr.unshift(rec);
+      saveRecords(arr);
+
+      if (!online) {
+        if (window.MobileStore && MobileStore.enqueue) {
+          MobileStore.enqueue({ type: 'quality_record', refId: rec.id, payload: rec });
+        }
+        toast('已离线保存，联网后自动同步', 'warning');
+      } else {
+        toast('抽检单 ' + rec.id + ' 已生成', conclusion === '合格' ? 'success' : 'warning');
+      }
+
+      resetForm();
+      renderAll();
+    }
+
+    function resetForm() {
+      $('qCount').value = '';
+      $('qWeight').value = '';
+      $('qDia').value = '';
+      senseState = {};
+      disposal = '';
+      document.querySelectorAll('.qc-seg-btn').forEach(function (b) {
+        b.classList.remove('active', 'pass', 'fail', 'has-error');
+      });
+      document.querySelectorAll('.qc-chip').forEach(function (b) { b.classList.remove('active', 'has-error'); });
+      ['qCount', 'qWeight', 'qDia'].forEach(function (id) { $(id).classList.remove('has-error'); });
+      setErr('errCount', '', false);
+      setErr('errWeight', '', false);
+      setErr('errDia', '', false);
+      setErr('errSense', '', false);
+      setErr('errDisposal', '', false);
+      var now = new Date();
+      $('qTime').value = dateKey(now) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+      updateConclusion();
+    }
+
+    /* ---------- 统计 ---------- */
+    function renderStats() {
+      var since = Date.now() - 7 * 24 * 3600 * 1000;
+      var list = readRecords().filter(function (r) {
+        var d = new Date(String(r.time || '').replace(/-/g, '/'));
+        return !isNaN(d.getTime()) && d.getTime() >= since;
+      });
+      var demo = list.length === 0;
+
+      if (demo) {
+        $('statBatches').innerHTML = '18<small>批</small>';
+        $('statRate').textContent = '94.4%';
+        $('statBad').innerHTML = '1<small>批</small>';
+        $('statBad').className = 'qc-stat-value bad';
+      } else {
+        var batchSet = {}, badSet = {}, passCount = 0;
+        list.forEach(function (r) {
+          batchSet[r.batch] = 1;
+          if (r.conclusion === '合格') passCount++;
+          else badSet[r.batch] = 1;
+        });
+        var batchN = Object.keys(batchSet).length;
+        var badN = Object.keys(badSet).length;
+        $('statBatches').innerHTML = batchN + '<small>批</small>';
+        $('statRate').textContent = (passCount / list.length * 100).toFixed(1) + '%';
+        $('statBad').innerHTML = badN + '<small>批</small>';
+        $('statBad').className = 'qc-stat-value' + (badN > 0 ? ' bad' : '');
+      }
+      $('demoTag').classList.toggle('show', demo);
+    }
+
+    /* ---------- 记录列表 ---------- */
+    function renderList() {
+      var list = todayRecords();
+      $('recCount').textContent = list.length + ' 条';
+      var box = $('recList');
+      if (!list.length) {
+        box.innerHTML = '<div class="qc-empty">今日暂无抽检记录</div>';
+        return;
+      }
+      box.innerHTML = list.map(function (r, i) {
+        var pass = r.conclusion === '合格';
+        var badText = (r.badItems && r.badItems.length) ? '不合格项：' + r.badItems.join('、') : '感官 4 项全部合格';
+        return '' +
+          '<div class="qc-rec" onclick="openDetail(' + i + ')">' +
+            '<div class="qc-rec-main">' +
+              '<div class="qc-rec-id">' + esc(r.id) + '</div>' +
+              '<div class="qc-rec-desc">' + esc(r.batch) + ' · ' + esc(r.house) + '</div>' +
+              '<div class="qc-rec-desc">' + esc(badText) + '</div>' +
+            '</div>' +
+            '<div class="qc-rec-side">' +
+              '<span class="qc-badge ' + (pass ? 'pass' : 'fail') + '">' + esc(r.conclusion) + '</span>' +
+              (r.status === 'pending' ? '<span class="qc-badge pending">待同步</span>' : '') +
+              '<div class="qc-rec-time">' + esc(String(r.time).slice(11, 16)) + '</div>' +
+            '</div>' +
+          '</div>';
+      }).join('');
+    }
+
+    function renderAll() {
+      renderStats();
+      renderList();
+    }
+
+    /* ---------- 详情 ---------- */
+    function row(k, v) {
+      return '<div class="qc-detail-row"><span>' + esc(k) + '</span><b>' + esc(v) + '</b></div>';
+    }
+
+    function openDetail(i) {
+      var r = todayRecords()[i];
+      if (!r) return;
+      $('detailId').textContent = r.id;
+      var senseText = SENSES.map(function (s) {
+        return s.name + '：' + (r.senses && r.senses[s.key] === 'fail' ? '不合格' : '合格');
+      }).join(' · ');
+      $('detailBody').innerHTML = '' +
+        row('批次号', r.batch) +
+        row('菇房', r.house) +
+        row('品种', r.variety) +
+        row('抽样数量', r.sampleCount + ' 颗') +
+        row('单菇均重', Number(r.avgWeight).toFixed(1) + ' g') +
+        row('菌盖直径', Number(r.diameter).toFixed(1) + ' cm') +
+        row('感官判定', senseText) +
+        row('抽检结论', r.conclusion) +
+        row('不合格项', (r.badItems && r.badItems.length) ? r.badItems.join('、') : '—') +
+        row('不合格处置', r.disposal || '—') +
+        row('抽检人', r.inspector) +
+        row('抽检时间', r.time) +
+        row('状态', r.status === 'pending' ? '待同步' : '已提交');
+      $('detailModal').classList.add('show');
+    }
+
+    function closeDetail() { $('detailModal').classList.remove('show'); }
+
+    function goHome() { window.location.href = 'mb_home.html'; }
+
+    /* ---------- 初始化 ---------- */
+    document.addEventListener('DOMContentLoaded', function () {
+      initBatch();
+      var now = new Date();
+      $('qTime').value = dateKey(now) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+      $('qInspector').value = sessionStorage.getItem('loginUser') || '李国强';
+      ['qCount', 'qWeight', 'qDia'].forEach(function (id) {
+        $(id).addEventListener('input', liveCheck);
+      });
+      updateConclusion();
+      renderAll();
+      if (window.MobileStore && $('syncBar')) MobileStore.renderSyncBar($('syncBar'));
+      $('detailModal').addEventListener('click', function (e) { if (e.target === this) closeDetail(); });
+    });
+  </script>
+</body>
+</html>

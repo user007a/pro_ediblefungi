@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工厂化农业数据管理系统 - 全链条录入</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,21,41,0.5); display:flex; align-items:center; justify-content:center; z-index:1200; opacity:0; visibility:hidden; transition:all .25s ease; }
+  .modal-overlay.active { opacity:1; visibility:visible; }
+  .modal { background:var(--bg-card); border-radius:16px; width:520px; max-width:92vw; max-height:90vh; overflow:hidden; transform:scale(.92); transition:all .25s ease; display:flex; flex-direction:column; }
+  .modal-overlay.active .modal { transform:scale(1); }
+  .modal-header { padding:18px 24px; border-bottom:1px solid var(--border-default); display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#1890ff 0%,#13c2c2 100%); color:#fff; flex-shrink:0; }
+  .modal-header h3 { font-size:17px; font-weight:600; margin:0; color:#fff; }
+  .modal-close { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.2); border:none; color:#fff; cursor:pointer; font-size:16px; line-height:1; }
+  .modal-close:hover { background:rgba(255,255,255,.32); }
+  .modal-body { padding:22px 24px; overflow-y:auto; }
+  .modal-footer { padding:14px 24px; border-top:1px solid var(--border-default); display:flex; justify-content:flex-end; gap:12px; flex-shrink:0; }
+  .form-group { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
+  .form-group label { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .form-group input, .form-group select { padding:9px 12px; border:1px solid var(--border-default); border-radius:8px; font-size:14px; transition:all .2s; background:#fff; color:var(--text-primary); }
+  .form-group input:focus, .form-group select:focus { outline:none; border-color:#1890ff; box-shadow:0 0 0 3px rgba(24,144,255,.12); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-hint { font-size:12px; color:var(--text-tertiary); }
+  .req { color:#ff4d4f; }
+  .detail-grid { display:grid; grid-template-columns:100px 1fr; gap:10px; padding:8px 0; border-bottom:1px dashed var(--border-light); font-size:13px; }
+  .detail-grid:last-child { border-bottom:none; }
+  .detail-label { color:var(--text-tertiary); }
+  .detail-value { color:var(--text-primary); font-weight:500; word-break:break-all; }
+  .drawer-overlay { position:fixed; inset:0; background:rgba(0,21,41,.45); z-index:1100; opacity:0; visibility:hidden; transition:all .25s; }
+  .drawer-overlay.active { opacity:1; visibility:visible; }
+  .drawer { position:fixed; top:0; right:0; bottom:0; width:500px; max-width:94vw; background:var(--bg-card); z-index:1101; transform:translateX(102%); transition:transform .3s ease; display:flex; flex-direction:column; box-shadow:-10px 0 34px rgba(0,21,41,.16); }
+  .drawer.active { transform:none; }
+  .drawer-header { padding:18px 22px; background:linear-gradient(135deg,#1890ff 0%,#722ed1 100%); color:#fff; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .drawer-header h3 { margin:0; font-size:16px; color:#fff; }
+  .drawer-body { flex:1; overflow-y:auto; padding:18px 22px; }
+  .drawer-body::-webkit-scrollbar, .modal-body::-webkit-scrollbar { width:6px; }
+  .drawer-body::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track { background:#f0f5ff; }
+  .drawer-body::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb { background:#91caff; border-radius:3px; }
+  .drawer-body::-webkit-scrollbar-thumb:hover, .modal-body::-webkit-scrollbar-thumb:hover { background:#1890ff; }
+  .toast { position:fixed; top:20px; right:20px; padding:13px 18px; background:var(--bg-card); border-radius:10px; box-shadow:0 6px 24px rgba(0,21,41,.18); display:flex; align-items:center; gap:10px; z-index:2000; transform:translateX(120%); transition:all .3s ease; border-left:4px solid #52c41a; max-width:min(480px,90vw); font-size:13px; }
+  .toast.show { transform:translateX(0); }
+  .toast.error { border-left-color:#ff4d4f; }
+  .toast.warning { border-left-color:#fa8c16; }
+  .toast.info { border-left-color:#1890ff; }
+  .toast-undo { border:1px solid #1890ff; color:#1890ff; background:#e6f4ff; border-radius:6px; padding:3px 12px; font-size:12px; cursor:pointer; flex-shrink:0; }
+  .toast-undo:hover { background:#1890ff; color:#fff; }
+  .stats-section { margin-bottom:16px; }
+  @media (max-width:1100px){ .stats-section { grid-template-columns:repeat(2,1fr); } }
+  .pbar { height:8px; background:#eef2f7; border-radius:4px; overflow:hidden; min-width:80px; }
+  .pbar > i { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,#1890ff,#52c41a); }
+  .bulk-bar { display:none; align-items:center; gap:12px; padding:8px 14px; margin-bottom:10px; background:#e6f4ff; border:1px solid #91caff; border-radius:8px; font-size:13px; color:#0958d9; }
+  .bulk-bar.show { display:flex; }
+  th.sortable { cursor:pointer; user-select:none; }
+  th.sortable:hover { color:#1890ff; }
+  .empty-row td { text-align:center; color:var(--text-tertiary); padding:36px 0 !important; font-size:13px; }
+  .mono { font-family:Consolas,Menlo,monospace; font-size:12.5px; }
+  /* 纵向时间线 */
+  .tl { position:relative; margin:6px 0 0 8px; padding-left:26px; }
+  .tl::before { content:''; position:absolute; left:7px; top:8px; bottom:8px; width:2px; background:linear-gradient(180deg,#1890ff,#13c2c2,#52c41a); border-radius:1px; opacity:.35; }
+  .tl-item { position:relative; padding:0 0 16px; }
+  .tl-item:last-child { padding-bottom:2px; }
+  .tl-dot { position:absolute; left:-26px; top:2px; width:16px; height:16px; border-radius:50%; background:#fff; border:3px solid #52c41a; box-shadow:0 0 0 3px rgba(82,196,26,.15); }
+  .tl-item.pending .tl-dot { border-color:#fa8c16; box-shadow:0 0 0 3px rgba(250,140,22,.15); }
+  .tl-card { background:#fafcff; border:1px solid var(--border-default); border-radius:10px; padding:10px 14px; }
+  .tl-item.pending .tl-card { background:#fffbf0; border-color:#ffe7ba; border-style:dashed; }
+  .tl-head { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .tl-name { font-size:13.5px; font-weight:600; color:var(--text-primary); }
+  .tl-step { font-size:11px; color:var(--text-tertiary); margin-right:6px; }
+  .tl-meta { font-size:12px; color:var(--text-secondary); margin-top:5px; line-height:1.6; }
+  .tl-btn { border:1px solid #1890ff; color:#1890ff; background:#e6f4ff; border-radius:6px; padding:2px 10px; font-size:12px; cursor:pointer; flex-shrink:0; }
+  .tl-btn:hover { background:#1890ff; color:#fff; }
+  .tl-btn.warn { border-color:#fa8c16; color:#fa8c16; background:#fff7e6; }
+  .tl-btn.warn:hover { background:#fa8c16; color:#fff; }
+  .view-toggle { display:inline-flex; border:1px solid #91caff; border-radius:8px; overflow:hidden; margin:4px 0 12px; }
+  .view-toggle button { border:none; background:#fff; color:#1890ff; padding:6px 16px; font-size:13px; cursor:pointer; }
+  .view-toggle button.on { background:#1890ff; color:#fff; }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="trace" data-active-submenu="trace-batch">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <main class="main-content">
+      <div class="content-wrapper">
+
+        <div class="stats-section metrics-row">
+          <div class="stat-card blue">
+            <div class="stat-header"><span class="stat-label">在录批次</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span></div>
+            <div class="stat-value" id="stChains">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);" id="stBatches">批次主数据 —</span></div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-header"><span class="stat-label">平均完成度</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span></div>
+            <div class="stat-value" id="stAvg">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">9 节点链 · 菌种 → 冷链</span></div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-header"><span class="stat-label">待补录节点</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span></div>
+            <div class="stat-value" id="stPending">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">null 节点等待录入</span></div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-header"><span class="stat-label">今日录入</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span></div>
+            <div class="stat-value" id="stToday">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">按节点录入时间统计</span></div>
+          </div>
+        </div>
+
+        <div class="search-section">
+          <div class="search-bar">
+            <select class="search-select" id="varietySelect" style="width:150px;">
+              <option value="">全部品种</option><option>平菇</option><option>杏鲍菇</option><option>金针菇</option><option>香菇</option>
+            </select>
+            <select class="search-select" id="stageSelect" style="width:150px;">
+              <option value="">全部阶段</option><option>菌包</option><option>灭菌</option><option>接种</option><option>培养</option><option>出菇</option><option>冷链</option>
+            </select>
+            <select class="search-select" id="doneSelect" style="width:170px;">
+              <option value="">全部完成度</option><option value="full">已完成 9/9</option><option value="part">录入中</option><option value="none">未开始</option>
+            </select>
+            <input type="text" class="search-input" placeholder="输入批次号搜索…" id="kwInput" style="width:200px;">
+            <div class="search-actions">
+              <button class="jg-btn jg-btn-primary" onclick="applyFilter(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button>
+              <button class="jg-btn" onclick="resetSearch()">重置</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <div class="action-left">
+            <button class="jg-btn jg-btn-primary" onclick="openNewBatch()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 4v16m8-8H4"/></svg>新建批次
+            </button>
+            <button class="jg-btn" onclick="exportCSV()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出 CSV
+            </button>
+          </div>
+          <div class="action-right"><span style="font-size:13px;color:var(--text-tertiary);" id="filterInfo"></span></div>
+        </div>
+
+        <div class="bulk-bar" id="bulkBar">
+          <span>已勾选 <strong id="bulkCount">0</strong> 个批次</span>
+          <button class="jg-btn" style="border-color:#ff4d4f;color:#ff4d4f;" onclick="bulkDelete()">批量删除</button>
+          <button class="jg-btn" onclick="clearSelection()">取消勾选</button>
+        </div>
+
+        <div class="data-section">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:44px;"><input type="checkbox" id="checkAll" onchange="toggleAll(this.checked)" aria-label="全选"></th>
+                <th style="width:56px;">序号</th>
+                <th>批次号</th>
+                <th>品种</th>
+                <th>菌种</th>
+                <th>菇房 / 区域</th>
+                <th>阶段</th>
+                <th>袋数</th>
+                <th style="width:170px;">链条完成度</th>
+                <th class="sortable" onclick="toggleSort()" id="thTime">开始时间 <span id="sortArrow">↕</span></th>
+                <th style="width:170px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody"></tbody>
+          </table>
+          <div id="pagination-container"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 批次链条抽屉 -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="chainDrawer" role="dialog" aria-label="批次全链条">
+  <div class="drawer-header">
+    <h3 id="drawerTitle">批次全链条</h3>
+    <button class="modal-close" onclick="closeDrawer()" aria-label="关闭">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<!-- 补录节点弹窗 -->
+<div class="modal-overlay" id="nodeModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="nodeModalTitle">补录节点</h3><button class="modal-close" onclick="closeModal('nodeModal')">×</button></div>
+    <div class="modal-body" id="nodeModalBody"></div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('nodeModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="confirmNode()">保存录入</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新建批次弹窗 -->
+<div class="modal-overlay" id="batchModal">
+  <div class="modal">
+    <div class="modal-header"><h3>新建生产批次</h3><button class="modal-close" onclick="closeModal('batchModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>品种 <span class="req">*</span></label><select id="nbVariety"><option>平菇</option><option>杏鲍菇</option><option>金针菇</option><option>香菇</option></select></div>
+        <div class="form-group"><label>菌种 <span class="req">*</span></label><select id="nbStrain"></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>菇房 / 区域 <span class="req">*</span></label><input type="text" id="nbRoom" placeholder="如 BD-01 / GF-01"></div>
+        <div class="form-group"><label>袋数 <span class="req">*</span></label><input type="number" id="nbBags" value="4000" min="1"></div>
+      </div>
+      <div class="form-group"><label>起始阶段</label><select id="nbStage"><option>菌包</option><option>灭菌</option><option>接种</option><option>培养</option><option>出菇</option><option>冷链</option></select></div>
+      <span class="form-hint">批次号自动生成（MJ-YYMMDD-NN），创建后进入 9 节点链条待录入状态。</span>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('batchModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="confirmNewBatch()">创建批次</button>
+    </div>
+  </div>
+</div>
+
+<!-- 通用确认弹窗 -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="width:420px;">
+    <div class="modal-header" style="background:linear-gradient(135deg,#fa8c16 0%,#ff4d4f 100%);"><h3 id="confirmTitle">确认操作</h3><button class="modal-close" onclick="closeModal('confirmModal')">×</button></div>
+    <div class="modal-body"><div id="confirmText" style="font-size:14px;color:var(--text-secondary);line-height:1.7;"></div></div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('confirmModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toastMessage">操作成功</span>
+  <button class="toast-undo" id="toastUndo" style="display:none;">撤销</button>
+</div>
+
+<script src="js/shared/fungi-store.js"></script>
+<script>
+/* ============================================================
+ * 全链条录入 —— FungiStore.batches + chain（6 批次 × 9 节点）
+ * 完成度 = chain.nodes 非 null 节点数 / 9
+ * chain 条目以批次号作为 id 写回（store.get/update 按 id 匹配）
+ * ============================================================ */
+'use strict';
+var FS = window.FungiStore;
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function pad(n,l){ n=String(n); while(n.length<(l||2)) n='0'+n; return n; }
+function nowHM(){ var d=new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function nowStr(){ return FS.at(0, nowHM()); }
+function fmt(n){ return Number(n||0).toLocaleString('zh-CN'); }
+function goPage(url,title){ if(window.parent && typeof window.parent.openPage==='function') window.parent.openPage(url,title); else window.location.href=url; }
+function opLog(action, object){
+  try{
+    var u=JSON.parse(sessionStorage.getItem('snzg_user')||'null')||{};
+    var arr=JSON.parse(localStorage.getItem('mushroom_op_log')||'[]');
+    arr.unshift({ time:nowStr(), account:u.username||'admin', action:action, object:object||'—' });
+    if(arr.length>200) arr.length=200;
+    localStorage.setItem('mushroom_op_log', JSON.stringify(arr));
+  }catch(e){}
+}
+var toastTimer=null, undoFn=null;
+function showToast(msg,type,undo){
+  var t=document.getElementById('toast');
+  document.getElementById('toastMessage').textContent=msg;
+  var ub=document.getElementById('toastUndo');
+  undoFn=undo||null; ub.style.display=undo?'':'none';
+  t.className='toast '+(type||'success')+' show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.remove('show'); undoFn=null; }, undo?6000:3000);
+}
+document.getElementById('toastUndo').addEventListener('click',function(){
+  if(undoFn){ var f=undoFn; undoFn=null; f(); }
+  document.getElementById('toast').classList.remove('show');
+});
+function openModal(id){ document.getElementById(id).classList.add('active'); }
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+function askConfirm(title,html,onOk){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmText').innerHTML=html;
+  var btn=document.getElementById('confirmOk');
+  var nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
+  nb.addEventListener('click',function(){ closeModal('confirmModal'); onOk(); });
+  openModal('confirmModal');
+}
+function openDrawer(){ document.getElementById('drawerOverlay').classList.add('active'); document.getElementById('chainDrawer').classList.add('active'); }
+function closeDrawer(){ document.getElementById('drawerOverlay').classList.remove('active'); document.getElementById('chainDrawer').classList.remove('active'); }
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ document.querySelectorAll('.modal-overlay.active').forEach(function(o){ closeModal(o.id); }); closeDrawer(); }
+});
+document.querySelectorAll('.modal-overlay').forEach(function(o){
+  o.addEventListener('click',function(e){ if(e.target===o) closeModal(o.id); });
+});
+
+/* ---------- 9 节点定义 ---------- */
+var NODES=[
+  { key:'strain',    name:'菌种', fields:[{k:'f1',label:'菌种编号',req:true,strain:true},{k:'f2',label:'用量 / 代次',ph:'栽培种 15g/袋'}] },
+  { key:'bag',       name:'装袋', fields:[{k:'f1',label:'配方编号',req:true,ph:'PB-261116-01'},{k:'f2',label:'含水率 %',ph:'62'}] },
+  { key:'sterilize', name:'灭菌', fields:[{k:'f1',label:'灭菌锅号',req:true,ph:'MJ-01'},{k:'f2',label:'峰值温度 °C / 保温 min',ph:'121°C 120min'}] },
+  { key:'inoculate', name:'接种', fields:[{k:'f1',label:'接种室',req:true,ph:'JZ-01'},{k:'f2',label:'沉降菌 cfu / 接种量',ph:'0.9 · 15g/袋'}] },
+  { key:'culture',   name:'培养', fields:[{k:'f1',label:'培养架位',req:true,ph:'PY-01-A01'},{k:'f2',label:'培养天数 / 温度',ph:'24天 23.5°C'}] },
+  { key:'fruit',     name:'出菇', fields:[{k:'f1',label:'出菇房',req:true,ph:'GF-01'},{k:'f2',label:'潮次 / CO₂ ppm',ph:'第2潮 620ppm'}] },
+  { key:'harvest',   name:'采收', fields:[{k:'f1',label:'采收量 kg',req:true,ph:'320'},{k:'f2',label:'一级菇 kg / 人数',ph:'264kg 4人'}] },
+  { key:'grade',     name:'分级', fields:[{k:'f1',label:'分级结果',req:true,ph:'一级/二级/加工级'},{k:'f2',label:'一级占比 %',ph:'82.5'}] },
+  { key:'cold',      name:'冷链', fields:[{k:'f1',label:'库区',req:true,ph:'YL-01 / LK-A'},{k:'f2',label:'入库吨数 t / 温度',ph:'1.4t 3°C'}] }
+];
+function chainOf(batchId){
+  var list=FS.list('chain');
+  for(var i=0;i<list.length;i++){ if(list[i].batch===batchId) return list[i]; }
+  return null;
+}
+/* chain 条目补 id（=批次号），使 FS.update 可按键写回并持久化 */
+function ensureChainIds(){
+  FS.list('chain').forEach(function(e){ if(!e.id) e.id=e.batch; });
+}
+function ensureChain(batchId){
+  ensureChainIds();
+  var c=chainOf(batchId);
+  if(c) return c;
+  var nodes={}; NODES.forEach(function(n){ nodes[n.key]=null; });
+  return FS.add('chain',{ id:batchId, batch:batchId, nodes:nodes });
+}
+function doneCount(batchId){
+  var c=chainOf(batchId); if(!c) return 0;
+  return NODES.filter(function(n){ return c.nodes[n.key]!=null; }).length;
+}
+
+/* ---------- 统计 ---------- */
+function renderStats(){
+  ensureChainIds();
+  var chains=FS.list('chain'), today=FS.dayKey(0);
+  var totalDone=0, pending=0, todayCount=0;
+  chains.forEach(function(c){
+    NODES.forEach(function(n){
+      var v=c.nodes[n.key];
+      if(v!=null){ totalDone++; if(String(v.time||'').slice(0,10)===today) todayCount++; }
+      else pending++;
+    });
+  });
+  document.getElementById('stChains').textContent=chains.length;
+  document.getElementById('stBatches').textContent='批次主数据 '+FS.list('batches').length+' 个';
+  document.getElementById('stAvg').textContent=chains.length?Math.round(totalDone/(chains.length*9)*100)+'%':'0%';
+  document.getElementById('stPending').textContent=pending;
+  document.getElementById('stToday').textContent=todayCount;
+}
+
+/* ---------- 列表 ---------- */
+var sortDesc=true, selected={};
+var Pagination={
+  currentPage:1,pageSize:10,filteredData:[],
+  updateData:function(data){ this.filteredData=data; this.currentPage=1; this.render(); },
+  goToPage:function(p){ var tp=Math.max(1,Math.ceil(this.filteredData.length/this.pageSize)); if(p<1||p>tp) return; this.currentPage=p; this.render(); },
+  render:function(){
+    var total=this.filteredData.length, tp=Math.max(1,Math.ceil(total/this.pageSize));
+    if(this.currentPage>tp) this.currentPage=tp;
+    var start=(this.currentPage-1)*this.pageSize;
+    var rows=this.filteredData.slice(start,start+this.pageSize);
+    var tbody=document.getElementById('dataTableBody');
+    tbody.innerHTML=rows.length?rows.map(function(b,i){ return renderRow(b,start+i+1); }).join('')
+      :'<tr class="empty-row"><td colspan="11">暂无符合条件的批次，点击「新建批次」开始追溯录入</td></tr>';
+    var html='<div class="pagination">';
+    html+='<button class="page-btn '+(this.currentPage<=1?'disabled':'')+'" onclick="Pagination.goToPage('+(this.currentPage-1)+')">‹</button>';
+    for(var i=1;i<=tp;i++){
+      if(i===1||i===tp||Math.abs(i-this.currentPage)<=1) html+='<button class="page-btn '+(i===this.currentPage?'active':'')+'" onclick="Pagination.goToPage('+i+')">'+i+'</button>';
+      else if(Math.abs(i-this.currentPage)===2) html+='<span style="padding:0 6px;color:#9aa5b1;">…</span>';
+    }
+    html+='<button class="page-btn '+(this.currentPage>=tp?'disabled':'')+'" onclick="Pagination.goToPage('+(this.currentPage+1)+')">›</button>';
+    html+='<span style="margin-left:14px;font-size:13px;color:#6b7b6b;">第 '+this.currentPage+' / '+tp+' 页 · 共 '+total+' 条</span></div>';
+    document.getElementById('pagination-container').innerHTML=html;
+    syncCheckAll();
+  }
+};
+function currentFiltered(){
+  var v=document.getElementById('varietySelect').value;
+  var s=document.getElementById('stageSelect').value;
+  var d=document.getElementById('doneSelect').value;
+  var kw=document.getElementById('kwInput').value.trim().toLowerCase();
+  var rows=FS.list('batches').filter(function(b){
+    if(v && b.variety!==v) return false;
+    if(s && b.stage!==s) return false;
+    if(kw && b.id.toLowerCase().indexOf(kw)<0) return false;
+    var n=doneCount(b.id);
+    if(d==='full' && n<9) return false;
+    if(d==='part' && (n===0||n===9)) return false;
+    if(d==='none' && n>0) return false;
+    return true;
+  });
+  rows.sort(function(a,b){ var r=String(a.start).localeCompare(String(b.start)); return sortDesc?-r:r; });
+  return rows;
+}
+function applyFilter(notify){
+  var rows=currentFiltered();
+  Pagination.updateData(rows);
+  document.getElementById('filterInfo').textContent='筛选结果 '+rows.length+' 个批次';
+  if(notify) showToast('找到 '+rows.length+' 个批次','info');
+}
+function resetSearch(){
+  ['varietySelect','stageSelect','doneSelect'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('kwInput').value='';
+  applyFilter(false); showToast('已重置筛选条件','info');
+}
+function toggleSort(){ sortDesc=!sortDesc; document.getElementById('sortArrow').textContent=sortDesc?'↓':'↑'; applyFilter(false); }
+function renderRow(b,seq){
+  var n=doneCount(b.id), pct=Math.round(n/9*100);
+  var color=n===9?'#52c41a':n>0?'#1890ff':'#fa8c16';
+  return '<tr>'+
+    '<td><input type="checkbox" '+(selected[b.id]?'checked':'')+' onchange="toggleRow(\''+esc(b.id)+'\',this.checked)" aria-label="勾选"></td>'+
+    '<td>'+seq+'</td>'+
+    '<td><strong class="mono">'+esc(b.id)+'</strong></td>'+
+    '<td>'+esc(b.variety)+'</td>'+
+    '<td class="mono">'+esc(b.strain)+'</td>'+
+    '<td>'+esc(b.room)+'</td>'+
+    '<td><span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:#e6f4ff;color:#1890ff;border:1px solid #91caff;">'+esc(b.stage)+'</span></td>'+
+    '<td>'+fmt(b.bags)+'</td>'+
+    '<td><div style="display:flex;align-items:center;gap:8px;"><div class="pbar" style="flex:1;"><i style="width:'+pct+'%;background:'+color+';"></i></div><span style="font-size:12px;color:'+color+';font-weight:600;white-space:nowrap;">'+n+'/9</span></div></td>'+
+    '<td>'+esc(b.start)+'</td>'+
+    '<td><div class="action-btns">'+
+      '<button class="action-btn detail" onclick="viewChain(\''+esc(b.id)+'\')">链条</button>'+
+      '<button class="action-btn" onclick="quickFill(\''+esc(b.id)+'\')">补录</button>'+
+      '<button class="action-btn" style="color:#ff4d4f;" onclick="deleteBatch(\''+esc(b.id)+'\')">删除</button>'+
+    '</div></td></tr>';
+}
+function toggleRow(id,on){ if(on) selected[id]=true; else delete selected[id]; syncBulk(); }
+function toggleAll(on){
+  Pagination.filteredData.slice((Pagination.currentPage-1)*Pagination.pageSize,Pagination.currentPage*Pagination.pageSize).forEach(function(b){
+    if(on) selected[b.id]=true; else delete selected[b.id];
+  });
+  Pagination.render(); syncBulk();
+}
+function syncCheckAll(){
+  var rows=Pagination.filteredData.slice((Pagination.currentPage-1)*Pagination.pageSize,Pagination.currentPage*Pagination.pageSize);
+  document.getElementById('checkAll').checked=rows.length>0 && rows.every(function(b){ return selected[b.id]; });
+}
+function syncBulk(){
+  var n=Object.keys(selected).length;
+  document.getElementById('bulkCount').textContent=n;
+  document.getElementById('bulkBar').classList.toggle('show',n>0);
+}
+function clearSelection(){ selected={}; Pagination.render(); syncBulk(); }
+function removeBatches(ids){
+  var removed=[];
+  ids.forEach(function(id){
+    var idx=FS.list('batches').findIndex(function(x){ return x.id===id; });
+    var obj=FS.remove('batches',id);
+    if(obj) removed.push({obj:obj,idx:idx});
+    delete selected[id];
+  });
+  refresh();
+  showToast('已删除 '+removed.length+' 个批次','warning',function(){
+    removed.sort(function(a,b){ return a.idx-b.idx; }).forEach(function(r){ FS.restore('batches',r.obj,r.idx); });
+    refresh(); showToast('已撤销删除','success');
+  });
+  opLog('删除批次',ids.join('、'));
+}
+function bulkDelete(){
+  var ids=Object.keys(selected); if(!ids.length) return;
+  askConfirm('批量删除批次','即将删除勾选的 <strong>'+ids.length+'</strong> 个批次（链条档案保留），删除后可撤销。是否继续？',function(){ removeBatches(ids); });
+}
+function deleteBatch(id){
+  askConfirm('删除批次','确定删除批次 <strong class="mono">'+esc(id)+'</strong> 吗？删除后可撤销。',function(){ removeBatches([id]); });
+}
+
+/* ---------- 新建批次 ---------- */
+function openNewBatch(){
+  document.getElementById('nbStrain').innerHTML=FS.list('strains').map(function(s){
+    return '<option value="'+esc(s.id)+'">'+esc(s.id)+' · '+esc(s.variety)+'</option>';
+  }).join('');
+  document.getElementById('nbRoom').value='';
+  document.getElementById('nbBags').value=4000;
+  openModal('batchModal');
+}
+function confirmNewBatch(){
+  var variety=document.getElementById('nbVariety').value;
+  var strain=document.getElementById('nbStrain').value;
+  var room=document.getElementById('nbRoom').value.trim();
+  var bags=Math.floor(Number(document.getElementById('nbBags').value));
+  if(!strain){ showToast('请选择菌种','error'); return; }
+  if(!room){ showToast('请填写菇房 / 区域','error'); return; }
+  if(!bags||bags<1){ showToast('袋数需为正整数','error'); return; }
+  var prefix='MJ-'+FS.dayKey(0).slice(2).replace(/-/g,'')+'-';
+  var n=1,id;
+  var existing={}; FS.list('batches').forEach(function(b){ existing[b.id]=true; });
+  do{ id=prefix+pad(n); n++; }while(existing[id]);
+  FS.add('batches',{ id:id, strain:strain, variety:variety, room:room, stage:document.getElementById('nbStage').value, flush:0, bags:bags, start:nowStr() });
+  ensureChain(id);
+  closeModal('batchModal'); opLog('新建批次',id); refresh();
+  showToast('批次 '+id+' 已创建，链条待录入','success');
+  viewChain(id);
+}
+
+/* ---------- 链条抽屉 ---------- */
+var drawerBatch='', reverseView=false;
+function viewChain(batchId){
+  drawerBatch=batchId;
+  var b=FS.list('batches').filter(function(x){ return x.id===batchId; })[0];
+  var c=ensureChain(batchId);
+  document.getElementById('drawerTitle').textContent='全链条 · '+batchId;
+  var n=doneCount(batchId);
+  var order=NODES.slice(); if(reverseView) order.reverse();
+  var tl=order.map(function(nd,i){
+    var v=c.nodes[nd.key];
+    var stepNo=reverseView?(9-NODES.indexOf(nd)):(NODES.indexOf(nd)+1);
+    if(v==null){
+      return '<div class="tl-item pending"><span class="tl-dot"></span><div class="tl-card">'+
+        '<div class="tl-head"><span class="tl-name"><span class="tl-step">'+pad(stepNo)+'</span>'+nd.name+'</span>'+
+        '<button class="tl-btn warn" onclick="openNodeModal(\''+esc(batchId)+'\',\''+nd.key+'\')">补录</button></div>'+
+        '<div class="tl-meta" style="color:#fa8c16;">待录入 · 该节点尚无追溯数据</div></div></div>';
+    }
+    return '<div class="tl-item"><span class="tl-dot"></span><div class="tl-card">'+
+      '<div class="tl-head"><span class="tl-name"><span class="tl-step">'+pad(stepNo)+'</span>'+nd.name+'</span>'+
+      '<button class="tl-btn" onclick="openNodeModal(\''+esc(batchId)+'\',\''+nd.key+'\')">重新录入</button></div>'+
+      '<div class="tl-meta">'+esc(v.time)+' · '+esc(v.operator)+'<br>'+esc(v.params)+'</div></div></div>';
+  }).join('');
+  document.getElementById('drawerBody').innerHTML=
+    '<div class="detail-grid"><span class="detail-label">品种 / 菌种</span><span class="detail-value">'+esc(b?b.variety+' / '+b.strain:'—')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">阶段 / 袋数</span><span class="detail-value">'+esc(b?b.stage+' · '+fmt(b.bags)+' 袋':'—')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">完成度</span><span class="detail-value"><div style="display:flex;align-items:center;gap:8px;"><div class="pbar" style="flex:1;"><i style="width:'+Math.round(n/9*100)+'%;"></i></div><span>'+n+'/9</span></div></span></div>'+
+    '<div class="view-toggle" role="tablist">'+
+      '<button class="'+(reverseView?'':'on')+'" onclick="setView(false)">正向追溯 ↓</button>'+
+      '<button class="'+(reverseView?'on':'')+'" onclick="setView(true)">反向追溯 ↑</button>'+
+    '</div>'+
+    '<div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px;">'+(reverseView?'从冷链回溯至菌种，用于问题批次溯源定位':'从菌种到冷链，展示批次生产履历')+'</div>'+
+    '<div class="tl">'+tl+'</div>'+
+    '<div style="margin-top:14px;display:flex;gap:10px;">'+
+      '<button class="jg-btn" onclick="goPage(\'trace_code.html?batch='+encodeURIComponent(batchId)+'\',\'追溯码管理\')">关联追溯码</button>'+
+      '<button class="jg-btn" onclick="goPage(\'trace_blockchain.html\',\'区块链存证\')">区块链存证</button>'+
+    '</div>';
+  openDrawer();
+}
+function setView(rev){ reverseView=rev; viewChain(drawerBatch); }
+function quickFill(batchId){
+  var c=ensureChain(batchId);
+  var first=NODES.filter(function(n){ return c.nodes[n.key]==null; })[0];
+  viewChain(batchId);
+  if(first) openNodeModal(batchId,first.key);
+  else showToast('该批次 9 节点已全部录入','info');
+}
+
+/* ---------- 补录弹窗 ---------- */
+var nodeBatch='', nodeKey='';
+function openNodeModal(batchId,key){
+  nodeBatch=batchId; nodeKey=key;
+  var nd=NODES.filter(function(n){ return n.key===key; })[0];
+  var c=ensureChain(batchId);
+  var old=c.nodes[key];
+  document.getElementById('nodeModalTitle').textContent=(old?'重新录入':'补录')+' · '+nd.name+'节点';
+  var u={}; try{ u=JSON.parse(sessionStorage.getItem('snzg_user')||'{}'); }catch(e){}
+  var strainOpts=FS.list('strains').map(function(s){ return '<option value="'+esc(s.id)+'">'+esc(s.id)+' · '+esc(s.variety)+'</option>'; }).join('');
+  var html='<div class="form-group"><label>批次 / 节点</label><input type="text" readonly value="'+esc(batchId)+' · '+nd.name+'"></div>'+
+    '<div class="form-row">'+
+      '<div class="form-group"><label>录入时间 <span class="req">*</span></label><input type="text" id="ndTime" value="'+esc(old?old.time:nowStr())+'" placeholder="YYYY-MM-DD HH:mm"></div>'+
+      '<div class="form-group"><label>操作人 <span class="req">*</span></label><input type="text" id="ndOperator" value="'+esc(old?old.operator:(u.realName||''))+'" placeholder="姓名"></div>'+
+    '</div>';
+  nd.fields.forEach(function(f){
+    html+='<div class="form-group"><label>'+esc(f.label)+(f.req?' <span class="req">*</span>':'')+'</label>';
+    if(f.strain) html+='<select id="nd_'+f.k+'">'+strainOpts+'</select>';
+    else html+='<input type="text" id="nd_'+f.k+'" placeholder="'+esc(f.ph||'')+'" value="">';
+    html+='</div>';
+  });
+  html+='<span class="form-hint">保存后写回链条节点，完成度与统计实时更新；带 <span class="req">*</span> 为必填。</span>';
+  document.getElementById('nodeModalBody').innerHTML=html;
+  if(old){
+    /* 回填：第一字段取首段，第二字段取剩余 */
+    var parts=String(old.params||'').split(' ');
+    nd.fields.forEach(function(f,i){
+      var el=document.getElementById('nd_'+f.k); if(!el) return;
+      el.value=i===0?(parts[0]||''):parts.slice(1).join(' ');
+    });
+  }
+  openModal('nodeModal');
+}
+function confirmNode(){
+  var nd=NODES.filter(function(n){ return n.key===nodeKey; })[0];
+  var time=document.getElementById('ndTime').value.trim();
+  var operator=document.getElementById('ndOperator').value.trim();
+  if(!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(time)){ showToast('时间格式应为 YYYY-MM-DD HH:mm','error'); return; }
+  if(!operator){ showToast('请填写操作人','error'); return; }
+  var vals=[];
+  for(var i=0;i<nd.fields.length;i++){
+    var f=nd.fields[i];
+    var v=document.getElementById('nd_'+f.k).value.trim();
+    if(f.req && !v){ showToast('请填写「'+f.label+'」','error'); return; }
+    if(v) vals.push(v);
+  }
+  ensureChainIds();
+  var c=chainOf(nodeBatch);
+  var nodes=JSON.parse(JSON.stringify(c.nodes));
+  nodes[nodeKey]={ time:time, operator:operator, params:vals.join(' ') };
+  FS.update('chain',nodeBatch,{ nodes:nodes });
+  closeModal('nodeModal');
+  opLog('录入追溯节点',nodeBatch+' · '+nd.name);
+  refresh(); viewChain(nodeBatch);
+  showToast(nd.name+'节点已录入（'+nodeBatch+'）','success');
+}
+
+/* ---------- 导出 ---------- */
+function exportCSV(){
+  var rows=Pagination.filteredData;
+  if(!rows.length){ showToast('当前没有可导出的数据','warning'); return; }
+  var head=['批次号','品种','菌种','菇房/区域','阶段','袋数','完成节点数','完成度','开始时间'].concat(NODES.map(function(n){ return n.name+'时间'; }));
+  var lines=[head.join(',')].concat(rows.map(function(b){
+    var c=chainOf(b.id);
+    var base=[b.id,b.variety,b.strain,b.room,b.stage,b.bags,doneCount(b.id),Math.round(doneCount(b.id)/9*100)+'%',b.start];
+    NODES.forEach(function(n){ var v=c?c.nodes[n.key]:null; base.push(v?v.time:'待录入'); });
+    return base.map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+  }));
+  var blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='全链条批次_'+FS.dayKey(0)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },1500);
+  opLog('导出全链条CSV',rows.length+' 个批次');
+  showToast('已导出 '+rows.length+' 个批次','success');
+}
+
+function refresh(){ renderStats(); applyFilter(false); }
+document.addEventListener('DOMContentLoaded',function(){
+  ['varietySelect','stageSelect','doneSelect'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(){ applyFilter(false); }); });
+  document.getElementById('kwInput').addEventListener('input',function(){ applyFilter(false); });
+  window.addEventListener('fungiStoreChange',function(){ renderStats(); });
+  refresh();
+  var preset=new URLSearchParams(window.location.search).get('batch');
+  if(preset) viewChain(preset);
+});
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/typography.js"></script>
+</body>
+</html>

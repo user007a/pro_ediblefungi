@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工厂化农业数据管理系统 - 厂区档案</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .page-head{margin-bottom:16px;}
+  .page-head h1{font-size:18px;font-weight:700;margin:0;color:var(--text-primary);}
+  .page-head .crumb{font-size:12px;color:var(--text-tertiary);margin-top:4px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;}
+  .stat-card{background:var(--bg-card,#fff);border:1px solid var(--border-color,#e8ece8);border-radius:12px;padding:16px 18px;border-left:4px solid #1890ff;}
+  .stat-card.green{border-left-color:#52c41a;}
+  .stat-card.orange{border-left-color:#fa8c16;}
+  .stat-card.cyan{border-left-color:#13c2c2;}
+  .stat-label{font-size:12px;color:var(--text-tertiary);margin-bottom:6px;}
+  .stat-value{font-size:22px;font-weight:600;line-height:1.2;}
+  .stat-value small{font-size:12px;font-weight:400;color:var(--text-tertiary);margin-left:4px;}
+  .stat-sub{margin-top:6px;font-size:12px;color:var(--text-tertiary);}
+  @media(max-width:1100px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+  th.sortable:hover{color:#1890ff;}
+  .sort-arrow{font-size:10px;margin-left:3px;color:#1890ff;}
+  .empty-cell{text-align:center;color:var(--text-tertiary);padding:32px 0!important;}
+  .row-btn{padding:3px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-default,#d9d9d9);background:#fff;color:var(--text-secondary,#555);cursor:pointer;margin-right:6px;white-space:nowrap;}
+  .row-btn:hover{border-color:#1890ff;color:#1890ff;}
+  .row-btn.danger{color:#ff4d4f;border-color:#ffccc7;}
+  .row-btn.danger:hover{background:#fff2f0;}
+  .drawer-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;}
+  .drawer-mask.show{display:block;}
+  .drawer{position:fixed;top:0;right:-580px;width:560px;max-width:94vw;height:100vh;background:#fff;z-index:9999;box-shadow:-8px 0 32px rgba(0,0,0,.15);transition:right .25s ease;display:flex;flex-direction:column;}
+  .drawer.open{right:0;}
+  .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .drawer-header h3{margin:0;font-size:16px;font-weight:600;color:var(--text-primary);}
+  .drawer-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .drawer-close:hover{background:#f5f5f5;color:#333;}
+  .drawer-body{padding:20px 24px;overflow-y:auto;flex:1;}
+  .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 20px;margin-bottom:16px;}
+  .detail-item.full{grid-column:1/-1;}
+  .detail-item .dl{font-size:12px;color:var(--text-tertiary);margin-bottom:2px;}
+  .detail-item .dv{font-size:14px;color:var(--text-primary);font-weight:500;word-break:break-all;}
+  .drawer-sec{font-size:13px;font-weight:600;color:var(--text-primary);margin:18px 0 10px;padding-left:8px;border-left:3px solid #1890ff;}
+  .mini-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .mini-table th{background:#f7f9f7;color:var(--text-tertiary);font-weight:600;padding:7px 8px;text-align:left;border-bottom:1px solid #e8ede8;white-space:nowrap;}
+  .mini-table td{padding:7px 8px;border-bottom:1px solid #f4f6f4;}
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{width:560px;max-width:92vw;max-height:86vh;background:#fff;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .modal-header h3{font-size:16px;font-weight:600;margin:0;}
+  .modal-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .modal-body{padding:20px 24px;overflow-y:auto;}
+  .form-group{margin-bottom:14px;}
+  .form-group.full{grid-column:1/-1;}
+  .form-group label{display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;}
+  .form-group label .req{color:#ff4d4f;margin-left:2px;}
+  #modal .modal-body input,#modal .modal-body select,#modal .modal-body textarea{width:100%;padding:9px 12px;border:1.5px solid #d9d9d9;border-radius:8px;font-size:13px!important;background:#fff;outline:none;font-family:inherit;box-sizing:border-box;}
+  #modal .modal-body input:focus,#modal .modal-body select:focus{border-color:#1890ff;box-shadow:0 0 0 3px rgba(24,144,255,.1);}
+  .modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:14px 24px;border-top:1px solid #eef1ef;flex:none;}
+  .toast-undo{display:none;padding:3px 12px;border-radius:6px;border:1px solid currentColor;background:rgba(255,255,255,.6);font-size:12px;font-weight:600;cursor:pointer;color:inherit;}
+</style>
+<style id="standalone-fix">.main-wrapper{margin-left:0!important;width:100%!important;}</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="enterprise" data-active-submenu="enterprise-base">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar"><div class="tab-bar-actions"><button class="tab-close-all" title="关闭全部标签"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg></button></div></div>
+    <main class="main-content"><div class="content-wrapper">
+
+      <div class="page-head">
+        <h1>厂区档案</h1>
+        <div class="crumb">企业管理 / 厂区档案 · 功能区、出菇房与冷链库区台账</div>
+      </div>
+
+      <div class="stat-grid" id="statGrid"></div>
+
+      <div class="page-section search-section">
+        <div class="search-bar">
+          <select class="search-select" id="filterSelect" onchange="renderTable()">
+            <option value="">全部类型</option>
+            <option value="生产">生产</option>
+            <option value="出菇">出菇</option>
+            <option value="冷链">冷链</option>
+          </select>
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索编号、名称..." oninput="renderTable()">
+          <div class="search-actions">
+            <button class="jg-btn" onclick="resetFilters()">重置</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="page-section action-bar">
+        <div class="action-left">
+          <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openZoneForm()">+ 新建功能区</button>
+          <button class="jg-btn" id="exportBtn" onclick="exportZones()">导出CSV</button>
+          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete('zones','功能区')">批量删除</button>
+          <span class="selected-info" id="selInfo"></span>
+        </div>
+      </div>
+
+      <div class="page-section data-section">
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+                <th class="sortable" data-key="id" onclick="sortBy('id')">编号<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="name" onclick="sortBy('name')">名称<span class="sort-arrow"></span></th>
+                <th>类型</th>
+                <th class="sortable" data-key="area" onclick="sortBy('area')">面积(㎡)<span class="sort-arrow"></span></th>
+                <th>容量</th>
+                <th>设计参数</th>
+                <th>状态</th>
+                <th style="width:130px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div></main>
+  </div>
+</div>
+
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header"><h3 id="drawerTitle">详情</h3><button class="drawer-close" id="drawerClose" onclick="closeDrawer()">×</button></div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header"><h3 id="modalTitle">编辑</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeModal()">取消</button><button class="jg-btn jg-btn-primary" id="modalSave" onclick="saveModal()">保存</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal-box" style="width:420px;">
+    <div class="modal-header"><h3>删除确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
+    <div class="modal-body"><p id="confirmText" style="margin:0;font-size:14px;color:var(--text-primary);"></p></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="doConfirm()">确认删除</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="toast-message" id="toastMessage"></span><button class="toast-undo" id="toastUndo">撤销</button></div>
+
+<script src="js/shared/fungi-store.js"></script>
+<script>
+var FS = window.FungiStore;
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function today(){return FS.dayKey(0);}
+function nav(url,title){try{if(window.parent&&window.parent!==window&&typeof window.parent.openPage==='function'){window.parent.openPage(url,title);return;}}catch(e){}location.href=url;}
+var toastTimer=null;
+function showToast(msg,type,undoFn){var t=document.getElementById('toast');document.getElementById('toastMessage').textContent=msg;t.className='toast toast-'+(type||'success')+' show';var ub=document.getElementById('toastUndo');if(undoFn){ub.style.display='inline-block';ub.onclick=function(){hideToast();undoFn();};}else{ub.style.display='none';ub.onclick=null;}clearTimeout(toastTimer);toastTimer=setTimeout(hideToast,undoFn?6000:2600);}
+function hideToast(){document.getElementById('toast').classList.remove('show');}
+function openModal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.add('show');}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+var confirmCb=null;
+function askConfirm(msg,cb){document.getElementById('confirmText').textContent=msg;confirmCb=cb;document.getElementById('confirmModal').classList.add('show');}
+function doConfirm(){var cb=confirmCb;closeConfirm();if(cb)cb();}
+function closeConfirm(){confirmCb=null;document.getElementById('confirmModal').classList.remove('show');}
+function openDrawer(title,html){document.getElementById('drawerTitle').textContent=title;document.getElementById('drawerBody').innerHTML=html;document.getElementById('drawer').classList.add('open');document.getElementById('drawerMask').classList.add('show');}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawerMask').classList.remove('show');}
+function rowClick(e,id){if(e.target.closest('button,input,select,a,label'))return;openDetail(id);}
+function val(id){var el=document.getElementById(id);return el?el.value.trim():'';}
+function reqOK(){var ok=true;document.querySelectorAll('#modalBody [data-req]').forEach(function(el){if(!String(el.value).trim()){el.style.borderColor='#ff4d4f';ok=false;}else{el.style.borderColor='';}});if(!ok)showToast('请填写完整必填项（红框）','error');return ok;}
+function fg(label,html,req,full){return '<div class="form-group'+(full?' full':'')+'"><label>'+label+(req?'<span class="req">*</span>':'')+'</label>'+html+'</div>';}
+function inp(id,v,type,req){return '<input id="'+id+'" type="'+(type||'text')+'" value="'+esc(v==null?'':v)+'"'+(req?' data-req="1"':'')+'>';}
+function sel(id,opts,v,req){return '<select id="'+id+'"'+(req?' data-req="1"':'')+'>'+opts.map(function(o){return '<option value="'+esc(o)+'"'+(String(o)===String(v)?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';}
+var selected={};
+function toggleAll(cb){document.querySelectorAll('#tableBody .row-check').forEach(function(c){c.checked=cb.checked;selected[c.dataset.id]=cb.checked;});updateSelInfo();}
+function toggleRow(cb){selected[cb.dataset.id]=cb.checked;updateSelInfo();}
+function updateSelInfo(){var n=Object.keys(selected).filter(function(k){return selected[k];}).length;var el=document.getElementById('selInfo');if(el)el.textContent=n?('已选 '+n+' 条'):'';var all=document.getElementById('selectAll');if(all){var boxes=document.querySelectorAll('#tableBody .row-check');all.checked=boxes.length>0&&n===boxes.length;}}
+function removeRow(col,id,label){var idx=FS.list(col).findIndex(function(x){return x.id===id;});askConfirm('确认删除「'+label+'」？删除后可撤销。',function(){var gone=FS.remove(col,id);delete selected[id];renderAll();showToast('已删除「'+label+'」','success',function(){FS.restore(col,gone,idx);renderAll();showToast('已撤销删除','success');});});}
+function batchDelete(col,label){var ids=Object.keys(selected).filter(function(k){return selected[k];});if(!ids.length){showToast('请先勾选要删除的记录','warning');return;}askConfirm('确认删除选中的 '+ids.length+' 条'+label+'？删除后可撤销。',function(){var list=FS.list(col);var removed=ids.map(function(id){return {obj:FS.get(col,id),idx:list.findIndex(function(x){return x.id===id;})};}).filter(function(r){return r.obj;}).sort(function(a,b){return a.idx-b.idx;});ids.forEach(function(id){FS.remove(col,id);});selected={};renderAll();showToast('已删除 '+removed.length+' 条'+label,'success',function(){removed.forEach(function(r){FS.restore(col,r.obj,r.idx);});renderAll();showToast('已撤销批量删除','success');});});}
+function exportCSV(name,headers,rows){if(!rows.length){showToast('当前视图暂无可导出数据','warning');return;}var csv='﻿'+[headers].concat(rows).map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'_'+today()+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);showToast('导出成功，文件已下载','success');}
+var sortKey='',sortDir=1;
+function sortBy(k){if(sortKey===k){sortDir=-sortDir;}else{sortKey=k;sortDir=1;}renderTable();}
+function applySort(rows){if(!sortKey)return rows;return rows.slice().sort(function(a,b){var x=a[sortKey],y=b[sortKey];if(typeof x==='number'&&typeof y==='number')return (x-y)*sortDir;return String(x==null?'':x).localeCompare(String(y==null?'':y),'zh')*sortDir;});}
+function paintArrows(){document.querySelectorAll('th.sortable').forEach(function(th){var a=th.querySelector('.sort-arrow');if(a)a.textContent=th.dataset.key===sortKey?(sortDir>0?'▲':'▼'):'';});}
+function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('filterSelect').value='';renderAll();}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeConfirm();closeDrawer();}});
+
+/* ===== 厂区档案 ===== */
+var TYPE_CLS={'生产':'normal','出菇':'active','冷链':'base-planning'};
+function statusCls(s){
+  if(s==='温度越限')return 'danger';
+  if(s==='消杀中'||s==='停用')return 'warning';
+  return 'normal';
+}
+function zoneRows(){
+  var kw=document.getElementById('searchInput').value.trim().toLowerCase();
+  var tp=document.getElementById('filterSelect').value;
+  return FS.list('zones').filter(function(z){
+    if(tp&&z.type!==tp)return false;
+    if(kw&&(z.id+' '+z.name).toLowerCase().indexOf(kw)===-1)return false;
+    return true;
+  });
+}
+function renderStats(){
+  var zs=FS.list('zones');
+  var fruit=zs.filter(function(z){return z.type==='出菇';}).length;
+  var cold=zs.filter(function(z){return z.type==='冷链';}).length;
+  var area=zs.reduce(function(s,z){return s+Number(z.area||0);},0);
+  var cards=[
+    {label:'功能区数',value:zs.length,unit:'个',sub:'生产 / 出菇 / 冷链三类',cls:''},
+    {label:'出菇房',value:fruit,unit:'间',sub:'在产 '+zs.filter(function(z){return z.type==='出菇'&&z.status==='在产';}).length+' 间',cls:'green'},
+    {label:'冷链区',value:cold,unit:'个',sub:'预冷区 + 冷库 A/B',cls:'cyan'},
+    {label:'总面积',value:area.toLocaleString(),unit:'㎡',sub:'厂区功能区合计',cls:'orange'}
+  ];
+  document.getElementById('statGrid').innerHTML=cards.map(function(c){
+    return '<div class="stat-card '+c.cls+'"><div class="stat-label">'+c.label+'</div><div class="stat-value">'+esc(c.value)+(c.unit?'<small>'+c.unit+'</small>':'')+'</div><div class="stat-sub">'+esc(c.sub)+'</div></div>';
+  }).join('');
+}
+function renderTable(){
+  var rows=applySort(zoneRows());
+  var body=document.getElementById('tableBody');
+  if(!rows.length){body.innerHTML='<tr><td colspan="9" class="empty-cell">暂无符合条件的功能区，点击「新建功能区」添加</td></tr>';updateSelInfo();paintArrows();return;}
+  body.innerHTML=rows.map(function(z){
+    return '<tr onclick="rowClick(event,\''+z.id+'\')" style="cursor:pointer;">'+
+      '<td><input type="checkbox" class="row-check" data-id="'+z.id+'" '+(selected[z.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+      '<td><strong>'+esc(z.id)+'</strong></td>'+
+      '<td>'+esc(z.name)+'</td>'+
+      '<td><span class="status-tag '+(TYPE_CLS[z.type]||'normal')+'">'+esc(z.type)+'</span></td>'+
+      '<td class="text-right">'+Number(z.area||0).toLocaleString()+'</td>'+
+      '<td>'+esc(z.capacity)+'</td>'+
+      '<td>'+esc(z.design)+'</td>'+
+      '<td><span class="status-tag '+statusCls(z.status)+'">'+esc(z.status)+'</span></td>'+
+      '<td><button class="row-btn row-edit" onclick="openZoneForm(\''+z.id+'\')">编辑</button><button class="row-btn danger row-del" onclick="removeRow(\'zones\',\''+z.id+'\',\''+esc(z.name)+'\')">删除</button></td>'+
+    '</tr>';
+  }).join('');
+  updateSelInfo();paintArrows();
+}
+function renderAll(){renderStats();renderTable();}
+
+var editingId='';
+function openZoneForm(id){
+  editingId=id||'';
+  var z=id?FS.get('zones',id):null;
+  openModal(z?'编辑功能区':'新建功能区',
+    fg('编号',inp('f_id',z?z.id:'','text',!z),true)+
+    fg('名称',inp('f_name',z?z.name:'','text',true),true)+
+    fg('类型',sel('f_type',['生产','出菇','冷链'],z?z.type:'生产',true),true)+
+    fg('面积(㎡)',inp('f_area',z?z.area:'','number',true),true)+
+    fg('容量',inp('f_capacity',z?z.capacity:''),false)+
+    fg('状态',sel('f_status',['运行','在产','消杀中','温度越限','停用'],z?z.status:'运行',true),true)+
+    fg('设计参数',inp('f_design',z?z.design:''),false,true)
+  );
+  if(z)document.getElementById('f_id').disabled=true;
+}
+function saveModal(){
+  if(!reqOK())return;
+  var id=val('f_id');
+  if(!editingId&&FS.get('zones',id)){showToast('编号 '+id+' 已存在','error');return;}
+  var area=Number(val('f_area'));
+  if(!(area>0)){showToast('面积必须为正数','error');return;}
+  var patch={name:val('f_name'),type:val('f_type'),area:area,capacity:val('f_capacity')||'—',design:val('f_design')||'—',status:val('f_status')};
+  if(editingId){FS.update('zones',editingId,patch);showToast('功能区已更新','success');}
+  else{patch.id=id;FS.add('zones',patch);showToast('功能区已创建','success');}
+  closeModal();renderAll();
+}
+function openDetail(id){
+  var z=FS.get('zones',id);if(!z)return;
+  var batches=FS.list('batches').filter(function(b){return b.room===id;});
+  var bhtml=batches.length?
+    '<table class="mini-table"><thead><tr><th>批次</th><th>品种</th><th>阶段</th><th>袋数</th><th>起始时间</th></tr></thead><tbody>'+
+    batches.map(function(b){return '<tr><td>'+esc(b.id)+'</td><td>'+esc(b.variety)+'</td><td>'+esc(b.stage)+'</td><td>'+Number(b.bags).toLocaleString()+'</td><td>'+esc(b.start)+'</td></tr>';}).join('')+
+    '</tbody></table>':
+    '<p style="font-size:12px;color:var(--text-tertiary);">当前无关联批次</p>';
+  openDrawer('功能区详情 · '+z.name,
+    '<div class="detail-grid">'+
+    '<div class="detail-item"><div class="dl">编号</div><div class="dv">'+esc(z.id)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">类型</div><div class="dv">'+esc(z.type)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">面积</div><div class="dv">'+Number(z.area).toLocaleString()+' ㎡</div></div>'+
+    '<div class="detail-item"><div class="dl">容量</div><div class="dv">'+esc(z.capacity)+'</div></div>'+
+    '<div class="detail-item full"><div class="dl">设计参数</div><div class="dv">'+esc(z.design)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+statusCls(z.status)+'">'+esc(z.status)+'</span></div></div>'+
+    '</div>'+
+    '<div class="drawer-sec">关联菇房批次</div>'+bhtml+
+    (z.type==='出菇'?'<div style="margin-top:14px;"><button class="jg-btn" onclick="nav(\'harvest_plan.html\',\'出菇培育管理\')">查看出菇培育</button></div>':'')+
+    (z.type==='冷链'?'<div style="margin-top:14px;"><button class="jg-btn" onclick="nav(\'harvest_storage.html\',\'仓储冷链管理\')">查看仓储冷链</button></div>':'')
+  );
+}
+function exportZones(){
+  var rows=applySort(zoneRows());
+  exportCSV('厂区档案',['编号','名称','类型','面积(㎡)','容量','设计参数','状态'],rows.map(function(z){
+    return [z.id,z.name,z.type,z.area,z.capacity,z.design,z.status];
+  }));
+}
+renderAll();
+</script>
+</body>
+</html>

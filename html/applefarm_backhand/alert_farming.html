@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智慧果园 - 农事预警</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .search-section {
+    background:linear-gradient(145deg, var(--bg-card) 0%, var(--gray-50) 100%);
+    border-radius:var(--radius-xl);
+    box-shadow:0 4px 20px rgba(24, 144, 255, 0.08), 0 1px 3px rgba(0,0,0,0.04);
+    padding:var(--space-2xl);
+    margin-bottom:var(--space-xl);
+    border:1px solid rgba(24, 144, 255, 0.08);
+    transition:all 0.3s ease;
+  }
+  .search-section:hover {
+    box-shadow:0 6px 24px rgba(24, 144, 255, 0.12), 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .search-bar {
+    display:flex;
+    align-items:center;
+    gap:var(--space-xl);
+    flex-wrap:wrap;
+  }
+  .search-item {
+    display:flex;
+    align-items:center;
+    gap:var(--space-md);
+  }
+  .search-label {
+    font-size:var(--font-size-sm);
+    color:var(--text-secondary);
+    font-weight:500;
+    min-width:60px;
+  }
+  .search-input, .search-select {
+    padding:11px 16px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-lg);
+    font-size:var(--font-size-base);
+    transition:all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background:var(--bg-card);
+  }
+  .search-input:hover, .search-select:hover {
+    border-color:var(--border-default);
+    box-shadow:0 2px 8px rgba(24, 144, 255, 0.08);
+  }
+  .search-input:focus, .search-select:focus {
+    border-color:var(--primary-500);
+    box-shadow:0 0 0 4px rgba(24, 144, 255, 0.12);
+    transform:translateY(-1px);
+  }
+  .search-select {
+    min-width:150px;
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c8c8c' stroke-width='2'%3E%3Cpath d='m6,9 6,6 6,-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+    appearance:none;
+  }
+  .search-input {
+    flex:1;
+    max-width:220px;
+  }
+  .search-input::placeholder {
+    color:var(--text-tertiary);
+  }
+  .date-separator {
+    color:var(--text-tertiary);
+    font-size:var(--font-size-sm);
+    padding:0 var(--space-md);
+    font-weight:500;
+  }
+  .action-bar {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:var(--space-xl);
+    padding:16px 20px;
+    background:var(--bg-card);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-card);
+    border:1px solid var(--border-light);
+  }
+  .action-bar-left {
+    display:flex;
+    align-items:center;
+    gap:var(--space-lg);
+  }
+  /* 图表栅格 + 面板（与全站 .panel 口径一致） */
+  .chart-grid {
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:16px;
+    margin-bottom:20px;
+  }
+  .panel {
+    background:var(--bg-card);
+    border:1px solid #f0f0f0;
+    border-radius:12px;
+    padding:18px 20px;
+    box-shadow:0 1px 3px rgba(16,24,40,0.06);
+    min-width:0;
+  }
+  .panel-title {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding-bottom:12px; margin-bottom:14px;
+    border-bottom:1px solid #f0f0f0;
+    font-size:15px; font-weight:600; color:var(--text-primary);
+  }
+  .panel-title > span:first-child { display:inline-flex; align-items:center; gap:8px; }
+  .panel-title svg { width:16px; height:16px; color:var(--primary-500); flex-shrink:0; }
+  .panel-title .meta { font-size:12px; font-weight:normal; color:var(--text-tertiary); }
+  /* 表格多选列 */
+  .col-check { width:44px; text-align:center; }
+  .col-check input { cursor:pointer; }
+  /* 响应式：窄屏下搜索栏纵向堆叠、操作栏换行 */
+  @media (max-width:1100px) {
+    .search-section { padding:var(--space-xl); }
+    .search-bar { flex-wrap:wrap !important; overflow-x:visible; }
+    .search-actions { margin-left:0; width:100%; }
+    .search-item { flex:1 1 100%; }
+    .search-item .search-input { flex:1; max-width:none; }
+    .action-bar { flex-wrap:wrap; }
+    .action-bar .action-left { flex-wrap:wrap; }
+    .chart-grid { grid-template-columns:1fr !important; }
+  }
+  .selected-info {
+    font-size:var(--font-size-sm);
+    color:var(--text-tertiary);
+    padding:8px 16px;
+    background:var(--primary-50);
+    border-radius:var(--radius-md);
+  }
+  .selected-info strong {
+    color:var(--primary-600);
+    font-weight:600;
+    font-size:15px;
+  }
+  .data-section {
+    background:var(--bg-card);
+    border-radius:var(--radius-xl);
+    box-shadow:0 4px 20px rgba(24, 144, 255, 0.06), 0 1px 3px rgba(0,0,0,0.04);
+    border:1px solid rgba(24, 144, 255, 0.06);
+    overflow:hidden;
+    transition:all 0.3s ease;
+  }
+  .data-section:hover {
+    box-shadow:0 6px 24px rgba(24, 144, 255, 0.08), 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .data-table-wrapper {
+    overflow-x:auto;
+  }
+  .data-table {
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+  }
+  .action-btns {
+    display:flex;
+    gap:6px;
+    flex-wrap:nowrap;
+  }
+  .action-btn {
+    padding:4px 10px;
+    font-size:11.5px;
+    font-weight:500;
+    border:1px solid transparent;
+    border-radius:6px;
+    cursor:pointer;
+    transition:all 0.2s ease;
+    white-space:nowrap;
+  }
+  .action-btn.detail {
+    color:#2b6cb0;
+    background:#f5f8fc;
+    border-color:#c5d9f0;
+  }
+  .action-btn.detail:hover {
+    background:#edf2fa;
+    border-color:#90bce8;
+  }
+  .action-btn.execute {
+    color:var(--primary-600);
+    background:var(--gray-50);
+    border-color:var(--border-default);
+  }
+  .action-btn.execute:hover {
+    background:var(--primary-50);
+    border-color:var(--primary-300);
+  }
+  .pagination-wrapper {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:var(--space-xl);
+    border-top:1px solid var(--border-light);
+    background:var(--gray-50);
+  }
+  .pagination-info {
+    font-size:var(--font-size-sm);
+    color:var(--text-tertiary);
+  }
+  .pagination-info .num {
+    color:var(--primary-500);
+    font-weight:var(--font-weight-semibold);
+  }
+  .pagination {
+    display:flex;
+    align-items:center;
+    gap:var(--space-sm);
+  }
+  .modal-overlay {
+    position:fixed;
+    inset:0;
+    background:rgba(0, 0, 0, 0.45);
+    z-index:var(--z-modal-backdrop);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:var(--space-xl);
+    opacity:0;
+    visibility:hidden;
+    transition:all var(--transition-normal);
+  }
+  .modal-box {
+    background:var(--bg-card);
+    border-radius:var(--radius-xl);
+    box-shadow:var(--shadow-xl);
+    max-width:700px;
+    width:100%;
+    max-height:85vh;
+    overflow:hidden;
+    transform:scale(0.95);
+    transition:transform var(--transition-normal);
+  }
+  .modal-close:hover {
+    background:var(--gray-100);
+  }
+  .modal-body {
+    padding:var(--space-xl);
+    overflow-y:auto;
+    max-height:calc(85vh - 180px);
+  }
+  .detail-content {
+    background:var(--gray-50);
+    border-radius:var(--radius-lg);
+    padding:var(--space-xl);
+  }
+  .detail-row {
+    display:flex;
+    padding:var(--space-md) 0;
+    border-bottom:1px solid var(--border-light);
+    align-items:flex-start;
+  }
+  .detail-row label {
+    width:140px;
+    font-weight:var(--font-weight-medium);
+    color:var(--text-tertiary);
+    flex-shrink:0;
+  }
+  .detail-row span, .detail-row p {
+    color:var(--text-primary);
+    flex:1;
+  }
+  .detail-row p {
+    margin:0;
+    line-height:var(--line-height-relaxed);
+  }
+  .threshold-info {
+    background:var(--bg-card);
+    border-radius:var(--radius-md);
+    padding:var(--space-md);
+    margin-top:var(--space-sm);
+  }
+  .threshold-item {
+    display:flex;
+    justify-content:space-between;
+    padding:var(--space-sm) 0;
+    border-bottom:1px dashed var(--border-light);
+  }
+  .threshold-item:last-child {
+    border-bottom:none;
+  }
+  .threshold-label {
+    font-size:var(--font-size-sm);
+    color:var(--text-secondary);
+  }
+  .threshold-value {
+    font-size:var(--font-size-sm);
+    color:var(--text-primary);
+    font-weight:var(--font-weight-medium);
+  }
+  .execute-section {
+    margin-top:var(--space-xl);
+    padding:var(--space-xl);
+    background:var(--warning-bg);
+    border-radius:var(--radius-lg);
+    border:1px solid var(--warning-light);
+  }
+  .execute-title {
+    font-size:var(--font-size-base);
+    font-weight:var(--font-weight-semibold);
+    color:var(--warning);
+    margin-bottom:var(--space-lg);
+  }
+  .execute-select {
+    width:100%;
+    padding:12px 14px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    margin-bottom:var(--space-lg);
+    background:var(--bg-card);
+  }
+  .execute-textarea {
+    width:100%;
+    padding:12px 14px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    min-height:100px;
+    resize:vertical;
+    background:var(--bg-card);
+    margin-bottom:var(--space-lg);
+  }
+  .execute-hint {
+    font-size:var(--font-size-xs);
+    color:var(--text-tertiary);
+    line-height:1.6;
+  }
+  .form-group {
+    margin-bottom:var(--space-lg);
+  }
+  .form-group label {
+    display:block;
+    font-weight:var(--font-weight-medium);
+    color:var(--text-secondary);
+    margin-bottom:var(--space-sm);
+  }
+  .form-select {
+    width:100%;
+    padding:12px 14px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    background:var(--bg-card);
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c8c8c' stroke-width='2'%3E%3Cpath d='m6,9 6,6 6,-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 12px center;
+  }
+  .form-textarea {
+    width:100%;
+    padding:12px 14px;
+    border:1.5px solid var(--border-default);
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-base);
+    min-height:80px;
+    resize:vertical;
+    background:var(--bg-card);
+  }
+  .checkbox-label {
+    display:flex;
+    align-items:center;
+    gap:var(--space-sm);
+    cursor:pointer;
+    color:var(--text-secondary);
+  }
+  .checkbox-label input[type="checkbox"] {
+    width:16px;
+    height:16px;
+    cursor:pointer;
+  }
+  .batch-info {
+    padding:var(--space-md);
+    background:var(--primary-50);
+    border-radius:var(--radius-md);
+    margin-bottom:var(--space-lg);
+  }
+  .batch-info .highlight {
+    color:var(--primary-600);
+    font-weight:var(--font-weight-semibold);
+    font-size:18px;
+  }
+  .toast-container {
+    position:fixed;
+    top:80px;
+    right:20px;
+    z-index:var(--z-toast);
+    display:flex;
+    flex-direction:column;
+    gap:var(--space-sm);
+  }
+  .toast {
+    padding:12px 16px;
+    border-radius:var(--radius-md);
+    font-size:var(--font-size-sm);
+    display:flex;
+    align-items:center;
+    gap:var(--space-sm);
+    min-width:240px;
+    animation:slideIn 0.3s ease;
+  }
+  .toast.success {
+    background:var(--success-bg);
+    color:var(--success);
+    border:1px solid var(--success-light);
+  }
+  .toast.warning {
+    background:var(--warning-bg);
+    color:var(--warning);
+    border:1px solid var(--warning-light);
+  }
+  .toast.info {
+    background:var(--info-bg);
+    color:var(--info);
+    border:1px solid var(--info-light);
+  }
+  .toast.error {
+    background:var(--error-bg);
+    color:var(--error);
+    border:1px solid var(--error-light);
+  }
+  /* 预警级别统一配色（与 alert-data.js / 移动端 / 大屏端 urgent|important|reminder|notice 对齐） */
+  .status-tag.urgent { background:var(--error-bg); color:var(--error); border:1px solid var(--error-border); }
+  .status-tag.important { background:#fff7e6; color:#d46b08; border:1px solid #ffd591; }
+  .status-tag.reminder { background:var(--warning-bg); color:#ad8b00; border:1px solid var(--warning-border); }
+  .status-tag.notice { background:var(--info-bg); color:var(--info); border:1px solid var(--info-border); }
+  @keyframes slideIn {
+    from {
+      opacity:0;
+      transform:translateX(100%);
+    }
+    to {
+      opacity:1;
+      transform:translateX(0);
+    }
+  }
+  @keyframes slideOut {
+    from {
+      opacity:1;
+      transform:translateX(0);
+    }
+    to {
+      opacity:0;
+      transform:translateX(100%);
+    }
+  }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="alert" data-active-submenu="alert-farming">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <main class="main-content">
+      <div class="content-wrapper">
+
+        <!-- 图表区 -->
+        <section class="chart-grid">
+          <div class="panel">
+            <div class="panel-title">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                预警趋势
+              </span>
+              <span class="meta">近 30 天</span>
+            </div>
+            <div id="alert_farming-c1" style="width:100%;height:240px;"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 9 9h-9z"/>
+                </svg>
+                预警分类分布
+              </span>
+              <span class="meta">按业务分类</span>
+            </div>
+            <div id="alert_farming-c2" style="width:100%;height:240px;"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">
+              <span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="12" rx="1"/>
+                </svg>
+                涉及地块 TOP5
+              </span>
+              <span class="meta">按预警数</span>
+            </div>
+            <div id="alert_farming-c3" style="width:100%;height:240px;"></div>
+          </div>
+        </section>
+
+                <div class="search-section">
+          <div class="search-bar">
+            <input type="text" class="search-input" id="searchInput" placeholder="搜索预警标题、地块...">
+            <select class="search-select" id="typeSelect">
+              <option value="">全部类型</option>
+              <option value="disease">病虫害预警</option>
+              <option value="weather">气象预警</option>
+              <option value="soil">土壤预警</option>
+              <option value="growth">生长预警</option>
+              <option value="environment">环境预警</option>
+              <option value="yield">产量预警</option>
+              <option value="inventory">库存预警</option>
+            </select>
+            <select class="search-select" id="levelSelect">
+              <option value="">全部级别</option>
+              <option value="urgent">紧急</option>
+              <option value="important">重要</option>
+              <option value="reminder">提醒</option>
+              <option value="notice">通知</option>
+            </select>
+            <select class="search-select" id="statusSelect" style="min-width:160px;">
+              <option value="">全部状态</option>
+              <option value="pending">待处理</option>
+              <option value="processing">处理中</option>
+              <option value="closed">已闭环</option>
+              <option value="ignored">已忽略</option>
+              <option value="transferred">已转工单</option>
+              <option value="voided">已作废</option>
+            </select>
+            <div class="search-item">
+              <label class="search-label">日期范围</label>
+              <input type="date" class="search-input" id="startDate">
+              <span class="date-separator">至</span>
+              <input type="date" class="search-input" id="endDate">
+            </div>
+            <select class="search-select" id="baseSelect">
+              <option value="">全部基地</option>
+              <option value="yantai">天水麦积区基地</option>
+              <option value="weihai">天水秦州基地</option>
+              <option value="penglai">天水甘谷基地</option>
+              <option value="qingdao">青岛莱西基地</option>
+              <option value="longkou">龙口南山基地</option>
+            </select>
+
+          <div class="search-actions"><button class="jg-btn jg-btn-primary" id="btnSearch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button><button class="jg-btn" id="btnReset">重置</button></div>
+          </div>
+        </div>
+        <div class="action-bar">
+          <div class="action-left">
+            <button class="jg-btn" id="btnBatch">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+              </svg>
+              批量处理
+            </button>
+            <button class="jg-btn" id="btnExport">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" x2="12" y1="15" y2="3"/>
+              </svg>
+              导出数据
+            </button>
+          </div>
+        </div>
+        <div class="data-section">
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:60px;">序号</th>
+                  <th class="col-check"><input type="checkbox" id="selectAll" aria-label="全选"></th>
+                  <th>预警标题</th>
+                  <th style="width:120px;">预警类型</th>
+                  <th style="width:100px;">预警级别</th>
+                  <th style="width:180px;">涉及地块</th>
+                  <th style="width:110px;">当前值</th>
+                  <th style="width:140px;">预警时间</th>
+                  <th style="width:100px;">状态</th>
+                  <th style="width:160px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody">
+              </tbody>
+            </table>
+          </div>
+          <div id="pagination-container"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title" id="modalTitle">农事预警详情</h3>
+      <button class="modal-close btn-cancel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody">
+      <div class="detail-content">
+        <div class="detail-row">
+          <label>预警标题</label>
+          <span id="detailTitle">病虫害预警：红蜘蛛虫害爆发风险</span>
+        </div>
+        <div class="detail-row">
+          <label>预警类型</label>
+          <span id="detailType"><span class="category-tag cat-pest">病虫害</span></span>
+        </div>
+        <div class="detail-row">
+          <label>预警来源</label>
+          <span id="detailSource"><span class="source-tag src-model">模型预警</span></span>
+        </div>
+        <div class="detail-row">
+          <label>预警级别</label>
+          <span id="detailLevel"><span class="level-tag level-urgent">紧急</span></span>
+        </div>
+        <div class="detail-row">
+          <label>涉及地块</label>
+          <span id="detailLocation">天水麦积区基地 - 地块A1、A2、A3</span>
+        </div>
+        <div class="detail-row">
+          <label>预警时间</label>
+          <span id="detailTime">2026-09-20 11:00</span>
+        </div>
+        <div class="detail-row">
+          <label>当前状态</label>
+          <span id="detailStatus"><span class="status-tag st-pending">待处理</span></span>
+        </div>
+        <div class="detail-row">
+          <label>受理人</label>
+          <span id="detailAssignee">—</span>
+        </div>
+        <div class="detail-row">
+          <label>响应截止</label>
+          <span id="detailRespondDue">—</span>
+        </div>
+        <div class="detail-row">
+          <label>处置截止</label>
+          <span id="detailHandleDue">—</span>
+        </div>
+        <div class="detail-row">
+          <label>预警描述</label>
+          <p id="detailDesc">根据监测数据，红蜘蛛虫口密度已达到防治阈值（>5头/叶），预计未来3天内将进入爆发期。建议立即采取防治措施。</p>
+        </div>
+        <div class="detail-row">
+          <label>阈值信息</label>
+          <div class="threshold-info">
+            <div class="threshold-item">
+              <span class="threshold-label">当前值</span>
+              <span class="threshold-value" id="thresholdCurrent">8头/叶</span>
+            </div>
+            <div class="threshold-item">
+              <span class="threshold-label">预警阈值</span>
+              <span class="threshold-value" id="thresholdLimit">5头/叶</span>
+            </div>
+            <div class="threshold-item">
+              <span class="threshold-label">历史趋势</span>
+              <span class="threshold-value" id="thresholdTrend">呈上升趋势</span>
+            </div>
+          </div>
+        </div>
+        <div class="detail-row">
+          <label>处理历史</label>
+          <div class="threshold-info" id="detailHistory">
+            <!-- 历史条目由 JS 动态渲染 -->
+          </div>
+        </div>
+      </div>
+      <div class="execute-section">
+        <div class="execute-title">执行操作</div>
+        <select class="execute-select" id="executeAction">
+          <option value="">请选择执行动作</option>
+          <option value="spray">喷洒农药</option>
+          <option value="biological">生物防治</option>
+          <option value="manual">人工摘除</option>
+          <option value="monitor">加强监测</option>
+          <option value="irrigation">启动灌溉</option>
+          <option value="fertile">执行施肥</option>
+          <option value="prune">执行修剪</option>
+          <option value="reinforce">执行加固</option>
+          <option value="coldproof">启动防寒</option>
+          <option value="ventilation">开启通风</option>
+          <option value="shade">遮阳降温</option>
+        </select>
+        <select class="execute-select" id="executeAssignee">
+          <option value="">请选择受理人</option>
+          <option value="植保组">植保组</option>
+          <option value="技术员">技术员</option>
+          <option value="黄忠坚">黄忠坚</option>
+          <option value="惠加宁">惠加宁</option>
+          <option value="张才孙">张才孙</option>
+        </select>
+        <textarea class="execute-textarea" id="executeRemark" placeholder="请输入处理备注..."></textarea>
+        <div class="execute-hint">处置类动作 → 已闭环；加强监测 → 处理中；灌溉 / 施肥 / 加固等 → 已转工单</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn btn-cancel">关闭</button>
+      <button class="jg-btn jg-btn-primary" id="btnExecuteModal">确认执行</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="batchModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">批量处理</h3>
+      <button class="modal-close btn-cancel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="batch-info">
+        <p>已选择 <span class="highlight" id="batchCount">0</span> 条预警记录</p>
+      </div>
+      <div class="form-group">
+        <label>处理方式</label>
+        <select class="form-select" id="batchAction">
+          <option value="">请选择处理方式</option>
+          <option value="accept">批量受理（转处理中）</option>
+          <option value="process">批量处理（已闭环）</option>
+          <option value="ignore">批量忽略（已忽略）</option>
+          <option value="escalate">批量转工单（已转工单）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>受理人</label>
+        <select class="form-select" id="batchAssignee">
+          <option value="">请选择受理人</option>
+          <option value="植保组">植保组</option>
+          <option value="技术员">技术员</option>
+          <option value="黄忠坚">黄忠坚</option>
+          <option value="惠加宁">惠加宁</option>
+          <option value="张才孙">张才孙</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>处理原因</label>
+        <textarea class="form-textarea" id="batchReason" rows="3" placeholder="请输入处理原因..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn btn-cancel">取消</button>
+          </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">导出数据</h3>
+      <button class="modal-close btn-cancel">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4l8 8M12 4l-8 8"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>导出格式</label>
+        <select class="form-select" id="exportFormat">
+          <option value="excel">Excel (.xlsx)</option>
+          <option value="csv">CSV (.csv)</option>
+          <option value="pdf">PDF (.pdf)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="includeHeader" checked>
+          包含表头
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="exportSelected">
+          仅导出选中记录
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn btn-cancel">取消</button>
+      <button class="jg-btn jg-btn-primary" id="confirmExport">确认导出</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/shared/alert-data.js"></script>
+<script>
+  // 数据来源：共享数据源 AlertStore（详见 js/shared/alert-data.js）
+  // 本页面只负责农事预警（type='farming'）的视图与交互。
+  let filteredData = AlertStore.byType('farming');
+
+  document.addEventListener('DOMContentLoaded', function() {
+    Pagination.init({
+      currentPage: 1,
+      pageSize: 10,
+      data: filteredData,
+      containerId: 'pagination-container',
+      tbodyId: 'dataTableBody',
+      renderRow: renderRow
+    });
+
+    // 订阅共享数据源变化（来自其他标签页 / 后台其他页面 / 移动端的处理动作）
+    if (window.AlertStore && typeof AlertStore.subscribe === 'function') {
+      AlertStore.subscribe(function(reason){
+        if (reason === 'init' || (typeof reason === 'string' && reason.indexOf('status:') === 0) || reason === 'reset') {
+          refreshDataFromStore();
+        }
+      });
+    }
+
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.action-btn');
+      if (!btn) return;
+      if (btn.classList.contains('detail') || btn.classList.contains('execute')) {
+        showDetailModal(btn.dataset.id);
+        document.getElementById('detailModal').classList.add('show');
+      }
+    });
+
+    const detailModal = document.getElementById('detailModal');
+    const batchModal = document.getElementById('batchModal');
+    const exportModal = document.getElementById('exportModal');
+
+    document.getElementById('btnSearch').addEventListener('click', function() {
+      const keyword = document.getElementById('searchInput').value.toLowerCase();
+      const type = document.getElementById('typeSelect').value;
+      const level = document.getElementById('levelSelect').value;
+      const status = document.getElementById('statusSelect')?.value || '';
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const base = document.getElementById('baseSelect').value;
+
+      filteredData = AlertStore.byType('farming').filter(item => {
+        const matchKeyword = !keyword || item.title.toLowerCase().includes(keyword) || (item.location||'').toLowerCase().includes(keyword);
+        const matchType = !type || (item.category || item.srcType || item.type) === type;
+        const matchLevel = !level || item.level === level;
+        const matchStatus = !status || item.status === status;
+        // 日期范围：起止同时存在时取区间交集；仅填一端时按该端边界过滤
+        let matchDate = true;
+        if (startDate) matchDate = matchDate && item.time >= startDate + ' 00:00';
+        if (endDate) matchDate = matchDate && item.time <= endDate + ' 23:59';
+        const matchBase = !base || (item.location||'').includes(getBaseText(base));
+        return matchKeyword && matchType && matchLevel && matchStatus && matchDate && matchBase;
+      });
+
+      Pagination.updateData(filteredData);
+      showToast('搜索完成，共找到 ' + filteredData.length + ' 条记录');
+    });
+
+    document.getElementById('btnReset').addEventListener('click', function() {
+      document.querySelectorAll('.search-select, .search-input').forEach(el => {
+        el.value = '';
+      });
+      filteredData = AlertStore.byType('farming');
+      Pagination.updateData(filteredData);
+    });
+
+    document.getElementById('btnBatch')?.addEventListener('click', function() {
+      const checked = document.querySelectorAll('.row-checkbox:checked');
+      if (checked.length === 0) {
+        showToast('请先选择要处理的预警记录', 'warning');
+      } else {
+        batchModal.classList.add('show');
+        document.getElementById('batchCount').textContent = checked.length;
+      }
+    });
+
+    document.getElementById('btnExport').addEventListener('click', function() {
+      exportModal.classList.add('show');
+    });
+
+    document.getElementById('confirmBatch')?.addEventListener('click', function() {
+      const action = document.getElementById('batchAction').value;
+      const reason = document.getElementById('batchReason').value;
+      const assignee = document.getElementById('batchAssignee').value;
+      if (!action) {
+        showToast('请选择处理方式', 'warning');
+        return;
+      }
+      const targetStatus = { accept:'processing', process:'closed', ignore:'ignored', escalate:'transferred' }[action];
+      const actionTextMap = { accept:'已受理', process:'已批量处理', ignore:'已批量忽略', escalate:'已批量转工单' };
+      const remark = reason ? `（${reason}）` : '';
+      let ok = 0, fail = 0;
+      document.querySelectorAll('.row-checkbox:checked').forEach(function(cb){
+        const id = cb.dataset.id;
+        if (!id) return;
+        const res = AlertStore.transition(id, targetStatus, {
+          action: '批量' + actionTextMap[action] + remark,
+          assignee: assignee
+        });
+        if (res.ok) ok++; else fail++;
+      });
+      refreshDataFromStore();
+      batchModal.classList.remove('show');
+      if (fail > 0){
+        showToast('成功 ' + ok + ' 条，' + fail + ' 条状态不允许该操作', 'warning');
+      } else {
+        showToast('已成功批量' + getActionText(action) + ok + '条记录', 'success');
+      }
+    });
+
+    document.getElementById('confirmExport').addEventListener('click', function() {
+      const format = document.getElementById('exportFormat').value;
+      const exportSelected = document.getElementById('exportSelected').checked;
+      exportModal.classList.remove('show');
+      const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(function(cb){ return cb.dataset.id; });
+      const list = (exportSelected && selectedIds.length) ? AlertStore.byType('farming').filter(function(a){ return selectedIds.indexOf(a.id) >= 0; }) : filteredData;
+      if (!list.length){
+        showToast('没有可导出的数据', 'warning');
+        return;
+      }
+      const ok = exportFarmingAlerts(list, format);
+      if (ok) showToast('数据导出成功，共 ' + list.length + ' 条', 'success');
+      else showToast('导出失败，请改用 CSV 格式重试', 'error');
+    });
+
+    document.getElementById('btnExecuteModal').addEventListener('click', function() {
+      const action = document.getElementById('executeAction').value;
+      if (!action) {
+        showToast('请选择执行动作', 'warning');
+        return;
+      }
+      const id = document.getElementById('executeAction').dataset.id;
+      if (id) {
+        const remark = document.getElementById('executeRemark').value;
+        const remarkText = remark ? `（${remark}）` : '';
+        const assignee = document.getElementById('executeAssignee').value;
+        // 处置类动作 → 已闭环；加强监测 → 处理中；灌溉/施肥/加固等 → 已转工单
+        const CLOSED_ACTIONS = ['spray','biological','manual','prune','coldproof','ventilation','shade'];
+        const PROCESSING_ACTIONS = ['monitor'];
+        let targetStatus = 'transferred';
+        if (CLOSED_ACTIONS.indexOf(action) >= 0) targetStatus = 'closed';
+        else if (PROCESSING_ACTIONS.indexOf(action) >= 0) targetStatus = 'processing';
+        const res = AlertStore.transition(id, targetStatus, {
+          action: getExecuteText(action) + remarkText,
+          assignee: assignee
+        });
+        if (!res.ok) {
+          showToast(res.message, 'warning');
+          return;
+        }
+        refreshDataFromStore();
+      }
+      detailModal.classList.remove('show');
+      showToast('执行成功：' + getExecuteText(action), 'success');
+    });
+
+    document.querySelectorAll('.modal-close, .btn-cancel').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
+      });
+    });
+
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          modal.classList.remove('show');
+        }
+      });
+    });
+
+    document.getElementById('selectAll')?.addEventListener('change', function() {
+      document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.checked = this.checked;
+      });
+      updateSelectedCount();
+    });
+
+    document.addEventListener('change', function(e) {
+      if (e.target.classList.contains('row-checkbox')) {
+        updateSelectedCount();
+      }
+    });
+  });
+
+  function getBaseText(value) {
+    const map = {
+      'yantai': '天水麦积区基地',
+      'weihai': '天水秦州基地',
+      'penglai': '天水甘谷基地',
+      'qingdao': '青岛莱西基地',
+      'longkou': '龙口南山基地'
+    };
+    return map[value] || '';
+  }
+
+  function getActionText(action) {
+    const map = {
+      'accept': '受理',
+      'ignore': '忽略',
+      'process': '处理',
+      'escalate': '转工单'
+    };
+    return map[action] || '';
+  }
+
+  function getFormatText(format) {
+    const map = {
+      'excel': 'Excel',
+      'csv': 'CSV',
+      'pdf': 'PDF'
+    };
+    return map[format] || format;
+  }
+
+  function getExecuteText(action) {
+    const map = {
+      'spray': '喷洒农药',
+      'biological': '生物防治',
+      'manual': '人工摘除',
+      'monitor': '加强监测',
+      'irrigation': '启动灌溉',
+      'fertile': '执行施肥',
+      'prune': '执行修剪',
+      'reinforce': '执行加固',
+      'coldproof': '启动防寒',
+      'ventilation': '开启通风',
+      'shade': '遮阳降温'
+    };
+    return map[action] || action;
+  }
+
+  // 导出农事预警（CSV 真实下载）
+  function exportFarmingAlerts(list, format){
+    const cols = [
+      { key:'title', title:'预警标题' },
+      { key:'typeText', title:'预警类型' },
+      { key:'levelText', title:'预警级别' },
+      { key:'location', title:'涉及地块' },
+      { key:'current', title:'当前值' },
+      { key:'limit', title:'预警阈值' },
+      { key:'time', title:'预警时间' },
+      { key:'statusText', title:'状态' },
+      { key:'assignee', title:'受理人' },
+      { key:'respondDue', title:'响应截止' },
+      { key:'handleDue', title:'处置截止' },
+      { key:'desc', title:'预警描述' }
+    ];
+    const rows = list.map(function(a){
+      const th = a.threshold || {};
+      return {
+        title: a.title, typeText: getTypeText(a.category, a.srcTypeText),
+        levelText: a.levelText, location: a.location,
+        current: th.current || '—', limit: th.limit || '—',
+        time: a.time, statusText: a.statusText, assignee: a.assignee || '未指派',
+        respondDue: a.respondDue || '无时限', handleDue: a.handleDue || '无时限', desc: a.desc
+      };
+    });
+    const stamp = new Date();
+    const pad = n => n < 10 ? '0' + n : n;
+    const name = '农事预警_' + stamp.getFullYear() + pad(stamp.getMonth()+1) + pad(stamp.getDate());
+    const ok = AlertStore.exportCsv(rows, cols, name);
+    if (ok && format && format !== 'csv'){
+      showToast('已按 CSV 格式导出（Excel / PDF 可用表格软件另存）', 'info');
+    }
+    return ok;
+  }
+
+  function renderRow(item, index) {
+    const canExecute = item.status === 'pending' || item.status === 'processing' || item.status === 'transferred';
+    const th = item.threshold || {};
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td class="col-check"><input type="checkbox" class="row-checkbox" data-id="${item.id}" aria-label="选择该条预警"></td>
+        <td><strong>${item.title}</strong></td>
+        <td><span class="category-tag ${getTypeClass(item.category || item.srcType || item.type)}">${getTypeText(item.category || item.srcType, item.srcTypeText || item.typeText)}</span></td>
+        <td><span class="level-tag level-${item.level}">${item.levelText}</span></td>
+        <td>${item.location || '—'}</td>
+        <td>${th.current || '—'}</td>
+        <td>${item.time}</td>
+        <td><span class="status-tag ${getStatusClass(item.status)}">${item.statusText}</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn detail" data-id="${item.id}">详情</button>
+            ${canExecute ? `<button class="action-btn execute" data-id="${item.id}">执行防治</button>` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }
+
+  function getTypeClass(type) {
+    const map = {
+      'disease': 'cat-pest',
+      'pest': 'cat-pest',
+      'weather': 'cat-weather',
+      'soil': 'cat-soil',
+      'growth': 'cat-growth',
+      'environment': 'cat-environment',
+      'yield': 'cat-yield',
+      'inventory': 'cat-inventory',
+      'quality': 'cat-quality',
+      'device': 'cat-device'
+    };
+    return map[type] || 'cat-device';
+  }
+
+  // 预警类型原始值到中文显示的映射
+  function getTypeText(srcType, fallback) {
+    var map = {
+      'disease': '病虫害',
+      'pest': '病虫害',
+      'weather': '气象',
+      'drought': '干旱',
+      'flood': '洪涝',
+      'low-temp': '低温',
+      'high-temp': '高温',
+      'soil': '土壤',
+      'growth': '生长',
+      'environment': '环境',
+      'yield': '产量',
+      'inventory': '库存',
+      'quality': '质量',
+      'device': '设备'
+    };
+    return map[srcType] || fallback || '-';
+  }
+
+  function getStatusClass(status) {
+    const map = {
+      'pending': 'st-pending',
+      'processing': 'st-processing',
+      'closed': 'st-closed',
+      'ignored': 'st-ignored',
+      'transferred': 'st-transferred',
+      'voided': 'st-voided'
+    };
+    return map[status] || 'st-pending';
+  }
+
+  function showDetailModal(id) {
+    const item = AlertStore.byId(id);
+    if (!item) return;
+
+    document.getElementById('detailTitle').textContent = item.title;
+    document.getElementById('detailType').innerHTML = `<span class="category-tag ${getTypeClass(item.category || item.srcType || item.type)}">${getTypeText(item.category || item.srcType, item.srcTypeText || item.typeText)}</span>`;
+    document.getElementById('detailSource').innerHTML = `<span class="source-tag src-${item.source}">${getSourceText(item.source)}</span>`;
+    document.getElementById('detailLevel').innerHTML = `<span class="level-tag level-${item.level}">${item.levelText}</span>`;
+    document.getElementById('detailLocation').textContent = item.location || '—';
+    document.getElementById('detailTime').textContent = item.time;
+    document.getElementById('detailStatus').innerHTML = `<span class="status-tag ${getStatusClass(item.status)}">${item.statusText}</span>`;
+    document.getElementById('detailAssignee').textContent = item.assignee || '未指派';
+    document.getElementById('detailRespondDue').textContent = item.respondDue || '无时限';
+    document.getElementById('detailHandleDue').textContent = item.handleDue || '无时限';
+    document.getElementById('detailDesc').textContent = item.desc;
+    const th = item.threshold || {};
+    document.getElementById('thresholdCurrent').textContent = th.current || '—';
+    document.getElementById('thresholdLimit').textContent = th.limit || '—';
+    document.getElementById('thresholdTrend').textContent = th.trend || '—';
+
+    // 渲染处理历史（首项用 item.time，后续项自带时间戳）
+    const historyEl = document.getElementById('detailHistory');
+    const hist = item.history || [];
+    if (hist.length === 0) {
+      historyEl.innerHTML = '<div style="padding:8px;color:var(--text-tertiary);font-size:13px;">暂无处理记录</div>';
+    } else {
+      historyEl.innerHTML = hist.map(function(h){
+        const m = String(h).match(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2})\s+(.+)$/);
+        const tm = m ? m[1] : item.time;
+        const content = m ? m[2] : h;
+        return '<div class="threshold-item">'+
+                  '<span class="threshold-label">'+tm+'</span>'+
+                  '<span class="threshold-value">'+content+'</span>'+
+                '</div>';
+      }).join('');
+    }
+
+    document.getElementById('executeAction').value = '';
+    document.getElementById('executeAction').dataset.id = id;
+    document.getElementById('executeRemark').value = '';
+    document.getElementById('executeAssignee').value = item.assignee || '';
+  }
+
+  function getSourceText(source) {
+    var map = { device:'设备预警', manual:'人工上报', model:'模型预警', inventory:'库存预警', system:'系统预警', cert:'资质到期预警' };
+    return map[source] || '系统预警';
+  }
+
+  function updateSelectedCount() {
+    const count = document.querySelectorAll('.row-checkbox:checked').length;
+    const __sc = document.getElementById('selectedCount'); if (__sc) __sc.textContent = count;
+  }
+
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'slideOut 0.3s ease forwards';
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 3000);
+  }
+
+  // 从共享数据源刷新当前视图（保持当前过滤状态）
+  function refreshDataFromStore() {
+    const keyword = (document.getElementById('searchInput')?.value || '').toLowerCase();
+    const type = document.getElementById('typeSelect')?.value || '';
+    const level = document.getElementById('levelSelect')?.value || '';
+    const status = document.getElementById('statusSelect')?.value || '';
+    const startDate = document.getElementById('startDate')?.value || '';
+    const endDate = document.getElementById('endDate')?.value || '';
+    const base = document.getElementById('baseSelect')?.value || '';
+    let arr = AlertStore.byType('farming');
+    if (keyword || type || level || status || startDate || endDate || base) {
+      arr = arr.filter(function(item){
+        const matchKeyword = !keyword || item.title.toLowerCase().includes(keyword) || (item.location||'').toLowerCase().includes(keyword);
+        const matchType = !type || (item.category || item.srcType) === type;
+        const matchLevel = !level || item.level === level;
+        const matchStatus = !status || item.status === status;
+        let matchDate = true;
+        if (startDate) matchDate = matchDate && item.time >= startDate + ' 00:00';
+        if (endDate) matchDate = matchDate && item.time <= endDate + ' 23:59';
+        const matchBase = !base || (item.location||'').includes(getBaseText(base));
+        return matchKeyword && matchType && matchLevel && matchStatus && matchDate && matchBase;
+      });
+    }
+    filteredData = arr;
+    if (window.Pagination) Pagination.updateData(filteredData);
+    if (window.Chart && window.Chart.loadECharts) window.Chart.loadECharts().then(renderCharts);
+  }
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/common-functions.js"></script>
+  <script src="js/search-helper.js"></script>
+  <script src="js/typography.js"></script>
+<script src="js/components/chart.js"></script>
+<script>
+/* 农事预警图表：与设备预警页对称（趋势 / 分类分布 / 地块 TOP5） */
+(function(){
+  function renderCharts(){
+    if (!window.Chart) return;
+    var all = AlertStore.byType('farming');
+
+    // 近 30 天趋势
+    var trend = AlertStore.typeTrend(30, 'farming');
+    var cats = trend.map(function(d){ return d.date.substring(5); });
+    Chart.line('#alert_farming-c1', {
+      categories: cats,
+      series: [{ name:'预警量', data: trend.map(function(d){ return d.total; }) }]
+    });
+
+    // 分类分布
+    var catCount = {};
+    all.forEach(function(a){
+      var c = a.category || a.srcType || 'other';
+      catCount[c] = (catCount[c] || 0) + 1;
+    });
+    var CAT_TEXT = { pest:'病虫害', weather:'气象', soil:'土壤', growth:'生长', environment:'环境', yield:'产量', inventory:'库存', quality:'质量', device:'设备' };
+    var catItems = Object.keys(catCount).map(function(k){
+      return { name: CAT_TEXT[k] || k, value: catCount[k] };
+    }).sort(function(a,b){ return b.value - a.value; });
+    Chart.donut('#alert_farming-c2', { series: catItems });
+
+    // 地块 TOP5
+    var plotCount = {};
+    all.forEach(function(a){
+      var p = a.plot || a.location || '未知地块';
+      plotCount[p] = (plotCount[p] || 0) + 1;
+    });
+    var topPlots = Object.keys(plotCount).map(function(k){ return { name:k, value:plotCount[k] }; })
+      .sort(function(a,b){ return b.value - a.value; }).slice(0,5);
+    Chart.bar('#alert_farming-c3', {
+      categories: topPlots.map(function(x){ return x.name; }),
+      series: [{ name:'预警数', data: topPlots.map(function(x){ return x.value; }) }]
+    });
+  }
+  if (window.Chart) window.Chart.loadECharts().then(renderCharts);
+  else window.addEventListener('load', function(){ window.Chart.loadECharts().then(renderCharts); });
+  if (window.AlertStore && typeof AlertStore.subscribe === 'function' && !window.__farmAlertChartSub){
+    window.__farmAlertChartSub = true;
+    AlertStore.subscribe(function(reason){
+      if (reason === 'init') return;
+      if (window.Chart && window.Chart.loadECharts) window.Chart.loadECharts().then(renderCharts);
+    });
+  }
+})();
+</script>
+</body>
+</html>

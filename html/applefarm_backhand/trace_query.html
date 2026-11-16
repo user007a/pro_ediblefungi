@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工厂化农业数据管理系统 - 产品召回</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,21,41,0.5); display:flex; align-items:center; justify-content:center; z-index:1200; opacity:0; visibility:hidden; transition:all .25s ease; }
+  .modal-overlay.active { opacity:1; visibility:visible; }
+  .modal { background:var(--bg-card); border-radius:16px; width:520px; max-width:92vw; max-height:90vh; overflow:hidden; transform:scale(.92); transition:all .25s ease; display:flex; flex-direction:column; }
+  .modal-overlay.active .modal { transform:scale(1); }
+  .modal-header { padding:18px 24px; border-bottom:1px solid var(--border-default); display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#ff4d4f 0%,#fa8c16 100%); color:#fff; flex-shrink:0; }
+  .modal-header h3 { font-size:17px; font-weight:600; margin:0; color:#fff; }
+  .modal-close { width:30px; height:30px; border-radius:50%; background:rgba(255,255,255,.2); border:none; color:#fff; cursor:pointer; font-size:16px; line-height:1; }
+  .modal-close:hover { background:rgba(255,255,255,.32); }
+  .modal-body { padding:22px 24px; overflow-y:auto; }
+  .modal-footer { padding:14px 24px; border-top:1px solid var(--border-default); display:flex; justify-content:flex-end; gap:12px; flex-shrink:0; }
+  .form-group { display:flex; flex-direction:column; gap:7px; margin-bottom:14px; }
+  .form-group label { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .form-group input, .form-group select, .form-group textarea { padding:9px 12px; border:1px solid var(--border-default); border-radius:8px; font-size:14px; transition:all .2s; background:#fff; color:var(--text-primary); font-family:inherit; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:#1890ff; box-shadow:0 0 0 3px rgba(24,144,255,.12); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .form-hint { font-size:12px; color:var(--text-tertiary); }
+  .req { color:#ff4d4f; }
+  .detail-grid { display:grid; grid-template-columns:100px 1fr; gap:10px; padding:9px 0; border-bottom:1px dashed var(--border-light); font-size:13px; }
+  .detail-grid:last-child { border-bottom:none; }
+  .detail-label { color:var(--text-tertiary); }
+  .detail-value { color:var(--text-primary); font-weight:500; word-break:break-all; }
+  .drawer-overlay { position:fixed; inset:0; background:rgba(0,21,41,.45); z-index:1100; opacity:0; visibility:hidden; transition:all .25s; }
+  .drawer-overlay.active { opacity:1; visibility:visible; }
+  .drawer { position:fixed; top:0; right:0; bottom:0; width:480px; max-width:94vw; background:var(--bg-card); z-index:1101; transform:translateX(102%); transition:transform .3s ease; display:flex; flex-direction:column; box-shadow:-10px 0 34px rgba(0,21,41,.16); }
+  .drawer.active { transform:none; }
+  .drawer-header { padding:18px 22px; background:linear-gradient(135deg,#ff4d4f 0%,#722ed1 100%); color:#fff; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .drawer-header h3 { margin:0; font-size:16px; color:#fff; }
+  .drawer-body { flex:1; overflow-y:auto; padding:18px 22px; }
+  .drawer-footer { padding:12px 22px; border-top:1px solid var(--border-default); display:flex; gap:10px; justify-content:flex-end; flex-shrink:0; }
+  .drawer-body::-webkit-scrollbar, .modal-body::-webkit-scrollbar { width:6px; }
+  .drawer-body::-webkit-scrollbar-track, .modal-body::-webkit-scrollbar-track { background:#fff1f0; }
+  .drawer-body::-webkit-scrollbar-thumb, .modal-body::-webkit-scrollbar-thumb { background:#ffa39e; border-radius:3px; }
+  .drawer-body::-webkit-scrollbar-thumb:hover, .modal-body::-webkit-scrollbar-thumb:hover { background:#ff4d4f; }
+  .toast { position:fixed; top:20px; right:20px; padding:13px 18px; background:var(--bg-card); border-radius:10px; box-shadow:0 6px 24px rgba(0,21,41,.18); display:flex; align-items:center; gap:10px; z-index:2000; transform:translateX(120%); transition:all .3s ease; border-left:4px solid #52c41a; max-width:min(480px,90vw); font-size:13px; }
+  .toast.show { transform:translateX(0); }
+  .toast.error { border-left-color:#ff4d4f; }
+  .toast.warning { border-left-color:#fa8c16; }
+  .toast.info { border-left-color:#1890ff; }
+  .toast-undo { border:1px solid #1890ff; color:#1890ff; background:#e6f4ff; border-radius:6px; padding:3px 12px; font-size:12px; cursor:pointer; flex-shrink:0; }
+  .toast-undo:hover { background:#1890ff; color:#fff; }
+  .stats-section { margin-bottom:16px; }
+  @media (max-width:1100px){ .stats-section { grid-template-columns:repeat(2,1fr); } }
+  .pbar { height:8px; background:#eef2f7; border-radius:4px; overflow:hidden; min-width:70px; }
+  .pbar > i { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,#fa8c16,#52c41a); }
+  .bulk-bar { display:none; align-items:center; gap:12px; padding:8px 14px; margin-bottom:10px; background:#e6f4ff; border:1px solid #91caff; border-radius:8px; font-size:13px; color:#0958d9; }
+  .bulk-bar.show { display:flex; }
+  th.sortable { cursor:pointer; user-select:none; }
+  th.sortable:hover { color:#1890ff; }
+  .empty-row td { text-align:center; color:var(--text-tertiary); padding:36px 0 !important; font-size:13px; }
+  .mono { font-family:Consolas,Menlo,monospace; font-size:12.5px; }
+  .tl { position:relative; margin:6px 0 0 8px; padding-left:26px; }
+  .tl::before { content:''; position:absolute; left:7px; top:8px; bottom:8px; width:2px; background:linear-gradient(180deg,#ff4d4f,#fa8c16,#52c41a); border-radius:1px; opacity:.35; }
+  .tl-item { position:relative; padding:0 0 14px; }
+  .tl-item:last-child { padding-bottom:2px; }
+  .tl-dot { position:absolute; left:-26px; top:2px; width:16px; height:16px; border-radius:50%; background:#fff; border:3px solid #52c41a; box-shadow:0 0 0 3px rgba(82,196,26,.15); }
+  .tl-item.future .tl-dot { border-color:#d9d9d9; box-shadow:none; }
+  .tl-card { background:#fafcff; border:1px solid var(--border-default); border-radius:10px; padding:9px 13px; }
+  .tl-item.future .tl-card { opacity:.55; border-style:dashed; }
+  .tl-name { font-size:13px; font-weight:600; color:var(--text-primary); }
+  .tl-meta { font-size:12px; color:var(--text-secondary); margin-top:4px; line-height:1.6; }
+  .drill-tag { display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; background:#f9f0ff; color:#722ed1; border:1px solid #d3adf7; margin-left:6px; }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="trace" data-active-submenu="trace-query">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <main class="main-content">
+      <div class="content-wrapper">
+
+        <div class="stats-section metrics-row">
+          <div class="stat-card red">
+            <div class="stat-header"><span class="stat-label">进行中召回</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span></div>
+            <div class="stat-value" id="stActive">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">发起 → 通知 → 回收 → 处置</span></div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-header"><span class="stat-label">已完成召回</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span></div>
+            <div class="stat-value" id="stDone">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">含演练单</span></div>
+          </div>
+          <div class="stat-card blue">
+            <div class="stat-header"><span class="stat-label">平均回收率</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></span></div>
+            <div class="stat-value" id="stRecovery">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">目标 ≥ 95%</span></div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-header"><span class="stat-label">召回演练次数</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span></div>
+            <div class="stat-value" id="stDrill">—</div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">演练单不计入真实召回</span></div>
+          </div>
+        </div>
+
+        <div class="search-section">
+          <div class="search-bar">
+            <select class="search-select" id="statusSelect" style="width:150px;">
+              <option value="">全部状态</option><option>发起</option><option>通知中</option><option>回收中</option><option>处置中</option><option>已完成</option>
+            </select>
+            <select class="search-select" id="levelSelect" style="width:140px;">
+              <option value="">全部级别</option><option>一级</option><option>二级</option><option>三级</option>
+            </select>
+            <select class="search-select" id="drillSelect" style="width:150px;">
+              <option value="">全部类型</option><option value="real">真实召回</option><option value="drill">演练单</option>
+            </select>
+            <input type="text" class="search-input" placeholder="召回单号 / 批次搜索…" id="kwInput" style="width:200px;">
+            <div class="search-actions">
+              <button class="jg-btn jg-btn-primary" onclick="applyFilter(true)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button>
+              <button class="jg-btn" onclick="resetSearch()">重置</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-bar">
+          <div class="action-left">
+            <button class="jg-btn jg-btn-primary" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="openNewRecall()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 4v16m8-8H4"/></svg>发起召回
+            </button>
+            <button class="jg-btn" style="border-color:#722ed1;color:#722ed1;" onclick="runDrill()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>召回演练
+            </button>
+            <button class="jg-btn" onclick="exportCSV()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出 CSV
+            </button>
+          </div>
+          <div class="action-right"><span style="font-size:13px;color:var(--text-tertiary);" id="filterInfo"></span></div>
+        </div>
+
+        <div class="bulk-bar" id="bulkBar">
+          <span>已勾选 <strong id="bulkCount">0</strong> 条召回单</span>
+          <button class="jg-btn" style="border-color:#ff4d4f;color:#ff4d4f;" onclick="bulkDelete()">批量删除</button>
+          <button class="jg-btn" onclick="clearSelection()">取消勾选</button>
+        </div>
+
+        <div class="data-section">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:44px;"><input type="checkbox" id="checkAll" onchange="toggleAll(this.checked)" aria-label="全选"></th>
+                <th style="width:56px;">序号</th>
+                <th>召回单号</th>
+                <th>批次号</th>
+                <th>召回原因</th>
+                <th>级别</th>
+                <th>召回范围</th>
+                <th style="width:150px;">回收率</th>
+                <th>状态</th>
+                <th class="sortable" onclick="toggleSort()" id="thTime">发起时间 <span id="sortArrow">↕</span></th>
+                <th style="width:230px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody"></tbody>
+          </table>
+          <div id="pagination-container"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 召回详情抽屉 -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="rcDrawer" role="dialog" aria-label="召回详情">
+  <div class="drawer-header">
+    <h3 id="drawerTitle">召回详情</h3>
+    <button class="modal-close" onclick="closeDrawer()" aria-label="关闭">×</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-footer" id="drawerFooter"></div>
+</div>
+
+<!-- 发起召回弹窗 -->
+<div class="modal-overlay" id="newModal">
+  <div class="modal">
+    <div class="modal-header"><h3>发起产品召回</h3><button class="modal-close" onclick="closeModal('newModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>涉及批次 <span class="req">*</span></label><select id="nrBatch"><option value="">请选择批次</option></select></div>
+      <div class="form-group"><label>召回原因 <span class="req">*</span></label><textarea id="nrReason" rows="2" placeholder="如：冷链温度越限排查 / 标签信息错误 / 抽检异常"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>召回级别 <span class="req">*</span></label><select id="nrLevel"><option>一级</option><option selected>二级</option><option>三级</option></select></div>
+        <div class="form-group"><label>召回范围 <span class="req">*</span></label><input type="text" id="nrScope" placeholder="如 TR-xxx 起 60 箱"></div>
+      </div>
+      <span class="form-hint">一级：食品安全风险，24h 内通知；二级：质量缺陷，48h；三级：标签/包装问题，72h。创建后进入「发起」状态。</span>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('newModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="confirmNewRecall()">确认发起</button>
+    </div>
+  </div>
+</div>
+
+<!-- 编辑弹窗 -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-header" style="background:linear-gradient(135deg,#1890ff 0%,#13c2c2 100%);"><h3>编辑召回单</h3><button class="modal-close" onclick="closeModal('editModal')">×</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>召回单号</label><input type="text" id="erId" readonly></div>
+      <div class="form-group"><label>召回原因 <span class="req">*</span></label><textarea id="erReason" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>级别</label><select id="erLevel"><option>一级</option><option>二级</option><option>三级</option></select></div>
+        <div class="form-group"><label>回收率 %</label><input type="number" id="erRecovery" min="0" max="100" step="0.1"></div>
+      </div>
+      <div class="form-group"><label>召回范围 <span class="req">*</span></label><input type="text" id="erScope"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('editModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" onclick="confirmEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 流转确认弹窗（动态内容） -->
+<div class="modal-overlay" id="stepModal">
+  <div class="modal" style="width:460px;">
+    <div class="modal-header" style="background:linear-gradient(135deg,#fa8c16 0%,#faad14 100%);"><h3 id="stepTitle">流转确认</h3><button class="modal-close" onclick="closeModal('stepModal')">×</button></div>
+    <div class="modal-body" id="stepBody"></div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('stepModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" id="stepOk">确认流转</button>
+    </div>
+  </div>
+</div>
+
+<!-- 通用确认弹窗 -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="width:420px;">
+    <div class="modal-header"><h3 id="confirmTitle">确认操作</h3><button class="modal-close" onclick="closeModal('confirmModal')">×</button></div>
+    <div class="modal-body"><div id="confirmText" style="font-size:14px;color:var(--text-secondary);line-height:1.7;"></div></div>
+    <div class="modal-footer">
+      <button class="jg-btn" onclick="closeModal('confirmModal')">取消</button>
+      <button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;">确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toastMessage">操作成功</span>
+  <button class="toast-undo" id="toastUndo" style="display:none;">撤销</button>
+</div>
+
+<script src="js/shared/fungi-store.js"></script>
+<script>
+/* ============================================================
+ * 产品召回 —— FungiStore.recalls 单一真源
+ * 流转：发起 → 通知中 → 回收中 → 处置中 → 已完成
+ * 每步弹窗确认并记录 history；演练单直接已完成并标记 drill
+ * ============================================================ */
+'use strict';
+var FS = window.FungiStore;
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function pad(n,l){ n=String(n); while(n.length<(l||2)) n='0'+n; return n; }
+function nowHM(){ var d=new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function nowStr(){ return FS.at(0, nowHM()); }
+function currentUser(){ try{ return JSON.parse(sessionStorage.getItem('snzg_user')||'{}'); }catch(e){ return {}; } }
+function opLog(action, object){
+  try{
+    var u=currentUser();
+    var arr=JSON.parse(localStorage.getItem('mushroom_op_log')||'[]');
+    arr.unshift({ time:nowStr(), account:u.username||'admin', action:action, object:object||'—' });
+    if(arr.length>200) arr.length=200;
+    localStorage.setItem('mushroom_op_log', JSON.stringify(arr));
+  }catch(e){}
+}
+var toastTimer=null, undoFn=null;
+function showToast(msg,type,undo){
+  var t=document.getElementById('toast');
+  document.getElementById('toastMessage').textContent=msg;
+  var ub=document.getElementById('toastUndo');
+  undoFn=undo||null; ub.style.display=undo?'':'none';
+  t.className='toast '+(type||'success')+' show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){ t.classList.remove('show'); undoFn=null; }, undo?6000:3200);
+}
+document.getElementById('toastUndo').addEventListener('click',function(){
+  if(undoFn){ var f=undoFn; undoFn=null; f(); }
+  document.getElementById('toast').classList.remove('show');
+});
+function openModal(id){ document.getElementById(id).classList.add('active'); }
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+function askConfirm(title,html,onOk){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmText').innerHTML=html;
+  var btn=document.getElementById('confirmOk');
+  var nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
+  nb.addEventListener('click',function(){ closeModal('confirmModal'); onOk(); });
+  openModal('confirmModal');
+}
+function openDrawer(){ document.getElementById('drawerOverlay').classList.add('active'); document.getElementById('rcDrawer').classList.add('active'); }
+function closeDrawer(){ document.getElementById('drawerOverlay').classList.remove('active'); document.getElementById('rcDrawer').classList.remove('active'); }
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ document.querySelectorAll('.modal-overlay.active').forEach(function(o){ closeModal(o.id); }); closeDrawer(); }
+});
+document.querySelectorAll('.modal-overlay').forEach(function(o){
+  o.addEventListener('click',function(e){ if(e.target===o) closeModal(o.id); });
+});
+
+/* ---------- 流转定义 ---------- */
+var STEPS=['发起','通知中','回收中','处置中','已完成'];
+var STEP_COLORS={ '发起':'#ff4d4f','通知中':'#fa8c16','回收中':'#1890ff','处置中':'#722ed1','已完成':'#52c41a' };
+function stepPill(s){
+  var c=STEP_COLORS[s]||'#8c9bab';
+  return '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;color:'+c+';border:1px solid '+c+'55;background:'+c+'14;">'+esc(s)+'</span>';
+}
+function levelPill(l){
+  var map={ '一级':'#ff4d4f','二级':'#fa8c16','三级':'#1890ff' };
+  var c=map[l]||'#8c9bab';
+  return '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;color:'+c+';border:1px solid '+c+'55;background:'+c+'14;">'+esc(l)+'</span>';
+}
+function historyOf(r){
+  if(Array.isArray(r.history) && r.history.length) return r.history;
+  /* 种子数据无 history：按当前状态合成时间线 */
+  var idx=STEPS.indexOf(r.status); if(idx<0) idx=0;
+  var out=[];
+  for(var i=0;i<=idx;i++){
+    out.push({ status:STEPS[i], time:i===0?r.time:'—', operator:r.operator||'—', note:i===0?'召回单创建（种子档案）':'历史流转记录' });
+  }
+  return out;
+}
+
+/* ---------- 统计 ---------- */
+function renderStats(){
+  var rows=FS.list('recalls');
+  var active=rows.filter(function(r){ return r.status!=='已完成'; }).length;
+  var done=rows.length-active;
+  var real=rows.filter(function(r){ return !r.drill; });
+  var avg=real.length?real.reduce(function(s,r){ return s+(Number(r.recovery)||0); },0)/real.length:0;
+  var drills=rows.filter(function(r){ return r.drill; }).length;
+  document.getElementById('stActive').textContent=active;
+  document.getElementById('stDone').textContent=done;
+  document.getElementById('stRecovery').textContent=real.length?avg.toFixed(1)+'%':'—';
+  document.getElementById('stDrill').textContent=drills;
+}
+
+/* ---------- 列表 ---------- */
+var sortDesc=true, selected={};
+var Pagination={
+  currentPage:1,pageSize:10,filteredData:[],
+  updateData:function(data){ this.filteredData=data; this.currentPage=1; this.render(); },
+  goToPage:function(p){ var tp=Math.max(1,Math.ceil(this.filteredData.length/this.pageSize)); if(p<1||p>tp) return; this.currentPage=p; this.render(); },
+  render:function(){
+    var total=this.filteredData.length, tp=Math.max(1,Math.ceil(total/this.pageSize));
+    if(this.currentPage>tp) this.currentPage=tp;
+    var start=(this.currentPage-1)*this.pageSize;
+    var rows=this.filteredData.slice(start,start+this.pageSize);
+    var tbody=document.getElementById('dataTableBody');
+    tbody.innerHTML=rows.length?rows.map(function(r,i){ return renderRow(r,start+i+1); }).join('')
+      :'<tr class="empty-row"><td colspan="11">暂无符合条件的召回单，可「发起召回」或执行「召回演练」</td></tr>';
+    var html='<div class="pagination">';
+    html+='<button class="page-btn '+(this.currentPage<=1?'disabled':'')+'" onclick="Pagination.goToPage('+(this.currentPage-1)+')">‹</button>';
+    for(var i=1;i<=tp;i++){
+      if(i===1||i===tp||Math.abs(i-this.currentPage)<=1) html+='<button class="page-btn '+(i===this.currentPage?'active':'')+'" onclick="Pagination.goToPage('+i+')">'+i+'</button>';
+      else if(Math.abs(i-this.currentPage)===2) html+='<span style="padding:0 6px;color:#9aa5b1;">…</span>';
+    }
+    html+='<button class="page-btn '+(this.currentPage>=tp?'disabled':'')+'" onclick="Pagination.goToPage('+(this.currentPage+1)+')">›</button>';
+    html+='<span style="margin-left:14px;font-size:13px;color:#6b7b6b;">第 '+this.currentPage+' / '+tp+' 页 · 共 '+total+' 条</span></div>';
+    document.getElementById('pagination-container').innerHTML=html;
+    syncCheckAll();
+  }
+};
+function currentFiltered(){
+  var s=document.getElementById('statusSelect').value;
+  var l=document.getElementById('levelSelect').value;
+  var d=document.getElementById('drillSelect').value;
+  var kw=document.getElementById('kwInput').value.trim().toLowerCase();
+  var rows=FS.list('recalls').filter(function(r){
+    if(s && r.status!==s) return false;
+    if(l && r.level!==l) return false;
+    if(d==='drill' && !r.drill) return false;
+    if(d==='real' && r.drill) return false;
+    if(kw && r.id.toLowerCase().indexOf(kw)<0 && String(r.batch).toLowerCase().indexOf(kw)<0) return false;
+    return true;
+  });
+  rows.sort(function(a,b){ var r=String(a.time).localeCompare(String(b.time)); return sortDesc?-r:r; });
+  return rows;
+}
+function applyFilter(notify){
+  var rows=currentFiltered();
+  Pagination.updateData(rows);
+  document.getElementById('filterInfo').textContent='筛选结果 '+rows.length+' 条';
+  if(notify) showToast('找到 '+rows.length+' 条召回单','info');
+}
+function resetSearch(){
+  ['statusSelect','levelSelect','drillSelect'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('kwInput').value='';
+  applyFilter(false); showToast('已重置筛选条件','info');
+}
+function toggleSort(){ sortDesc=!sortDesc; document.getElementById('sortArrow').textContent=sortDesc?'↓':'↑'; applyFilter(false); }
+function renderRow(r,seq){
+  var rec=Number(r.recovery)||0;
+  var idx=STEPS.indexOf(r.status);
+  var next=idx>=0&&idx<STEPS.length-1?STEPS[idx+1]:null;
+  var acts='';
+  if(next) acts+='<button class="action-btn detail" onclick="openStep(\''+esc(r.id)+'\')">→ '+next+'</button>';
+  acts+='<button class="action-btn" onclick="openRecovery(\''+esc(r.id)+'\')">回收率</button>';
+  acts+='<button class="action-btn qrcode" onclick="viewDetail(\''+esc(r.id)+'\')">详情</button>';
+  acts+='<button class="action-btn" style="color:#ff4d4f;" onclick="deleteOne(\''+esc(r.id)+'\')">删除</button>';
+  return '<tr>'+
+    '<td><input type="checkbox" '+(selected[r.id]?'checked':'')+' onchange="toggleRow(\''+esc(r.id)+'\',this.checked)" aria-label="勾选"></td>'+
+    '<td>'+seq+'</td>'+
+    '<td><strong class="mono">'+esc(r.id)+'</strong>'+(r.drill?'<span class="drill-tag">演练</span>':'')+'</td>'+
+    '<td class="mono">'+esc(r.batch)+'</td>'+
+    '<td style="max-width:180px;">'+esc(r.reason||'—')+'</td>'+
+    '<td>'+levelPill(r.level)+'</td>'+
+    '<td style="max-width:170px;">'+esc(r.scope||'—')+'</td>'+
+    '<td><div style="display:flex;align-items:center;gap:8px;"><div class="pbar" style="flex:1;"><i style="width:'+Math.min(rec,100)+'%;"></i></div><span style="font-size:12px;font-weight:600;color:'+(rec>=95?'#52c41a':rec>=60?'#fa8c16':'#ff4d4f')+';">'+rec.toFixed(1)+'%</span></div></td>'+
+    '<td>'+stepPill(r.status)+'</td>'+
+    '<td>'+esc(r.time)+'</td>'+
+    '<td><div class="action-btns">'+acts+'</div></td></tr>';
+}
+function toggleRow(id,on){ if(on) selected[id]=true; else delete selected[id]; syncBulk(); }
+function toggleAll(on){
+  Pagination.filteredData.slice((Pagination.currentPage-1)*Pagination.pageSize,Pagination.currentPage*Pagination.pageSize).forEach(function(r){
+    if(on) selected[r.id]=true; else delete selected[r.id];
+  });
+  Pagination.render(); syncBulk();
+}
+function syncCheckAll(){
+  var rows=Pagination.filteredData.slice((Pagination.currentPage-1)*Pagination.pageSize,Pagination.currentPage*Pagination.pageSize);
+  document.getElementById('checkAll').checked=rows.length>0 && rows.every(function(r){ return selected[r.id]; });
+}
+function syncBulk(){
+  var n=Object.keys(selected).length;
+  document.getElementById('bulkCount').textContent=n;
+  document.getElementById('bulkBar').classList.toggle('show',n>0);
+}
+function clearSelection(){ selected={}; Pagination.render(); syncBulk(); }
+function removeRecords(ids){
+  var removed=[];
+  ids.forEach(function(id){
+    var idx=FS.list('recalls').findIndex(function(x){ return x.id===id; });
+    var obj=FS.remove('recalls',id);
+    if(obj) removed.push({obj:obj,idx:idx});
+    delete selected[id];
+  });
+  refresh();
+  showToast('已删除 '+removed.length+' 条召回单','warning',function(){
+    removed.sort(function(a,b){ return a.idx-b.idx; }).forEach(function(r){ FS.restore('recalls',r.obj,r.idx); });
+    refresh(); showToast('已撤销删除','success');
+  });
+  opLog('删除召回单',ids.join('、'));
+}
+function bulkDelete(){
+  var ids=Object.keys(selected); if(!ids.length) return;
+  askConfirm('批量删除召回单','即将删除勾选的 <strong>'+ids.length+'</strong> 条召回单，删除后可撤销。是否继续？',function(){ removeRecords(ids); });
+}
+function deleteOne(id){
+  askConfirm('删除召回单','确定删除召回单 <strong class="mono">'+esc(id)+'</strong> 吗？删除后可撤销。',function(){ removeRecords([id]); });
+}
+
+/* ---------- 发起召回 ---------- */
+function openNewRecall(){
+  var sel=document.getElementById('nrBatch');
+  sel.innerHTML='<option value="">请选择批次</option>'+FS.list('batches').map(function(b){
+    return '<option value="'+esc(b.id)+'">'+esc(b.id)+' · '+esc(b.variety)+'</option>';
+  }).join('');
+  document.getElementById('nrReason').value='';
+  document.getElementById('nrScope').value='';
+  openModal('newModal');
+}
+function confirmNewRecall(){
+  var batch=document.getElementById('nrBatch').value;
+  var reason=document.getElementById('nrReason').value.trim();
+  var level=document.getElementById('nrLevel').value;
+  var scope=document.getElementById('nrScope').value.trim();
+  if(!batch){ showToast('请选择涉及批次','error'); return; }
+  if(!reason){ showToast('请填写召回原因','error'); return; }
+  if(!scope){ showToast('请填写召回范围','error'); return; }
+  var u=currentUser();
+  var rec=FS.add('recalls',{
+    batch:batch, reason:reason, level:level, scope:scope,
+    status:'发起', recovery:0, operator:u.realName||'周明轩', time:nowStr(),
+    history:[{ status:'发起', time:nowStr(), operator:u.realName||'周明轩', note:'召回单创建：'+reason }]
+  });
+  closeModal('newModal');
+  opLog('发起召回',rec.id+' · '+batch);
+  refresh();
+  showToast('召回单 '+rec.id+' 已发起，请推进通知流程','success');
+  viewDetail(rec.id);
+}
+
+/* ---------- 流转 ---------- */
+var stepId='';
+function openStep(id){
+  var r=FS.get('recalls',id); if(!r) return;
+  var idx=STEPS.indexOf(r.status);
+  if(idx<0||idx>=STEPS.length-1){ showToast('该召回单已完成全部流转','info'); return; }
+  stepId=id;
+  var next=STEPS[idx+1];
+  document.getElementById('stepTitle').textContent='流转确认 · '+r.status+' → '+next;
+  var html='<div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">召回单 <strong class="mono">'+esc(r.id)+'</strong> · 批次 '+esc(r.batch)+'</div>';
+  if(next==='通知中'){
+    html+='<div class="form-group"><label>通知渠道 <span class="req">*</span></label><select id="stepInput"><option>短信 + 站内通知</option><option>电话 + 短信</option><option>站内通知</option><option>经销商函件 + 短信</option></select></div>'+
+      '<span class="form-hint">确认后向范围内经销商 / 门店发送召回通知。</span>';
+  }else if(next==='回收中'){
+    html+='<div class="form-group"><label>已通知箱数 <span class="req">*</span></label><input type="number" id="stepInput" min="1" placeholder="如 60"></div>'+
+      '<span class="form-hint">确认后启动实物回收，回收率可随时更新。</span>';
+  }else if(next==='处置中'){
+    html+='<div class="form-group"><label>当前回收率 % <span class="req">*</span></label><input type="number" id="stepInput" min="0" max="100" step="0.1" value="'+(Number(r.recovery)||0)+'"></div>'+
+      '<span class="form-hint">回收阶段结束，进入不合格品处置流程。</span>';
+  }else{
+    html+='<div class="form-group"><label>处置方式 <span class="req">*</span></label><select id="stepInput"><option>无害化处理</option><option>返工加工</option><option>监督销毁</option><option>转饲料原料</option></select></div>'+
+      '<div class="form-group"><label>最终回收率 %</label><input type="number" id="stepInput2" min="0" max="100" step="0.1" value="'+(Number(r.recovery)||0)+'"></div>'+
+      '<span class="form-hint">确认后召回闭环，归档至已完成。</span>';
+  }
+  document.getElementById('stepBody').innerHTML=html;
+  var btn=document.getElementById('stepOk');
+  var nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
+  nb.addEventListener('click',function(){ confirmStep(next); });
+  openModal('stepModal');
+}
+function confirmStep(next){
+  var r=FS.get('recalls',stepId); if(!r) return;
+  var input=document.getElementById('stepInput');
+  var v=input?input.value.trim():'';
+  if(!v){ showToast('请填写必填项','error'); return; }
+  var note='', patch={ status:next };
+  var u=currentUser();
+  if(next==='通知中') note='通知渠道：'+v;
+  else if(next==='回收中'){
+    if(!(Number(v)>0)){ showToast('已通知箱数需为正数','error'); return; }
+    note='已通知 '+v+' 箱，启动实物回收';
+  }
+  else if(next==='处置中'){
+    var rec=Number(v);
+    if(isNaN(rec)||rec<0||rec>100){ showToast('回收率需在 0-100 之间','error'); return; }
+    patch.recovery=rec; note='回收阶段结束，回收率 '+rec.toFixed(1)+'%';
+  }
+  else{
+    var rec2El=document.getElementById('stepInput2');
+    var rec2=rec2El?Number(rec2El.value):Number(r.recovery)||0;
+    if(isNaN(rec2)||rec2<0||rec2>100){ showToast('最终回收率需在 0-100 之间','error'); return; }
+    patch.recovery=rec2; note='处置方式：'+v+' · 最终回收率 '+rec2.toFixed(1)+'%';
+  }
+  var hist=historyOf(r).slice();
+  hist.push({ status:next, time:nowStr(), operator:u.realName||'周明轩', note:note });
+  patch.history=hist;
+  FS.update('recalls',stepId,patch);
+  closeModal('stepModal');
+  opLog('召回流转',stepId+' → '+next);
+  refresh();
+  showToast('已流转至「'+next+'」：'+stepId,'success');
+  if(document.getElementById('rcDrawer').classList.contains('active')) viewDetail(stepId);
+}
+
+/* ---------- 回收率更新 ---------- */
+function openRecovery(id){
+  var r=FS.get('recalls',id); if(!r) return;
+  stepId=id;
+  document.getElementById('stepTitle').textContent='更新回收率 · '+r.id;
+  document.getElementById('stepBody').innerHTML=
+    '<div class="form-group"><label>回收率 % <span class="req">*</span></label><input type="number" id="stepInput" min="0" max="100" step="0.1" value="'+(Number(r.recovery)||0)+'"></div>'+
+    '<span class="form-hint">回收率 = 已回收箱数 / 召回范围箱数 × 100%，目标 ≥ 95%。</span>';
+  var btn=document.getElementById('stepOk');
+  var nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
+  nb.textContent='保存回收率';
+  nb.addEventListener('click',function(){
+    var v=Number(document.getElementById('stepInput').value);
+    if(isNaN(v)||v<0||v>100){ showToast('回收率需在 0-100 之间','error'); return; }
+    var rec=FS.get('recalls',stepId);
+    var hist=historyOf(rec).slice();
+    hist.push({ status:rec.status, time:nowStr(), operator:currentUser().realName||'周明轩', note:'回收率更新为 '+v.toFixed(1)+'%' });
+    FS.update('recalls',stepId,{ recovery:v, history:hist });
+    closeModal('stepModal');
+    opLog('更新回收率',stepId+' → '+v.toFixed(1)+'%');
+    refresh();
+    showToast('回收率已更新：'+v.toFixed(1)+'%','success');
+    if(document.getElementById('rcDrawer').classList.contains('active')) viewDetail(stepId);
+  });
+  openModal('stepModal');
+}
+
+/* ---------- 召回演练 ---------- */
+function runDrill(){
+  askConfirm('发起召回演练','将生成一条<strong>演练召回单</strong>：模拟完整流转并直接归档为「已完成」，标记为演练，不影响真实召回统计。是否继续？',function(){
+    var u=currentUser();
+    var recovery=+(95+Math.random()*4.9).toFixed(1);
+    var t=nowStr();
+    var hist=STEPS.map(function(s,i){
+      return { status:s, time:t, operator:u.realName||'周明轩', note:['演练单创建','模拟通知 120 箱','模拟回收 '+recovery+'%','模拟无害化处理','演练闭环归档'][i] };
+    });
+    var rec=FS.add('recalls',{
+      batch:'MJ-DRILL-'+FS.dayKey(0).slice(2).replace(/-/g,''),
+      reason:'季度召回演练（模拟冷链断链场景）',
+      level:'三级', scope:'演练批次 120 箱',
+      status:'已完成', recovery:recovery, drill:true,
+      operator:u.realName||'周明轩', time:t, history:hist
+    });
+    opLog('召回演练',rec.id+' · 回收率 '+recovery+'%');
+    refresh();
+    showToast('演练完成：'+rec.id+' · 模拟回收率 '+recovery+'%','success');
+    viewDetail(rec.id);
+  });
+}
+
+/* ---------- 编辑 ---------- */
+var editingId='';
+function openEdit(id){
+  var r=FS.get('recalls',id); if(!r) return;
+  editingId=id;
+  document.getElementById('erId').value=id;
+  document.getElementById('erReason').value=r.reason||'';
+  document.getElementById('erLevel').value=r.level||'二级';
+  document.getElementById('erRecovery').value=Number(r.recovery)||0;
+  document.getElementById('erScope').value=r.scope||'';
+  closeDrawer(); openModal('editModal');
+}
+function confirmEdit(){
+  var reason=document.getElementById('erReason').value.trim();
+  var scope=document.getElementById('erScope').value.trim();
+  var rec=Number(document.getElementById('erRecovery').value);
+  if(!reason){ showToast('请填写召回原因','error'); return; }
+  if(!scope){ showToast('请填写召回范围','error'); return; }
+  if(isNaN(rec)||rec<0||rec>100){ showToast('回收率需在 0-100 之间','error'); return; }
+  FS.update('recalls',editingId,{ reason:reason, scope:scope, level:document.getElementById('erLevel').value, recovery:rec });
+  closeModal('editModal');
+  opLog('编辑召回单',editingId);
+  refresh(); showToast('已保存：'+editingId,'success');
+}
+
+/* ---------- 抽屉 ---------- */
+function viewDetail(id){
+  var r=FS.get('recalls',id); if(!r) return;
+  document.getElementById('drawerTitle').textContent='召回详情 · '+r.id;
+  var hist=historyOf(r);
+  var reached=STEPS.indexOf(r.status);
+  var tl=STEPS.map(function(s,i){
+    var h=null;
+    for(var j=hist.length-1;j>=0;j--){ if(hist[j].status===s){ h=hist[j]; break; } }
+    var future=i>reached;
+    return '<div class="tl-item '+(future?'future':'')+'"><span class="tl-dot"></span><div class="tl-card">'+
+      '<div class="tl-name">'+s+(future?'（未到达）':'')+'</div>'+
+      '<div class="tl-meta">'+(h?esc(h.time)+' · '+esc(h.operator)+'<br>'+esc(h.note):'等待流转')+'</div></div></div>';
+  }).join('');
+  var rec=Number(r.recovery)||0;
+  document.getElementById('drawerBody').innerHTML=
+    '<div class="detail-grid"><span class="detail-label">召回单号</span><span class="detail-value mono">'+esc(r.id)+(r.drill?'<span class="drill-tag">演练</span>':'')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">涉及批次</span><span class="detail-value mono">'+esc(r.batch)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">召回原因</span><span class="detail-value">'+esc(r.reason||'—')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">级别 / 状态</span><span class="detail-value">'+levelPill(r.level)+' '+stepPill(r.status)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">召回范围</span><span class="detail-value">'+esc(r.scope||'—')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">回收率</span><span class="detail-value"><div style="display:flex;align-items:center;gap:8px;"><div class="pbar" style="flex:1;"><i style="width:'+Math.min(rec,100)+'%;"></i></div><span>'+rec.toFixed(1)+'%</span></div></span></div>'+
+    '<div class="detail-grid"><span class="detail-label">发起人 / 时间</span><span class="detail-value">'+esc(r.operator||'—')+' · '+esc(r.time)+'</span></div>'+
+    '<div style="margin:16px 0 8px;font-size:13px;font-weight:600;color:var(--text-primary);">流转时间线</div>'+
+    '<div class="tl">'+tl+'</div>';
+  var idx=STEPS.indexOf(r.status);
+  var f='<button class="jg-btn" onclick="openEdit(\''+esc(r.id)+'\')">编辑</button>'+
+        '<button class="jg-btn" onclick="openRecovery(\''+esc(r.id)+'\')">更新回收率</button>';
+  if(idx>=0&&idx<STEPS.length-1) f+='<button class="jg-btn jg-btn-primary" onclick="openStep(\''+esc(r.id)+'\')">流转 → '+STEPS[idx+1]+'</button>';
+  document.getElementById('drawerFooter').innerHTML=f;
+  openDrawer();
+}
+
+/* ---------- 导出 ---------- */
+function exportCSV(){
+  var rows=Pagination.filteredData;
+  if(!rows.length){ showToast('当前没有可导出的数据','warning'); return; }
+  var head=['召回单号','批次号','原因','级别','范围','回收率%','状态','类型','发起人','发起时间'];
+  var lines=[head.join(',')].concat(rows.map(function(r){
+    return [r.id,r.batch,r.reason||'',r.level,r.scope||'',Number(r.recovery)||0,r.status,r.drill?'演练':'真实召回',r.operator||'',r.time].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+  }));
+  var blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='产品召回_'+FS.dayKey(0)+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },1500);
+  opLog('导出召回CSV',rows.length+' 条');
+  showToast('已导出 '+rows.length+' 条召回单','success');
+}
+
+function refresh(){ renderStats(); applyFilter(false); }
+document.addEventListener('DOMContentLoaded',function(){
+  ['statusSelect','levelSelect','drillSelect'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(){ applyFilter(false); }); });
+  document.getElementById('kwInput').addEventListener('input',function(){ applyFilter(false); });
+  window.addEventListener('fungiStoreChange',function(){ renderStats(); });
+  refresh();
+});
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/typography.js"></script>
+</body>
+</html>

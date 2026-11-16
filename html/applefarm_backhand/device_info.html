@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工厂化农业数据管理系统 - 设备管理</title>
+<link rel="stylesheet" href="css/design-system.css">
+<link rel="stylesheet" href="css/sidebar-layout.css">
+<link rel="stylesheet" href="css/page-content.css">
+<style>
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:999; backdrop-filter:blur(4px); }
+  .modal-overlay.show { display:block; }
+  .modal-box { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    background:var(--bg-card); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.15);
+    width:720px; max-width:94vw; max-height:88vh; overflow-y:auto; z-index:1000; animation:modalSlideIn .25s ease-out; padding:20px 24px; }
+  .modal-box.show { display:block; }
+  @keyframes modalSlideIn { from{opacity:0;transform:translate(-50%,-50%) scale(.95)} to{opacity:1;transform:translate(-50%,-50%) scale(1)} }
+  .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;
+    padding-bottom:16px; border-bottom:1px solid var(--border-light); }
+  .modal-header h3 { font-size:16px; font-weight:600; color:var(--text-primary); margin:0; }
+  .modal-close { width:28px; height:28px; border:none; background:var(--gray-100); border-radius:6px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; }
+  .modal-close:hover { background:var(--error-bg); color:var(--error); }
+  .modal-body { padding:0 4px; }
+  .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; padding:16px 0 0;
+    border-top:1px solid var(--border-light); }
+
+  .form-group { margin-bottom:16px; }
+  .form-group label { display:block; font-size:13px; font-weight:500; color:var(--text-secondary); margin-bottom:8px; }
+  .form-group label.required::after { content:' *'; color:var(--error); }
+  .form-group input, .form-group select, .form-group textarea { width:100%; padding:10px;
+    border:1px solid var(--border-default); border-radius:8px; font-size:13px; box-sizing:border-box; }
+  .form-group input:focus, .form-group select:focus { outline:none; border-color:var(--primary-400); box-shadow:0 0 0 3px rgba(24,144,255,.1); }
+  .form-row { display:flex; gap:16px; }
+  .form-row > .form-group { flex:1; }
+  .form-check { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-primary); padding:10px 0; }
+  .form-check input { width:auto; }
+
+  .drawer-mask { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:998; opacity:0; visibility:hidden; transition:all .25s; }
+  .drawer-mask.show { opacity:1; visibility:visible; }
+  .drawer { position:fixed; top:0; right:0; bottom:0; width:520px; max-width:94vw; background:var(--bg-card); z-index:999;
+    transform:translateX(102%); transition:transform .25s ease; box-shadow:-8px 0 30px rgba(0,0,0,.12); display:flex; flex-direction:column; }
+  .drawer.show { transform:none; }
+  .drawer-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border-light); }
+  .drawer-header h3 { margin:0; font-size:15px; font-weight:600; color:var(--text-primary); }
+  .drawer-body { flex:1; overflow-y:auto; padding:16px 20px; }
+  .drawer-section { font-weight:600; font-size:13px; color:var(--text-primary); margin:18px 0 8px; }
+  .drawer-section:first-child { margin-top:0; }
+
+  .detail-info { padding:12px; background:linear-gradient(135deg,var(--gray-50),var(--gray-100));
+    border-radius:12px; margin-bottom:12px; border:1px solid var(--border-default); }
+  .detail-row { display:flex; padding:9px 0; border-bottom:1px dashed var(--border-default); font-size:13px; }
+  .detail-row:last-child { border-bottom:none; }
+  .detail-label { width:104px; color:var(--text-tertiary); flex-shrink:0; }
+  .detail-value { flex:1; color:var(--text-primary); word-break:break-all; }
+
+  .status-tag { display:inline-flex; align-items:center; padding:3px 10px; font-size:11.5px;
+    font-weight:500; border-radius:20px; white-space:nowrap; }
+  .status-tag.online { background:#d9f7be; color:#3a8618; border:1px solid #b7eb8f; }
+  .status-tag.offline { background:var(--error-bg); color:#cf1322; border:1px solid #ffccc7; }
+  .status-tag.processing { background:var(--info-bg); color:var(--primary-500); border:1px solid var(--info-border); }
+  .status-tag.warning { background:var(--warning-bg); color:#ad8b00; border:1px solid var(--warning-border); }
+  .status-tag.idle { background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border-default); }
+
+  .type-badge { display:inline-block; padding:2px 8px; border-radius:var(--radius-sm); font-size:11.5px;
+    font-weight:500; background:var(--primary-50); color:var(--primary-600); border:1px solid var(--primary-100); }
+  .type-badge.ctrl { background:#f6ffed; color:#389e0d; border-color:#b7eb8f; }
+  .type-badge.plain { background:var(--gray-100); color:var(--text-secondary); border-color:var(--border-default); }
+  .action-btns { display:flex; gap:6px; flex-wrap:nowrap; }
+  .action-btn { padding:4px 10px; font-size:11.5px; font-weight:500; border:1px solid transparent;
+    border-radius:6px; cursor:pointer; white-space:nowrap; background:none; }
+  .action-btn.detail { color:#2b6cb0; background:#f5f8fc; border-color:#c5d9f0; }
+  .action-btn.edit { color:var(--primary-600); background:var(--gray-50); border-color:var(--border-default); }
+  .action-btn.del { color:#cf1322; background:var(--error-bg); border-color:#ffccc7; }
+
+  .stat-card-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:16px; }
+  .stat-card-row .stat-card { margin-top:0 !important; cursor:default; }
+  .stat-card-row .stat-card:hover { transform:none; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .stat-label { font-size:12px; color:var(--text-tertiary); margin-bottom:6px; }
+  .stat-value { font-size:26px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; }
+  .stat-value .unit { font-size:13px; font-weight:500; color:var(--text-tertiary); margin-left:4px; }
+  .stat-sub { margin-top:6px; font-size:12px; color:var(--text-tertiary); }
+  .stat-sub.warn { color:var(--warning); }
+  .stat-sub.err { color:var(--error); }
+
+  .chart-card { background:#fff; border:1px solid #eef0ee; border-radius:12px; padding:16px;
+    box-shadow:0 1px 3px rgba(0,0,0,.04); min-width:300px; }
+  .chart-title { font-weight:600; font-size:14px; color:var(--text-primary); margin-bottom:10px; }
+  .chart-legend { display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:10px; font-size:12px; color:var(--text-secondary); }
+  .chart-legend .lg { display:inline-flex; align-items:center; gap:6px; }
+  .chart-legend .dot { width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+  .chart-empty { padding:40px 0; text-align:center; color:var(--text-tertiary); font-size:13px; }
+
+  .data-table { min-width:1080px; }
+  .data-table th { white-space:nowrap; }
+  .data-table th.sortable { cursor:pointer; user-select:none; }
+  .data-table th.sortable:hover { color:var(--primary-500); }
+  .data-table th .arrow { font-size:10px; margin-left:3px; color:var(--primary-500); }
+  .data-table tbody tr { cursor:pointer; }
+  .data-table tbody tr:hover { background:#f7fbff; }
+  .empty-row td { text-align:center; color:var(--text-tertiary); padding:40px 0; }
+  .mini-list { font-size:12.5px; }
+  .mini-item { display:flex; gap:8px; align-items:flex-start; padding:8px 10px; border:1px solid var(--border-light);
+    border-radius:8px; margin-bottom:6px; background:var(--gray-50); }
+  .mini-item .mi-main { flex:1; min-width:0; }
+  .mini-item .mi-sub { color:var(--text-tertiary); font-size:11.5px; margin-top:2px; }
+  #pagination-container { padding:12px 16px; }
+  .selected-info { font-size:12.5px; color:var(--text-tertiary); margin-left:auto; }
+  .selected-info strong { color:var(--primary-600); }
+</style>
+<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
+  .main-wrapper{margin-left:0!important;width:100%!important;}
+</style>
+<link rel="stylesheet" href="css/unified-theme.css">
+<link rel="stylesheet" href="css/typography.css">
+</head>
+<body data-active-menu="device" data-active-submenu="device-info">
+
+<div class="app-layout">
+  <div class="main-wrapper">
+    <div class="tab-bar">
+      <div class="tab-bar-actions">
+        <button class="tab-close-all" title="关闭全部标签">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3L11 11M11 3L3 11"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <main class="main-content">
+      <nav class="device-tabs" aria-label="设备管理">
+        <a href="device_info.html" class="active">设备管理</a>
+        <a href="env_monitor.html">设备环境数据</a>
+        <a href="device_control.html">设备运行监控</a>
+        <a href="device_maintain.html">设备运维工单</a>
+        <a href="device_spare.html">备品备件</a>
+      </nav>
+
+      <div class="stat-card-row" id="statCards"></div>
+
+      <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin:0 0 20px;">
+        <div class="chart-card"><div class="chart-title">设备状态分布</div><div id="chartStatus"></div></div>
+        <div class="chart-card"><div class="chart-title">设备类型构成</div><div id="chartType"></div></div>
+      </section>
+
+      <div class="content-wrapper">
+
+        <div class="page-section search-section">
+          <div class="search-bar">
+            <select class="search-select" id="typeSelect"><option value="">全部设备类型</option></select>
+            <select class="search-select" id="statusSelect" style="min-width:120px;">
+              <option value="">全部运行状态</option>
+              <option value="运行">运行</option>
+              <option value="待机">待机</option>
+              <option value="离线">离线</option>
+              <option value="故障">故障</option>
+              <option value="联动">联动</option>
+              <option value="定时">定时</option>
+            </select>
+            <input type="text" class="search-input" id="searchInput" placeholder="搜索设备名称 / 编号 / 型号 / 位置...">
+            <div class="search-actions">
+              <button class="jg-btn" onclick="resetFilter()">重置</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-section action-bar">
+          <button class="jg-btn jg-btn-primary" onclick="openEditModal('')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;">
+              <path d="M12 5v14"/><path d="M5 12h14"/>
+            </svg>新增设备
+          </button>
+          <button class="jg-btn-outline" id="bulkDelBtn" onclick="bulkDelete()" disabled>批量删除</button>
+          <button class="jg-btn-outline" onclick="exportDevices()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/>
+            </svg>导出CSV
+          </button>
+          <span class="selected-info" id="selectedInfo"></span>
+        </div>
+
+        <div class="page-section data-section">
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th style="width:44px;text-align:center;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+                  <th class="sortable" style="width:90px;" onclick="setSort('id')">设备编号<span class="arrow" id="ar-id"></span></th>
+                  <th class="sortable" onclick="setSort('name')">设备名称<span class="arrow" id="ar-name"></span></th>
+                  <th class="sortable" style="width:120px;" onclick="setSort('type')">设备类型<span class="arrow" id="ar-type"></span></th>
+                  <th class="sortable" style="width:110px;" onclick="setSort('location')">安装位置<span class="arrow" id="ar-location"></span></th>
+                  <th class="sortable" style="width:96px;" onclick="setSort('status')">运行状态<span class="arrow" id="ar-status"></span></th>
+                  <th style="width:90px;">控制能力</th>
+                  <th style="width:150px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody"></tbody>
+            </table>
+          </div>
+          <div id="pagination-container"></div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 新增/编辑设备 -->
+<div class="modal-overlay" id="editOverlay" onclick="closeEditModal()"></div>
+<div class="modal-box" id="editModal">
+  <div class="modal-header">
+    <h3 id="editTitle">新增设备</h3>
+    <button class="modal-close" onclick="closeEditModal()">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l8 8M11 3l-8 8"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="form-row">
+      <div class="form-group"><label>设备编号</label><input type="text" id="fId" placeholder="留空自动生成，如 DV-19"></div>
+      <div class="form-group"><label class="required">设备名称</label><input type="text" id="fName" placeholder="如 GF-06 新风风机"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="required">设备类型</label><select id="fType"></select></div>
+      <div class="form-group"><label class="required">安装位置</label><select id="fLocation"></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>设备型号</label><input type="text" id="fModel" placeholder="如 XF-380"></div>
+      <div class="form-group"><label>生产厂家</label><input type="text" id="fMaker" placeholder="如 德州通风设备"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="required">运行状态</label><select id="fStatus">
+        <option value="运行">运行</option><option value="待机">待机</option><option value="离线">离线</option>
+        <option value="故障">故障</option><option value="联动">联动</option><option value="定时">定时</option>
+      </select></div>
+      <div class="form-group"><label>采购日期</label><input type="date" id="fBought"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>控制能力</label>
+        <label class="form-check"><input type="checkbox" id="fControl" onchange="toggleSetpoint()"> 支持远程控制（下发指令 / 设定值）</label>
+      </div>
+      <div class="form-group" id="setpointGroup" style="display:none;">
+        <label class="required">设定值</label><input type="number" id="fSetpoint" step="0.5" placeholder="如 90">
+        <div style="font-size:11.5px;color:var(--text-tertiary);margin-top:6px;" id="setpointHint"></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="jg-btn" onclick="closeEditModal()">取消</button>
+    <button class="jg-btn jg-btn-primary" onclick="saveDevice()">保存</button>
+  </div>
+</div>
+
+<!-- 详情抽屉 -->
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-header">
+    <h3 id="drawerTitle">设备详情</h3>
+    <button class="modal-close" onclick="closeDrawer()">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l8 8M11 3l-8 8"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
+
+<script src="js/components/modal.js"></script>
+<script src="js/components/confirm.js"></script>
+<script src="js/shared/fungi-store.js"></script>
+<script src="js/shared/device-ui.js"></script>
+<script>
+/* ============================================================
+ * 设备台账（食用菌工厂化设备）
+ * 数据源：js/shared/fungi-store.js → devices / maintainOrders / commands
+ * 状态口径与种子一致：运行 / 待机 / 离线 / 故障 / 联动 / 定时；
+ * 「维修中」统计按 status === '故障' 推导（store 无独立维修状态字段）。
+ * ============================================================ */
+var FS = window.FungiStore;
+var esc = DeviceUI.esc;
+var STATUS_CLS = { '运行':'online', '待机':'idle', '离线':'offline', '故障':'offline', '联动':'processing', '定时':'warning' };
+var STATUS_COLOR = { '运行':'#52c41a', '待机':'#13c2c2', '离线':'#ff4d4f', '故障':'#fa8c16', '联动':'#1890ff', '定时':'#722ed1' };
+var SETPOINT_UNIT = { '加湿器':'%RH', '新风风机':'ppm', '冷水机组':'°C', '循环风机':'min', '照明灯组':'lx' };
+var editingId = '';
+var sortKey = 'id', sortDir = 1;
+var curPage = 1, PAGE_SIZE = 10;
+var selected = {};
+
+function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+function nowStr(){ var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+function openPage(url, title){ if (window.parent && window.parent !== window && window.parent.openPage) window.parent.openPage(url, title); else location.href = url; }
+function statusTag(s){ return '<span class="status-tag ' + (STATUS_CLS[s] || 'idle') + '">' + esc(s) + '</span>'; }
+function zoneName(id){ var z = FS.list('zones').filter(function(x){ return x.id === id; })[0]; return z ? z.name : id; }
+
+function undoToast(msg, fn){
+  var c = document.querySelector('.toast-container');
+  if (!c){ c = document.createElement('div'); c.className = 'toast-container';
+    c.style.cssText = 'position:fixed;top:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;'; document.body.appendChild(c); }
+  var t = document.createElement('div'); t.className = 'jg-toast success';
+  t.innerHTML = '<span class="jg-toast-icon">✓</span><span class="jg-toast-message">' + esc(msg) + '</span>';
+  var b = document.createElement('button'); b.textContent = '撤销';
+  b.style.cssText = 'margin-left:10px;padding:2px 10px;border:1px solid currentColor;border-radius:6px;background:none;color:inherit;cursor:pointer;font-size:12px;flex-shrink:0;';
+  b.onclick = function(){ fn(); t.remove(); DeviceUI.toast('已撤销', 'info'); };
+  t.appendChild(b); c.appendChild(t);
+  setTimeout(function(){ if (t.parentNode){ t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(function(){ t.remove(); }, 300); } }, 6000);
+}
+function openDrawer(title, html){
+  document.getElementById('drawerTitle').textContent = title;
+  document.getElementById('drawerBody').innerHTML = html;
+  document.getElementById('drawer').classList.add('show');
+  document.getElementById('drawerMask').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('show');
+  document.getElementById('drawerMask').classList.remove('show');
+}
+
+/* ---------- 统计卡 ---------- */
+function renderStats(){
+  var list = FS.list('devices');
+  var run = list.filter(function(x){ return x.status === '运行' || x.status === '联动' || x.status === '定时'; }).length;
+  var off = list.filter(function(x){ return x.status === '离线'; }).length;
+  var repair = list.filter(function(x){ return x.status === '故障'; }).length;
+  var ctrl = list.filter(function(x){ return x.control; }).length;
+  document.getElementById('statCards').innerHTML =
+    '<div class="stat-card"><div class="stat-label">设备总数</div><div class="stat-value">' + list.length + '<span class="unit">台</span></div>' +
+    '<div class="stat-sub">可控 ' + ctrl + ' 台 · 采集 ' + (list.length - ctrl) + ' 台</div></div>' +
+    '<div class="stat-card"><div class="stat-label">运行中</div><div class="stat-value" style="color:#52c41a;">' + run + '<span class="unit">台</span></div>' +
+    '<div class="stat-sub">含联动 / 定时运行</div></div>' +
+    '<div class="stat-card"><div class="stat-label">离线</div><div class="stat-value" style="color:' + (off ? '#ff4d4f' : 'inherit') + ';">' + off + '<span class="unit">台</span></div>' +
+    '<div class="stat-sub ' + (off ? 'err' : '') + '">' + (off ? 'HS-02 加湿器待检修' : '通信全部正常') + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">维修中</div><div class="stat-value" style="color:' + (repair ? '#fa8c16' : 'inherit') + ';">' + repair + '<span class="unit">台</span></div>' +
+    '<div class="stat-sub warn">故障设备已关联维修工单</div></div>';
+}
+
+/* ---------- 内联 SVG 图表 ---------- */
+function svgDonut(series){
+  var total = series.reduce(function(s,x){ return s + x.value; }, 0);
+  if (!total) return '<div class="chart-empty">暂无数据</div>';
+  var size = 190, cx = size/2, cy = size/2, r = 82, ir = 52, a0 = -Math.PI/2, paths = '';
+  series.forEach(function(s){
+    if (!s.value) return;
+    var frac = Math.min(s.value / total, 0.99999);
+    var a1 = a0 + Math.PI * 2 * frac, large = (a1 - a0) > Math.PI ? 1 : 0;
+    function pt(rad, a){ return (cx + rad * Math.cos(a)).toFixed(2) + ' ' + (cy + rad * Math.sin(a)).toFixed(2); }
+    paths += '<path d="M' + pt(r,a0) + ' A' + r + ' ' + r + ' 0 ' + large + ' 1 ' + pt(r,a1) +
+      ' L' + pt(ir,a1) + ' A' + ir + ' ' + ir + ' 0 ' + large + ' 0 ' + pt(ir,a0) + ' Z" fill="' + s.color + '"/>';
+    a0 = a1;
+  });
+  var svg = '<svg viewBox="0 0 ' + size + ' ' + size + '" style="width:190px;height:190px;display:block;margin:0 auto;">' + paths +
+    '<text x="' + cx + '" y="' + (cy-4) + '" text-anchor="middle" font-size="24" font-weight="700" fill="#262626">' + total + '</text>' +
+    '<text x="' + cx + '" y="' + (cy+16) + '" text-anchor="middle" font-size="11" fill="#8c8c8c">设备总数</text></svg>';
+  var legend = '<div class="chart-legend">' + series.filter(function(s){ return s.value; }).map(function(s){
+    return '<span class="lg"><span class="dot" style="background:' + s.color + ';"></span>' + esc(s.name) + ' ' + s.value + ' 台（' + Math.round(s.value/total*100) + '%）</span>';
+  }).join('') + '</div>';
+  return svg + legend;
+}
+function niceStep(max){
+  var steps = [1,2,5,10,20,50,100,200,500,1000];
+  for (var i = 0; i < steps.length; i++){ if (max / steps[i] <= 5) return steps[i]; }
+  return 2000;
+}
+function svgHBars(items, color){
+  if (!items.length) return '<div class="chart-empty">暂无数据</div>';
+  var max = Math.max.apply(null, items.map(function(x){ return x.value; }).concat([1]));
+  var step = niceStep(max), top = Math.ceil(max / step) * step;
+  var rowH = 26, padL = 108, padR = 44, padT = 6, padB = 24, W = 560, plotW = W - padL - padR;
+  var H = padT + items.length * rowH + padB, grid = '', bars = '';
+  for (var v = 0; v <= top; v += step){
+    var x = padL + v / top * plotW;
+    grid += '<line x1="' + x + '" y1="' + padT + '" x2="' + x + '" y2="' + (H - padB) + '" stroke="#f0f0f0"/>' +
+      '<text x="' + x + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#8c8c8c">' + v + '</text>';
+  }
+  items.forEach(function(it, i){
+    var y = padT + i * rowH + 5, w = Math.max(2, it.value / top * plotW);
+    bars += '<text x="' + (padL - 8) + '" y="' + (y + 11) + '" text-anchor="end" font-size="11" fill="#595959">' + esc(it.name) + '</text>' +
+      '<rect x="' + padL + '" y="' + y + '" width="' + w.toFixed(1) + '" height="14" rx="3" fill="' + color + '"/>' +
+      '<text x="' + (padL + w + 6).toFixed(1) + '" y="' + (y + 11) + '" font-size="11" font-weight="600" fill="#262626">' + it.value + '</text>';
+  });
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block;">' + grid + bars + '</svg>';
+}
+function renderCharts(){
+  var list = FS.list('devices');
+  var statuses = ['运行','联动','定时','待机','故障','离线'];
+  document.getElementById('chartStatus').innerHTML = svgDonut(statuses.map(function(s){
+    return { name: s, value: list.filter(function(x){ return x.status === s; }).length, color: STATUS_COLOR[s] };
+  }));
+  var byType = {};
+  list.forEach(function(x){ byType[x.type] = (byType[x.type] || 0) + 1; });
+  var items = Object.keys(byType).map(function(k){ return { name: k, value: byType[k] }; })
+    .sort(function(a,b){ return b.value - a.value; });
+  document.getElementById('chartType').innerHTML = svgHBars(items, '#1890ff');
+}
+
+/* ---------- 筛选 / 排序 ---------- */
+function filteredList(){
+  var type = document.getElementById('typeSelect').value;
+  var status = document.getElementById('statusSelect').value;
+  var kw = document.getElementById('searchInput').value.trim().toLowerCase();
+  var list = FS.list('devices').filter(function(x){
+    if (type && x.type !== type) return false;
+    if (status && x.status !== status) return false;
+    if (kw){
+      var hay = [x.id, x.name, x.type, x.model, x.maker, x.location, zoneName(x.location)].join(' ').toLowerCase();
+      if (hay.indexOf(kw) < 0) return false;
+    }
+    return true;
+  });
+  list.sort(function(a,b){
+    var va = a[sortKey] || '', vb = b[sortKey] || '';
+    return String(va).localeCompare(String(vb), 'zh-CN') * sortDir;
+  });
+  return list;
+}
+function setSort(key){
+  if (sortKey === key) sortDir = -sortDir; else { sortKey = key; sortDir = 1; }
+  curPage = 1; renderTable();
+}
+function resetFilter(){
+  document.getElementById('typeSelect').value = '';
+  document.getElementById('statusSelect').value = '';
+  document.getElementById('searchInput').value = '';
+  curPage = 1; renderTable();
+  DeviceUI.toast('已重置筛选条件', 'info');
+}
+
+/* ---------- 表格 ---------- */
+function renderTable(){
+  var list = filteredList();
+  var totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  if (curPage > totalPages) curPage = totalPages;
+  var pageData = list.slice((curPage-1)*PAGE_SIZE, curPage*PAGE_SIZE);
+  var body = document.getElementById('dataTableBody');
+  if (!pageData.length){
+    body.innerHTML = '<tr class="empty-row"><td colspan="8">暂无符合条件的设备</td></tr>';
+  } else {
+    body.innerHTML = pageData.map(function(x){
+      return '<tr onclick="openDetail(\'' + esc(x.id) + '\')">' +
+        '<td style="text-align:center;" onclick="event.stopPropagation();"><input type="checkbox" ' + (selected[x.id] ? 'checked' : '') + ' onclick="toggleOne(\'' + esc(x.id) + '\', this)"></td>' +
+        '<td><strong>' + esc(x.id) + '</strong></td>' +
+        '<td>' + esc(x.name) + '</td>' +
+        '<td><span class="type-badge">' + esc(x.type) + '</span></td>' +
+        '<td title="' + esc(zoneName(x.location)) + '">' + esc(x.location) + '</td>' +
+        '<td>' + statusTag(x.status) + '</td>' +
+        '<td>' + (x.control ? '<span class="type-badge ctrl">可控</span>' : '<span class="type-badge plain">采集</span>') + '</td>' +
+        '<td onclick="event.stopPropagation();"><div class="action-btns">' +
+          '<button class="action-btn detail" onclick="openDetail(\'' + esc(x.id) + '\')">详情</button>' +
+          '<button class="action-btn edit" onclick="openEditModal(\'' + esc(x.id) + '\')">编辑</button>' +
+          '<button class="action-btn del" onclick="deleteDevice(\'' + esc(x.id) + '\')">删除</button>' +
+        '</div></td></tr>';
+    }).join('');
+  }
+  ['id','name','type','location','status'].forEach(function(k){
+    document.getElementById('ar-' + k).textContent = sortKey === k ? (sortDir > 0 ? '▲' : '▼') : '';
+  });
+  var pg = '<div class="pagination">';
+  pg += '<button class="page-btn ' + (curPage <= 1 ? 'disabled' : '') + '" onclick="gotoPage(' + (curPage-1) + ')">‹</button>';
+  for (var i = 1; i <= totalPages; i++){
+    pg += '<button class="page-btn ' + (i === curPage ? 'active' : '') + '" onclick="gotoPage(' + i + ')">' + i + '</button>';
+  }
+  pg += '<button class="page-btn ' + (curPage >= totalPages ? 'disabled' : '') + '" onclick="gotoPage(' + (curPage+1) + ')">›</button>';
+  pg += '<span style="margin-left:16px;font-size:13px;color:#6b7b6b;">第 ' + curPage + ' 页/共 ' + totalPages + ' 页，共 ' + list.length + ' 条记录</span></div>';
+  document.getElementById('pagination-container').innerHTML = pg;
+  var all = document.getElementById('checkAll');
+  all.checked = pageData.length > 0 && pageData.every(function(x){ return selected[x.id]; });
+  renderSelected();
+}
+function gotoPage(n){
+  var totalPages = Math.max(1, Math.ceil(filteredList().length / PAGE_SIZE));
+  if (n < 1 || n > totalPages) return;
+  curPage = n; renderTable();
+}
+function toggleOne(id, box){ if (box.checked) selected[id] = true; else delete selected[id]; renderSelected(); }
+function toggleAll(box){
+  var list = filteredList().slice((curPage-1)*PAGE_SIZE, curPage*PAGE_SIZE);
+  list.forEach(function(x){ if (box.checked) selected[x.id] = true; else delete selected[x.id]; });
+  renderTable();
+}
+function renderSelected(){
+  var ids = Object.keys(selected);
+  var btn = document.getElementById('bulkDelBtn');
+  btn.disabled = !ids.length;
+  btn.textContent = ids.length ? '批量删除（' + ids.length + '）' : '批量删除';
+  document.getElementById('selectedInfo').innerHTML = ids.length ? '已选 <strong>' + ids.length + '</strong> 台设备' : '';
+}
+
+/* ---------- 详情抽屉 ---------- */
+function openDetail(id){
+  var d = FS.get('devices', id);
+  if (!d) return;
+  var rows = [
+    ['设备编号', d.id], ['设备名称', d.name], ['设备类型', d.type],
+    ['设备型号', d.model || '—'], ['生产厂家', d.maker || '—'],
+    ['安装位置', d.location + ' · ' + zoneName(d.location)],
+    ['运行状态', statusTag(d.status), 'raw'],
+    ['控制能力', d.control ? '支持远程控制' : '仅数据采集'],
+    ['采购日期', d.bought || '—']
+  ];
+  if (d.control){
+    rows.push(['当前设定值', (d.setpoint != null ? d.setpoint : '—') + ' ' + (SETPOINT_UNIT[d.type] || '')]);
+  }
+  var orders = FS.list('maintainOrders').filter(function(x){ return x.device === id; });
+  var cmds = FS.list('commands').filter(function(x){ return x.device === id; });
+  var html = '<div class="drawer-section">基础信息</div><div class="detail-info">' +
+    rows.map(function(r){
+      return '<div class="detail-row"><span class="detail-label">' + r[0] + '</span><span class="detail-value">' + (r[2] === 'raw' ? r[1] : esc(r[1])) + '</span></div>';
+    }).join('') + '</div>';
+  html += '<div class="drawer-section">关联运维工单（' + orders.length + '）</div>';
+  html += orders.length ? '<div class="mini-list">' + orders.map(function(o){
+    return '<div class="mini-item"><div class="mi-main"><strong>' + esc(o.id) + '</strong> · ' + esc(o.type) + ' ' + statusTag(o.status) +
+      '<div class="mi-sub">' + esc(o.item) + '</div><div class="mi-sub">' + esc(o.time) + ' · 负责人 ' + esc(o.owner) + '</div></div></div>';
+  }).join('') + '</div>' : '<div style="font-size:12.5px;color:var(--text-tertiary);">暂无关联工单</div>';
+  html += '<div class="drawer-section">控制指令历史（' + cmds.length + '）</div>';
+  html += cmds.length ? '<div class="mini-list">' + cmds.map(function(c){
+    return '<div class="mini-item"><div class="mi-main"><strong>' + esc(c.action) + '</strong> · ' + esc(c.value) +
+      '<div class="mi-sub">' + esc(c.time) + ' · ' + esc(c.operator) + ' · 结果 ' + esc(c.result) + '</div></div></div>';
+  }).join('') + '</div>' : '<div style="font-size:12.5px;color:var(--text-tertiary);">暂无指令记录</div>';
+  if (d.control){
+    html += '<div style="margin-top:16px;"><button class="jg-btn jg-btn-primary" onclick="closeDrawer();openPage(\'device_control.html\',\'设备运行监控\')">前往运行监控</button></div>';
+  }
+  openDrawer('设备详情 · ' + d.name, html);
+}
+
+/* ---------- 新增 / 编辑 ---------- */
+function initSelects(){
+  var types = {};
+  FS.list('devices').forEach(function(x){ types[x.type] = true; });
+  DeviceUI.fillSelect('typeSelect', Object.keys(types), '全部设备类型');
+  DeviceUI.fillSelect('fType', Object.keys(types), null);
+  DeviceUI.fillSelect('fLocation', FS.list('zones').map(function(z){ return { value: z.id, label: z.id + ' · ' + z.name }; }), null);
+}
+function toggleSetpoint(){
+  var on = document.getElementById('fControl').checked;
+  document.getElementById('setpointGroup').style.display = on ? '' : 'none';
+  var t = document.getElementById('fType').value;
+  document.getElementById('setpointHint').textContent = on ? '单位：' + (SETPOINT_UNIT[t] || '按设备类型') : '';
+}
+function nextDeviceId(){
+  var max = 0;
+  FS.list('devices').forEach(function(x){ var m = /^DV-(\d+)$/.exec(x.id); if (m) max = Math.max(max, +m[1]); });
+  return 'DV-' + pad2(max + 1);
+}
+function openEditModal(id){
+  editingId = id || '';
+  var d = id ? FS.get('devices', id) : null;
+  document.getElementById('editTitle').textContent = d ? '编辑设备 · ' + d.name : '新增设备';
+  document.getElementById('fId').value = d ? d.id : '';
+  document.getElementById('fId').disabled = !!d;
+  document.getElementById('fName').value = d ? d.name : '';
+  document.getElementById('fType').value = d ? d.type : (document.getElementById('fType').options[0] || {}).value || '';
+  document.getElementById('fLocation').value = d ? d.location : 'GF-01';
+  document.getElementById('fModel').value = d ? (d.model || '') : '';
+  document.getElementById('fMaker').value = d ? (d.maker || '') : '';
+  document.getElementById('fStatus').value = d ? d.status : '运行';
+  document.getElementById('fBought').value = d ? (d.bought || '') : '';
+  document.getElementById('fControl').checked = d ? !!d.control : false;
+  document.getElementById('fSetpoint').value = d && d.setpoint != null ? d.setpoint : '';
+  toggleSetpoint();
+  document.getElementById('editOverlay').classList.add('show');
+  document.getElementById('editModal').classList.add('show');
+}
+function closeEditModal(){
+  document.getElementById('editOverlay').classList.remove('show');
+  document.getElementById('editModal').classList.remove('show');
+  editingId = '';
+}
+function saveDevice(){
+  var name = document.getElementById('fName').value.trim();
+  if (!name){ DeviceUI.toast('请填写设备名称', 'error'); return; }
+  var id = editingId || document.getElementById('fId').value.trim() || nextDeviceId();
+  if (!editingId && FS.get('devices', id)){ DeviceUI.toast('设备编号 ' + id + ' 已存在', 'error'); return; }
+  var control = document.getElementById('fControl').checked;
+  var setpoint = null;
+  if (control){
+    var sv = document.getElementById('fSetpoint').value;
+    if (sv === '' || isNaN(Number(sv))){ DeviceUI.toast('可控设备请填写设定值', 'error'); return; }
+    setpoint = Number(sv);
+  }
+  var patch = {
+    name: name,
+    type: document.getElementById('fType').value,
+    location: document.getElementById('fLocation').value,
+    model: document.getElementById('fModel').value.trim(),
+    maker: document.getElementById('fMaker').value.trim(),
+    status: document.getElementById('fStatus').value,
+    bought: document.getElementById('fBought').value,
+    control: control
+  };
+  if (control) patch.setpoint = setpoint;
+  if (editingId){
+    FS.update('devices', editingId, patch);
+    DeviceUI.toast('设备信息已更新', 'success');
+  } else {
+    patch.id = id;
+    FS.add('devices', patch);
+    DeviceUI.toast('设备已创建', 'success');
+  }
+  closeEditModal(); refreshAll();
+}
+
+/* ---------- 删除（带撤销） ---------- */
+function deleteDevice(id){
+  var d = FS.get('devices', id);
+  if (!d) return;
+  DeviceUI.confirmDelete('确定删除设备「' + d.name + '（' + id + '）」吗？删除后可在提示中撤销。').then(function(ok){
+    if (!ok) return;
+    var list = FS.list('devices');
+    var idx = list.findIndex(function(x){ return x.id === id; });
+    FS.remove('devices', id);
+    delete selected[id];
+    refreshAll();
+    undoToast('设备 ' + id + ' 已删除', function(){ FS.restore('devices', d, idx); refreshAll(); });
+  });
+}
+function bulkDelete(){
+  var ids = Object.keys(selected);
+  if (!ids.length) return;
+  DeviceUI.confirmDelete('确定删除选中的 ' + ids.length + ' 台设备吗？删除后可在提示中撤销。').then(function(ok){
+    if (!ok) return;
+    var list = FS.list('devices');
+    var items = ids.map(function(id){
+      return { obj: list.filter(function(x){ return x.id === id; })[0], idx: list.findIndex(function(x){ return x.id === id; }) };
+    }).filter(function(x){ return x.obj; }).sort(function(a,b){ return a.idx - b.idx; });
+    items.forEach(function(x){ FS.remove('devices', x.obj.id); });
+    selected = {};
+    refreshAll();
+    undoToast('已删除 ' + items.length + ' 台设备', function(){
+      items.forEach(function(x){ FS.restore('devices', x.obj, x.idx); });
+      refreshAll();
+    });
+  });
+}
+
+/* ---------- 导出 ---------- */
+function exportDevices(){
+  var list = filteredList();
+  var headers = ['设备编号','设备名称','设备类型','设备型号','生产厂家','安装位置','运行状态','控制能力','设定值','采购日期'];
+  var rows = list.map(function(x){
+    return [x.id, x.name, x.type, x.model || '', x.maker || '', x.location, x.status,
+      x.control ? '可控' : '采集', x.control && x.setpoint != null ? x.setpoint + (SETPOINT_UNIT[x.type] || '') : '', x.bought || ''];
+  });
+  DeviceUI.exportCsv('设备台账', headers, rows);
+}
+
+/* ---------- 刷新 / 初始化 ---------- */
+function refreshAll(){ renderStats(); renderCharts(); renderTable(); }
+document.addEventListener('DOMContentLoaded', function(){
+  initSelects();
+  refreshAll();
+  document.getElementById('searchInput').addEventListener('input', function(){ curPage = 1; renderTable(); });
+  document.getElementById('typeSelect').addEventListener('change', function(){ curPage = 1; renderTable(); });
+  document.getElementById('statusSelect').addEventListener('change', function(){ curPage = 1; renderTable(); });
+  document.getElementById('fType').addEventListener('change', toggleSetpoint);
+});
+</script>
+<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/typography.js"></script>
+</body>
+</html>
