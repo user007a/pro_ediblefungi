@@ -125,6 +125,7 @@
                 <th class="sortable" data-key="bags" onclick="sortBy('bags')">袋数<span class="sort-arrow"></span></th>
                 <th class="sortable" data-key="hold" onclick="sortBy('hold')">保温min<span class="sort-arrow"></span></th>
                 <th class="sortable" data-key="peak" onclick="sortBy('peak')">峰值°C<span class="sort-arrow"></span></th>
+                <th>曲线采集</th>
                 <th>操作人</th>
                 <th>复判</th>
                 <th>状态</th>
@@ -236,15 +237,22 @@ function renderStats(){
 }
 function reviewCls(rv){return rv==='通过'?'normal':rv==='报废'?'danger':'warning';}
 function statusCls(st){return st==='已完成'?'normal':st==='已报废'?'inactive':'danger';}
+function isAuto(r){return !!(r.completeness&&r.completeness.auto);}
+function compTag(r){
+  if(!r.completeness)return '<span class="status-tag base-built">—</span>';
+  var c=r.completeness;
+  return c.complete?'<span class="status-tag normal">自动·完整 '+c.points+'点</span>':'<span class="status-tag danger">缺口·丢点'+c.missing+'（'+c.lossRate+'%）</span>';
+}
 function renderTable(){
   var rows=applySort(stRows());
   var body=document.getElementById('tableBody');
-  if(!rows.length){body.innerHTML='<tr><td colspan="12" class="empty-cell">暂无符合条件的灭菌单，点击「新建灭菌单」添加</td></tr>';updateSelInfo();paintArrows();return;}
+  if(!rows.length){body.innerHTML='<tr><td colspan="13" class="empty-cell">暂无符合条件的灭菌单，点击「新建灭菌单」添加</td></tr>';updateSelInfo();paintArrows();return;}
   body.innerHTML=rows.map(function(r){
     var batch=FS.get('batches',r.batch);
     var scrapTag=batch&&batch.scrap?' <span class="status-tag danger">已报废</span>':'';
     var reviewBtns=r.review==='待复判'?
       '<button class="row-btn ok" onclick="passReview(\''+r.id+'\')">通过</button><button class="row-btn danger" onclick="scrapReview(\''+r.id+'\')">报废</button>':'';
+    var delBtn=isAuto(r)?'<button class="row-btn" onclick="openNotes(\''+r.id+'\')">追加说明</button>':'<button class="row-btn danger row-del" onclick="removeRow(\'sterilize\',\''+r.id+'\',\''+esc(r.id)+'\')">删除</button>';
     return '<tr onclick="rowClick(event,\''+r.id+'\')" style="cursor:pointer;">'+
       '<td><input type="checkbox" class="row-check" data-id="'+r.id+'" '+(selected[r.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
       '<td><strong>'+esc(r.id)+'</strong></td>'+
@@ -253,16 +261,32 @@ function renderTable(){
       '<td class="text-right">'+Number(r.bags).toLocaleString()+'</td>'+
       '<td class="text-right">'+r.hold+'</td>'+
       '<td class="text-right">'+Number(r.peak).toFixed(1)+'</td>'+
+      '<td>'+compTag(r)+'</td>'+
       '<td>'+esc(r.operator)+'</td>'+
       '<td><span class="status-tag '+reviewCls(r.review)+'">'+esc(r.review)+'</span></td>'+
       '<td><span class="status-tag '+statusCls(r.status)+'">'+esc(r.status)+'</span></td>'+
       '<td>'+esc(r.time)+'</td>'+
-      '<td>'+reviewBtns+'<button class="row-btn row-edit" onclick="openStForm(\''+r.id+'\')">编辑</button><button class="row-btn danger row-del" onclick="removeRow(\'sterilize\',\''+r.id+'\',\''+esc(r.id)+'\')">删除</button></td>'+
+      '<td>'+reviewBtns+'<button class="row-btn row-edit" onclick="openStForm(\''+r.id+'\')">编辑</button>'+delBtn+'</td>'+
     '</tr>';
   }).join('');
   updateSelInfo();paintArrows();
 }
 function renderAll(){renderStats();renderTable();}
+
+/* 自动采集曲线不可删改：删除入口硬阻断，仅可追加说明 */
+var baseRemoveRow=removeRow,baseBatchDelete=batchDelete;
+removeRow=function(col,id,label){
+  if(col==='sterilize'){var r=FS.get(col,id);if(isAuto(r)){showToast('自动采集曲线不可删改，仅可「追加说明」','error');return;}}
+  baseRemoveRow(col,id,label);
+};
+batchDelete=function(col,label){
+  if(col==='sterilize'){
+    var ids=Object.keys(selected).filter(function(k){return selected[k];});
+    var auto=ids.filter(function(id){return isAuto(FS.get(col,id));});
+    if(auto.length){showToast('选中含自动采集曲线记录（'+auto.join('、')+'），不可删除，仅可追加说明','error');return;}
+  }
+  baseBatchDelete(col,label);
+};
 
 /* ===== 复判流转 ===== */
 function passReview(id){
@@ -285,23 +309,29 @@ function scrapReview(id){
   });
 }
 
-/* ===== 灭菌曲线 SVG ===== */
+/* ===== 灭菌曲线 SVG（温度 + 压力MPa 双轴 + 3点探头取最低）===== */
 function curveSVG(curve){
-  var W=560,H=250,L=46,R=540,T=16,B=210;
-  var maxT=210,maxC=130;
+  var W=580,H=258,L=46,R=506,T=16,B=210;
+  var maxT=210,maxC=130,maxP=0.16;
   function x(t){return L+(t/maxT)*(R-L);}
   function y(c){return B-(c/maxC)*(B-T);}
-  var s='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;" role="img" aria-label="灭菌温度曲线">';
+  function yp(p){return B-(p/maxP)*(B-T);}
+  var s='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;" role="img" aria-label="灭菌温度压力曲线">';
   for(var c=0;c<=120;c+=20){
     s+='<line x1="'+L+'" y1="'+y(c)+'" x2="'+R+'" y2="'+y(c)+'" stroke="#f0f0f0" stroke-width="1"/>'+
        '<text x="'+(L-6)+'" y="'+(y(c)+4)+'" text-anchor="end" font-size="10" fill="#8c8c8c">'+c+'</text>';
+  }
+  for(var pi=0;pi<=4;pi++){
+    var pv=+(maxP*pi/4).toFixed(2);
+    s+='<text x="'+(R+8)+'" y="'+(yp(pv)+4)+'" text-anchor="start" font-size="10" fill="#fa8c16">'+pv.toFixed(2)+'</text>';
   }
   for(var t=0;t<=maxT;t+=30){
     s+='<line x1="'+x(t)+'" y1="'+T+'" x2="'+x(t)+'" y2="'+B+'" stroke="#f7f7f7" stroke-width="1"/>'+
        '<text x="'+x(t)+'" y="'+(B+14)+'" text-anchor="middle" font-size="10" fill="#8c8c8c">'+t+'</text>';
   }
   s+='<text x="'+(R)+'" y="'+(B+28)+'" text-anchor="end" font-size="10" fill="#8c8c8c">时间(min)</text>'+
-     '<text x="'+(L-32)+'" y="'+(T+2)+'" font-size="10" fill="#8c8c8c">°C</text>';
+     '<text x="'+(L-32)+'" y="'+(T+2)+'" font-size="10" fill="#8c8c8c">°C</text>'+
+     '<text x="'+(R+8)+'" y="'+(T+2)+'" font-size="10" fill="#fa8c16">MPa</text>';
   s+='<line x1="'+L+'" y1="'+y(121)+'" x2="'+R+'" y2="'+y(121)+'" stroke="#52c41a" stroke-width="1" stroke-dasharray="4 3"/>'+
      '<text x="'+(R-4)+'" y="'+(y(121)-4)+'" text-anchor="end" font-size="10" fill="#52c41a">121°C 保温线</text>';
   var pts=curve||[];
@@ -317,13 +347,37 @@ function curveSVG(curve){
     s+='<rect x="'+x1+'" y="'+T+'" width="'+(x2-x1)+'" height="'+(B-T)+'" fill="rgba(255,77,79,.12)" stroke="#ff4d4f" stroke-width="1" stroke-dasharray="4 3"/>'+
        '<text x="'+((x1+x2)/2)+'" y="'+(T+14)+'" text-anchor="middle" font-size="10" fill="#ff4d4f">曲线缺口</text>';
   });
-  var seg=[],segs=[];
-  pts.forEach(function(p){
-    if(p.temp===null){if(seg.length)segs.push(seg);seg=[];}
-    else seg.push(p);
+  function segments(key){
+    var seg=[],segs=[];
+    pts.forEach(function(p){
+      var v=p[key];
+      if(v==null){if(seg.length)segs.push(seg);seg=[];}
+      else seg.push(p);
+    });
+    if(seg.length)segs.push(seg);
+    return segs;
+  }
+  /* 3 点探头（细线） */
+  var probeColors=['#91d5ff','#b7eb8f','#d3adf7'];
+  for(var k=0;k<3;k++){
+    (function(k){
+      var seg=[],segs=[];
+      pts.forEach(function(p){
+        if(p.p==null||p.p[k]==null){if(seg.length)segs.push(seg);seg=[];}
+        else seg.push(p);
+      });
+      if(seg.length)segs.push(seg);
+      segs.forEach(function(sg){
+        s+='<polyline points="'+sg.map(function(p){return x(p.t)+','+y(p.p[k]);}).join(' ')+'" fill="none" stroke="'+probeColors[k]+'" stroke-width="1" opacity="0.9"/>';
+      });
+    })(k);
+  }
+  /* 压力曲线（右轴 MPa） */
+  segments('press').forEach(function(sg){
+    s+='<polyline points="'+sg.map(function(p){return x(p.t)+','+yp(p.press);}).join(' ')+'" fill="none" stroke="#fa8c16" stroke-width="1.5" stroke-dasharray="5 3"/>';
   });
-  if(seg.length)segs.push(seg);
-  segs.forEach(function(sg){
+  /* 主温度曲线 */
+  segments('temp').forEach(function(sg){
     s+='<polyline points="'+sg.map(function(p){return x(p.t)+','+y(p.temp);}).join(' ')+'" fill="none" stroke="#1890ff" stroke-width="2"/>';
   });
   var valid=pts.filter(function(p){return p.temp!==null;});
@@ -332,86 +386,149 @@ function curveSVG(curve){
     s+='<circle cx="'+x(peak.t)+'" cy="'+y(peak.temp)+'" r="3" fill="#1890ff"/>'+
        '<text x="'+(x(peak.t)+6)+'" y="'+(y(peak.temp)-6)+'" font-size="10" fill="#1890ff">峰值 '+peak.temp+'°C</text>';
   }
+  /* 保温段最低探头标记（多点取最低判定） */
+  var minPt=null,minVal=null;
+  pts.forEach(function(p){
+    if(p.p&&p.temp!=null&&p.temp>=118){
+      var lo=Math.min.apply(null,p.p);
+      if(minVal==null||lo<minVal){minVal=lo;minPt=p;}
+    }
+  });
+  if(minPt){
+    s+='<circle cx="'+x(minPt.t)+'" cy="'+y(minVal)+'" r="3.5" fill="none" stroke="#ff4d4f" stroke-width="1.5"/>'+
+       '<text x="'+(x(minPt.t)+6)+'" y="'+(y(minVal)+14)+'" font-size="10" fill="#ff4d4f">最低探头 '+minVal+'°C</text>';
+  }
   s+='</svg>';
   return s;
 }
 
-/* ===== 新建 / 编辑 ===== */
+/* ===== 新建 / 编辑（曲线自动采集，含压力与3点探头）===== */
 function makeCurve(){
-  var pts=[],t=0,temp=24;
+  var pts=[],t=0;
   for(var i=0;i<14;i++){
     t+=15;
+    var temp;
     if(i<4)temp=24+i*26;
-    else if(i<10)temp=+(121+(i%2?0.4:-0.3)).toFixed(1);
+    else if(i<10)temp=+(121.6+(i%2?0.2:-0.1)).toFixed(1);
     else temp=121-(i-9)*22;
-    pts.push({t:t,temp:temp});
+    var press=+(Math.max(0,(temp-100)*0.006+0.02)).toFixed(3);
+    var p=[+(temp+0.2).toFixed(1),+(temp-0.1).toFixed(1),+(temp-0.5).toFixed(1)];
+    pts.push({t:t,temp:temp,press:press,p:p});
   }
   return pts;
 }
-var editingId='';
+var editingId='',modalMode='st';
 function batchOptions(){
   return FS.list('batches').map(function(b){return {v:b.id,t:b.id+' · '+b.variety+' · '+b.stage};});
 }
 function openStForm(id){
+  modalMode='st';
   editingId=id||'';
   var r=id?FS.get('sterilize',id):null;
   var pots=['MJ-01','MJ-02','MJ-03','MJ-04'];
   openModal(r?'编辑灭菌单':'新建灭菌单',
+    (r&&isAuto(r)?'<div class="form-group full"><div style="padding:9px 12px;border-radius:8px;background:#e6f7ff;border:1px solid #91d5ff;color:#096dd9;font-size:12px;">曲线为自动采集（completeness.auto），不可手补/删改；此处仅编辑锅次元数据，曲线说明请用「追加说明」。</div></div>':'')+
     fg('锅号',sel('f_pot',pots,r?r.pot:'MJ-01',true),true)+
     fg('批次',sel('f_batch',batchOptions(),r?r.batch:(batchOptions()[0]||{v:''}).v,true),true)+
+    fg('装载方式',sel('f_loadWay',['整筐装载','散袋装载'],r?r.loadWay:'整筐装载',true),true)+
     fg('袋数',inp('f_bags',r?r.bags:1800,'number',true),true)+
     fg('保温时长(min)',inp('f_hold',r?r.hold:120,'number',true),true)+
     fg('峰值温度(°C)',inp('f_peak',r?r.peak:121.3,'number',true),true)+
     fg('操作人',inp('f_operator',r?r.operator:'','text',true),true)
   );
 }
+function openNotes(id){
+  var r=FS.get('sterilize',id);if(!r)return;
+  modalMode='notes';editingId=id;
+  openModal('追加说明 · '+r.id+'（只追加，不可修改/删除既有说明）',
+    fg('说明人',inp('f_noteOp',r.operator||'','text',true),true)+
+    fg('说明内容','<textarea id="f_noteText" rows="3" data-req="1" placeholder="如：生物指示剂培养阴性，结合曲线缺口情况复判通过"></textarea>',true,true)
+  );
+}
 function saveModal(){
   if(!reqOK())return;
+  if(modalMode==='notes'){
+    var r=FS.get('sterilize',editingId);if(!r)return;
+    var notes=(r.notes||[]).concat([{time:nowStamp(),operator:val('f_noteOp'),text:val('f_noteText')}]);
+    FS.update('sterilize',editingId,{notes:notes});
+    closeModal();renderAll();openDetail(editingId);
+    showToast('说明已追加（曲线数据未改动）','success');
+    return;
+  }
   var bags=Number(val('f_bags')),hold=Number(val('f_hold')),peak=Number(val('f_peak'));
   if(!(bags>0)){showToast('袋数必须为正数','error');return;}
   if(!(hold>0)){showToast('保温时长必须为正数','error');return;}
   if(!(peak>=100&&peak<=135)){showToast('峰值温度需在 100-135°C 之间','error');return;}
-  var patch={pot:val('f_pot'),batch:val('f_batch'),bags:bags,hold:hold,peak:peak,operator:val('f_operator')};
+  var patch={pot:val('f_pot'),batch:val('f_batch'),loadWay:val('f_loadWay'),bags:bags,hold:hold,peak:peak,operator:val('f_operator')};
   if(editingId){
     FS.update('sterilize',editingId,patch);
-    closeModal();renderAll();showToast('灭菌单已更新','success');return;
+    closeModal();renderAll();showToast('灭菌单元数据已更新（自动采集曲线未改动）','success');return;
   }
-  patch.review='通过';patch.status='已完成';patch.time=nowStamp();patch.curve=makeCurve();
+  patch.time=nowStamp();
+  patch.curve=makeCurve();
+  patch.completeness=FS.curveComplete(patch.curve);
+  patch.minTemp=FS.curveMinTemp(patch.curve);
+  patch.judgeStd='SOP-02';
+  patch.anomalies=[];patch.notes=[];
+  var autoPass=patch.minTemp!=null&&patch.minTemp>=121;
+  patch.review=autoPass?'通过':'待复判';
+  patch.status=autoPass?'已完成':'曲线缺口';
   var created=FS.add('sterilize',patch);
   closeModal();renderAll();
-  showToast('灭菌单 '+created.id+' 已创建（曲线完整，自动通过）','success');
+  showToast('灭菌单 '+created.id+' 已创建：曲线自动采集 '+patch.completeness.points+' 点，最低探头 '+patch.minTemp+'°C，'+(autoPass?'≥121°C 自动通过':'<121°C 转人工复判'),'success');
 }
 function openDetail(id){
   var r=FS.get('sterilize',id);if(!r)return;
   var batch=FS.get('batches',r.batch);
   var alert=window.FungiAlertData?FungiAlertData.get('FA-261116-02'):null;
+  var comp=r.completeness||FS.curveComplete(r.curve);
+  var calcMin=FS.curveMinTemp(r.curve);
+  var autoPass=calcMin!=null&&calcMin>=121;
   var reviewBtns=r.review==='待复判'?
     '<div style="margin-top:14px;display:flex;gap:10px;"><button class="jg-btn jg-btn-primary" onclick="passReview(\''+r.id+'\')">复判通过</button><button class="jg-btn" style="color:#ff4d4f;border-color:#ffccc7;" onclick="scrapReview(\''+r.id+'\')">判定报废</button></div>':'';
+  var notes=r.notes||[];
+  var anomalies=r.anomalies||[];
   openDrawer('灭菌单详情 · '+r.id,
     '<div class="detail-grid">'+
     '<div class="detail-item"><div class="dl">灭菌单</div><div class="dv">'+esc(r.id)+'</div></div>'+
     '<div class="detail-item"><div class="dl">锅号</div><div class="dv">'+esc(r.pot)+'</div></div>'+
     '<div class="detail-item"><div class="dl">批次</div><div class="dv">'+esc(r.batch)+(batch&&batch.scrap?'（已报废）':'')+'</div></div>'+
+    '<div class="detail-item"><div class="dl">装载方式</div><div class="dv">'+esc(r.loadWay||'—')+'</div></div>'+
     '<div class="detail-item"><div class="dl">袋数</div><div class="dv">'+Number(r.bags).toLocaleString()+' 袋</div></div>'+
     '<div class="detail-item"><div class="dl">保温时长</div><div class="dv">'+r.hold+' min</div></div>'+
     '<div class="detail-item"><div class="dl">峰值温度</div><div class="dv">'+Number(r.peak).toFixed(1)+' °C</div></div>'+
+    '<div class="detail-item"><div class="dl">记录最低探头</div><div class="dv">'+(r.minTemp==null?'—（缺口待复判）':Number(r.minTemp).toFixed(1)+' °C')+'</div></div>'+
     '<div class="detail-item"><div class="dl">操作人</div><div class="dv">'+esc(r.operator)+'</div></div>'+
     '<div class="detail-item"><div class="dl">时间</div><div class="dv">'+esc(r.time)+'</div></div>'+
     '<div class="detail-item"><div class="dl">复判</div><div class="dv"><span class="status-tag '+reviewCls(r.review)+'">'+esc(r.review)+'</span></div></div>'+
     '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+statusCls(r.status)+'">'+esc(r.status)+'</span></div></div>'+
     '</div>'+
-    '<div class="drawer-sec">灭菌温度曲线</div>'+
+    '<div class="drawer-sec">曲线采集完整性</div>'+
+    '<div class="detail-grid">'+
+    '<div class="detail-item"><div class="dl">采集方式</div><div class="dv">'+(comp.auto?'<span class="status-tag normal">自动采集</span>（不可手补/删改）':'<span class="status-tag warning">人工录入</span>')+'</div></div>'+
+    '<div class="detail-item"><div class="dl">完整性</div><div class="dv">'+(comp.complete?'<span class="status-tag normal">完整</span>':'<span class="status-tag danger">曲线不完整</span>')+'</div></div>'+
+    '<div class="detail-item"><div class="dl">采样点 / 丢点</div><div class="dv">'+comp.points+' 点 / 丢 '+comp.missing+' 点（丢点率 '+comp.lossRate+'%）</div></div>'+
+    '<div class="detail-item"><div class="dl">判定标准</div><div class="dv">'+esc(r.judgeStd||'SOP-02')+' · 保温段最低探头 ≥121°C</div></div>'+
+    '</div>'+
+    '<div class="drawer-sec">灭菌温度 / 压力曲线（3点探头取最低）</div>'+
     '<div class="chart-box">'+curveSVG(r.curve)+
-    '<div class="chart-legend"><span><i style="background:#1890ff;"></i>温度曲线</span><span><i style="background:#52c41a;"></i>121°C 保温线</span><span><i style="background:rgba(255,77,79,.35);border:1px dashed #ff4d4f;"></i>曲线缺口（需人工复判）</span></div></div>'+
-    (hasGap(r)?'<p style="font-size:12px;color:#ff4d4f;margin-top:10px;">曲线存在缺口：灭菌中途断电导致数据缺失，请结合生物指示剂结果人工复判。</p>':'')+
+    '<div class="chart-legend"><span><i style="background:#1890ff;"></i>温度°C（左轴）</span><span><i style="background:#fa8c16;"></i>压力MPa（右轴）</span><span><i style="background:#91d5ff;"></i><i style="background:#b7eb8f;"></i><i style="background:#d3adf7;"></i>3点探头</span><span><i style="background:#52c41a;"></i>121°C 保温线</span><span><i style="background:rgba(255,77,79,.35);border:1px dashed #ff4d4f;"></i>曲线缺口</span></div></div>'+
+    '<p style="font-size:12px;margin-top:10px;color:var(--text-secondary);">SOP-02 自动判定：保温段最低探头复算 <strong style="color:'+(autoPass?'#389e0d':'#ff4d4f')+';">'+(calcMin==null?'—（缺口无法复算）':calcMin+'°C')+'</strong> '+(autoPass?'≥121°C，自动合格':'&lt;121°C，需人工复判')+'；最终判定：<span class="status-tag '+reviewCls(r.review)+'">'+esc(r.review)+'</span></p>'+
+    (hasGap(r)?'<p style="font-size:12px;color:#ff4d4f;margin-top:6px;">曲线存在缺口：灭菌中途断电导致数据缺失，请结合生物指示剂结果人工复判（通过/报废）。</p>':'')+
     (alert&&r.review==='待复判'?'<p style="font-size:12px;color:var(--text-tertiary);margin-top:6px;">关联预警：'+esc(alert.id)+' '+esc(alert.title)+'（'+esc(alert.statusText)+'）</p>':'')+
+    '<div class="drawer-sec">异常事件</div>'+
+    (anomalies.length?'<table class="mini-table"><thead><tr><th>类型</th><th>时间</th><th>持续</th><th>措施</th><th>影响</th></tr></thead><tbody>'+anomalies.map(function(a){return '<tr><td style="color:#ff4d4f;font-weight:600;">'+esc(a.type)+'</td><td>'+esc(a.time)+'</td><td>'+esc(a.duration)+'</td><td>'+esc(a.measure)+'</td><td>'+esc(a.impact)+'</td></tr>';}).join('')+'</tbody></table>':'<p style="font-size:12px;color:var(--text-tertiary);margin:0;">无异常事件</p>')+
+    '<div class="drawer-sec">追加说明（只追加，不可修改/删除）</div>'+
+    (notes.length?notes.map(function(n){return '<div style="padding:8px 12px;border:1px solid #eef1ef;border-radius:8px;margin-bottom:8px;font-size:12.5px;"><div style="color:var(--text-tertiary);font-size:11px;margin-bottom:3px;">'+esc(n.time)+' · '+esc(n.operator)+'</div>'+esc(n.text)+'</div>';}).join(''):'<p style="font-size:12px;color:var(--text-tertiary);margin:0 0 8px;">暂无说明</p>')+
+    '<button class="jg-btn" onclick="openNotes(\''+r.id+'\')">＋ 追加说明</button>'+
     reviewBtns
   );
 }
 function exportSt(){
   var rows=applySort(stRows());
-  exportCSV('高压灭菌',['灭菌单','锅号','批次','袋数','保温min','峰值°C','操作人','复判','状态','时间'],rows.map(function(r){
-    return [r.id,r.pot,r.batch,r.bags,r.hold,r.peak,r.operator,r.review,r.status,r.time];
+  exportCSV('高压灭菌',['灭菌单','锅号','批次','装载方式','袋数','保温min','峰值°C','最低探头°C','曲线完整','丢点率%','判定标准','操作人','复判','状态','时间'],rows.map(function(r){
+    var c=r.completeness||{};
+    return [r.id,r.pot,r.batch,r.loadWay||'',r.bags,r.hold,r.peak,r.minTemp==null?'':r.minTemp,c.complete?'完整':'不完整',c.lossRate==null?'':c.lossRate,r.judgeStd||'SOP-02',r.operator,r.review,r.status,r.time];
   }));
 }
 (function initPotFilter(){

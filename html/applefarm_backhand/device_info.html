@@ -109,6 +109,18 @@
   #pagination-container { padding:12px 16px; }
   .selected-info { font-size:12.5px; color:var(--text-tertiary); margin-left:auto; }
   .selected-info strong { color:var(--primary-600); }
+
+  .hb-dot { width:8px; height:8px; border-radius:50%; background:#52c41a; display:inline-block; animation:hbPulse 2s infinite; }
+  @keyframes hbPulse { 0%{box-shadow:0 0 0 0 rgba(82,196,26,.45)} 70%{box-shadow:0 0 0 6px rgba(82,196,26,0)} 100%{box-shadow:0 0 0 0 rgba(82,196,26,0)} }
+  #floorMap svg { width:100%; height:auto; display:block; }
+  #floorMap .map-dot { cursor:pointer; }
+  #floorMap .map-dot:hover { stroke:#262626; stroke-width:1.5; }
+  #floorMap .map-dot.off { animation:dotBlink 1.2s infinite; }
+  @keyframes dotBlink { 0%,100%{opacity:1} 50%{opacity:.35} }
+  #floorMap .zone-name { cursor:pointer; }
+  #floorMap .zone-name:hover { fill:#1890ff; text-decoration:underline; }
+  .circuit-code { font-family:Consolas,Menlo,monospace; font-size:12px; background:var(--gray-100); border:1px solid var(--border-default);
+    padding:1px 6px; border-radius:5px; color:var(--text-primary); white-space:nowrap; }
 </style>
 <style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
   .main-wrapper{margin-left:0!important;width:100%!important;}
@@ -144,6 +156,18 @@
       <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin:0 0 20px;">
         <div class="chart-card"><div class="chart-title">设备状态分布</div><div id="chartStatus"></div></div>
         <div class="chart-card"><div class="chart-title">设备类型构成</div><div id="chartType"></div></div>
+      </section>
+
+      <section class="chart-card" style="margin:0 0 20px;">
+        <div class="chart-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          厂区设备点位图
+          <span style="font-weight:400;font-size:12px;color:var(--text-tertiary);">点击点位查看设备详情 · 点击区域名称筛选台账</span>
+          <span id="hbBadge" style="margin-left:auto;font-size:12px;font-weight:500;color:#3a8618;display:inline-flex;align-items:center;gap:6px;">
+            <span class="hb-dot"></span>实时刷新 5s
+          </span>
+        </div>
+        <div id="floorMap"></div>
+        <div class="chart-legend" id="mapLegend"></div>
       </section>
 
       <div class="content-wrapper">
@@ -193,7 +217,9 @@
                   <th class="sortable" onclick="setSort('name')">设备名称<span class="arrow" id="ar-name"></span></th>
                   <th class="sortable" style="width:120px;" onclick="setSort('type')">设备类型<span class="arrow" id="ar-type"></span></th>
                   <th class="sortable" style="width:110px;" onclick="setSort('location')">安装位置<span class="arrow" id="ar-location"></span></th>
+                  <th class="sortable" style="width:110px;" onclick="setSort('circuit')">回路号<span class="arrow" id="ar-circuit"></span></th>
                   <th class="sortable" style="width:96px;" onclick="setSort('status')">运行状态<span class="arrow" id="ar-status"></span></th>
+                  <th style="width:110px;">功率 / 今日能耗</th>
                   <th style="width:90px;">控制能力</th>
                   <th style="width:150px;">操作</th>
                 </tr>
@@ -230,6 +256,12 @@
     <div class="form-row">
       <div class="form-group"><label>设备型号</label><input type="text" id="fModel" placeholder="如 XF-380"></div>
       <div class="form-group"><label>生产厂家</label><input type="text" id="fMaker" placeholder="如 德州通风设备"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="required">配电回路号</label><input type="text" id="fCircuit" placeholder="如 HL-GF01-11">
+        <div style="font-size:11.5px;color:var(--text-tertiary);margin-top:6px;">回路号全厂唯一，用于电气寻址与备件关联</div>
+      </div>
+      <div class="form-group"><label>额定功率（kW）</label><input type="number" id="fPower" step="0.01" min="0" placeholder="如 2.2"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="required">运行状态</label><select id="fStatus">
@@ -282,11 +314,20 @@ var FS = window.FungiStore;
 var esc = DeviceUI.esc;
 var STATUS_CLS = { '运行':'online', '待机':'idle', '离线':'offline', '故障':'offline', '联动':'processing', '定时':'warning' };
 var STATUS_COLOR = { '运行':'#52c41a', '待机':'#13c2c2', '离线':'#ff4d4f', '故障':'#fa8c16', '联动':'#1890ff', '定时':'#722ed1' };
-var SETPOINT_UNIT = { '加湿器':'%RH', '新风风机':'ppm', '冷水机组':'°C', '循环风机':'min', '照明灯组':'lx' };
+var SETPOINT_UNIT = {
+  '超声波雾化加湿器':'%RH', '高压微雾加湿器':'%RH', '工业加湿机组':'%RH', '除湿机':'%RH',
+  '新风风机':'ppm', '冷水机组':'°C', '风冷热泵':'°C', '电加热':'°C', '水冷空调':'°C',
+  '层架循环风机':'min', '循环内机':'%', '负压排风扇':'Pa', '电动风阀':'%',
+  '层架喷淋补水装置':'min', '臭氧发生器':'min', '紫外消杀装置':'min',
+  '自动采摘辅助设备':'%', 'LED植物补光灯':'lx'
+};
 var editingId = '';
 var sortKey = 'id', sortDir = 1;
 var curPage = 1, PAGE_SIZE = 10;
 var selected = {};
+var HB_CYCLE = 5000, HB_MISS_LIMIT = 3;
+var hb = {}, hbPaused = {}, hbSimOffline = {};
+var drawerOpenId = '';
 
 function pad2(n){ return n < 10 ? '0' + n : '' + n; }
 function nowStr(){ var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
@@ -313,6 +354,7 @@ function openDrawer(title, html){
   document.getElementById('drawerMask').classList.add('show');
 }
 function closeDrawer(){
+  drawerOpenId = '';
   document.getElementById('drawer').classList.remove('show');
   document.getElementById('drawerMask').classList.remove('show');
 }
@@ -330,7 +372,7 @@ function renderStats(){
     '<div class="stat-card"><div class="stat-label">运行中</div><div class="stat-value" style="color:#52c41a;">' + run + '<span class="unit">台</span></div>' +
     '<div class="stat-sub">含联动 / 定时运行</div></div>' +
     '<div class="stat-card"><div class="stat-label">离线</div><div class="stat-value" style="color:' + (off ? '#ff4d4f' : 'inherit') + ';">' + off + '<span class="unit">台</span></div>' +
-    '<div class="stat-sub ' + (off ? 'err' : '') + '">' + (off ? 'HS-02 加湿器待检修' : '通信全部正常') + '</div></div>' +
+    '<div class="stat-sub ' + (off ? 'err' : '') + '">' + (off ? esc(list.filter(function(x){ return x.status === '离线'; }).map(function(x){ return x.id; }).join('、')) + ' 待检修' : '通信全部正常') + '</div></div>' +
     '<div class="stat-card"><div class="stat-label">维修中</div><div class="stat-value" style="color:' + (repair ? '#fa8c16' : 'inherit') + ';">' + repair + '<span class="unit">台</span></div>' +
     '<div class="stat-sub warn">故障设备已关联维修工单</div></div>';
 }
@@ -391,7 +433,126 @@ function renderCharts(){
   list.forEach(function(x){ byType[x.type] = (byType[x.type] || 0) + 1; });
   var items = Object.keys(byType).map(function(k){ return { name: k, value: byType[k] }; })
     .sort(function(a,b){ return b.value - a.value; });
+  if (items.length > 10){
+    var rest = items.slice(10).reduce(function(s,x){ return s + x.value; }, 0);
+    items = items.slice(0, 10).concat([{ name: '其他 ' + (Object.keys(byType).length - 10) + ' 类', value: rest }]);
+  }
   document.getElementById('chartType').innerHTML = svgHBars(items, '#1890ff');
+}
+
+/* ---------- 厂区 SVG 点位图 ---------- */
+var ZONE_POS = {
+  'BD-01': { x:16,  y:16,  w:140, h:104 }, 'MJ-W': { x:172, y:16,  w:180, h:104 },
+  'JZ-01': { x:368, y:16,  w:130, h:104 }, 'PY-01': { x:514, y:16,  w:200, h:104 },
+  'YL-01': { x:730, y:16,  w:110, h:104 },
+  'GF-01': { x:16,  y:140, w:148, h:122 }, 'GF-02': { x:180, y:140, w:148, h:122 },
+  'GF-03': { x:344, y:140, w:148, h:122 }, 'GF-04': { x:508, y:140, w:148, h:122 },
+  'GF-05': { x:672, y:140, w:148, h:122 }, 'GF-06': { x:836, y:140, w:128, h:122 },
+  'GF-07': { x:16,  y:282, w:148, h:96 },  'GF-08': { x:180, y:282, w:148, h:96 },
+  'LK-A':  { x:344, y:282, w:180, h:96 },  'LK-B':  { x:540, y:282, w:180, h:96 }
+};
+var ZONE_FILL = { '生产': ['#f6ffed','#b7eb8f'], '出菇': ['#f0f5ff','#adc6ff'], '冷链': ['#e6fffb','#87e8de'] };
+function renderMap(){
+  var zones = FS.list('zones'), devices = FS.list('devices');
+  var svg = '<svg viewBox="0 0 980 396" role="img" aria-label="厂区设备点位图">';
+  svg += '<rect x="4" y="4" width="972" height="388" rx="12" fill="#fbfdfb" stroke="#e4e9e4"/>';
+  zones.forEach(function(z){
+    var p = ZONE_POS[z.id];
+    if (!p) return;
+    var fill = ZONE_FILL[z.type] || ['#fafafa','#d9d9d9'];
+    var devs = devices.filter(function(d){ return d.location === z.id; });
+    svg += '<rect x="' + p.x + '" y="' + p.y + '" width="' + p.w + '" height="' + p.h + '" rx="8" fill="' + fill[0] + '" stroke="' + fill[1] + '"/>';
+    svg += '<text class="zone-name" x="' + (p.x+10) + '" y="' + (p.y+18) + '" font-size="12" font-weight="600" fill="#43503f" onclick="filterByZone(\'' + esc(z.id) + '\')">' + esc(z.id) + '</text>';
+    svg += '<text x="' + (p.x+p.w-10) + '" y="' + (p.y+18) + '" text-anchor="end" font-size="10.5" fill="#8c9a8c">' + devs.length + ' 台</text>';
+    var cols = Math.max(1, Math.floor((p.w - 24) / 26));
+    devs.forEach(function(d, i){
+      var cx = p.x + 20 + (i % cols) * 26, cy = p.y + 38 + Math.floor(i / cols) * 24;
+      if (cy > p.y + p.h - 12) return;
+      var off = d.status === '离线' || d.status === '故障';
+      svg += '<circle class="map-dot' + (off ? ' off' : '') + '" cx="' + cx + '" cy="' + cy + '" r="6.5" fill="' + (STATUS_COLOR[d.status] || '#bfbfbf') + '" stroke="#fff" stroke-width="1.5" onclick="openDetail(\'' + esc(d.id) + '\')">' +
+        '<title>' + esc(d.id + ' ' + d.name + ' · ' + d.status + ' · ' + (d.circuit || '')) + '</title></circle>';
+    });
+  });
+  svg += '<text x="740" y="300" font-size="11" fill="#8c9a8c">图例（点击点位查看详情）</text>';
+  ['运行','待机','离线','故障','联动','定时'].forEach(function(s, i){
+    var lx = 740 + (i % 2) * 118, ly = 318 + Math.floor(i / 2) * 22;
+    svg += '<circle cx="' + lx + '" cy="' + (ly-4) + '" r="5.5" fill="' + STATUS_COLOR[s] + '"/>' +
+      '<text x="' + (lx+12) + '" y="' + ly + '" font-size="11" fill="#595959">' + s + '</text>';
+  });
+  svg += '</svg>';
+  document.getElementById('floorMap').innerHTML = svg;
+}
+function filterByZone(id){
+  document.getElementById('searchInput').value = id;
+  curPage = 1; renderTable();
+  DeviceUI.toast('已按区域 ' + id + ' 筛选台账', 'info');
+}
+
+/* ---------- 心跳监测（5s 刷新 · 离线 >3 周期判定） ---------- */
+function hbInit(){
+  var now = Date.now();
+  FS.list('devices').forEach(function(d){
+    if (hb[d.id] == null) hb[d.id] = d.status === '离线' ? now - HB_CYCLE * (HB_MISS_LIMIT + 2) : now;
+  });
+}
+function hbMissed(id){ return Math.floor((Date.now() - (hb[id] || Date.now())) / HB_CYCLE); }
+function hbTick(){
+  var now = Date.now();
+  FS.list('devices').forEach(function(d){
+    if (hb[d.id] == null) hb[d.id] = d.status === '离线' ? now - HB_CYCLE * (HB_MISS_LIMIT + 2) : now;
+    if (d.status !== '离线' && d.status !== '故障' && !hbPaused[d.id]) hb[d.id] = now;
+    var missed = hbMissed(d.id);
+    if (d.status !== '离线' && d.status !== '故障' && missed > HB_MISS_LIMIT){
+      FS.update('devices', d.id, { status: '离线' });
+      hbSimOffline[d.id] = true;
+      DeviceUI.toast(d.id + ' ' + d.name + ' 连续 ' + missed + ' 个周期无心跳，已判定离线', 'error');
+    }
+  });
+  renderStats(); renderTable(); renderMap();
+  var badge = document.getElementById('hbBadge');
+  if (badge){
+    var t = new Date();
+    badge.innerHTML = '<span class="hb-dot"></span>实时刷新 5s · 上次 ' + pad2(t.getHours()) + ':' + pad2(t.getMinutes()) + ':' + pad2(t.getSeconds());
+  }
+  if (drawerOpenId) renderDrawerHb(drawerOpenId);
+}
+function simLoss(id){
+  hbPaused[id] = true;
+  DeviceUI.toast('已模拟 ' + id + ' 心跳丢失，连续 ' + (HB_MISS_LIMIT + 1) + ' 个周期（约 ' + ((HB_MISS_LIMIT + 1) * HB_CYCLE / 1000) + 's）无心跳将判定离线', 'info');
+  renderDrawerHb(id);
+}
+function simRestore(id){
+  delete hbPaused[id];
+  hb[id] = Date.now();
+  if (hbSimOffline[id]){
+    delete hbSimOffline[id];
+    FS.update('devices', id, { status: '运行' });
+    DeviceUI.toast(id + ' 心跳恢复，状态已恢复为运行', 'success');
+  } else {
+    DeviceUI.toast(id + ' 心跳已恢复', 'success');
+  }
+  refreshAll(); renderDrawerHb(id);
+}
+function renderDrawerHb(id){
+  var box = document.getElementById('hbPanel');
+  if (!box || drawerOpenId !== id) return;
+  var d = FS.get('devices', id);
+  if (!d) return;
+  var missed = hbMissed(id);
+  var last = hb[id] ? new Date(hb[id]) : null;
+  var lastStr = last ? last.getFullYear() + '-' + pad2(last.getMonth()+1) + '-' + pad2(last.getDate()) + ' ' + pad2(last.getHours()) + ':' + pad2(last.getMinutes()) + ':' + pad2(last.getSeconds()) : '—';
+  var judged = d.status === '离线';
+  box.innerHTML =
+    '<div class="detail-row"><span class="detail-label">最近心跳</span><span class="detail-value">' + lastStr + '</span></div>' +
+    '<div class="detail-row"><span class="detail-label">丢失周期</span><span class="detail-value">' + missed + ' / ' + HB_MISS_LIMIT + '（5s/周期）</span></div>' +
+    '<div class="detail-row"><span class="detail-label">离线判定</span><span class="detail-value">' +
+      (judged ? '<span class="status-tag offline">已离线（丢失 &gt; ' + HB_MISS_LIMIT + ' 周期）</span>' :
+        (hbPaused[id] ? '<span class="status-tag warning">模拟丢包中 · ' + Math.max(0, (HB_MISS_LIMIT + 1) - missed) + ' 周期后判定</span>' : '<span class="status-tag online">通信正常</span>')) + '</span></div>' +
+    '<div style="margin-top:10px;display:flex;gap:8px;">' +
+      (hbPaused[id]
+        ? '<button class="jg-btn jg-btn-primary" onclick="simRestore(\'' + esc(id) + '\')">恢复心跳</button>'
+        : (d.status !== '离线' && d.status !== '故障' ? '<button class="jg-btn-outline" onclick="simLoss(\'' + esc(id) + '\')">模拟心跳丢失</button>' : '')) +
+    '</div>';
 }
 
 /* ---------- 筛选 / 排序 ---------- */
@@ -403,7 +564,7 @@ function filteredList(){
     if (type && x.type !== type) return false;
     if (status && x.status !== status) return false;
     if (kw){
-      var hay = [x.id, x.name, x.type, x.model, x.maker, x.location, zoneName(x.location)].join(' ').toLowerCase();
+      var hay = [x.id, x.name, x.type, x.model, x.maker, x.location, x.circuit, zoneName(x.location)].join(' ').toLowerCase();
       if (hay.indexOf(kw) < 0) return false;
     }
     return true;
@@ -434,7 +595,7 @@ function renderTable(){
   var pageData = list.slice((curPage-1)*PAGE_SIZE, curPage*PAGE_SIZE);
   var body = document.getElementById('dataTableBody');
   if (!pageData.length){
-    body.innerHTML = '<tr class="empty-row"><td colspan="8">暂无符合条件的设备</td></tr>';
+    body.innerHTML = '<tr class="empty-row"><td colspan="10">暂无符合条件的设备</td></tr>';
   } else {
     body.innerHTML = pageData.map(function(x){
       return '<tr onclick="openDetail(\'' + esc(x.id) + '\')">' +
@@ -443,7 +604,10 @@ function renderTable(){
         '<td>' + esc(x.name) + '</td>' +
         '<td><span class="type-badge">' + esc(x.type) + '</span></td>' +
         '<td title="' + esc(zoneName(x.location)) + '">' + esc(x.location) + '</td>' +
+        '<td><span class="circuit-code">' + esc(x.circuit || '—') + '</span></td>' +
         '<td>' + statusTag(x.status) + '</td>' +
+        '<td style="font-variant-numeric:tabular-nums;">' + (x.power != null ? x.power + ' kW' : '—') +
+          '<div style="font-size:11px;color:var(--text-tertiary);">' + (x.energyToday != null ? x.energyToday + ' kWh' : '—') + '</div></td>' +
         '<td>' + (x.control ? '<span class="type-badge ctrl">可控</span>' : '<span class="type-badge plain">采集</span>') + '</td>' +
         '<td onclick="event.stopPropagation();"><div class="action-btns">' +
           '<button class="action-btn detail" onclick="openDetail(\'' + esc(x.id) + '\')">详情</button>' +
@@ -452,7 +616,7 @@ function renderTable(){
         '</div></td></tr>';
     }).join('');
   }
-  ['id','name','type','location','status'].forEach(function(k){
+  ['id','name','type','location','circuit','status'].forEach(function(k){
     document.getElementById('ar-' + k).textContent = sortKey === k ? (sortDir > 0 ? '▲' : '▼') : '';
   });
   var pg = '<div class="pagination">';
@@ -490,12 +654,17 @@ function renderSelected(){
 function openDetail(id){
   var d = FS.get('devices', id);
   if (!d) return;
+  drawerOpenId = id;
   var rows = [
     ['设备编号', d.id], ['设备名称', d.name], ['设备类型', d.type],
     ['设备型号', d.model || '—'], ['生产厂家', d.maker || '—'],
     ['安装位置', d.location + ' · ' + zoneName(d.location)],
+    ['配电回路', '<span class="circuit-code">' + esc(d.circuit || '—') + '</span>', 'raw'],
     ['运行状态', statusTag(d.status), 'raw'],
     ['控制能力', d.control ? '支持远程控制' : '仅数据采集'],
+    ['额定功率', d.power != null ? d.power + ' kW' : '—'],
+    ['今日能耗', d.energyToday != null ? d.energyToday + ' kWh' : '—'],
+    ['上次保养', d.maintainDate || '—'],
     ['采购日期', d.bought || '—']
   ];
   if (d.control){
@@ -507,6 +676,7 @@ function openDetail(id){
     rows.map(function(r){
       return '<div class="detail-row"><span class="detail-label">' + r[0] + '</span><span class="detail-value">' + (r[2] === 'raw' ? r[1] : esc(r[1])) + '</span></div>';
     }).join('') + '</div>';
+  html += '<div class="drawer-section">通信心跳（5s 周期 · 丢失 &gt; ' + HB_MISS_LIMIT + ' 周期判定离线）</div><div class="detail-info" id="hbPanel"></div>';
   html += '<div class="drawer-section">关联运维工单（' + orders.length + '）</div>';
   html += orders.length ? '<div class="mini-list">' + orders.map(function(o){
     return '<div class="mini-item"><div class="mi-main"><strong>' + esc(o.id) + '</strong> · ' + esc(o.type) + ' ' + statusTag(o.status) +
@@ -521,6 +691,7 @@ function openDetail(id){
     html += '<div style="margin-top:16px;"><button class="jg-btn jg-btn-primary" onclick="closeDrawer();openPage(\'device_control.html\',\'设备运行监控\')">前往运行监控</button></div>';
   }
   openDrawer('设备详情 · ' + d.name, html);
+  renderDrawerHb(id);
 }
 
 /* ---------- 新增 / 编辑 ---------- */
@@ -542,6 +713,17 @@ function nextDeviceId(){
   FS.list('devices').forEach(function(x){ var m = /^DV-(\d+)$/.exec(x.id); if (m) max = Math.max(max, +m[1]); });
   return 'DV-' + pad2(max + 1);
 }
+function suggestCircuit(loc){
+  var prefix = 'HL-' + String(loc || 'GF01').replace(/-/g, '') + '-';
+  var max = 0;
+  FS.list('devices').forEach(function(x){
+    if (x.circuit && x.circuit.indexOf(prefix) === 0){
+      var n = parseInt(x.circuit.slice(prefix.length), 10);
+      if (!isNaN(n)) max = Math.max(max, n);
+    }
+  });
+  return prefix + pad2(max + 1);
+}
 function openEditModal(id){
   editingId = id || '';
   var d = id ? FS.get('devices', id) : null;
@@ -553,6 +735,8 @@ function openEditModal(id){
   document.getElementById('fLocation').value = d ? d.location : 'GF-01';
   document.getElementById('fModel').value = d ? (d.model || '') : '';
   document.getElementById('fMaker').value = d ? (d.maker || '') : '';
+  document.getElementById('fCircuit').value = d ? (d.circuit || '') : suggestCircuit('GF-01');
+  document.getElementById('fPower').value = d && d.power != null ? d.power : '';
   document.getElementById('fStatus').value = d ? d.status : '运行';
   document.getElementById('fBought').value = d ? (d.bought || '') : '';
   document.getElementById('fControl').checked = d ? !!d.control : false;
@@ -571,6 +755,12 @@ function saveDevice(){
   if (!name){ DeviceUI.toast('请填写设备名称', 'error'); return; }
   var id = editingId || document.getElementById('fId').value.trim() || nextDeviceId();
   if (!editingId && FS.get('devices', id)){ DeviceUI.toast('设备编号 ' + id + ' 已存在', 'error'); return; }
+  var circuit = document.getElementById('fCircuit').value.trim().toUpperCase();
+  if (!circuit){ DeviceUI.toast('请填写配电回路号', 'error'); return; }
+  var dup = FS.list('devices').filter(function(x){ return x.id !== id && String(x.circuit || '').toUpperCase() === circuit; })[0];
+  if (dup){ DeviceUI.toast('回路号 ' + circuit + ' 已被 ' + dup.id + '（' + dup.name + '）占用，回路号必须全厂唯一', 'error'); return; }
+  var powerRaw = document.getElementById('fPower').value;
+  if (powerRaw !== '' && (isNaN(Number(powerRaw)) || Number(powerRaw) < 0)){ DeviceUI.toast('额定功率必须为非负数字', 'error'); return; }
   var control = document.getElementById('fControl').checked;
   var setpoint = null;
   if (control){
@@ -584,6 +774,8 @@ function saveDevice(){
     location: document.getElementById('fLocation').value,
     model: document.getElementById('fModel').value.trim(),
     maker: document.getElementById('fMaker').value.trim(),
+    circuit: circuit,
+    power: powerRaw === '' ? null : Number(powerRaw),
     status: document.getElementById('fStatus').value,
     bought: document.getElementById('fBought').value,
     control: control
@@ -594,9 +786,12 @@ function saveDevice(){
     DeviceUI.toast('设备信息已更新', 'success');
   } else {
     patch.id = id;
+    patch.energyToday = 0;
+    patch.maintainDate = nowStr();
     FS.add('devices', patch);
     DeviceUI.toast('设备已创建', 'success');
   }
+  if (patch.status !== '离线'){ hb[id] = Date.now(); delete hbPaused[id]; delete hbSimOffline[id]; }
   closeEditModal(); refreshAll();
 }
 
@@ -636,23 +831,29 @@ function bulkDelete(){
 /* ---------- 导出 ---------- */
 function exportDevices(){
   var list = filteredList();
-  var headers = ['设备编号','设备名称','设备类型','设备型号','生产厂家','安装位置','运行状态','控制能力','设定值','采购日期'];
+  var headers = ['设备编号','设备名称','设备类型','设备型号','生产厂家','安装位置','配电回路','运行状态','控制能力','设定值','额定功率kW','今日能耗kWh','上次保养','采购日期'];
   var rows = list.map(function(x){
-    return [x.id, x.name, x.type, x.model || '', x.maker || '', x.location, x.status,
-      x.control ? '可控' : '采集', x.control && x.setpoint != null ? x.setpoint + (SETPOINT_UNIT[x.type] || '') : '', x.bought || ''];
+    return [x.id, x.name, x.type, x.model || '', x.maker || '', x.location, x.circuit || '', x.status,
+      x.control ? '可控' : '采集', x.control && x.setpoint != null ? x.setpoint + (SETPOINT_UNIT[x.type] || '') : '',
+      x.power != null ? x.power : '', x.energyToday != null ? x.energyToday : '', x.maintainDate || '', x.bought || ''];
   });
   DeviceUI.exportCsv('设备台账', headers, rows);
 }
 
 /* ---------- 刷新 / 初始化 ---------- */
-function refreshAll(){ renderStats(); renderCharts(); renderTable(); }
+function refreshAll(){ renderStats(); renderCharts(); renderTable(); renderMap(); }
 document.addEventListener('DOMContentLoaded', function(){
   initSelects();
+  hbInit();
   refreshAll();
+  setInterval(hbTick, HB_CYCLE);
   document.getElementById('searchInput').addEventListener('input', function(){ curPage = 1; renderTable(); });
   document.getElementById('typeSelect').addEventListener('change', function(){ curPage = 1; renderTable(); });
   document.getElementById('statusSelect').addEventListener('change', function(){ curPage = 1; renderTable(); });
   document.getElementById('fType').addEventListener('change', toggleSetpoint);
+  document.getElementById('fLocation').addEventListener('change', function(){
+    if (!editingId) document.getElementById('fCircuit').value = suggestCircuit(this.value);
+  });
 });
 </script>
 <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>

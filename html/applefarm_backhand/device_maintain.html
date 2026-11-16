@@ -177,6 +177,10 @@
             <option value="">全部类型</option>
             <option value="维修">维修</option>
             <option value="保养">保养</option>
+            <option value="校准">校准</option>
+            <option value="巡检">巡检</option>
+            <option value="更换">更换</option>
+            <option value="调试">调试</option>
           </select>
           <select class="search-select" id="deviceSelect"><option value="">全部设备</option></select>
           <input type="text" class="search-input" id="searchInput" placeholder="搜索工单号 / 项目 / 负责人...">
@@ -210,6 +214,7 @@
                 <th>故障 / 保养描述</th>
                 <th style="width:110px;">备件</th>
                 <th class="sortable" style="width:96px;" onclick="setSort('status')">状态<span class="arrow" id="ar-status"></span></th>
+                <th style="width:90px;">响应时长</th>
                 <th style="width:90px;">负责人</th>
                 <th class="sortable" style="width:150px;" onclick="setSort('time')">时间<span class="arrow" id="ar-time"></span></th>
                 <th style="width:220px;">操作</th>
@@ -237,7 +242,7 @@
   <div class="modal-body">
     <div class="form-row">
       <div class="form-group"><label class="required">设备</label><select id="oDevice"></select></div>
-      <div class="form-group"><label class="required">类型</label><select id="oType"><option value="维修">维修</option><option value="保养">保养</option></select></div>
+      <div class="form-group"><label class="required">类型</label><select id="oType"><option value="维修">维修</option><option value="保养">保养</option><option value="校准">校准</option><option value="巡检">巡检</option><option value="更换">更换</option><option value="调试">调试</option></select></div>
     </div>
     <div class="form-group"><label class="required">故障 / 保养描述</label><textarea id="oItem" rows="3" placeholder="如：密封圈老化漏气，需更换灭菌锅密封圈"></textarea></div>
     <div class="form-row">
@@ -332,6 +337,17 @@ function dueTag(next){
   if (n <= 3) return '<span class="due-tag soon">' + (n === 0 ? '今日到期' : n + ' 天内到期') + '</span>';
   return '<span class="due-tag ok">' + n + ' 天后到期</span>';
 }
+function minutesBetween(fromStr, toStr){
+  var a = new Date(String(fromStr).replace(' ', 'T') + ':00');
+  var b = toStr ? new Date(String(toStr).replace(' ', 'T') + ':00') : new Date();
+  if (isNaN(a) || isNaN(b)) return null;
+  return Math.max(0, Math.round((b - a) / 60000));
+}
+function responseText(o){
+  if (o.responseMin != null) return o.responseMin + ' min';
+  if (o.status === '待处理') return '待响应';
+  return '—';
+}
 function undoToast(msg, fn){
   var c = document.querySelector('.toast-container');
   if (!c){ c = document.createElement('div'); c.className = 'toast-container';
@@ -363,6 +379,8 @@ function renderStats(){
   var month = todayStr().slice(0,7);
   var doneMonth = orders.filter(function(x){ return x.status === '已完成' && String(x.time).slice(0,7) === month; }).length;
   var overdue = FS.list('maintainPlans').filter(function(p){ return daysUntil(p.next) < 0; }).length;
+  var responded = orders.filter(function(x){ return x.responseMin != null; });
+  var avgResp = responded.length ? Math.round(responded.reduce(function(s,x){ return s + x.responseMin; }, 0) / responded.length) : null;
   document.getElementById('statCards').innerHTML =
     '<div class="stat-card"><div class="stat-label">待处理</div><div class="stat-value" style="color:' + (pending ? '#fa8c16' : 'inherit') + ';">' + pending + '<span class="unit">单</span></div>' +
     '<div class="stat-sub warn">维修 / 保养待分派</div></div>' +
@@ -371,7 +389,9 @@ function renderStats(){
     '<div class="stat-card"><div class="stat-label">本月完成</div><div class="stat-value" style="color:#52c41a;">' + doneMonth + '<span class="unit">单</span></div>' +
     '<div class="stat-sub">' + month + ' 已完成工单</div></div>' +
     '<div class="stat-card"><div class="stat-label">逾期保养</div><div class="stat-value" style="color:' + (overdue ? '#ff4d4f' : '#52c41a') + ';">' + overdue + '<span class="unit">项</span></div>' +
-    '<div class="stat-sub ' + (overdue ? 'err' : '') + '">' + (overdue ? '请尽快生成保养工单' : '保养计划均在期内') + '</div></div>';
+    '<div class="stat-sub ' + (overdue ? 'err' : '') + '">' + (overdue ? '请尽快生成保养工单' : '保养计划均在期内') + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">平均响应</div><div class="stat-value">' + (avgResp != null ? avgResp : '—') + '<span class="unit">min</span></div>' +
+    '<div class="stat-sub">按 ' + responded.length + ' 单 responseMin 统计</div></div>';
 }
 
 /* ---------- 保养计划 ---------- */
@@ -501,7 +521,7 @@ function renderOrders(){
   document.getElementById('orderCount').textContent = '共 ' + list.length + ' 单';
   var body = document.getElementById('orderBody');
   if (!pageData.length){
-    body.innerHTML = '<tr class="empty-row"><td colspan="10">暂无符合条件的工单</td></tr>';
+    body.innerHTML = '<tr class="empty-row"><td colspan="11">暂无符合条件的工单</td></tr>';
   } else {
     body.innerHTML = pageData.map(function(o){
       var flowBtn = '';
@@ -515,6 +535,7 @@ function renderOrders(){
         '<td>' + esc(o.item) + '</td>' +
         '<td>' + esc(spareName(o.parts)) + '</td>' +
         '<td>' + orderTag(o.status) + '</td>' +
+        '<td class="num-cell">' + responseText(o) + '</td>' +
         '<td>' + esc(o.owner) + '</td>' +
         '<td>' + esc(o.time) + '</td>' +
         '<td onclick="event.stopPropagation();"><div class="action-btns">' + flowBtn +
@@ -562,7 +583,9 @@ function renderSelected(){
 function startOrder(id){
   var o = FS.get('maintainOrders', id);
   if (!o) return;
-  FS.update('maintainOrders', id, { status: '处理中', startedAt: nowStr() });
+  var patch = { status: '处理中', startedAt: nowStr() };
+  if (o.responseMin == null) patch.responseMin = minutesBetween(o.time, null);
+  FS.update('maintainOrders', id, patch);
   DeviceUI.toast('工单 ' + id + ' 已开始处理', 'success');
   refreshAll();
 }
@@ -584,7 +607,11 @@ function finishOrder(id){
       FS.update('spares', spare.id, { stock: spare.stock - 1 });
       FS.add('spareMoves', { type: '出库', spare: spare.id, qty: 1, ref: id, operator: o.owner, time: nowStr() });
     }
-    FS.update('maintainOrders', id, { status: '已完成', closedAt: nowStr() });
+    FS.update('maintainOrders', id, {
+      status: '已完成',
+      closedAt: nowStr(),
+      responseMin: o.responseMin != null ? o.responseMin : minutesBetween(o.time, o.startedAt || null)
+    });
     if (o.type === '维修'){
       var dev = FS.get('devices', o.device);
       if (dev && dev.status === '故障') FS.update('devices', o.device, { status: '运行' });
@@ -625,10 +652,23 @@ function saveOrder(){
     status: document.getElementById('oStatus').value
   };
   if (editingOrderId){
+    var prev = FS.get('maintainOrders', editingOrderId);
+    if (patch.status === '处理中' && prev && prev.status === '待处理'){
+      patch.startedAt = nowStr();
+      if (prev.responseMin == null) patch.responseMin = minutesBetween(prev.time, null);
+    }
+    if (patch.status === '已完成' && prev && prev.status !== '已完成'){
+      patch.closedAt = nowStr();
+      if (prev.responseMin == null) patch.responseMin = minutesBetween(prev.time, prev.startedAt || null);
+    }
     FS.update('maintainOrders', editingOrderId, patch);
     DeviceUI.toast('工单已更新', 'success');
   } else {
     patch.time = nowStr();
+    patch.responseMin = null;
+    patch.closedAt = null;
+    if (patch.status === '处理中') patch.startedAt = nowStr();
+    if (patch.status === '已完成'){ patch.startedAt = nowStr(); patch.closedAt = nowStr(); patch.responseMin = 0; }
     var o = FS.add('maintainOrders', patch);
     DeviceUI.toast('工单 ' + o.id + ' 已创建', 'success');
   }
@@ -674,7 +714,10 @@ function openOrderDrawer(id){
   var rows = [
     ['工单号', o.id], ['设备', o.device + ' · ' + deviceName(o.device)],
     ['类型', o.type], ['状态', orderTag(o.status), 'raw'],
-    ['负责人', o.owner], ['所需备件', spareName(o.parts)], ['创建时间', o.time]
+    ['负责人', o.owner], ['所需备件', spareName(o.parts)], ['创建时间', o.time],
+    ['响应时长', responseText(o)],
+    ['开始处理', o.startedAt || (o.status === '待处理' ? '待开始' : '—')],
+    ['完成闭环', o.closedAt || (o.status === '已完成' ? '—' : '待完成')]
   ];
   var html = '<div class="drawer-section">工单信息</div><div class="detail-info">' +
     rows.map(function(r){
@@ -696,8 +739,10 @@ function openOrderDrawer(id){
 
 /* ---------- 导出 ---------- */
 function exportOrders(){
-  var headers = ['工单号','设备','类型','故障/保养描述','备件','状态','负责人','时间'];
-  var rows = orderFiltered().map(function(o){ return [o.id, o.device, o.type, o.item, o.parts || '—', o.status, o.owner, o.time]; });
+  var headers = ['工单号','设备','类型','故障/保养描述','备件','状态','响应时长min','负责人','创建时间','开始处理','完成时间'];
+  var rows = orderFiltered().map(function(o){
+    return [o.id, o.device, o.type, o.item, o.parts || '—', o.status, o.responseMin != null ? o.responseMin : '', o.owner, o.time, o.startedAt || '', o.closedAt || ''];
+  });
   DeviceUI.exportCsv('运维工单', headers, rows);
 }
 

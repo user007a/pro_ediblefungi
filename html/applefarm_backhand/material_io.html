@@ -139,6 +139,37 @@
         </div>
       </div>
 
+      <!-- 称重抽检与发菌上架守恒：每50袋抽1袋 · 上架≤装袋，超发阻断 -->
+      <div class="page-section action-bar">
+        <div class="action-left"><strong style="font-size:14px;">称重抽检与发菌上架守恒</strong><span style="font-size:12px;color:var(--text-tertiary);margin-left:10px;">每50袋抽1袋称重 · 上架数 ≤ 装袋数，超发即红色阻断</span></div>
+      </div>
+      <div class="page-section data-section">
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr><th>抽检批次</th><th>灭菌批号</th><th>装袋数</th><th>抽检频次</th><th>样本数</th><th>样本均重kg</th><th>标准kg</th><th>合格率%</th><th>已上架</th><th>守恒判定</th><th>操作人</th><th style="width:120px;">操作</th></tr>
+            </thead>
+            <tbody id="weighBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 库存变动流水：入库/出库/盘点/报废，出库联动扣减库存 -->
+      <div class="page-section action-bar">
+        <div class="action-left"><strong style="font-size:14px;">库存变动流水</strong><span style="font-size:12px;color:var(--text-tertiary);margin-left:10px;">出库/报废联动扣减物料库存，不足即阻断</span></div>
+        <div class="action-right"><button class="jg-btn jg-btn-primary" onclick="openMoveForm()">＋ 登记出入库</button></div>
+      </div>
+      <div class="page-section data-section">
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr><th>时间</th><th>类型</th><th>物料</th><th>数量</th><th>关联单据</th><th>经手人</th><th>备注</th></tr>
+            </thead>
+            <tbody id="movesBody"></tbody>
+          </table>
+        </div>
+      </div>
+
     </div></main>
   </div>
 </div>
@@ -214,10 +245,11 @@ function parseFormula(str){
   while((m=re.exec(String(str||''))))out.push({name:m[1],pct:parseFloat(m[2])});
   return out;
 }
+var MAT_ALIAS={'石灰':'生石灰'};
 function consumption(r){
   var total=Number(r.bags)*Number(r.bagWeight);
   return parseFormula(r.formula).map(function(p){
-    var mat=FS.list('materials').filter(function(m){return m.name===p.name;})[0]||null;
+    var mat=FS.list('materials').filter(function(m){return m.name===p.name||m.name===MAT_ALIAS[p.name];})[0]||null;
     return {name:p.name,pct:p.pct,need:+(total*p.pct/100).toFixed(1),mat:mat};
   });
 }
@@ -271,7 +303,7 @@ function renderTable(){
   }).join('');
   updateSelInfo();paintArrows();
 }
-function renderAll(){renderStats();renderTable();}
+function renderAll(){renderStats();renderTable();renderWeigh();renderMoves();}
 
 function advance(id){
   var r=FS.get('recipes',id);if(!r)return;
@@ -284,11 +316,12 @@ function advance(id){
   if(next==='已灭菌')showToast(r.id+' 灭菌完成，可安排接种','success');
 }
 
-var editingId='';
+var editingId='',modalMode='recipe';
 function strainOptions(){
   return FS.list('strains').map(function(s){return {v:s.id,t:s.id+' · '+s.variety};});
 }
 function openRecipeForm(id){
+  modalMode='recipe';
   editingId=id||'';
   var r=id?FS.get('recipes',id):null;
   openModal(r?'编辑配方批':'新建配方批（按配比扣减物料库存）',
@@ -317,11 +350,14 @@ function updatePreview(){
     '<br>'+items.map(function(it){
       if(!it.mat)return it.name+' '+it.pct+'% ≈ '+it.need+' kg（物料台账无此项，不扣减）';
       var enough=Number(it.mat.stock)>=it.need;
-      return it.name+' '+it.pct+'% ≈ <span style="color:'+(enough?'#389e0d':'#ff4d4f')+';">'+it.need+' kg</span>（现存 '+Number(it.mat.stock).toLocaleString()+' kg'+(enough?'':'，不足')+'）';
+      var alias=it.mat.name!==it.name?'（台账:'+it.mat.name+'）':'';
+      return it.name+alias+' '+it.pct+'% ≈ <span style="color:'+(enough?'#389e0d':'#ff4d4f')+';">'+it.need+' kg</span>（现存 '+Number(it.mat.stock).toLocaleString()+' kg'+(enough?'':'，不足')+'）';
     }).join('；');
 }
 function saveModal(){
   if(!reqOK())return;
+  if(modalMode==='rack')return saveRack();
+  if(modalMode==='move')return saveMove();
   var bags=Number(val('f_bags')),bw=Number(val('f_bagWeight')),moist=Number(val('f_moisture')),ph=Number(val('f_ph'));
   if(!(bags>0&&bw>0)){showToast('袋数与袋重必须为正数','error');return;}
   if(!(moist>=0&&moist<=100)){showToast('含水率需在 0-100 之间','error');return;}
@@ -339,13 +375,15 @@ function saveModal(){
     showToast('库存不足：'+short.map(function(it){return it.name+' 需 '+it.need+'kg / 现存 '+Number(it.mat.stock).toLocaleString()+'kg';}).join('；'),'error');
     return;
   }
-  items.forEach(function(it){
-    if(it.mat)FS.update('materials',it.mat.id,{stock:+(Number(it.mat.stock)-it.need).toFixed(1)});
-  });
   patch.status='拌料';patch.time=nowStamp();
   var created=FS.add('recipes',patch);
+  items.forEach(function(it){
+    if(!it.mat)return;
+    FS.update('materials',it.mat.id,{stock:+(Number(it.mat.stock)-it.need).toFixed(1)});
+    FS.add('materialMoves',{type:'出库',material:it.mat.id,qty:it.need,ref:created.id,operator:patch.operator,time:nowStamp(),note:'配方拌料领用'+(it.mat.name!==it.name?'（台账名:'+it.mat.name+'）':'')});
+  });
   closeModal();renderAll();
-  showToast('配方批 '+created.id+' 已创建，物料库存已扣减','success');
+  showToast('配方批 '+created.id+' 已创建，物料库存已扣减并登记出库流水','success');
 }
 function openDetail(id){
   var r=FS.get('recipes',id);if(!r)return;
@@ -380,6 +418,110 @@ function exportRecipes(){
   exportCSV('菌包制备',['配方号','菌株','配方配比','含水率%','pH','袋数','袋重kg','状态','操作人','时间'],rows.map(function(r){
     return [r.id,r.strain,r.formula,r.moisture,r.ph,r.bags,r.bagWeight,r.status,r.operator,r.time];
   }));
+}
+
+/* ===== 称重抽检与发菌上架守恒（上架≤装袋，超发红色阻断）===== */
+function weighOver(w){return w.blocked||Number(w.racked)>Number(w.bagCount);}
+function renderWeigh(){
+  var ws=FS.list('weighSamples');
+  var body=document.getElementById('weighBody');
+  if(!ws.length){body.innerHTML='<tr><td colspan="12" class="empty-cell">暂无称重抽检记录</td></tr>';return;}
+  body.innerHTML=ws.map(function(w){
+    var over=weighOver(w);
+    var tag=over?'<span class="status-tag danger">超发阻断</span>':(w.conservation==='守恒通过'?'<span class="status-tag normal">守恒通过</span>':'<span class="status-tag base-built">'+esc(w.conservation||'待上架')+'</span>');
+    return '<tr'+(over?' style="background:#fff2f0;"':'')+'>'+
+      '<td><strong>'+esc(w.id)+'</strong></td>'+
+      '<td>'+esc(w.batch)+'</td>'+
+      '<td class="text-right">'+Number(w.bagCount).toLocaleString()+'</td>'+
+      '<td>每'+w.sampleEvery+'袋抽1袋</td>'+
+      '<td class="text-right">'+w.samples+'</td>'+
+      '<td class="text-right">'+Number(w.avgWeight).toFixed(2)+'</td>'+
+      '<td class="text-right">'+Number(w.stdWeight).toFixed(2)+'</td>'+
+      '<td class="text-right"'+(Number(w.passRate)<95?' style="color:#ff4d4f;font-weight:600;"':'')+'>'+Number(w.passRate).toFixed(1)+'</td>'+
+      '<td class="text-right"'+(over?' style="color:#ff4d4f;font-weight:700;"':'')+'>'+Number(w.racked).toLocaleString()+(over?' / 上限 '+Number(w.bagCount).toLocaleString():'')+'</td>'+
+      '<td>'+tag+'</td>'+
+      '<td>'+esc(w.operator)+'</td>'+
+      '<td><button class="row-btn '+(over?'danger':'primary')+'" onclick="openRack(\''+w.id+'\')">'+(over?'重新上架':'上架登记')+'</button></td>'+
+    '</tr>';
+  }).join('');
+}
+var rackId='';
+function openRack(id){
+  var w=FS.get('weighSamples',id);if(!w)return;
+  rackId=id;modalMode='rack';
+  openModal('发菌上架登记 · '+w.id,
+    '<div class="preview-box" style="margin-bottom:14px;">灭菌批 <strong>'+esc(w.batch)+'</strong> · 装袋 <strong>'+Number(w.bagCount).toLocaleString()+'</strong> 袋 · 已上架 '+Number(w.racked).toLocaleString()+' 袋<br>守恒规则：<strong>上架数 ≤ 装袋数</strong>，超发将被红色阻断且不允许提交。</div>'+
+    fg('上架数量（袋）',inp('f_rack',w.racked,'number',true),true,true)+
+    '<div id="rackError" style="display:none;margin-top:4px;padding:10px 12px;border-radius:8px;background:#fff2f0;border:1px solid #ffccc7;color:#ff4d4f;font-size:12.5px;font-weight:600;"></div>'
+  );
+}
+function saveRack(){
+  var w=FS.get('weighSamples',rackId);if(!w)return;
+  var n=Number(val('f_rack'));
+  var err=document.getElementById('rackError');
+  if(!(n>=0)||Math.floor(n)!==n){err.style.display='block';err.textContent='上架数量必须为非负整数';showToast('上架数量必须为非负整数','error');return;}
+  if(n>Number(w.bagCount)){
+    err.style.display='block';
+    err.textContent='超发阻断：上架 '+n.toLocaleString()+' 袋 > 装袋 '+Number(w.bagCount).toLocaleString()+' 袋，超出 '+(n-Number(w.bagCount)).toLocaleString()+' 袋。请核减后重新提交。';
+    showToast('超发阻断：上架数不得超过装袋数（'+Number(w.bagCount).toLocaleString()+' 袋）','error');
+    return;
+  }
+  FS.update('weighSamples',rackId,{racked:n,conservation:n===0?'待上架':'守恒通过',blocked:false});
+  closeModal();renderAll();
+  showToast(w.id+' 上架 '+n.toLocaleString()+' 袋，守恒校验通过','success');
+}
+
+/* ===== 库存变动流水（出库/报废联动扣减，不足阻断）===== */
+var MOVE_CLS={'入库':'normal','出库':'base-built','盘点':'warning','报废':'danger'};
+function matName(mid){var m=FS.get('materials',mid);return m?m.name:mid;}
+function matUnit(mid){var m=FS.get('materials',mid);return m?m.unit:'';}
+function renderMoves(){
+  var ms=FS.list('materialMoves').slice().sort(function(a,b){return String(b.time).localeCompare(String(a.time));});
+  var body=document.getElementById('movesBody');
+  if(!ms.length){body.innerHTML='<tr><td colspan="7" class="empty-cell">暂无库存变动记录，点击「登记出入库」添加</td></tr>';return;}
+  body.innerHTML=ms.map(function(m){
+    var q=Number(m.qty);
+    return '<tr>'+
+      '<td>'+esc(m.time)+'</td>'+
+      '<td><span class="status-tag '+(MOVE_CLS[m.type]||'normal')+'">'+esc(m.type)+'</span></td>'+
+      '<td>'+esc(matName(m.material))+' <span style="color:var(--text-tertiary);font-size:11px;">'+esc(m.material)+'</span></td>'+
+      '<td class="text-right" style="font-weight:600;color:'+(m.type==='入库'?'#389e0d':(q<0?'#fa8c16':'#ff4d4f'))+';">'+(m.type==='入库'?'+':(m.type==='盘点'?(q>=0?'+':''):'-'))+Math.abs(q).toLocaleString()+' '+esc(matUnit(m.material))+'</td>'+
+      '<td>'+esc(m.ref)+'</td>'+
+      '<td>'+esc(m.operator)+'</td>'+
+      '<td>'+esc(m.note||'—')+'</td>'+
+    '</tr>';
+  }).join('');
+}
+function openMoveForm(){
+  modalMode='move';
+  var opts=FS.list('materials').map(function(m){return {v:m.id,t:m.id+' · '+m.name+'（现存 '+Number(m.stock).toLocaleString()+' '+m.unit+'）'};});
+  openModal('登记库存变动（出库/报废联动扣减库存）',
+    fg('变动类型',sel('f_moveType',['入库','出库','盘点','报废'],'出库',true),true)+
+    fg('物料',sel('f_moveMat',opts,(opts[0]||{v:''}).v,true),true)+
+    fg('数量',inp('f_moveQty','','number',true),true)+
+    fg('关联单据',inp('f_moveRef','','text'),false)+
+    fg('经手人',inp('f_moveOperator','陈小忠','text',true),true)+
+    fg('备注',inp('f_moveNote','','text'),false,true)+
+    '<div class="form-group full"><div class="preview-box">入库增加库存；出库/报废扣减库存，<strong>现存不足将阻断</strong>；盘点填差异数（盘亏为负）。</div></div>'
+  );
+}
+function saveMove(){
+  var type=val('f_moveType'),mid=val('f_moveMat'),qty=Number(val('f_moveQty'));
+  var m=FS.get('materials',mid);
+  if(!m){showToast('请选择物料','error');return;}
+  if(type==='盘点'){if(!(qty!==0)){showToast('盘点差异数不能为 0','error');return;}}
+  else if(!(qty>0)){showToast('数量必须为正数','error');return;}
+  var stock=Number(m.stock);
+  if((type==='出库'||type==='报废')&&qty>stock){
+    showToast('库存不足阻断：'+m.name+' 需 '+qty.toLocaleString()+' '+m.unit+' / 现存 '+stock.toLocaleString()+' '+m.unit,'error');
+    return;
+  }
+  var next=type==='入库'?stock+qty:(type==='盘点'?stock+qty:stock-qty);
+  if(next<0){showToast('库存不足阻断：调整后库存为负','error');return;}
+  FS.update('materials',mid,{stock:+next.toFixed(1)});
+  FS.add('materialMoves',{type:type,material:mid,qty:qty,ref:val('f_moveRef')||'—',operator:val('f_moveOperator'),time:nowStamp(),note:val('f_moveNote')});
+  closeModal();renderAll();
+  showToast(type+'登记成功：'+m.name+' '+(type==='入库'?'+':'')+qty.toLocaleString()+' '+m.unit+'，现存 '+next.toLocaleString()+' '+m.unit,'success');
 }
 renderAll();
 </script>

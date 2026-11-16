@@ -131,7 +131,23 @@
           <div class="chart-legend" id="chartLegend"></div>
         </div>
         <div id="mainChart"></div>
-        <div class="chart-note">四条曲线按各自量程归一化绘制（温度 0–30°C · 湿度 50–100% · CO₂ 0–1500ppm · 光照 0–400lx）；虚线为阈值线，红点为越限采样点。阈值依据预警规则 AR-01/02/03/07 与各区设计指标推导。</div>
+        <div class="chart-note">五条曲线按各自量程归一化绘制（温度 0–30°C · 湿度 50–100% · CO₂ 0–1500ppm · 光照 0–400lx · 负压 -30–0Pa）；虚线为阈值线，红点为越限采样点。阈值依据预警规则 AR-01/02/03/07 与各区设计指标推导。</div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title">多菇房实时曲线对比</div>
+          <select id="cmpMetric" style="padding:6px 10px;border:1px solid var(--border-default);border-radius:8px;font-size:12.5px;">
+            <option value="co2" selected>CO₂ 浓度</option>
+            <option value="temp">温度</option>
+            <option value="hum">相对湿度</option>
+            <option value="light">光照强度</option>
+            <option value="pressDiff">负压</option>
+          </select>
+          <div class="chart-legend" id="cmpLegend"></div>
+        </div>
+        <div id="cmpChart"></div>
+        <div class="chart-note" id="cmpNote">各监测区同一指标逐时曲线（归一化）；越限曲线加粗并以红色端点标记。GF-02 CO₂ 986ppm 已超 800ppm 上限（AR-01），新风风机 XF-02 已联动启动。</div>
       </div>
 
       <div class="page-section data-section" style="margin-bottom:16px;">
@@ -154,6 +170,57 @@
         </div>
       </div>
 
+      <div class="page-section data-section" style="margin-bottom:16px;">
+        <div class="section-title">培养人工操作记录（翻袋 / 补水）
+          <span class="count">数据源：培养批次台账 · 与菌丝培养页同口径</span>
+          <span style="margin-left:auto;display:flex;gap:8px;">
+            <button class="jg-btn jg-btn-primary" onclick="openManual('turn','')">记录翻袋</button>
+            <button class="jg-btn-outline" onclick="openManual('water','')">记录补水</button>
+            <button class="jg-btn" onclick="openPage('harvest_record.html','菌丝培养')">前往培养页</button>
+          </span>
+        </div>
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:130px;">批次</th>
+                <th style="width:110px;">培养架</th>
+                <th style="width:80px;">培养天数</th>
+                <th style="width:80px;">翻袋次数</th>
+                <th style="width:150px;">最近翻袋</th>
+                <th style="width:80px;">补水次数</th>
+                <th style="width:110px;">累计补水 (L)</th>
+                <th style="width:150px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="manualBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page-section data-section" style="margin-bottom:16px;">
+        <div class="section-title">杂菌污染监测（4 型） <span class="count">绿霉 / 青霉 / 曲霉 / 链孢霉 · 污染率阈值 AR-04 ≥ 3.0%</span></div>
+        <div class="realtime-row" id="pollCards" style="margin-bottom:12px;"></div>
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:130px;">批次</th>
+                <th style="width:110px;">培养架</th>
+                <th style="width:90px;">杂菌类型</th>
+                <th style="width:90px;">检出袋数</th>
+                <th style="width:110px;">检出位置</th>
+                <th style="width:100px;">剔除率</th>
+                <th style="width:110px;">处置</th>
+                <th style="width:90px;">处理人</th>
+                <th style="width:150px;">处理时间</th>
+              </tr>
+            </thead>
+            <tbody id="pollBody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="page-section data-section">
         <div class="section-title">全区环境矩阵 <span class="count">点击行切换上方监测区</span></div>
         <div class="data-table-wrapper">
@@ -162,10 +229,12 @@
               <tr>
                 <th style="width:90px;">监测区</th>
                 <th>区域名称</th>
-                <th style="width:110px;">温度 (°C)</th>
-                <th style="width:110px;">湿度 (%)</th>
-                <th style="width:120px;">CO₂ (ppm)</th>
-                <th style="width:110px;">光照 (lx)</th>
+                <th style="width:100px;">温度 (°C)</th>
+                <th style="width:90px;">湿度 (%)</th>
+                <th style="width:100px;">CO₂ (ppm)</th>
+                <th style="width:90px;">光照 (lx)</th>
+                <th style="width:100px;">负压 (Pa)</th>
+                <th style="width:90px;">洁净度</th>
                 <th style="width:100px;">状态</th>
               </tr>
             </thead>
@@ -197,9 +266,10 @@ var METRICS = [
   { key:'temp',  name:'温度', unit:'°C',  color:'#1890ff', range:[0,30] },
   { key:'hum',   name:'湿度', unit:'%',   color:'#52c41a', range:[50,100] },
   { key:'co2',   name:'CO₂',  unit:'ppm', color:'#fa8c16', range:[0,1500] },
-  { key:'light', name:'光照', unit:'lx',  color:'#722ed1', range:[0,400] }
+  { key:'light', name:'光照', unit:'lx',  color:'#722ed1', range:[0,400] },
+  { key:'pressDiff', name:'负压', unit:'Pa', color:'#13c2c2', range:[-30,0] }
 ];
-var LEVEL_BY_METRIC = { co2:'urgent', temp:'important', hum:'reminder', light:'notice' };
+var LEVEL_BY_METRIC = { co2:'urgent', temp:'important', hum:'reminder', light:'notice', pressDiff:'reminder' };
 var LEVEL_TEXT = { urgent:'紧急', important:'重要', reminder:'提醒', notice:'通知' };
 var curRoom = 'GF-02', curHours = 24;
 var refreshTimer = null;
@@ -211,13 +281,14 @@ function zoneName(id){ var z = FS.list('zones').filter(function(x){ return x.id 
 
 /* 每区阈值 [lo, hi]；null 表示该指标无阈值约束 */
 function limits(room){
-  var L = { temp:null, hum:null, co2:null, light:null };
+  var L = { temp:null, hum:null, co2:null, light:null, pressDiff:null };
   if (/^GF-/.test(room)){
     var ranges = { 'GF-01':[15,20], 'GF-05':[15,20], 'GF-02':[14,18], 'GF-06':[14,18], 'GF-03':[10,14], 'GF-04':[12,18] };
     L.temp = ranges[room] || [15,20];
     L.hum = room === 'GF-04' ? [85,90] : (room === 'GF-03' ? [90,95] : [85,95]);
     L.co2 = [0, room === 'GF-03' ? 600 : 800];
-  } else if (room === 'PY-01'){ L.temp = [22,25]; }
+    L.pressDiff = [-15,-5];
+  } else if (room === 'PY-01'){ L.temp = [22,25]; L.pressDiff = [-15,-5]; }
   else if (room === 'YL-01'){ L.temp = [0,4]; }
   else if (room === 'LK-A' || room === 'LK-B'){ L.temp = [2,4]; }
   return L;
@@ -226,6 +297,7 @@ function limitText(room, key){
   var lim = limits(room)[key];
   if (!lim) return '无阈值约束';
   var m = METRICS.filter(function(x){ return x.key === key; })[0];
+  if (key === 'pressDiff') return lim[0] + ' ~ ' + lim[1] + m.unit;
   if (lim[0] <= 0 && key !== 'temp') return '≤ ' + lim[1] + m.unit;
   if (key === 'hum') return lim[0] + '–' + lim[1] + '%';
   return lim[0] + '–' + lim[1] + m.unit;
@@ -265,10 +337,15 @@ function renderStats(){
 }
 
 /* ---------- 实时卡片 ---------- */
+function cleanBadge(g){
+  if (g === 'A') return '<span class="status-tag online">A 级 · 优</span>';
+  if (g === 'B') return '<span class="status-tag warning">B 级 · 合格</span>';
+  return '<span class="status-tag offline">C 级 · 不合格</span>';
+}
 function renderRealtime(){
   var cur = FS.envCurrent(curRoom);
   var L = limits(curRoom);
-  document.getElementById('realtimeCards').innerHTML = METRICS.map(function(m){
+  var html = METRICS.map(function(m){
     var v = cur[m.key];
     var lim = L[m.key];
     var bad = lim && (v < lim[0] || v > lim[1]);
@@ -279,6 +356,12 @@ function renderRealtime(){
       '<div class="rt-value" style="color:' + (bad ? '#cf1322' : m.color) + ';">' + v + '<span class="unit">' + m.unit + '</span></div>' +
       '<div class="rt-limit">阈值：' + limitText(curRoom, m.key) + '</div></div>';
   }).join('');
+  var g = cur.clean || 'A';
+  html += '<div class="rt-card' + (g === 'C' ? ' violated' : '') + '">' +
+    '<div class="rt-head"><span class="rt-name">洁净度</span>' + cleanBadge(g) + '</div>' +
+    '<div class="rt-value" style="color:' + (g === 'A' ? '#52c41a' : g === 'B' ? '#fa8c16' : '#cf1322') + ';">' + esc(g) + '<span class="unit">级</span></div>' +
+    '<div class="rt-limit">洁净度 100 级 · 放行要求 ≥ B 级</div></div>';
+  document.getElementById('realtimeCards').innerHTML = html;
 }
 
 /* ---------- 主图表：四色多曲线 SVG ---------- */
@@ -334,6 +417,64 @@ function renderChart(){
   document.getElementById('chartLegend').innerHTML = METRICS.map(function(m){
     return '<span class="lg"><span class="dot" style="background:' + m.color + ';"></span>' + m.name + ' ' + cur[m.key] + m.unit + '</span>';
   }).join('');
+}
+
+/* ---------- 多菇房对比曲线 ---------- */
+var CMP_COLORS = ['#1890ff','#52c41a','#fa8c16','#722ed1','#13c2c2','#eb2f96','#f5222d','#a0d911','#2f54eb','#faad14'];
+function renderCmp(){
+  var key = document.getElementById('cmpMetric').value;
+  var m = METRICS.filter(function(x){ return x.key === key; })[0];
+  var rooms = FS.envRooms;
+  var seriesMap = {};
+  rooms.forEach(function(r){ seriesMap[r] = FS.envSeries(r, curHours); });
+  var base = seriesMap[rooms[0]];
+  var W = 1100, H = 320, padL = 46, padR = 16, padT = 14, padB = 30;
+  var plotW = W - padL - padR, plotH = H - padT - padB;
+  function X(i){ return padL + (base.length > 1 ? i / (base.length - 1) : 0) * plotW; }
+  function Y(v){ return padT + (1 - norm(key, v)) * plotH; }
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block;">';
+  for (var g = 0; g <= 4; g++){
+    var gy = padT + g / 4 * plotH;
+    svg += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#f0f0f0"/>' +
+      '<text x="' + (padL - 8) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="10" fill="#8c8c8c">' + (100 - g * 25) + '%</text>';
+  }
+  var tickStep = Math.max(1, Math.ceil(base.length / 8));
+  base.forEach(function(p, i){
+    if (i % tickStep === 0 || i === base.length - 1){
+      svg += '<text x="' + X(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10" fill="#8c8c8c">' + p.t + '</text>';
+    }
+  });
+  /* 通用阈值线（出菇房多数口径） */
+  var thLine = key === 'co2' ? 800 : (key === 'hum' ? 85 : (key === 'pressDiff' ? -5 : null));
+  if (thLine != null){
+    var ty = Y(thLine);
+    svg += '<line x1="' + padL + '" y1="' + ty.toFixed(1) + '" x2="' + (W - padR) + '" y2="' + ty.toFixed(1) +
+      '" stroke="#ff4d4f" stroke-width="1" stroke-dasharray="5 4" opacity="0.6"/>' +
+      '<text x="' + (W - padR - 4) + '" y="' + (ty - 4).toFixed(1) + '" text-anchor="end" font-size="10" fill="#ff4d4f">' +
+      (key === 'hum' ? '下限 ' : '上限 ') + thLine + m.unit + '</text>';
+  }
+  var legend = '';
+  rooms.forEach(function(r, ri){
+    var s = seriesMap[r];
+    var cur = FS.envCurrent(r);
+    var lim = limits(r)[key];
+    var bad = lim && (cur[key] < lim[0] || cur[key] > lim[1]);
+    var color = bad ? '#f5222d' : CMP_COLORS[ri % CMP_COLORS.length];
+    var d = s.map(function(p, i){ return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(p[key]).toFixed(1); }).join(' ');
+    svg += '<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="' + (bad ? 3 : 1.6) + '" stroke-linejoin="round" opacity="' + (bad ? 1 : 0.85) + '"/>';
+    var lastY = Y(s[s.length - 1][key]);
+    svg += '<circle cx="' + X(s.length - 1).toFixed(1) + '" cy="' + lastY.toFixed(1) + '" r="' + (bad ? 5 : 3) + '" fill="' + color + '" stroke="#fff" stroke-width="1.2">' +
+      '<title>' + r + ' ' + cur[key] + m.unit + (bad ? ' 越限' : '') + '</title></circle>';
+    if (bad){
+      svg += '<text x="' + (X(s.length - 1) - 8).toFixed(1) + '" y="' + (lastY - 9).toFixed(1) + '" text-anchor="end" font-size="11" font-weight="700" fill="#f5222d">' +
+        r + ' ' + cur[key] + m.unit + ' 越限</text>';
+    }
+    legend += '<span class="lg"><span class="dot" style="background:' + color + ';"></span>' + r + ' ' + cur[key] + m.unit +
+      (bad ? ' <span style="color:#cf1322;font-weight:600;">越限</span>' : '') + '</span>';
+  });
+  svg += '</svg>';
+  document.getElementById('cmpChart').innerHTML = svg;
+  document.getElementById('cmpLegend').innerHTML = legend;
 }
 
 /* ---------- 越限事件（由序列 + 阈值推导，连续越限合并为一条） ---------- */
@@ -393,9 +534,12 @@ function renderMatrix(){
       return '<td class="num-cell' + (badKeys[key] ? ' bad' : '') + '">' + cur[key] + '</td>';
     }
     var badge = vs.length ? '<span class="status-tag offline">越限</span>' : '<span class="status-tag online">正常</span>';
+    var g = cur.clean || 'A';
+    var gColor = g === 'A' ? '#3a8618' : (g === 'B' ? '#ad6800' : '#cf1322');
     return '<tr class="' + (r === curRoom ? 'row-active' : '') + '" onclick="selectRoom(\'' + r + '\')">' +
       '<td><strong>' + esc(r) + '</strong></td><td>' + esc(zoneName(r)) + '</td>' +
-      cell('temp') + cell('hum') + cell('co2') + cell('light') + '<td>' + badge + '</td></tr>';
+      cell('temp') + cell('hum') + cell('co2') + cell('light') + cell('pressDiff') +
+      '<td style="font-weight:600;color:' + gColor + ';">' + esc(g) + ' 级</td><td>' + badge + '</td></tr>';
   }).join('');
 }
 function selectRoom(r){
@@ -404,9 +548,106 @@ function selectRoom(r){
   renderRealtime(); renderChart(); renderEvents(); renderMatrix();
 }
 
+/* ---------- 培养人工操作（翻袋 / 补水） ---------- */
+function nowStr(){ var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+function renderManual(){
+  var list = FS.list('cultivation').slice().sort(function(a,b){ return String(b.turnLast || '').localeCompare(String(a.turnLast || '')); });
+  var body = document.getElementById('manualBody');
+  if (!list.length){ body.innerHTML = '<tr class="empty-row"><td colspan="8">暂无培养批次</td></tr>'; return; }
+  body.innerHTML = list.map(function(c){
+    return '<tr style="cursor:default;">' +
+      '<td><strong>' + esc(c.batch) + '</strong><div style="font-size:11px;color:var(--text-tertiary);">' + esc(c.id) + '</div></td>' +
+      '<td>' + esc(c.shelf) + '</td>' +
+      '<td class="num-cell">' + c.days + ' 天</td>' +
+      '<td class="num-cell">' + c.turnCount + ' 次</td>' +
+      '<td>' + esc(c.turnLast || '—') + '</td>' +
+      '<td class="num-cell">' + c.waterCount + ' 次</td>' +
+      '<td class="num-cell">' + c.waterAmount + ' L</td>' +
+      '<td><button class="action-btn" onclick="openManual(\'turn\',\'' + esc(c.id) + '\')">翻袋</button> ' +
+      '<button class="action-btn" onclick="openManual(\'water\',\'' + esc(c.id) + '\')">补水</button></td></tr>';
+  }).join('');
+}
+function openManual(kind, cuId){
+  var list = FS.list('cultivation');
+  if (!list.length){ DeviceUI.toast('暂无培养批次可记录', 'error'); return; }
+  var isTurn = kind === 'turn';
+  var fields = [
+    { name:'cu', label:'培养批次', type:'select', required:true,
+      options: list.map(function(c){ return { value:c.id, label:c.batch + ' · ' + c.shelf + '（第 ' + c.days + ' 天）' }; }) },
+    { name:'operator', label:'操作人', type:'select', required:true,
+      options: DeviceUI.operators().map(function(n){ return { value:n, label:n }; }) }
+  ];
+  if (!isTurn){
+    fields.push({ name:'amount', label:'本次补水量 (L)', type:'number', required:true, min:0.5, step:0.5, placeholder:'如 6' });
+  }
+  fields.push({ name:'note', label:'备注', type:'textarea', placeholder: isTurn ? '如：翻袋并剔除污染袋 2 袋' : '如：补水后检查架面积水' });
+  Modal.form({
+    title: isTurn ? '记录翻袋' : '记录补水',
+    fields: fields,
+    values: { cu: cuId || list[0].id, operator: '徐水应' },
+    submitText: '保存记录',
+    onSubmit: function(data){
+      if (!data.cu){ DeviceUI.toast('请选择培养批次', 'error'); return false; }
+      if (!data.operator){ DeviceUI.toast('请选择操作人', 'error'); return false; }
+      var c = FS.get('cultivation', data.cu);
+      if (!c){ DeviceUI.toast('批次不存在', 'error'); return false; }
+      if (isTurn){
+        FS.update('cultivation', data.cu, { turnCount: (c.turnCount || 0) + 1, turnLast: nowStr() });
+        DeviceUI.toast(c.batch + ' 翻袋已记录（第 ' + ((c.turnCount || 0) + 1) + ' 次）', 'success');
+      } else {
+        var amt = Number(data.amount);
+        if (!amt || amt <= 0){ DeviceUI.toast('补水量必须大于 0', 'error'); return false; }
+        FS.update('cultivation', data.cu, { waterCount: (c.waterCount || 0) + 1, waterAmount: +((c.waterAmount || 0) + amt).toFixed(1) });
+        DeviceUI.toast(c.batch + ' 补水 ' + amt + 'L 已记录', 'success');
+      }
+      renderManual();
+    }
+  });
+}
+
+/* ---------- 杂菌污染（4 型 + 污染率） ---------- */
+function renderPoll(){
+  var dict = FS.get('dictionaries', 'DIC-POLL');
+  var types = dict ? dict.items : ['绿霉','青霉','曲霉','链孢霉'];
+  var cu = FS.list('cultivation');
+  var rate = FS.stats().pollutionGF04;
+  var rateBad = rate >= 3.0;
+  var colors = { '绿霉':'#52c41a', '青霉':'#1890ff', '曲霉':'#fa8c16', '链孢霉':'#eb2f96' };
+  var html = types.map(function(t){
+    var hits = cu.filter(function(c){ return c.contamination && c.contamination.type === t; });
+    var count = hits.reduce(function(s,c){ return s + (c.contamination.count || 0); }, 0);
+    return '<div class="rt-card">' +
+      '<div class="rt-head"><span class="rt-name">' + esc(t) + '</span>' +
+      (count ? '<span class="status-tag warning">检出 ' + hits.length + ' 批</span>' : '<span class="status-tag online">未检出</span>') + '</div>' +
+      '<div class="rt-value" style="color:' + (count ? (colors[t] || '#fa8c16') : '#52c41a') + ';">' + count + '<span class="unit">袋</span></div>' +
+      '<div class="rt-limit">' + (count ? esc(hits.map(function(c){ return c.shelf; }).join('、')) : '培养车间巡查正常') + '</div></div>';
+  }).join('');
+  html += '<div class="rt-card' + (rateBad ? ' violated' : '') + '">' +
+    '<div class="rt-head"><span class="rt-name">培养污染率</span>' +
+    (rateBad ? '<span class="status-tag offline">超阈值</span>' : '<span class="status-tag online">达标</span>') + '</div>' +
+    '<div class="rt-value" style="color:' + (rateBad ? '#cf1322' : '#52c41a') + ';">' + rate + '<span class="unit">%</span></div>' +
+    '<div class="rt-limit">AR-04 阈值 ≥ 3.0% 阻断出菇（LK-04）</div></div>';
+  document.getElementById('pollCards').innerHTML = html;
+  var body = document.getElementById('pollBody');
+  body.innerHTML = cu.map(function(c){
+    var ct = c.contamination || {};
+    var has = ct.type && ct.type !== '—';
+    return '<tr style="cursor:default;">' +
+      '<td><strong>' + esc(c.batch) + '</strong></td>' +
+      '<td>' + esc(c.shelf) + '</td>' +
+      '<td>' + (has ? '<span class="level-tag level-important">' + esc(ct.type) + '</span>' : '<span class="status-tag online">未检出</span>') + '</td>' +
+      '<td class="num-cell' + (has ? ' bad' : '') + '">' + (ct.count != null ? ct.count : '—') + '</td>' +
+      '<td>' + esc(ct.position || '—') + '</td>' +
+      '<td class="num-cell' + (c.cullRate >= 3 ? ' bad' : '') + '">' + c.cullRate + '%</td>' +
+      '<td>' + esc(ct.handle || '—') + '</td>' +
+      '<td>' + esc(ct.handler || '—') + '</td>' +
+      '<td>' + esc(ct.date || '—') + '</td></tr>';
+  }).join('');
+}
+
 /* ---------- 刷新与定时器（单一计时器，防叠加） ---------- */
 function refreshNow(){
-  renderStats(); renderRealtime(); renderChart(); renderEvents(); renderMatrix();
+  renderStats(); renderRealtime(); renderChart(); renderCmp(); renderEvents(); renderMatrix();
   var t = nowHMS();
   document.getElementById('refreshTime').textContent = t;
   var st = document.getElementById('statRefreshTime');
@@ -425,10 +666,10 @@ document.addEventListener('visibilitychange', function(){ if (document.hidden) s
 
 /* ---------- 导出 ---------- */
 function exportMatrix(){
-  var headers = ['监测区','区域名称','温度(°C)','湿度(%)','CO₂(ppm)','光照(lx)','状态'];
+  var headers = ['监测区','区域名称','温度(°C)','湿度(%)','CO₂(ppm)','光照(lx)','负压(Pa)','洁净度','状态'];
   var rows = FS.envRooms.map(function(r){
     var cur = FS.envCurrent(r);
-    return [r, zoneName(r), cur.temp, cur.hum, cur.co2, cur.light, violations(r, cur).length ? '越限' : '正常'];
+    return [r, zoneName(r), cur.temp, cur.hum, cur.co2, cur.light, cur.pressDiff, (cur.clean || 'A') + '级', violations(r, cur).length ? '越限' : '正常'];
   });
   DeviceUI.exportCsv('环境矩阵_' + curRoom, headers, rows);
 }
@@ -442,7 +683,12 @@ document.addEventListener('DOMContentLoaded', function(){
   sel.value = curRoom;
   sel.addEventListener('change', function(){ selectRoom(this.value); });
   document.getElementById('hoursSelect').addEventListener('change', function(){
-    curHours = +this.value; renderChart(); renderEvents();
+    curHours = +this.value; renderChart(); renderCmp(); renderEvents();
+  });
+  document.getElementById('cmpMetric').addEventListener('change', renderCmp);
+  renderManual(); renderPoll();
+  window.addEventListener('fungiStoreChange', function(e){
+    if (!e.detail || e.detail.col === 'cultivation' || e.detail.col === '*'){ renderManual(); renderPoll(); }
   });
   refreshNow();
   startTimer();

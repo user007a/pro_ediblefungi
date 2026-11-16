@@ -88,6 +88,8 @@
   .result-ok { color:#3a8618; font-weight:500; }
   .result-fail { color:#cf1322; font-weight:500; }
   #cmdPagination { padding:12px 16px; }
+  @keyframes ctrlPulse { 0%{box-shadow:0 0 0 0 rgba(82,196,26,.45)} 70%{box-shadow:0 0 0 6px rgba(82,196,26,0)} 100%{box-shadow:0 0 0 0 rgba(82,196,26,0)} }
+  .link-off { opacity:.6; }
 </style>
 <style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
   .main-wrapper{margin-left:0!important;width:100%!important;}
@@ -123,7 +125,11 @@
       <div class="stat-card-row" id="statCards"></div>
 
       <div class="page-section data-section" style="margin-bottom:16px;">
-        <div class="section-title">可控设备 <span class="count" id="ctrlCount"></span></div>
+        <div class="section-title">可控设备 <span class="count" id="ctrlCount"></span>
+          <span style="margin-left:auto;font-size:12px;font-weight:500;color:#3a8618;display:inline-flex;align-items:center;gap:6px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:#52c41a;display:inline-block;animation:ctrlPulse 2s infinite;"></span>状态 5s 实时刷新 · <span id="ctrlRefreshTime">—</span>
+          </span>
+        </div>
         <div class="data-table-wrapper">
           <table class="data-table">
             <thead>
@@ -137,6 +143,29 @@
               </tr>
             </thead>
             <tbody id="ctrlBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page-section data-section" style="margin-bottom:16px;">
+        <div class="section-title">联动策略 <span class="count" id="linkCount"></span>
+          <span style="margin-left:auto;"><button class="jg-btn" onclick="openPage('alert_settings.html','预警设置')">策略配置</button></span>
+        </div>
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:80px;">编号</th>
+                <th style="width:200px;">触发条件</th>
+                <th style="width:160px;">目标设备</th>
+                <th>执行动作</th>
+                <th style="width:80px;">延时</th>
+                <th style="width:100px;">锁定方式</th>
+                <th style="width:200px;">复位条件</th>
+                <th style="width:80px;">状态</th>
+              </tr>
+            </thead>
+            <tbody id="linkBody"></tbody>
           </table>
         </div>
       </div>
@@ -211,12 +240,36 @@ var FAD = window.FungiAlertData;
 var esc = DeviceUI.esc;
 var STATUS_CLS = { '运行':'online', '待机':'idle', '离线':'offline', '故障':'offline', '联动':'processing', '定时':'warning' };
 var SP_META = {
-  '加湿器':   { unit:'%RH', step:1,   min:60,  max:99 },
-  '新风风机': { unit:'ppm', step:50,  min:400, max:1500 },
-  '冷水机组': { unit:'°C',  step:0.5, min:0,   max:10 },
-  '循环风机': { unit:'min', step:1,   min:5,   max:60 },
-  '照明灯组': { unit:'lx',  step:10,  min:0,   max:500 }
+  '超声波雾化加湿器': { unit:'%RH', step:1,   min:60,  max:99 },
+  '高压微雾加湿器':   { unit:'%RH', step:1,   min:60,  max:99 },
+  '工业加湿机组':     { unit:'%RH', step:1,   min:50,  max:95 },
+  '除湿机':           { unit:'%RH', step:1,   min:40,  max:90 },
+  '新风风机':         { unit:'ppm', step:50,  min:400, max:1500 },
+  '冷水机组':         { unit:'°C',  step:0.5, min:0,   max:10 },
+  '风冷热泵':         { unit:'°C',  step:0.5, min:10,  max:30 },
+  '电加热':           { unit:'°C',  step:0.5, min:10,  max:35 },
+  '水冷空调':         { unit:'°C',  step:0.5, min:16,  max:30 },
+  '层架循环风机':     { unit:'min', step:1,   min:5,   max:60 },
+  '循环内机':         { unit:'%',   step:5,   min:0,   max:100 },
+  '负压排风扇':       { unit:'Pa',  step:1,   min:-30, max:0 },
+  '电动风阀':         { unit:'%',   step:5,   min:0,   max:100 },
+  '层架喷淋补水装置': { unit:'min', step:1,   min:1,   max:60 },
+  '臭氧发生器':       { unit:'min', step:5,   min:5,   max:120 },
+  '紫外消杀装置':     { unit:'min', step:5,   min:5,   max:120 },
+  '自动采摘辅助设备': { unit:'%',   step:5,   min:0,   max:100 },
+  'LED植物补光灯':    { unit:'lx',  step:10,  min:0,   max:500 }
 };
+function spAction(d){
+  var u = spMeta(d).unit;
+  if (u === '%RH') return '设定湿度';
+  if (u === '°C') return '设定温度';
+  if (u === 'ppm') return '设定CO₂上限';
+  if (u === 'lx') return '设定光照';
+  if (u === 'Pa') return '设定负压';
+  if (u === 'min') return '设定定时';
+  if (u === '%') return '设定开度';
+  return '设定参数';
+}
 var OPERATOR = '张才孙';
 var cmdPage = 1, CMD_PAGE_SIZE = 8;
 
@@ -320,7 +373,7 @@ function stepSetpoint(id, dir){
   var v = (d.setpoint != null ? d.setpoint : m.min) + dir * m.step;
   v = Math.max(m.min, Math.min(m.max, +v.toFixed(2)));
   FS.update('devices', id, { setpoint: v });
-  FS.add('commands', { device: id, action: '设定' + (d.type === '加湿器' ? '湿度' : d.type === '冷水机组' ? '温度' : '参数'), value: v + m.unit, result: '成功', operator: OPERATOR, time: nowStr() });
+  FS.add('commands', { device: id, action: spAction(d), value: v + m.unit, result: '成功', operator: OPERATOR, time: nowStr() });
   DeviceUI.toast(d.name + ' 设定值已下发：' + v + m.unit, 'success');
   refreshAll();
 }
@@ -333,7 +386,7 @@ function commitSetpoint(id, raw){
   if (v < m.min || v > m.max){ DeviceUI.toast('设定值需在 ' + m.min + '–' + m.max + m.unit + ' 范围内', 'error'); renderCtrl(); return; }
   if (v === d.setpoint) return;
   FS.update('devices', id, { setpoint: v });
-  FS.add('commands', { device: id, action: '设定' + (d.type === '加湿器' ? '湿度' : d.type === '冷水机组' ? '温度' : '参数'), value: v + m.unit, result: '成功', operator: OPERATOR, time: nowStr() });
+  FS.add('commands', { device: id, action: spAction(d), value: v + m.unit, result: '成功', operator: OPERATOR, time: nowStr() });
   DeviceUI.toast(d.name + ' 设定值已下发：' + v + m.unit, 'success');
   refreshAll();
 }
@@ -376,6 +429,26 @@ function openDeviceDrawer(id){
       '<span class="detail-value">' + esc(c.action) + ' · ' + esc(c.value) + ' · <span class="' + (c.result === '成功' ? 'result-ok' : 'result-fail') + '">' + esc(c.result) + '</span> · ' + esc(c.operator) + '</span></div>';
   }).join('') : '<div style="font-size:12.5px;color:var(--text-tertiary);">暂无指令记录</div>';
   openDrawer('运行监控 · ' + d.name, html);
+}
+
+/* ---------- 联动策略展示 ---------- */
+function renderLinkages(){
+  var list = FS.list('linkages');
+  var on = list.filter(function(x){ return x.enabled; }).length;
+  document.getElementById('linkCount').textContent = '共 ' + list.length + ' 条 · 启用 ' + on + ' 条（触发 → 目标 → 动作 → 延时 → 锁定 → 复位）';
+  var body = document.getElementById('linkBody');
+  if (!list.length){ body.innerHTML = '<tr class="empty-row"><td colspan="8">暂无联动策略</td></tr>'; return; }
+  body.innerHTML = list.map(function(l){
+    return '<tr class="' + (l.enabled ? '' : 'link-off') + '">' +
+      '<td><strong>' + esc(l.id) + '</strong></td>' +
+      '<td>' + esc(l.trigger) + '</td>' +
+      '<td>' + esc(l.target) + '</td>' +
+      '<td>' + esc(l.action) + '</td>' +
+      '<td class="num-cell">' + (l.delay ? l.delay + 's' : '即时') + '</td>' +
+      '<td>' + esc(l.lock) + '</td>' +
+      '<td>' + esc(l.reset) + '</td>' +
+      '<td>' + (l.enabled ? '<span class="status-tag online">启用</span>' : '<span class="status-tag idle">停用</span>') + '</td></tr>';
+  }).join('');
 }
 
 /* ---------- 指令记录 ---------- */
@@ -442,17 +515,32 @@ function exportCommands(){
 }
 
 /* ---------- 刷新 / 初始化 ---------- */
-function refreshAll(){ renderBanner(); renderStats(); renderCtrl(); renderCmds(); }
+function refreshAll(){ renderBanner(); renderStats(); renderCtrl(); renderLinkages(); renderCmds(); }
+function liveTick(){
+  if (document.hidden) return;
+  renderStats();
+  var ae = document.activeElement;
+  var editing = ae && ae.tagName === 'INPUT' && ae.closest && ae.closest('.stepper');
+  if (!editing) renderCtrl();
+  var t = new Date();
+  var el = document.getElementById('ctrlRefreshTime');
+  if (el) el.textContent = pad2(t.getHours()) + ':' + pad2(t.getMinutes()) + ':' + pad2(t.getSeconds());
+}
 document.addEventListener('DOMContentLoaded', function(){
   var devs = {};
   FS.list('commands').forEach(function(c){ devs[c.device] = true; });
   FS.list('devices').filter(function(d){ return d.control; }).forEach(function(d){ devs[d.id] = true; });
   DeviceUI.fillSelect('cmdDeviceSelect', Object.keys(devs).sort(), '全部设备');
   refreshAll();
+  liveTick();
+  setInterval(liveTick, 5000);
   document.getElementById('cmdDeviceSelect').addEventListener('change', function(){ cmdPage = 1; renderCmds(); });
   document.getElementById('cmdResultSelect').addEventListener('change', function(){ cmdPage = 1; renderCmds(); });
   document.getElementById('cmdSearch').addEventListener('input', function(){ cmdPage = 1; renderCmds(); });
   window.addEventListener('fungiAlertChange', renderBanner);
+  window.addEventListener('fungiStoreChange', function(e){
+    if (e.detail && e.detail.col === 'linkages') renderLinkages();
+  });
 });
 </script>
 <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>

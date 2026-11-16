@@ -74,7 +74,7 @@
 
       <div class="page-head">
         <h1>物料种质</h1>
-        <div class="crumb">企业管理 / 物料种质 · 菌株种质档案与主物料库存台账</div>
+        <div class="crumb">企业管理 / 物料种质 · 菌株种质档案 · 主物料库存台账 · 供应商资质</div>
       </div>
 
       <div class="stat-grid" id="statGrid"></div>
@@ -82,11 +82,13 @@
       <div class="tabs" id="mainTabs">
         <div class="tab-item active" data-tab="strains" onclick="switchTab('strains')">菌株种质</div>
         <div class="tab-item" data-tab="materials" onclick="switchTab('materials')">主物料</div>
+        <div class="tab-item" data-tab="suppliers" onclick="switchTab('suppliers')">供应商</div>
       </div>
 
       <div class="page-section search-section">
         <div class="search-bar">
           <select class="search-select" id="filterSelect" onchange="renderTable()"></select>
+          <select class="search-select" id="filterExtra" onchange="renderTable()" style="display:none;"></select>
           <input type="text" class="search-input" id="searchInput" placeholder="搜索编号、品种、名称..." oninput="renderTable()">
           <div class="search-actions">
             <button class="jg-btn" onclick="resetFilters()">重置</button>
@@ -98,7 +100,7 @@
         <div class="action-left">
           <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openForm()">+ 新建菌株</button>
           <button class="jg-btn" id="exportBtn" onclick="exportCurrent()">导出CSV</button>
-          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete(currentTab,currentTab==='strains'?'菌株':'物料')">批量删除</button>
+          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete(currentTab,TAB_LABEL[currentTab])">批量删除</button>
           <span class="selected-info" id="selInfo"></span>
         </div>
       </div>
@@ -132,9 +134,9 @@
 
 <div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
   <div class="modal-box" style="width:420px;">
-    <div class="modal-header"><h3>删除确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
+    <div class="modal-header"><h3>操作确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
     <div class="modal-body"><p id="confirmText" style="margin:0;font-size:14px;color:var(--text-primary);"></p></div>
-    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="doConfirm()">确认删除</button></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" onclick="doConfirm()">确认</button></div>
   </div>
 </div>
 
@@ -174,49 +176,77 @@ var sortKey='',sortDir=1;
 function sortBy(k){if(sortKey===k){sortDir=-sortDir;}else{sortKey=k;sortDir=1;}renderTable();}
 function applySort(rows){if(!sortKey)return rows;return rows.slice().sort(function(a,b){var x=a[sortKey],y=b[sortKey];if(typeof x==='number'&&typeof y==='number')return (x-y)*sortDir;return String(x==null?'':x).localeCompare(String(y==null?'':y),'zh')*sortDir;});}
 function paintArrows(){document.querySelectorAll('th.sortable').forEach(function(th){var a=th.querySelector('.sort-arrow');if(a)a.textContent=th.dataset.key===sortKey?(sortDir>0?'▲':'▼'):'';});}
-function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('filterSelect').value='';renderAll();}
+function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('filterSelect').value='';var fx=document.getElementById('filterExtra');if(fx)fx.value='';renderAll();}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeConfirm();closeDrawer();}});
 
-/* ===== 双 tab：菌株种质 / 主物料 ===== */
+/* ===== 三 tab：菌株种质 / 主物料 / 供应商 ===== */
 var currentTab='strains';
+var TAB_LABEL={strains:'菌株',materials:'物料',suppliers:'供应商'};
 function switchTab(tab){
   currentTab=tab;selected={};sortKey='';sortDir=1;
   document.querySelectorAll('#mainTabs .tab-item').forEach(function(el){el.classList.toggle('active',el.dataset.tab===tab);});
-  var f=document.getElementById('filterSelect');
-  f.innerHTML=tab==='strains'?
-    '<option value="">全部状态</option><option value="在用">在用</option><option value="停用">停用</option>':
-    '<option value="">全部库存</option><option value="低库存">仅看低库存</option><option value="正常">库存正常</option>';
+  var f=document.getElementById('filterSelect'),fx=document.getElementById('filterExtra');
+  if(tab==='strains'){
+    f.innerHTML='<option value="">全部状态</option><option value="在用">在用</option><option value="停用">停用</option>';
+    fx.style.display='none';fx.innerHTML='';
+  }else if(tab==='materials'){
+    f.innerHTML='<option value="">全部类别</option><option value="原料">原料</option><option value="辅料">辅料</option><option value="菌袋">菌袋</option>';
+    fx.style.display='';fx.innerHTML='<option value="">全部质检/库存</option><option value="合格">质检合格</option><option value="待检">质检待检</option><option value="低库存">仅看低库存</option>';
+  }else{
+    f.innerHTML='<option value="">全部类别</option><option value="菌种">菌种</option><option value="原料">原料</option><option value="辅料">辅料</option><option value="菌袋">菌袋</option>';
+    fx.style.display='';fx.innerHTML='<option value="">全部资质</option><option value="合格">合格</option><option value="待复核">待复核</option>';
+  }
+  f.value='';fx.value='';
   document.getElementById('searchInput').value='';
-  document.getElementById('newBtn').textContent=tab==='strains'?'+ 新建菌株':'+ 新建物料';
+  document.getElementById('newBtn').textContent='+ 新建'+TAB_LABEL[tab];
   renderAll();
 }
 function isLow(m){return Number(m.stock)<Number(m.safety);}
+function supName(id){var sp=FS.get('suppliers',id);return sp?sp.name:(id||'—');}
+function supplierSelect(id,v){
+  var opts='<option value="">未指定</option>'+FS.list('suppliers').map(function(sp){
+    return '<option value="'+esc(sp.id)+'"'+(sp.id===v?' selected':'')+'>'+esc(sp.id)+' · '+esc(sp.name)+'</option>';
+  }).join('');
+  return '<select id="'+id+'">'+opts+'</select>';
+}
 function currentRows(){
   var kw=document.getElementById('searchInput').value.trim().toLowerCase();
   var fv=document.getElementById('filterSelect').value;
+  var fx=document.getElementById('filterExtra').value;
   if(currentTab==='strains'){
     return FS.list('strains').filter(function(s){
       if(fv&&s.status!==fv)return false;
-      if(kw&&(s.id+' '+s.variety+' '+s.latin+' '+s.mother).toLowerCase().indexOf(kw)===-1)return false;
+      if(kw&&(s.id+' '+s.variety+' '+s.latin+' '+s.mother+' '+(s.batchNo||'')).toLowerCase().indexOf(kw)===-1)return false;
       return true;
     });
   }
-  return FS.list('materials').filter(function(m){
-    if(fv==='低库存'&&!isLow(m))return false;
-    if(fv==='正常'&&isLow(m))return false;
-    if(kw&&(m.id+' '+m.name+' '+m.spec+' '+m.supplier).toLowerCase().indexOf(kw)===-1)return false;
+  if(currentTab==='materials'){
+    return FS.list('materials').filter(function(m){
+      if(fv&&m.category!==fv)return false;
+      if(fx==='合格'||fx==='待检'){if(m.qc!==fx)return false;}
+      if(fx==='低库存'&&!isLow(m))return false;
+      if(kw&&(m.id+' '+m.name+' '+m.spec+' '+(m.supplierName||m.supplier)+' '+(m.batchNo||'')+' '+(m.origin||'')).toLowerCase().indexOf(kw)===-1)return false;
+      return true;
+    });
+  }
+  return FS.list('suppliers').filter(function(sp){
+    if(fv&&sp.category!==fv)return false;
+    if(fx&&sp.qual!==fx)return false;
+    if(kw&&(sp.id+' '+sp.name+' '+sp.contact+' '+sp.phone+' '+(sp.items||'')).toLowerCase().indexOf(kw)===-1)return false;
     return true;
   });
 }
 function renderStats(){
-  var ss=FS.list('strains'),ms=FS.list('materials');
+  var ss=FS.list('strains'),ms=FS.list('materials'),sps=FS.list('suppliers');
   var bags=ss.reduce(function(s,x){return s+Number(x.bags||0);},0);
   var low=ms.filter(isLow).length;
+  var pending=ms.filter(function(m){return m.qc==='待检';}).length;
+  var recheck=sps.filter(function(sp){return sp.qual==='待复核';}).length;
   var cards=[
     {label:'菌株种质',value:ss.length,unit:'株',sub:'在用 '+ss.filter(function(s){return s.status==='在用';}).length+' 株',cls:''},
     {label:'在用袋数合计',value:bags.toLocaleString(),unit:'袋',sub:'全部在用菌株投袋量',cls:'green'},
-    {label:'主物料种类',value:ms.length,unit:'种',sub:'培养料与包装耗材',cls:'orange'},
-    {label:'低库存物料',value:low,unit:'种',sub:low?'低于安全库存，请补货':'库存全部正常',cls:'red'}
+    {label:'低库存物料',value:low,unit:'种',sub:'主物料共 '+ms.length+' 种 · 待检 '+pending+' 种',cls:'red'},
+    {label:'供应商',value:sps.length,unit:'家',sub:recheck?('资质待复核 '+recheck+' 家'):'资质全部合格',cls:'orange'}
   ];
   document.getElementById('statGrid').innerHTML=cards.map(function(c){
     return '<div class="stat-card '+c.cls+'"><div class="stat-label">'+c.label+'</div><div class="stat-value">'+esc(c.value)+(c.unit?'<small>'+c.unit+'</small>':'')+'</div><div class="stat-sub">'+esc(c.sub)+'</div></div>';
@@ -227,50 +257,67 @@ function renderHead(){
   if(currentTab==='strains'){
     h.innerHTML='<tr><th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>'+
       '<th class="sortable" data-key="id" onclick="sortBy(\'id\')">编号<span class="sort-arrow"></span></th>'+
-      '<th>品种</th><th>拉丁名</th><th>代次</th><th>母种</th><th>保藏</th>'+
-      '<th class="sortable" data-key="activated" onclick="sortBy(\'activated\')">活化日期<span class="sort-arrow"></span></th>'+
-      '<th class="sortable" data-key="bags" onclick="sortBy(\'bags\')">在用袋数<span class="sort-arrow"></span></th>'+
+      '<th>品种</th><th>代次</th><th>形态</th><th>适温范围</th><th>适 pH</th><th>批次号</th><th>检验报告</th>'+
+      '<th class="sortable" data-key="bags" onclick="sortBy(\'bags\')">库存(袋)<span class="sort-arrow"></span></th>'+
       '<th>状态</th><th style="width:130px;">操作</th></tr>';
-  }else{
+  }else if(currentTab==='materials'){
     h.innerHTML='<tr><th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>'+
       '<th class="sortable" data-key="name" onclick="sortBy(\'name\')">名称<span class="sort-arrow"></span></th>'+
-      '<th>规格</th><th>单位</th>'+
+      '<th>类别</th><th>供应商</th><th>批次号</th><th>产地</th><th>质检</th>'+
       '<th class="sortable" data-key="stock" onclick="sortBy(\'stock\')">库存<span class="sort-arrow"></span></th>'+
       '<th class="sortable" data-key="safety" onclick="sortBy(\'safety\')">安全库存<span class="sort-arrow"></span></th>'+
-      '<th>供应商</th>'+
-      '<th class="sortable" data-key="price" onclick="sortBy(\'price\')">单价(元)<span class="sort-arrow"></span></th>'+
       '<th>库存状态</th><th style="width:130px;">操作</th></tr>';
+  }else{
+    h.innerHTML='<tr><th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>'+
+      '<th class="sortable" data-key="id" onclick="sortBy(\'id\')">编号<span class="sort-arrow"></span></th>'+
+      '<th>名称</th><th>类别</th><th>联系人</th><th>电话</th><th>资质状态</th><th>最近审核</th><th>供应品类</th>'+
+      '<th style="width:180px;">操作</th></tr>';
   }
 }
 function renderTable(){
   renderHead();
   var rows=applySort(currentRows());
   var body=document.getElementById('tableBody');
-  var cols=currentTab==='strains'?11:10;
+  var cols=currentTab==='strains'?12:(currentTab==='materials'?11:10);
   if(!rows.length){body.innerHTML='<tr><td colspan="'+cols+'" class="empty-cell">暂无符合条件的记录，点击「新建」添加</td></tr>';updateSelInfo();paintArrows();return;}
   if(currentTab==='strains'){
     body.innerHTML=rows.map(function(s){
       return '<tr onclick="rowClick(event,\''+s.id+'\')" style="cursor:pointer;">'+
         '<td><input type="checkbox" class="row-check" data-id="'+s.id+'" '+(selected[s.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
-        '<td><strong>'+esc(s.id)+'</strong></td><td>'+esc(s.variety)+'</td><td><em>'+esc(s.latin)+'</em></td>'+
-        '<td>'+esc(s.generation)+'</td><td>'+esc(s.mother)+'</td><td>'+esc(s.storage)+'</td>'+
-        '<td>'+esc(String(s.activated).slice(0,10))+'</td>'+
+        '<td><strong>'+esc(s.id)+'</strong></td><td>'+esc(s.variety)+'</td>'+
+        '<td>'+esc(s.generation)+'</td><td>'+esc(s.form||'固体')+'</td>'+
+        '<td>'+esc(s.tempRange||'—')+'</td><td>'+esc(s.phRange||'—')+'</td>'+
+        '<td>'+esc(s.batchNo||'—')+'</td><td>'+esc(s.report||'—')+'</td>'+
         '<td class="text-right">'+Number(s.bags||0).toLocaleString()+'</td>'+
         '<td><span class="status-tag '+(s.status==='在用'?'normal':'inactive')+'">'+esc(s.status)+'</span></td>'+
         '<td><button class="row-btn row-edit" onclick="openForm(\''+s.id+'\')">编辑</button><button class="row-btn danger row-del" onclick="removeRow(\'strains\',\''+s.id+'\',\''+esc(s.id)+'\')">删除</button></td></tr>';
     }).join('');
-  }else{
+  }else if(currentTab==='materials'){
     body.innerHTML=rows.map(function(m){
       var low=isLow(m);
       return '<tr onclick="rowClick(event,\''+m.id+'\')" style="cursor:pointer;">'+
         '<td><input type="checkbox" class="row-check" data-id="'+m.id+'" '+(selected[m.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
-        '<td><strong>'+esc(m.name)+'</strong></td><td>'+esc(m.spec)+'</td><td>'+esc(m.unit)+'</td>'+
+        '<td><strong>'+esc(m.name)+'</strong></td>'+
+        '<td><span class="status-tag '+(m.category==='原料'?'normal':(m.category==='辅料'?'base-planning':'active'))+'">'+esc(m.category||'—')+'</span></td>'+
+        '<td>'+esc(m.supplierName||supName(m.supplier))+'</td>'+
+        '<td>'+esc(m.batchNo||'—')+'</td><td>'+esc(m.origin||'—')+'</td>'+
+        '<td><span class="status-tag '+(m.qc==='合格'?'normal':'warning')+'">'+esc(m.qc||'待检')+'</span></td>'+
         '<td class="text-right">'+Number(m.stock||0).toLocaleString()+'</td>'+
         '<td class="text-right">'+Number(m.safety||0).toLocaleString()+'</td>'+
-        '<td>'+esc(m.supplier)+'</td>'+
-        '<td class="text-right">'+Number(m.price||0).toFixed(2)+'</td>'+
         '<td><span class="status-tag '+(low?'danger':'normal')+'">'+(low?'低库存':'正常')+'</span></td>'+
         '<td><button class="row-btn row-edit" onclick="openForm(\''+m.id+'\')">编辑</button><button class="row-btn danger row-del" onclick="removeRow(\'materials\',\''+m.id+'\',\''+esc(m.name)+'\')">删除</button></td></tr>';
+    }).join('');
+  }else{
+    body.innerHTML=rows.map(function(sp){
+      return '<tr onclick="rowClick(event,\''+sp.id+'\')" style="cursor:pointer;">'+
+        '<td><input type="checkbox" class="row-check" data-id="'+sp.id+'" '+(selected[sp.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+        '<td><strong>'+esc(sp.id)+'</strong></td><td>'+esc(sp.name)+'</td>'+
+        '<td><span class="status-tag base-planning">'+esc(sp.category)+'</span></td>'+
+        '<td>'+esc(sp.contact)+'</td><td>'+esc(sp.phone)+'</td>'+
+        '<td><span class="status-tag '+(sp.qual==='合格'?'normal':'warning')+'">'+esc(sp.qual)+'</span></td>'+
+        '<td>'+esc(String(sp.audit||'').slice(0,10))+'</td>'+
+        '<td>'+esc(sp.items||'—')+'</td>'+
+        '<td style="white-space:nowrap;"><button class="row-btn" onclick="openForm(\''+sp.id+'\')">编辑</button><button class="row-btn" style="color:#52c41a;border-color:#b7eb8f;" onclick="auditSupplier(\''+sp.id+'\')">'+(sp.qual==='待复核'?'审核':'复审')+'</button><button class="row-btn danger" onclick="removeRow(\'suppliers\',\''+sp.id+'\',\''+esc(sp.name)+'\')">删除</button></td></tr>';
     }).join('');
   }
   updateSelInfo();paintArrows();
