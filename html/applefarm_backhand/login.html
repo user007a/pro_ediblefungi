@@ -412,13 +412,13 @@
 
   <div class="login-footer">
     食用菌工厂化农业数据管理平台<br>
-    技术支持：湖南智农数果科技有限公司<br>
+    技术支持：托克逊县数字农业科技有限公司<br>
     <span style="color:var(--gray-400);">演示账号：admin / admin123</span>
   </div>
 </div>
 
 <!-- 底部版权 -->
-<div class="copyright">© 2023-2026 湖南智农数果科技有限公司  All Rights Reserved</div>
+<div class="copyright">© 2023-2026 托克逊县数字农业科技有限公司  All Rights Reserved</div>
 
 <script>
   // ===== 浮动粒子 =====
@@ -663,7 +663,11 @@
   (function autoFill() {
     var saved = null;
     try { saved = JSON.parse(localStorage.getItem(REMEMBER_KEY)); } catch (e) {}
-    if (!saved || !saved.username) return;
+    if (!saved || !saved.username) {
+      usernameInput.value = 'admin';
+      pwdInput.value = 'admin123';
+      return;
+    }
 
     // 7 天免登录：未过期且账号密码仍有效，直接进入系统首页
     if (saved.expireAt && Date.now() < saved.expireAt) {

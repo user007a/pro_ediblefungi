@@ -831,6 +831,10 @@
       if (savedPwd) {
         document.getElementById('password').value = decodePwd(savedPwd);
       }
+      if (!saved && !savedPwd) {
+        document.getElementById('username').value = 'demo';
+        document.getElementById('password').value = 'demo123';
+      }
     })();
     
     var tabs = document.querySelectorAll('.tab-item');

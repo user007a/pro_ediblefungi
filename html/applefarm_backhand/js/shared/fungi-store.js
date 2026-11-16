@@ -222,7 +222,7 @@
       { id: 'SOP-06', name: '采收与分级标准', version: 'v1.5', scope: '分品种', effective: at(-35, '00:00'), status: '启用', key: '八成熟采收，一级菇占比 ≥ 80%，采后 2h 内入预冷' }
     ],
     enterprise: [
-      { id: 'EN-01', field: '企业名称', value: '湖南智农数果科技有限公司' },
+      { id: 'EN-01', field: '企业名称', value: '托克逊县数字农业科技有限公司' },
       { id: 'EN-02', field: '统一社会信用代码', value: '91430100MA4L2X8K3B' },
       { id: 'EN-03', field: '法定代表人', value: '李建国' },
       { id: 'EN-04', field: '注册资本', value: '2,000 万元' },
@@ -393,6 +393,10 @@
   if (!db) db = JSON.parse(JSON.stringify(SEED));
   /* 旧版本缓存缺少 traceStats 字段时，用种子补齐，保证口径定义始终存在 */
   if (!db.traceStats) db.traceStats = JSON.parse(JSON.stringify(SEED.traceStats));
+  /* 企业更名：旧缓存中的旧公司名精确替换为新名，用户自定义值不动 */
+  (db.enterprise || []).forEach(function (x) {
+    if (x.id === 'EN-01' && x.value === '湖南智农数果科技有限公司') x.value = '托克逊县数字农业科技有限公司';
+  });
   function persist(col) {
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
     global.dispatchEvent(new CustomEvent('fungiStoreChange', { detail: { col: col } }));

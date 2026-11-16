@@ -97,7 +97,7 @@ python -m http.server 8899 --bind 127.0.0.1
 
 | 文件 | 页面 | 已实现内容 |
 |---|---|---|
-| `applefarm_mobile/mb_login.html` | 登录 | 系统名「食用菌移动助手」（标题/系统名/微信授权弹窗/协议文本统一）、菌菇主题、菇房背景、食用菌文案、协议/隐私政策改写、演示账号角色改为车间操作工 |
+| `applefarm_mobile/mb_login.html` | 登录 | 系统名「食用菌移动助手」（标题/系统名/微信授权弹窗/协议文本统一）、菌菇主题、菇房背景、食用菌文案、协议/隐私政策改写、演示账号角色改为车间操作工；无记住凭据时自动预填演示账号 `demo / demo123`（与页面提示一致，记住密码回填优先） |
 | `applefarm_mobile/mb_home.html` | 车间工作台 | 问候区（姓名/岗位/工号/菇房/日期）、今日待办 2 项（抽屉：建议/执行/采纳/关闭）置于环境卡之前、当前菇房环境紧凑状态条（适宜度+四指标一行，点击展开详情；有 GF-01 未处置预警时显示异常横幅并自动置顶，处置后恢复适宜态，与预警台账互通）、常用服务按登录角色显示高频入口（操作工/运维/质检/仓储，管理员与访客显示全部，「全部」Tile 展开九宫格；统一排序见第 5 节 SVC_ORDER）、今日动态三联卡、离线同步条、铃铛与「我的」角标跟随消息未读数 |
 | `applefarm_mobile/mb_device.html` | 监测 Tab | 菇房选择、适宜性评估、温度/湿度/CO₂/光照、SVG 曲线（1min/1h/1d）、越限记录、6 台设备控制（启停二次确认、阈值步进、自动/手动、报修） |
 | `applefarm_mobile/vr_panorama.html` | 监控 Tab | 整页重写为视频监控：8 路通道（在线/告警/离线）、2×2/3×3、全屏模拟预览、回放时间轴与倍速、AI 抓拍列表 |
@@ -208,6 +208,8 @@ python -m http.server 8899 --bind 127.0.0.1
 - 批次 A 已完成（2026-11-16）：企业管理 5 页（`enterprise_info` / `enterprise_base` / `material_info` / `team_manage` / `guide_standard`）+ 生产管理 7 页（`material_io` / `harvest_report` / `farming_record` / `harvest_record` / `harvest_plan` / `harvest_process` / `harvest_storage`）。真实流转：菌包制备扣物料库存、灭菌复判通过闭环 `FA-261116-02` 并转接种、采收预冷交接生成预冷库存 lot、出库 FIFO 校验。
 - 批次 B 已完成（2026-11-16）：设备管理 5 页（`device_info` / `env_monitor` / `device_control` / `device_maintain` / `device_spare`）+ 预警管理 2 页（`alert_overview` / `alert_settings`）。真实流转：工单完成扣备件库存并写出库流水（不足阻断）、设定值/启停写指令表、预警分派→闭环必填处置措施、`env_monitor` 30s 单定时器刷新。
 - 批次 C 已完成（2026-11-16）：追溯管理 5 页（`trace_code` / `trace_batch` / `trace_blockchain` / `trace_query` / `data_source`）+ 系统管理 3 页（`system_settings` / `menu_settings` / `user_settings`）全部菌菇化并接 `js/shared/fungi-store.js` 单一真源；`index.html` 仅追加一段品牌脚本（读 `mushroom_sys_settings` 同步 `#brandText` 与标题）。新增本机键：`mushroom_sys_settings`、`mushroom_reg_config`、`mushroom_op_log`；账号/权限沿用 `snzg_user_accounts` / `snzg_permissions`（菜单权限键为 `角色中文名:分组:菜单名` 白名单）。系统设置「重置演示数据」只清业务数据+日志，保留账号与配置。
+- **登录页演示账号自动填充（2026-11-16）**：后台 `login.html` 无记住凭据时预填 `admin / admin123`（7 天免登录与记住密码回填优先，逻辑不变）；移动端 `mb_login.html` 同条件预填 `demo / demo123`。两页均浏览器实测：预填→一键登录成功（后台进 index 超级管理员、移动端进首页访客），手动输入可覆盖预填值，控制台零报错。
+- **公司名统一更换（2026-11-16）**：「湖南智农数果科技有限公司」→「托克逊县数字农业科技有限公司」，全库共 3 处（后台登录页技术支持/版权、`fungi-store.js` 种子 EN-01 企业名称）；store 加载层对旧缓存中的旧公司名做精确迁移（只替换旧名，自定义值不动），新种子/旧缓存两条路径均实测通过。追溯 H5 的「菇乡源生物科技（示例）有限公司」为另一示例主体，按「追溯不动」约束未改。企业信息中厂区地址（长沙）、电话（0731）、信用代码（91430100 开头）仍为湖南口径，是否随更名属地化待用户确认。
 
 ### 其他
 
