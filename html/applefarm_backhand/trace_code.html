@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>工厂化农业数据管理系统 - 追溯码管理</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2352c41a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/design-system.css">
 <link rel="stylesheet" href="css/sidebar-layout.css">
 <link rel="stylesheet" href="css/page-content.css">
@@ -52,6 +53,13 @@
   .toast-undo:hover { background:#1890ff; color:#fff; }
   /* 业务组件 */
   .stats-section { margin-bottom:16px; }
+  .stats-section .stat-card { height:100%; }
+  .stats-section .stat-card + .stat-card { margin-top:0; }
+  .data-section { overflow-x:auto; }
+  .data-section::-webkit-scrollbar { height:8px; }
+  .data-section::-webkit-scrollbar-track { background:#f6ffed; }
+  .data-section::-webkit-scrollbar-thumb { background:#b7eb8f; border-radius:4px; }
+  .data-section::-webkit-scrollbar-thumb:hover { background:#52c41a; }
   @media (max-width:1100px){ .stats-section { grid-template-columns:repeat(2,1fr); } }
   .pbar { height:8px; background:#eef2f7; border-radius:4px; overflow:hidden; min-width:70px; }
   .pbar > i { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,#1890ff,#52c41a); }

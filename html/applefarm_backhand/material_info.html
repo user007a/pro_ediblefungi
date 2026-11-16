@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>工厂化农业数据管理系统 - 物料种质</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2352c41a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/design-system.css">
 <link rel="stylesheet" href="css/sidebar-layout.css">
 <link rel="stylesheet" href="css/page-content.css">
@@ -360,7 +361,7 @@ function openDetail(id){
       '<div class="detail-item"><div class="dl">库存金额</div><div class="dv">'+(Number(m.stock)*Number(m.price)).toLocaleString(undefined,{maximumFractionDigits:0})+' 元</div></div>'+
       '</div>'+
       (low?'<p style="font-size:12px;color:#ff4d4f;">低于安全库存 '+(Number(m.safety)-Number(m.stock)).toLocaleString()+' '+esc(m.unit)+'，请及时补货。</p>':'')+
-      '<div style="margin-top:12px;"><button class="jg-btn" onclick="nav(\'material_io.html\',\'菌包制备管理\')">前往菌包制备</button></div>'
+      '<div style="margin-top:12px;"><button class="jg-btn" onclick="nav(\'material_io.html\',\'菌包制备\')">前往菌包制备</button></div>'
     );
   }
 }

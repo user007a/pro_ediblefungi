@@ -10,7 +10,7 @@
 1. **需求基准**：`docs/需求说明书.md`（页面清单、字段、流程以它为准）。
 2. **视觉基准**：双面品牌 v2.1（见第 3 节）——工厂移动端 = 中性画布 + 品牌棕点缀（`css/mobile-design-system.css`）；消费者追溯 `html/applefarm_h5/trace_h5.html` 保留全棕暖调，两面不混用。
 3. **本轮改造范围**：移动端 `html/applefarm_mobile/` 的登录、首页、监测、监控及首页九个业务入口。
-4. **还没改完**：移动端其余页面、PC 后台、数据大屏仍是苹果/果园口径（见第 8 节）。
+4. **还没改完**：PC 后台菜单外遗留页（约 110 个）、数据大屏仍是苹果/果园口径（见第 8 节）；移动端 15 页与 PC 后台登录/主框架/首页 + 28 个菜单页已完成菌菇化。
 
 ---
 
@@ -43,10 +43,10 @@ python -m http.server 8899 --bind 127.0.0.1
 | `docs/需求说明书.md` | 需求基准（改页面前必读） |
 | `html/applefarm_mobile/` | 移动端 15 个菌菇页面、`css/mobile-design-system.css`、`js/mobile-store.js`、`js/mobile-messages.js`；苹果时期无关页面已删除（见 8） |
 | `html/applefarm_h5/` | 追溯 H5；`images/trace_*.jpg` 是移动端改版公用图片素材 |
-| `html/applefarm_backhand/` | PC 后台（本轮未改） |
+| `html/applefarm_backhand/` | PC 后台：登录/主框架/首页 + 28 个菜单页已菌菇化（见 8）；菜单外遗留页仍是苹果口径 |
 | `html/applefarm_dataanlye/` | 数据大屏（本轮未改） |
 | `html/portal.html` | 统一登录聚合门户（入口矩阵 + 系统服务状态，见 4.4） |
-| `html/common/js/portal_data.js` | 门户系统元数据（四端入口/版本/服务状态/演示账号），不含生产数据 |
+| `html/common/js/portal_data.js` | 门户系统元数据（四端入口/服务状态/演示账号/场景轮播），不含生产数据与版本号 |
 | `html/common/js/qrcode.js` | vendored MIT qrcode-generator@1.4.4，门户二维码离线生成 |
 | `html/common/images/` | 通用图片（多为苹果口径，移动端已不再使用） |
 
@@ -97,8 +97,8 @@ python -m http.server 8899 --bind 127.0.0.1
 
 | 文件 | 页面 | 已实现内容 |
 |---|---|---|
-| `applefarm_mobile/mb_login.html` | 登录 | 菌菇主题、菇房背景、食用菌文案、协议/隐私政策改写、演示账号角色改为车间操作工 |
-| `applefarm_mobile/mb_home.html` | 车间工作台 | 问候区（姓名/岗位/工号/菇房/日期）、今日待办 4 项（抽屉：建议/执行/采纳/关闭）置于环境卡之前、当前菇房环境紧凑状态条（适宜度+四指标一行，点击展开详情；有 GF-01 未处置预警时显示异常横幅并自动置顶，处置后恢复适宜态，与预警台账互通）、常用服务按登录角色显示高频入口（操作工/运维/质检/仓储，管理员与访客显示全部，「全部」Tile 展开九宫格）、今日动态三联卡、离线同步条、铃铛与「我的」角标跟随消息未读数 |
+| `applefarm_mobile/mb_login.html` | 登录 | 系统名「食用菌移动助手」（标题/系统名/微信授权弹窗/协议文本统一）、菌菇主题、菇房背景、食用菌文案、协议/隐私政策改写、演示账号角色改为车间操作工 |
+| `applefarm_mobile/mb_home.html` | 车间工作台 | 问候区（姓名/岗位/工号/菇房/日期）、今日待办 2 项（抽屉：建议/执行/采纳/关闭）置于环境卡之前、当前菇房环境紧凑状态条（适宜度+四指标一行，点击展开详情；有 GF-01 未处置预警时显示异常横幅并自动置顶，处置后恢复适宜态，与预警台账互通）、常用服务按登录角色显示高频入口（操作工/运维/质检/仓储，管理员与访客显示全部，「全部」Tile 展开九宫格；统一排序见第 5 节 SVC_ORDER）、今日动态三联卡、离线同步条、铃铛与「我的」角标跟随消息未读数 |
 | `applefarm_mobile/mb_device.html` | 监测 Tab | 菇房选择、适宜性评估、温度/湿度/CO₂/光照、SVG 曲线（1min/1h/1d）、越限记录、6 台设备控制（启停二次确认、阈值步进、自动/手动、报修） |
 | `applefarm_mobile/vr_panorama.html` | 监控 Tab | 整页重写为视频监控：8 路通道（在线/告警/离线）、2×2/3×3、全屏模拟预览、回放时间轴与倍速、AI 抓拍列表 |
 
@@ -106,14 +106,14 @@ python -m http.server 8899 --bind 127.0.0.1
 
 | 入口 | 文件 | 核心业务逻辑 | 存储键 |
 |---|---|---|---|
-| 扫码开工 | `mb_label.html` | 批次码格式校验、重复开工拦截、批次卡、工序选择、开工登记、带参跳转工序填报 | `mushroom_scan_jobs` |
-| 工序填报 | `mb_record_task.html` | 拌料/灭菌/接种/培养/出菇/采收 6 类台账、字段级校验、照片凭证、待同步重试 | `mushroom_process_records` |
-| 采收过磅 | `mb_yield.html` | 批次联动、总重/一级/二级校验、等外重与一级率自动计算、二次确认、CS 单号、今日汇总 | `mushroom_harvest_records` |
-| 质量抽检 | `mb_patrol.html` | 抽样数/均重/直径校验、色泽/形态/气味/杂质判定、结论自动生成、不合格强制处置、ZJ 单号 | `mushroom_quality_records` |
+| 扫码开工 | `mb_label.html` | 批次码格式校验、重复开工拦截、批次卡、工序选择、开工登记、带参跳转工序填报；键缺失或为空时种子 4 条开工记录（批次避开样例码，不拦截样例扫码） | `mushroom_scan_jobs` |
+| 工序填报 | `mb_record_task.html` | 拌料/灭菌/接种/培养/出菇/采收 6 类台账、字段级校验、照片凭证、待同步重试；键缺失或为空时种子 8 条台账（拌料×3/接种×2/培养×1/出菇×1/采收×1，批次与扫码开工互相呼应，默认拌料 Tab 显示 3 条） | `mushroom_process_records` |
+| 采收过磅 | `mb_yield.html` | 批次联动、总重/一级/二级校验、等外重与一级率自动计算、二次确认、CS 单号、今日汇总；键缺失或为空时种子 6 条磅单（今日 3 + 昨日 3，今日合计 1156.9kg / 一级率 82.1%）；批次字典补 `JB-20261112-02`（杏鲍菇 GF-02）与 `JB-20261110-05`（白玉菇 GF-05） | `mushroom_harvest_records` |
+| 质量抽检 | `mb_patrol.html` | 抽样数/均重/直径校验、色泽/形态/气味/杂质判定、结论自动生成、不合格强制处置、ZJ 单号；键缺失或为空时种子 6 条抽检单（今日 3 含 1 条形态不合格带处置措施，历史含 1 条色泽+气味不合格降级处置）；批次字典与采收过磅一致，今日批次与磅单对应（采后抽检） | `mushroom_quality_records` |
 | 预警处置 | `mb_alert.html` | 蓝/黄/橙/红四级预警、状态与级别筛选、处置措施+结果回填、已处置留痕、可转维修工单 | `mushroom_alert_records` |
-| 杂菌识别 | `mb_disease.html` | 样例图片上传、扫描动画、绿霉识别结果（置信度/风险）、4 条处置建议、一键污染上报 | `mushroom_contamination_reports` |
+| 杂菌识别 | `mb_disease.html` | 样例图片上传、扫描动画、绿霉识别结果（置信度/风险）、4 条处置建议、一键污染上报；识别历史键缺失或为空时种子 4 条（高/中/中/低风险，复用样例图片与批次） | `mushroom_contamination_reports`、`mushroom_disease_history` |
 | 设备控制 | `mb_device.html` | 见 4.1，设备列表与详情抽屉 | — |
-| 设备报修 | `mb_troubleshoot.html` | 设备+回路号、故障描述、紧急程度、手机号校验、WX 工单、受理/完成流转 | `mushroom_repair_orders` |
+| 设备报修 | `mb_troubleshoot.html` | 设备+回路号、故障描述、紧急程度、手机号校验、WX 工单、受理/完成流转；键缺失或为空时种子 6 条工单（待受理 1/维修中 2/今日完成 1/昨日完成 1/前日完成 1，统计 1/2/1） | `mushroom_repair_orders` |
 | 冷库出入库 | `mb_material.html` | 温区/库位、追溯码段自动生成、入库/出库校验、库存扣减、温度越限阻断出库、RK/CK 流水 | `mushroom_cold_storage`、`mushroom_cold_logs` |
 
 > 所有提交动作在离线时通过 `MobileStore.enqueue()` 入队并标记「待同步」，页面内提供「重试同步」。
@@ -135,12 +135,12 @@ python -m http.server 8899 --bind 127.0.0.1
 
 `html/portal.html` 于 2026-11-16 重写为**登录聚合页**，不再承担实时数据看板职能：
 
-- 结构：左侧品牌区（厂名锁定式双行标题、**四张工厂场景轮播**：接种→培养→出菇→冷库，6s 自动播放、悬停/聚焦暂停、可暂停按钮、箭头/圆点/滑动/方向键切换、底部进度条；图片与说明在 `portal_data.js meta.scenes`）+ 项目编号/平台版本/覆盖规模、四端服务状态清单；右侧入口矩阵，分两组：**壹 需登录·厂内员工**（管理后台、移动应用端）与**贰 免登录·直开**（生产数据大屏、消费者溯源 H5）。
+- 结构：左侧品牌区（厂名锁定式双行标题、**四张工厂场景轮播**：接种→培养→出菇→冷库，6s 自动播放、悬停/聚焦暂停、可暂停按钮、箭头/圆点/滑动/方向键切换、底部进度条；图片与说明在 `portal_data.js meta.scenes`）+ 项目编号/覆盖规模、四端服务状态清单（只报"正常/维护"，**不显示版本号**，用户要求）；右侧入口矩阵，分两组：**壹 需登录·厂内员工**（管理后台、移动应用端）与**贰 免登录·直开**（生产数据大屏、消费者溯源 H5）。
 - 每张入口卡只陈述"登录契约"：适用角色、进入方式、3 项核心功能、演示账号（带复制按钮）、进入 CTA；**不含任何生产实时指标**（KPI/告警/菇房曲线/工序照片条已全部删除）。
 - **页面不写解释性文案**（用户要求）：无"继续上次"条、无分组旁注/组下注、无卡片服务更新日期、无政策声明行、无品牌导语——用户进来直接看入口判断。`localStorage.portal_last_sys` 仍记录最近进入的系统，但只驱动卡上"常用"徽标；移动登录与溯源示例附**真实可扫二维码**（`common/js/qrcode.js` 离线生成 SVG；`file://` 预览时二维码说明自动降级为"本地预览 · 部署后扫码生效"）。
 - 复制按钮失败时有可见反馈（选中账号文本提示 Ctrl+C），不会静默失败。
 - 门户**不设统一登录表单、不收集/存储密码**；认证在各端登录页完成。
-- 系统状态口径是"服务是否正常 + 版本号"，不是生产状态；实时数据进对应系统查看。
+- 系统状态口径是"服务是否正常"（仅左栏清单），不是生产状态；**顶栏状态胶囊与"管理登录"快捷按钮已按用户要求移除**，顶栏右侧只留右对齐的时间/日期时钟；**入口页任何位置不显示版本号**（卡片状态章、清单、左栏、页脚的版本均已按用户要求移除）；实时数据进对应系统查看。
 - 视觉沿用松绿 + 琥珀台账语言与工程网格底纹；390/760/1080/1440 四档实测无横向溢出。
 
 ---
@@ -149,6 +149,7 @@ python -m http.server 8899 --bind 127.0.0.1
 
 - 底部 4 个主 Tab：**首页** `mb_home.html` / **监测** `mb_device.html` / **监控** `vr_panorama.html` / **我的** `mb_mine.html`。
 - 首页常用服务（只放“动作型入口”，按登录角色显示高频 4 项 + 「全部」展开完整九宫格；管理员/访客显示全部）：
+- **统一排序（`SVC_ORDER`，角色高频子集与展开九宫格均按此序）**：设备控制 → 设备报修 → 预警处置 → 扫码开工 → 工序填报 → 采收过磅 → 冷库出入库 → 质量抽检 → 杂菌识别（2026-11-16 按用户指定调整）。
 
 | 分组 | 入口 → 页面 |
 |---|---|
@@ -202,8 +203,11 @@ python -m http.server 8899 --bind 127.0.0.1
 
 ### PC 后台与数据大屏
 
-- `applefarm_backhand/` 仍有约 138 个文件包含果园/苹果口径，`applefarm_dataanlye/` 有 10 个；门户 `portal.html` 已是食用菌。
-- 建议按需求第 1 章先做范围裁剪（认养、商城、销售、模型、经营分析等本期不做），再逐个改主流程页面。
+- **PC 后台菜单内页面已全部完成（2026-11-16）**：`login.html` / `index.html` / `home.html` + 28 个菜单页（25 页改造 + 新建 `team_manage.html`、`env_monitor.html`），风格沿用原设计系统，数据统一接 `js/shared/fungi-store.js`（`window.FungiStore`，键 `mushroom_fungi_store_v1`）与 `js/shared/fungi-alert-data.js`（`window.FungiAlertData`，键 `mushroom_alerts_v1`）；两文件为冻结契约，改页面前先读。
+- **后台无引用清理已完成（2026-11-16）**：按全项目引用图（保留页 + 外部入口可达性闭包）删除 111 个不可达文件（94 个苹果时期遗留 html：认养/商城/销售/模型/经营分析/旧设备/旧物料/后台版 mb_* 等，17 个孤儿 js/css/图片），后台现仅 75 个文件（30 html + 31 js + 7 css + 6 图 + 1 vendor）。**注意**：`js/shared/` 下 alert-data/biz/cert/data/device/enterprise/harvest/mall/mobile-ops/model/plot-master-seed/production/sales/soil/trace-stat/trace 等旧 store 仍被数据大屏 `applefarm_dataanlye/` 与追溯 H5 引用，**不可删**；`js/material-store.js`、`icons/icons.js` 同理被外部引用。大屏本身仍是苹果口径，待后续改造。
+- 批次 A 已完成（2026-11-16）：企业管理 5 页（`enterprise_info` / `enterprise_base` / `material_info` / `team_manage` / `guide_standard`）+ 生产管理 7 页（`material_io` / `harvest_report` / `farming_record` / `harvest_record` / `harvest_plan` / `harvest_process` / `harvest_storage`）。真实流转：菌包制备扣物料库存、灭菌复判通过闭环 `FA-261116-02` 并转接种、采收预冷交接生成预冷库存 lot、出库 FIFO 校验。
+- 批次 B 已完成（2026-11-16）：设备管理 5 页（`device_info` / `env_monitor` / `device_control` / `device_maintain` / `device_spare`）+ 预警管理 2 页（`alert_overview` / `alert_settings`）。真实流转：工单完成扣备件库存并写出库流水（不足阻断）、设定值/启停写指令表、预警分派→闭环必填处置措施、`env_monitor` 30s 单定时器刷新。
+- 批次 C 已完成（2026-11-16）：追溯管理 5 页（`trace_code` / `trace_batch` / `trace_blockchain` / `trace_query` / `data_source`）+ 系统管理 3 页（`system_settings` / `menu_settings` / `user_settings`）全部菌菇化并接 `js/shared/fungi-store.js` 单一真源；`index.html` 仅追加一段品牌脚本（读 `mushroom_sys_settings` 同步 `#brandText` 与标题）。新增本机键：`mushroom_sys_settings`、`mushroom_reg_config`、`mushroom_op_log`；账号/权限沿用 `snzg_user_accounts` / `snzg_permissions`（菜单权限键为 `角色中文名:分组:菜单名` 白名单）。系统设置「重置演示数据」只清业务数据+日志，保留账号与配置。
 
 ### 其他
 
@@ -267,6 +271,8 @@ html/applefarm_mobile/mb_mine.html
 > 已通过浏览器实测的业务链路：扫码开工 → 工序填报、冷库入库/出库、预警处置；首页铃铛 → 消息通知 → 预警处置反馈（含转报修生成 WX 工单）→ 预警处置页状态互通 → 我的（统计/角标/作业记录/设置/退出确认）、全部已读后铃铛红点与角标隐藏；首页环境卡异常置顶/处置后恢复紧凑态、各角色服务配置与「全部」展开；页面均无控制台报错。
 > v2.1 视觉回归（15/15 页，强制刷缓存后实测）：画布 `#FAF9F7`、卡片纯白、语义四色浅底惯例值、头部/主按钮棕渐变、数字等宽、预警四级色正确、登录→首页链路正常；追溯 H5 未改动。
 
+> Mock 种子轮（2026-11-16，按用户逐页指令）：`mb_label`（4 开工）/ `mb_record_task`（8 台账）/ `mb_yield`（6 磅单）/ `mb_patrol`（6 抽检）/ `mb_disease`（4 识别历史）/ `mb_troubleshoot`（6 工单）各页内置 `seedXIfEmpty()`，统一守卫＝键缺失、JSON 解析失败或空数组时才写入，已有数据绝不覆盖；日期全部相对今天生成。跨页一致性：扫码↔工序批次互相呼应，采收↔抽检今日同批次（采后抽检），`mb_yield`/`mb_patrol` 批次字典同步补 2 个历史批次；`mb_mine` 三本台账（作业 8/采收 6/报修 6）与统计、角标直接读同一存储键，无需单独种子。浏览器实测：各页条数/汇总/详情弹窗/照片渲染正确、控制台零报错、强刷重载后条数不变（幂等）；`mb_label` 样例码 `JB-20261116-03/04`、`JB-20261115-08` 扫码黄金路径不受种子拦截。未实施（待用户批准的原清单）：共享 `js/mobile-seeds.js`、首页今日动态派生、监测页告警汇总派生、图表美化（曲线平滑/触摸提示/环形渐变/等级堆叠条等）。
+
 清理轮删除文件（20 页 + 1 图，经用户确认）：
 
 ```text
@@ -277,3 +283,43 @@ html/applefarm_mobile/mb_drone_patrol.html / mb_weather_predict.html / mb_ai_ass
 html/applefarm_mobile/mb_service.html / mb_expert.html / mb_feedback.html / mb_growth.html / mb_pest_risk.html
 html/applefarm_mobile/images/orchard_apples.jpg（images/ 空目录随之移除）
 ```
+
+PC 后台菌菇化轮（2026-11-16，三批并行 + 集成回归）：
+
+```text
+html/applefarm_backhand/login.html / index.html / home.html（前轮已完成；index 本轮仅追加品牌同步脚本）
+html/applefarm_backhand/js/shared/fungi-store.js（新增，冻结数据契约）
+html/applefarm_backhand/js/shared/fungi-alert-data.js（扩展持久化与 update/add/reset，冻结）
+html/applefarm_backhand/enterprise_info.html / enterprise_base.html / material_info.html /
+team_manage.html（新建）/ guide_standard.html / material_io.html / harvest_report.html /
+farming_record.html / harvest_record.html / harvest_plan.html / harvest_process.html / harvest_storage.html
+html/applefarm_backhand/device_info.html / env_monitor.html（新建）/ device_control.html /
+device_maintain.html / device_spare.html / alert_overview.html / alert_settings.html
+html/applefarm_backhand/trace_code.html / trace_batch.html / trace_blockchain.html /
+trace_query.html / data_source.html / system_settings.html / menu_settings.html / user_settings.html
+```
+
+> 集成回归 136/136 通过（无头 Chrome CDP 实测）：登录→主框架→28 菜单页 iframe 逐页加载零报错、1600/1000 双宽度无横向溢出；跨页链路实测：灭菌复判→预警闭环、预冷交接→仓储 lot、工单完成→备件扣减、死信重发→监管预警闭环、菜单权限白名单隐藏菜单、平台名称→index 品牌/标题同步。
+> 演示状态卫生：各批与集成测试结束均已清空测试写入（`mushroom_*` 业务键删除后种子自动再生；`snzg_permissions` / `snzg_user_accounts` 测试配置已移除）；QA 目录与 8899 服务已清理停止。
+
+后台无引用清理轮（2026-11-16，引用图闭包判定 + 132/132 实测回归）：
+
+```text
+删除 111 个后台不可达文件：
+  html 94：adoption_*（7）、mall_*（16）、sales_*（8）、model_*（8）、report_*（4）、
+  device_access/asset/audit/calibration/command/log/model/stats（8）、material_config/inventory/label/return/supplier/usage（6）、
+  mb_*（10，后台版旧移动页）、alert_device/farming/internal_report（3）、biz_*（3）、
+  drone_log/patrol、farming_patrol/plan、enterprise_plot、gateway_config、guide_calculator、
+  harvest_post、patrol_route、performance_dashboard/detail、soil_test_record、task_assign、
+  video_monitor、vr_panorama、achievement_record、data_collection、cert_issue、cert_manage、
+  trace_config、trace_statistics
+  js 14：export-helper、iframe-hide、material-dict、sidebar-layout、shared/_*.check（5）、
+  shared/adoption-store、demo-seed、mobile-bridge、model-bind
+  css 3：mall-subpage、model-page、sales-module；images 1：gis_base.jpg
+根目录 QA 草稿同步清除：.tmp_*_check.js 等 9 个脚本 + .tmp_img/
+配套修正：enterprise_info 证书抽屉移除指向遗留 cert_manage 的冗余按钮（证书 CRUD 已在页内）；
+  23 个缺 favicon 的保留页补内联 SVG icon（与批次 B 七页同款）
+保留 75 文件：30 html（login/index/home + 28 菜单页）、31 js、7 css、6 菌菇实景 png、1 vendor
+```
+
+> 清理后回归 132/132：30 保留页独立打开零 404/零控制台报错/无溢出、index iframe 逐页 walked、门户/大屏 9 页/移动 2 页/追溯 H5 共 14 个外部入口零指向后台已删文件的 404；大屏渲染完整（其依赖的后台旧 store 全部保留）。

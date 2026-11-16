@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>工厂化农业数据管理系统 - 厂区档案</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2352c41a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/design-system.css">
 <link rel="stylesheet" href="css/sidebar-layout.css">
 <link rel="stylesheet" href="css/page-content.css">
@@ -286,8 +287,8 @@ function openDetail(id){
     '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+statusCls(z.status)+'">'+esc(z.status)+'</span></div></div>'+
     '</div>'+
     '<div class="drawer-sec">关联菇房批次</div>'+bhtml+
-    (z.type==='出菇'?'<div style="margin-top:14px;"><button class="jg-btn" onclick="nav(\'harvest_plan.html\',\'出菇培育管理\')">查看出菇培育</button></div>':'')+
-    (z.type==='冷链'?'<div style="margin-top:14px;"><button class="jg-btn" onclick="nav(\'harvest_storage.html\',\'仓储冷链管理\')">查看仓储冷链</button></div>':'')
+    (z.type==='出菇'?'<div style="margin-top:14px;"><button class="jg-btn" onclick="nav(\'harvest_plan.html\',\'出菇培育\')">查看出菇培育</button></div>':'')+
+    (z.type==='冷链'?'<div style="margin-top:14px;"><button class="jg-btn" onclick="nav(\'harvest_storage.html\',\'仓储冷链\')">查看仓储冷链</button></div>':'')
   );
 }
 function exportZones(){

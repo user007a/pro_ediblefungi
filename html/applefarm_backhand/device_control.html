@@ -3,77 +3,91 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智慧果园 - 水肥一体化控制</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2352c41a'/%3E%3C/svg%3E">
+<title>工厂化农业数据管理系统 - 设备运行监控</title>
 <link rel="stylesheet" href="css/design-system.css">
 <link rel="stylesheet" href="css/sidebar-layout.css">
 <link rel="stylesheet" href="css/page-content.css">
 <style>
-  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:999; backdrop-filter:blur(4px); }
-  .modal-overlay.show { display:block; }
-  .modal-box { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-    background:var(--bg-card); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.15);
-    width:560px; max-width:94vw; max-height:86vh; overflow-y:auto; z-index:1000; }
-  .modal-box.show { display:block; }
-  .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;
-    padding-bottom:16px; border-bottom:1px solid var(--border-light); }
-  .modal-header h3 { font-size:16px; font-weight:600; color:var(--text-primary); margin:0; }
+  .search-input { flex:1; min-width:220px; }
   .modal-close { width:28px; height:28px; border:none; background:var(--gray-100); border-radius:6px; cursor:pointer;
     display:flex; align-items:center; justify-content:center; }
-  .modal-body { padding:0 4px; }
-  .modal-footer { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; padding:16px 0 0;
-    border-top:1px solid var(--border-light); }
-  .form-group { margin-bottom:16px; }
-  .form-group label { display:block; font-size:13px; font-weight:500; color:var(--text-secondary); margin-bottom:8px; }
-  .form-group input, .form-group select { width:100%; padding:10px; border:1px solid var(--border-default);
-    border-radius:8px; font-size:13px; box-sizing:border-box; }
+  .modal-close:hover { background:var(--error-bg); color:var(--error); }
 
-  .ctrl-layout { display:grid; grid-template-columns:320px 1fr; gap:16px; align-items:start; }
-  @media (max-width:1180px){ .ctrl-layout{ grid-template-columns:1fr; } }
-
-  .panel { background:#fff; border:1px solid #eef0ee; border-radius:12px; padding:16px;
-    box-shadow:0 1px 3px rgba(0,0,0,.04); }
-  .panel-title { font-weight:600; font-size:14px; color:#1f2e1f; margin-bottom:12px;
-    display:flex; justify-content:space-between; align-items:center; }
-  .panel-title .hint { font-size:11.5px; font-weight:400; color:var(--text-tertiary); }
-
-  .dev-item { display:flex; align-items:center; gap:10px; padding:11px 12px; border-radius:10px;
-    border:1px solid var(--border-light); margin-bottom:8px; cursor:pointer; transition:all .18s; }
-  .dev-item:hover { border-color:var(--primary-400); background:#f7fbff; }
-  .dev-item.active { border-color:var(--primary-500); background:#f0f8ff; box-shadow:0 2px 8px rgba(24,144,255,.12); }
-  .dev-item .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-  .dev-item .dot.online { background:var(--success); }
-  .dev-item .dot.warning { background:var(--warning); }
-  .dev-item .dot.offline { background:#bfbfbf; }
-  .dev-item .di-name { font-size:13px; font-weight:600; color:var(--text-primary); }
-  .dev-item .di-meta { font-size:11.5px; color:var(--text-tertiary); margin-top:2px; }
-
-  .metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
-  .metric { background:var(--gray-50); border:1px solid var(--border-light); border-radius:10px; padding:12px 14px; }
-  .metric .m-label { font-size:11.5px; color:var(--text-tertiary); margin-bottom:6px; }
-  .metric .m-value { font-size:22px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; line-height:1.15; }
-  .metric .m-value small { font-size:12px; font-weight:500; color:var(--text-tertiary); margin-left:3px; }
-  .metric .m-sub { font-size:11.5px; color:var(--text-tertiary); margin-top:5px; }
-  .metric.off .m-value { color:#bfbfbf; }
-
-  .ctrl-actions { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:14px; }
-  .ctrl-btn { padding:12px 14px; border-radius:10px; border:1px solid var(--border-default); background:#fff;
-    cursor:pointer; text-align:left; transition:all .18s; }
-  .ctrl-btn:hover { border-color:var(--primary-400); box-shadow:0 2px 8px rgba(24,144,255,.12); }
-  .ctrl-btn:disabled { opacity:.5; cursor:not-allowed; box-shadow:none; }
-  .ctrl-btn .cb-title { font-size:13px; font-weight:600; color:var(--text-primary); }
-  .ctrl-btn .cb-desc { font-size:11.5px; color:var(--text-tertiary); margin-top:4px; }
-  .ctrl-btn.danger .cb-title { color:var(--error); }
-  .ctrl-btn.primary .cb-title { color:var(--primary-600); }
+  .drawer-mask { position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:998; opacity:0; visibility:hidden; transition:all .25s; }
+  .drawer-mask.show { opacity:1; visibility:visible; }
+  .drawer { position:fixed; top:0; right:0; bottom:0; width:500px; max-width:94vw; background:var(--bg-card); z-index:999;
+    transform:translateX(102%); transition:transform .25s ease; box-shadow:-8px 0 30px rgba(0,0,0,.12); display:flex; flex-direction:column; }
+  .drawer.show { transform:none; }
+  .drawer-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border-light); }
+  .drawer-header h3 { margin:0; font-size:15px; font-weight:600; color:var(--text-primary); }
+  .drawer-body { flex:1; overflow-y:auto; padding:16px 20px; }
+  .drawer-section { font-weight:600; font-size:13px; color:var(--text-primary); margin:18px 0 8px; }
+  .drawer-section:first-child { margin-top:0; }
+  .detail-info { padding:12px; background:linear-gradient(135deg,var(--gray-50),var(--gray-100));
+    border-radius:12px; margin-bottom:12px; border:1px solid var(--border-default); }
+  .detail-row { display:flex; padding:9px 0; border-bottom:1px dashed var(--border-default); font-size:13px; }
+  .detail-row:last-child { border-bottom:none; }
+  .detail-label { width:104px; color:var(--text-tertiary); flex-shrink:0; }
+  .detail-value { flex:1; color:var(--text-primary); word-break:break-all; }
 
   .status-tag { display:inline-flex; align-items:center; padding:3px 10px; font-size:11.5px;
     font-weight:500; border-radius:20px; white-space:nowrap; }
   .status-tag.online { background:#d9f7be; color:#3a8618; border:1px solid #b7eb8f; }
-  .status-tag.warning { background:var(--warning-bg); color:#ad8b00; border:1px solid var(--warning-border); }
   .status-tag.offline { background:var(--error-bg); color:#cf1322; border:1px solid #ffccc7; }
   .status-tag.processing { background:var(--info-bg); color:var(--primary-500); border:1px solid var(--info-border); }
-  .data-table { min-width:900px; }
+  .status-tag.warning { background:var(--warning-bg); color:#ad8b00; border:1px solid var(--warning-border); }
+  .status-tag.idle { background:var(--gray-100); color:var(--text-secondary); border:1px solid var(--border-default); }
+
+  .link-banner { display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:12px; margin-bottom:16px;
+    background:linear-gradient(90deg,#fff7e6,#fffbe6); border:1px solid #ffe58f; font-size:13px; color:#874d00; }
+  .link-banner .lb-icon { width:34px; height:34px; border-radius:10px; background:#fa8c16; color:#fff; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; }
+  .link-banner .lb-main { flex:1; min-width:0; }
+  .link-banner .lb-title { font-weight:600; font-size:13.5px; }
+  .link-banner .lb-sub { font-size:12px; color:#ad6800; margin-top:2px; }
+  .link-banner.closed { background:#f6ffed; border-color:#b7eb8f; color:#3a8618; }
+  .link-banner.closed .lb-icon { background:#52c41a; }
+  .link-banner.closed .lb-sub { color:#52952c; }
+
+  .stat-card-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:16px; margin-bottom:16px; }
+  .stat-card-row .stat-card { margin-top:0 !important; cursor:default; }
+  .stat-card-row .stat-card:hover { transform:none; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .stat-label { font-size:12px; color:var(--text-tertiary); margin-bottom:6px; }
+  .stat-value { font-size:26px; font-weight:700; color:var(--text-primary); font-variant-numeric:tabular-nums; }
+  .stat-value .unit { font-size:13px; font-weight:500; color:var(--text-tertiary); margin-left:4px; }
+  .stat-sub { margin-top:6px; font-size:12px; color:var(--text-tertiary); }
+
+  .section-title { font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 10px; display:flex; align-items:center; gap:8px; }
+  .section-title .count { font-size:12px; font-weight:500; color:var(--text-tertiary); }
+
+  .data-table { min-width:980px; }
   .data-table th { white-space:nowrap; }
+  .data-table tbody tr.clickable { cursor:pointer; }
+  .data-table tbody tr.clickable:hover { background:#f7fbff; }
   .empty-row td { text-align:center; color:var(--text-tertiary); padding:32px 0; }
+
+  .stepper { display:inline-flex; align-items:center; gap:0; border:1px solid var(--border-default); border-radius:8px; overflow:hidden; background:#fff; }
+  .stepper button { width:28px; height:30px; border:none; background:var(--gray-50); cursor:pointer; font-size:15px;
+    color:var(--text-secondary); line-height:1; }
+  .stepper button:hover { background:var(--primary-50); color:var(--primary-600); }
+  .stepper button:disabled { opacity:.4; cursor:not-allowed; }
+  .stepper input { width:64px; height:30px; border:none; border-left:1px solid var(--border-light); border-right:1px solid var(--border-light);
+    text-align:center; font-size:13px; font-variant-numeric:tabular-nums; color:var(--text-primary); }
+  .stepper input:focus { outline:none; background:#f0f8ff; }
+  .stepper .sp-unit { padding:0 8px; font-size:11px; color:var(--text-tertiary); background:var(--gray-50); height:30px; display:flex; align-items:center; }
+  .sp-range { font-size:11px; color:var(--text-tertiary); margin-top:4px; }
+
+  .action-btns { display:flex; gap:6px; flex-wrap:nowrap; }
+  .action-btn { padding:4px 10px; font-size:11.5px; font-weight:500; border:1px solid transparent;
+    border-radius:6px; cursor:pointer; white-space:nowrap; background:none; }
+  .action-btn.start { color:#3a8618; background:#f6ffed; border-color:#b7eb8f; }
+  .action-btn.stop { color:#cf1322; background:var(--error-bg); border-color:#ffccc7; }
+  .action-btn.detail { color:#2b6cb0; background:#f5f8fc; border-color:#c5d9f0; }
+  .action-btn:disabled { opacity:.45; cursor:not-allowed; }
+  .result-ok { color:#3a8618; font-weight:500; }
+  .result-fail { color:#cf1322; font-weight:500; }
+  #cmdPagination { padding:12px 16px; }
 </style>
 <style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
   .main-wrapper{margin-left:0!important;width:100%!important;}
@@ -96,313 +110,349 @@
     </div>
 
     <main class="main-content">
-      <nav class="device-tabs" aria-label="远程控制">
-        <a href="device_control.html" class="active">水肥一体化</a>
-        <a href="device_command.html">远程指令与OTA</a>
+      <nav class="device-tabs" aria-label="设备管理">
+        <a href="device_info.html">设备管理</a>
+        <a href="env_monitor.html">设备环境数据</a>
+        <a href="device_control.html" class="active">设备运行监控</a>
+        <a href="device_maintain.html">设备运维工单</a>
+        <a href="device_spare.html">备品备件</a>
       </nav>
 
-      <div class="ctrl-layout">
-        <!-- 左：可控设备列表 -->
-        <div class="panel">
-          <div class="panel-title">可控设备 <span class="hint">来自设备台账</span></div>
-          <div id="deviceList"></div>
+      <div id="linkBanner"></div>
+
+      <div class="stat-card-row" id="statCards"></div>
+
+      <div class="page-section data-section" style="margin-bottom:16px;">
+        <div class="section-title">可控设备 <span class="count" id="ctrlCount"></span></div>
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:90px;">设备编号</th>
+                <th>设备名称</th>
+                <th style="width:100px;">安装位置</th>
+                <th style="width:96px;">运行状态</th>
+                <th style="width:230px;">设定值（即时下发）</th>
+                <th style="width:170px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="ctrlBody"></tbody>
+          </table>
         </div>
+      </div>
 
-        <!-- 右：控制台 -->
-        <div>
-          <div class="panel" style="margin-bottom:16px;">
-            <div class="panel-title">
-              <span id="ctrlTitle">请选择设备</span>
-              <span id="ctrlBadge"></span>
-            </div>
-            <div class="metric-grid" id="metricGrid"></div>
-            <div class="ctrl-actions" id="ctrlActions"></div>
-          </div>
-
-          <div class="panel">
-            <div class="panel-title">最近控制指令 <span class="hint">来源：设备远程指令</span></div>
-            <div class="data-table-wrapper">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th style="width:150px;">指令编号</th>
-                    <th style="width:96px;">指令类型</th>
-                    <th>指令内容</th>
-                    <th style="width:150px;">下发时间</th>
-                    <th style="width:96px;">状态</th>
-                    <th style="width:76px;">操作人</th>
-                  </tr>
-                </thead>
-                <tbody id="cmdBody"></tbody>
-              </table>
-            </div>
+      <div class="page-section search-section">
+        <div class="search-bar">
+          <select class="search-select" id="cmdDeviceSelect"><option value="">全部设备</option></select>
+          <select class="search-select" id="cmdResultSelect" style="min-width:120px;">
+            <option value="">全部结果</option>
+            <option value="成功">成功</option>
+            <option value="失败">失败</option>
+          </select>
+          <input type="text" class="search-input" id="cmdSearch" placeholder="搜索指令 / 参数 / 操作人...">
+          <div class="search-actions">
+            <button class="jg-btn" onclick="resetCmdFilter()">重置</button>
+            <button class="jg-btn-outline" onclick="exportCommands()">导出CSV</button>
           </div>
         </div>
       </div>
+
+      <div class="page-section data-section">
+        <div class="section-title">控制指令记录 <span class="count" id="cmdCount"></span></div>
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:90px;">指令编号</th>
+                <th style="width:150px;">时间</th>
+                <th style="width:110px;">设备</th>
+                <th style="width:120px;">指令</th>
+                <th>参数</th>
+                <th style="width:80px;">结果</th>
+                <th style="width:110px;">操作人</th>
+              </tr>
+            </thead>
+            <tbody id="cmdBody"></tbody>
+          </table>
+        </div>
+        <div id="cmdPagination"></div>
+      </div>
+
     </main>
   </div>
 </div>
 
-<!-- ===== 参数设置弹窗 ===== -->
-<div class="modal-overlay" id="paramOverlay"></div>
-<div class="modal-box" id="paramModal">
-  <div class="modal-header">
-    <h3 id="paramTitle">参数设置</h3>
-    <button class="modal-close" onclick="closeParam()">
+<!-- 设备抽屉 -->
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-header">
+    <h3 id="drawerTitle">设备详情</h3>
+    <button class="modal-close" onclick="closeDrawer()">
       <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l8 8M11 3l-8 8"/></svg>
     </button>
   </div>
-  <div class="modal-body">
-    <div class="form-group">
-      <label id="paramLabel">设定值</label>
-      <input type="number" id="paramValue" step="0.01" />
-    </div>
-    <div class="form-group">
-      <label>操作人</label>
-      <select id="paramOperator"></select>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="jg-btn" onclick="closeParam()">取消</button>
-    <button class="jg-btn jg-btn-primary" onclick="submitParam()">确认下发</button>
-  </div>
-</div>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
 
 <script src="js/components/modal.js"></script>
 <script src="js/components/confirm.js"></script>
-<script src="js/shared/device-store.js"></script>
+<script src="js/shared/fungi-store.js"></script>
+<script src="js/shared/fungi-alert-data.js"></script>
 <script src="js/shared/device-ui.js"></script>
 <script>
 /* ============================================================
- * 水肥一体化控制台
- * 数据源：js/shared/device-store.js
- *
- * 控制域（water_fertilizer）：
- *   目标 / 实际 EC、目标 / 实际 pH、阀门开启路数、肥料余量、
- *   水泵状态、过滤状态、回收率、运行模式、流量、压力、当日灌溉量。
- * 所有控制动作均落为「远程指令」，不直接改写设备运行数据，
- * 以保证控制链路可追溯、可回放。
+ * 设备运行监控（可控设备设定值 / 启停 + 指令流水）
+ * 数据源：FungiStore.devices(control:true) / commands；
+ * 联动横幅读取 FungiAlertData.get('FA-261116-01')，未闭环即提示。
+ * 设定值步进即时 FS.update；启停经确认弹窗后写入 commands 并更新状态。
  * ============================================================ */
+var FS = window.FungiStore;
+var FAD = window.FungiAlertData;
+var esc = DeviceUI.esc;
+var STATUS_CLS = { '运行':'online', '待机':'idle', '离线':'offline', '故障':'offline', '联动':'processing', '定时':'warning' };
+var SP_META = {
+  '加湿器':   { unit:'%RH', step:1,   min:60,  max:99 },
+  '新风风机': { unit:'ppm', step:50,  min:400, max:1500 },
+  '冷水机组': { unit:'°C',  step:0.5, min:0,   max:10 },
+  '循环风机': { unit:'min', step:1,   min:5,   max:60 },
+  '照明灯组': { unit:'lx',  step:10,  min:0,   max:500 }
+};
+var OPERATOR = '张才孙';
+var cmdPage = 1, CMD_PAGE_SIZE = 8;
 
-var CONTROL_TYPES = ['water_fertilizer', 'irrigation_controller', 'cold_storage', 'drone_hangar'];
-var currentId = '';
-var pendingParam = null;
-
-function nowStr() {
-  var d = new Date();
-  var p = function (n) { return n < 10 ? '0' + n : n; };
-  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
-    ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+function pad2(n){ return n < 10 ? '0' + n : '' + n; }
+function nowStr(){ var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+function openPage(url, title){ if (window.parent && window.parent !== window && window.parent.openPage) window.parent.openPage(url, title); else location.href = url; }
+function statusTag(s){ return '<span class="status-tag ' + (STATUS_CLS[s] || 'idle') + '">' + esc(s) + '</span>'; }
+function zoneName(id){ var z = FS.list('zones').filter(function(x){ return x.id === id; })[0]; return z ? z.name : id; }
+function spMeta(d){ return SP_META[d.type] || { unit:'', step:1, min:0, max:9999 }; }
+function isRunning(s){ return s === '运行' || s === '联动' || s === '定时'; }
+function openDrawer(title, html){
+  document.getElementById('drawerTitle').textContent = title;
+  document.getElementById('drawerBody').innerHTML = html;
+  document.getElementById('drawer').classList.add('show');
+  document.getElementById('drawerMask').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('show');
+  document.getElementById('drawerMask').classList.remove('show');
 }
 
-function controlDevices() {
-  return DeviceStore.devices().filter(function (d) { return CONTROL_TYPES.indexOf(d.type) >= 0; });
+/* ---------- 联动横幅 ---------- */
+function renderBanner(){
+  var a = FAD.get('FA-261116-01');
+  var el = document.getElementById('linkBanner');
+  if (!a){ el.innerHTML = ''; return; }
+  if (a.status !== 'closed'){
+    el.innerHTML = '<div class="link-banner">' +
+      '<div class="lb-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></div>' +
+      '<div class="lb-main"><div class="lb-title">GF-02 CO₂ 超标 · 新风 XF-02 联动已启动</div>' +
+      '<div class="lb-sub">' + esc(a.id) + ' · ' + esc(a.statusText) + ' · ' + esc(a.time) + ' · 当前 CO₂ 986ppm &gt; 上限 800ppm，XF-02 按联动策略持续换气</div></div>' +
+      '<button class="jg-btn jg-btn-primary" onclick="openPage(\'alert_overview.html\',\'预警管理\')">查看预警</button></div>';
+  } else {
+    el.innerHTML = '<div class="link-banner closed">' +
+      '<div class="lb-icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>' +
+      '<div class="lb-main"><div class="lb-title">GF-02 CO₂ 预警已闭环 · XF-02 联动解除</div>' +
+      '<div class="lb-sub">' + esc(a.id) + ' · 已闭环，新风风机恢复常规运行策略</div></div>' +
+      '<button class="jg-btn" onclick="openPage(\'alert_overview.html\',\'预警管理\')">查看预警</button></div>';
+  }
 }
 
-/* ---------- 左列表 ---------- */
-function renderDeviceList() {
-  var list = controlDevices();
-  var box = document.getElementById('deviceList');
-  if (!list.length) {
-    box.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--text-tertiary);font-size:13px;">暂无可控设备</div>';
+/* ---------- 统计卡 ---------- */
+function renderStats(){
+  var ctrl = FS.list('devices').filter(function(x){ return x.control; });
+  var running = ctrl.filter(function(x){ return isRunning(x.status); }).length;
+  var today = FS.dayKey(0);
+  var todayCmds = FS.list('commands').filter(function(x){ return String(x.time).slice(0,10) === today; }).length;
+  var linked = ctrl.filter(function(x){ return x.status === '联动'; }).length;
+  document.getElementById('statCards').innerHTML =
+    '<div class="stat-card"><div class="stat-label">可控设备</div><div class="stat-value">' + ctrl.length + '<span class="unit">台</span></div>' +
+    '<div class="stat-sub">支持远程设定 / 启停</div></div>' +
+    '<div class="stat-card"><div class="stat-label">运行中</div><div class="stat-value" style="color:#52c41a;">' + running + '<span class="unit">台</span></div>' +
+    '<div class="stat-sub">含联动 / 定时运行</div></div>' +
+    '<div class="stat-card"><div class="stat-label">今日指令</div><div class="stat-value">' + todayCmds + '<span class="unit">条</span></div>' +
+    '<div class="stat-sub">含系统联动自动下发</div></div>' +
+    '<div class="stat-card"><div class="stat-label">联动生效</div><div class="stat-value" style="color:' + (linked ? '#fa8c16' : 'inherit') + ';">' + linked + '<span class="unit">项</span></div>' +
+    '<div class="stat-sub">' + (linked ? 'XF-02 新风联动运行中' : '当前无联动策略生效') + '</div></div>';
+}
+
+/* ---------- 可控设备表 ---------- */
+function renderCtrl(){
+  var ctrl = FS.list('devices').filter(function(x){ return x.control; });
+  document.getElementById('ctrlCount').textContent = '共 ' + ctrl.length + ' 台 · 设定值修改即时保存';
+  var body = document.getElementById('ctrlBody');
+  if (!ctrl.length){
+    body.innerHTML = '<tr class="empty-row"><td colspan="6">暂无可控设备</td></tr>';
     return;
   }
-  box.innerHTML = list.map(function (d) {
-    return '<div class="dev-item' + (d.id === currentId ? ' active' : '') + '" onclick="selectDevice(\'' + d.id + '\')">' +
-      '<span class="dot ' + d.status + '"></span>' +
-      '<div style="flex:1;min-width:0;">' +
-        '<div class="di-name">' + DeviceUI.esc(d.name) + '</div>' +
-        '<div class="di-meta">' + DeviceUI.esc(d.id) + ' · ' + DeviceUI.esc(DeviceStore.typeName(d.type)) + '</div>' +
-      '</div>' +
-    '</div>';
+  body.innerHTML = ctrl.map(function(d){
+    var m = spMeta(d);
+    var disabled = d.status === '离线' || d.status === '故障';
+    var run = isRunning(d.status);
+    var startStop = disabled
+      ? '<button class="action-btn stop" disabled title="设备' + esc(d.status) + '，无法下发指令">不可用</button>'
+      : (run
+        ? '<button class="action-btn stop" onclick="event.stopPropagation();toggleRun(\'' + esc(d.id) + '\',false)">停止</button>'
+        : '<button class="action-btn start" onclick="event.stopPropagation();toggleRun(\'' + esc(d.id) + '\',true)">启动</button>');
+    return '<tr class="clickable" onclick="openDeviceDrawer(\'' + esc(d.id) + '\')">' +
+      '<td><strong>' + esc(d.id) + '</strong></td>' +
+      '<td>' + esc(d.name) + '</td>' +
+      '<td>' + esc(d.location) + '</td>' +
+      '<td>' + statusTag(d.status) + '</td>' +
+      '<td onclick="event.stopPropagation();">' +
+        '<div class="stepper">' +
+          '<button onclick="stepSetpoint(\'' + esc(d.id) + '\',-1)" ' + (disabled ? 'disabled' : '') + '>−</button>' +
+          '<input type="number" id="sp-' + esc(d.id) + '" value="' + (d.setpoint != null ? d.setpoint : '') + '" step="' + m.step + '" min="' + m.min + '" max="' + m.max + '" ' + (disabled ? 'disabled' : '') + ' onchange="commitSetpoint(\'' + esc(d.id) + '\',this.value)">' +
+          '<button onclick="stepSetpoint(\'' + esc(d.id) + '\',1)" ' + (disabled ? 'disabled' : '') + '>+</button>' +
+          '<span class="sp-unit">' + m.unit + '</span>' +
+        '</div>' +
+        '<div class="sp-range">范围 ' + m.min + '–' + m.max + m.unit + ' · 步进 ' + m.step + '</div>' +
+      '</td>' +
+      '<td onclick="event.stopPropagation();"><div class="action-btns">' + startStop +
+        '<button class="action-btn detail" onclick="openDeviceDrawer(\'' + esc(d.id) + '\')">详情</button>' +
+      '</div></td></tr>';
   }).join('');
 }
-
-/* ---------- 右控制台 ---------- */
-function selectDevice(id) {
-  currentId = id;
-  renderDeviceList();
-  var d = DeviceStore.deviceOf(id);
+function stepSetpoint(id, dir){
+  var d = FS.get('devices', id);
   if (!d) return;
-  var r = DeviceStore.readingsOf(id);
-  document.getElementById('ctrlTitle').textContent = d.name;
-  document.getElementById('ctrlBadge').innerHTML = DeviceUI.statusTag(
-    d.status === 'online' ? 'online' : d.status === 'offline' ? 'offline' : 'warning',
-    DeviceStore.RUN_STATUS_TEXT[d.status] + ' · ' + d.id);
-
-  document.getElementById('metricGrid').innerHTML = buildMetrics(d, r);
-  document.getElementById('ctrlActions').innerHTML = buildActions(d);
-  renderCommands();
+  var m = spMeta(d);
+  var v = (d.setpoint != null ? d.setpoint : m.min) + dir * m.step;
+  v = Math.max(m.min, Math.min(m.max, +v.toFixed(2)));
+  FS.update('devices', id, { setpoint: v });
+  FS.add('commands', { device: id, action: '设定' + (d.type === '加湿器' ? '湿度' : d.type === '冷水机组' ? '温度' : '参数'), value: v + m.unit, result: '成功', operator: OPERATOR, time: nowStr() });
+  DeviceUI.toast(d.name + ' 设定值已下发：' + v + m.unit, 'success');
+  refreshAll();
 }
-
-function metric(label, value, unit, sub, offline) {
-  return '<div class="metric' + (offline ? ' off' : '') + '">' +
-    '<div class="m-label">' + label + '</div>' +
-    '<div class="m-value">' + value + (unit ? '<small>' + unit + '</small>' : '') + '</div>' +
-    '<div class="m-sub">' + (sub || '') + '</div>' +
-  '</div>';
-}
-
-function buildMetrics(d, r) {
-  if (!r) {
-    return metric('实时数据', '—', '', '设备离线或未上报，控制功能已锁定', true) +
-      metric('通信状态', '离线', '', '最近在线 ' + (d.lastOnline || '—'), true) +
-      metric('累计运行', Math.round(Number(d.runHours) || 0).toLocaleString(), 'h', '可用率 ' + (d.uptimeRate || 0) + '%', true);
-  }
-  if (d.type === 'water_fertilizer') {
-    return metric('实际 EC', r.actualEc, 'mS/cm', '目标 ' + r.targetEc) +
-      metric('实际 pH', r.actualPh, '', '目标 ' + r.targetPh) +
-      metric('开启阀门', r.valveOpen + ' / ' + r.valveTotal, '路', '灌溉分区') +
-      metric('肥料余量', r.fertRemain, '%', '低于 20% 需补料') +
-      metric('水泵状态', r.pumpState, '', '过滤 ' + r.filterState) +
-      metric('回收率', r.recycleRate, '%', '尾水回收利用') +
-      metric('运行模式', r.runMode, '', '流量 ' + r.flowRate + ' m³/h') +
-      metric('管道压力', r.pressure, 'MPa', '当日灌溉 ' + r.irrigatedToday + ' m³');
-  }
-  if (d.type === 'cold_storage') {
-    return metric('库温', r.storeTemp, '℃', '适温 0~4℃') +
-      metric('库湿', r.storeHum, '%RH', '适湿 85%~95%') +
-      metric('压缩机', r.compressState, '', '制冷机组') +
-      metric('化霜', r.defrostState, '', '定时化霜') +
-      metric('库门', r.doorState, '', '门磁状态') +
-      metric('累计运行', Math.round(Number(d.runHours) || 0).toLocaleString(), 'h', '可用率 ' + d.uptimeRate + '%');
-  }
-  return metric('设备状态', DeviceStore.RUN_STATUS_TEXT[d.status], '', '已上报 ' + Object.keys(r).length + ' 个测点') +
-    metric('累计运行', Math.round(Number(d.runHours) || 0).toLocaleString(), 'h', '可用率 ' + (d.uptimeRate || 0) + '%');
-}
-
-function buildActions(d) {
-  var offline = d.status === 'offline' || !DeviceStore.readingsOf(d.id);
-  var btn = function (title, desc, cmd, cls, arg) {
-    return '<button class="ctrl-btn ' + (cls || '') + '"' + (offline ? ' disabled' : '') +
-      ' onclick="issue(\'' + cmd + '\'' + (arg ? ',\'' + arg + '\'' : '') + ')">' +
-      '<div class="cb-title">' + title + '</div><div class="cb-desc">' + desc + '</div></button>';
-  };
-  if (d.type === 'water_fertilizer') {
-    return btn('启动灌溉', '按当前目标 EC / pH 自动配肥', '启动灌溉', 'primary') +
-      btn('停止灌溉', '关闭全部电磁阀并停泵', '停止灌溉', 'danger') +
-      btn('调整目标 EC', '设定灌溉液电导率', '调整目标EC', '') +
-      btn('调整目标 pH', '设定灌溉液酸碱度', '调整目标pH', '') +
-      btn('自动 / 手动', '切换运行模式', '切换运行模式', '') +
-      btn('一键冲洗', '反冲洗过滤器与管路', '一键冲洗', '');
-  }
-  if (d.type === 'cold_storage') {
-    return btn('设置目标库温', '调整冷库制冷温度', '设置库温', 'primary') +
-      btn('强制化霜', '立即执行一次化霜', '强制化霜', '') +
-      btn('开启制冷', '启动压缩机组', '开启制冷', '') +
-      btn('停止制冷', '停止压缩机组', '停止制冷', 'danger');
-  }
-  if (d.type === 'irrigation_controller') {
-    return btn('开启全部阀门', '按分区依次开启', '开启全部阀门', 'primary') +
-      btn('关闭全部阀门', '立即停止灌溉', '关闭全部阀门', 'danger') +
-      btn('上报采集', '召测一次实时数据', '采集指令', '');
-  }
-  return btn('下发采集指令', '召测一次实时数据', '采集指令', 'primary') +
-    btn('远程重启', '重启设备通信模组', '远程重启', 'danger');
-}
-
-/* ---------- 指令下发 ---------- */
-function issue(cmd, arg) {
-  var d = DeviceStore.deviceOf(currentId);
+function commitSetpoint(id, raw){
+  var d = FS.get('devices', id);
   if (!d) return;
-  if (cmd === '调整目标EC') { openParam('目标 EC（mS/cm）', 1.8, cmd, 0.1); return; }
-  if (cmd === '调整目标pH') { openParam('目标 pH', 6.2, cmd, 0.05); return; }
-  if (cmd === '设置库温') { openParam('目标库温（℃）', 2.5, cmd, 0.1); return; }
-  var content = arg ? (cmd + '：' + arg) : cmd;
-  pushCommand(d, '开关控制', content);
+  var m = spMeta(d);
+  var v = Number(raw);
+  if (raw === '' || isNaN(v)){ DeviceUI.toast('请输入有效数值', 'error'); renderCtrl(); return; }
+  if (v < m.min || v > m.max){ DeviceUI.toast('设定值需在 ' + m.min + '–' + m.max + m.unit + ' 范围内', 'error'); renderCtrl(); return; }
+  if (v === d.setpoint) return;
+  FS.update('devices', id, { setpoint: v });
+  FS.add('commands', { device: id, action: '设定' + (d.type === '加湿器' ? '湿度' : d.type === '冷水机组' ? '温度' : '参数'), value: v + m.unit, result: '成功', operator: OPERATOR, time: nowStr() });
+  DeviceUI.toast(d.name + ' 设定值已下发：' + v + m.unit, 'success');
+  refreshAll();
 }
-
-function openParam(label, def, cmd, step) {
-  pendingParam = cmd;
-  document.getElementById('paramTitle').textContent = cmd;
-  document.getElementById('paramLabel').textContent = label;
-  var input = document.getElementById('paramValue');
-  input.value = def;
-  input.step = step;
-  DeviceUI.fillSelect('paramOperator', DeviceUI.operatorOptions(), '请选择操作人');
-  document.getElementById('paramOverlay').classList.add('show');
-  document.getElementById('paramModal').classList.add('show');
-}
-
-function closeParam() {
-  document.getElementById('paramOverlay').classList.remove('show');
-  document.getElementById('paramModal').classList.remove('show');
-}
-
-function submitParam() {
-  var d = DeviceStore.deviceOf(currentId);
-  var v = document.getElementById('paramValue').value;
-  if (v === '') { DeviceUI.toast('请填写设定值', 'error'); return; }
-  pushCommand(d, '参数下发', pendingParam + '：' + v, document.getElementById('paramOperator').value);
-  closeParam();
-}
-
-function pushCommand(d, type, content, operator) {
+function toggleRun(id, start){
+  var d = FS.get('devices', id);
   if (!d) return;
-  var now = new Date();
-  var datePart = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
-  var seq = DeviceStore.commands().filter(function (c) { return (c.id || '').indexOf('CMD-' + datePart) === 0; }).length + 1;
-  var item = {
-    id: 'CMD-' + datePart + '-' + String(seq).padStart(3, '0'),
-    deviceId: d.id,
-    type: type,
-    createTime: nowStr(),
-    status: d.status === 'offline' ? 'failed' : 'pending',
-    operator: operator || '当前用户',
-    content: content,
-    remark: d.status === 'offline' ? '设备离线，指令未能送达' : '',
-    finishTime: d.status === 'offline' ? nowStr() : ''
-  };
-  var check = DeviceStore.validate('command', item, null);
-  if (!check.ok) { DeviceUI.toast(check.message, 'error'); return; }
-  DeviceStore.upsertCommand(item);
-  DeviceStore.appendLog({
-    deviceId: d.id, level: 'info', type: '控制指令', source: '平台',
-    content: '下发控制指令：' + content,
-    traceId: 'TR-' + item.id.replace(/[^0-9]/g, '').slice(0, 12)
+  var verb = start ? '启动' : '停止';
+  Modal.confirm('确定' + verb + '设备「' + d.name + '（' + id + '）」吗？指令将立即下发并记录。', {
+    title: verb + '确认',
+    confirmText: verb,
+    danger: !start
+  }).then(function(ok){
+    if (!ok) return;
+    FS.add('commands', { device: id, action: verb, value: '—', result: '成功', operator: OPERATOR, time: nowStr() });
+    FS.update('devices', id, { status: start ? '运行' : '待机' });
+    DeviceUI.toast(d.name + ' 已' + verb, 'success');
+    refreshAll();
   });
-  if (item.status === 'failed') DeviceUI.toast('设备离线，指令已记录未送达', 'error');
-  else DeviceUI.toast('指令已下发，等待设备回执', 'success');
-  renderCommands();
+}
+function openDeviceDrawer(id){
+  var d = FS.get('devices', id);
+  if (!d) return;
+  var m = spMeta(d);
+  var cmds = FS.list('commands').filter(function(x){ return x.device === id; });
+  var rows = [
+    ['设备编号', d.id], ['设备名称', d.name], ['设备类型', d.type],
+    ['安装位置', d.location + ' · ' + zoneName(d.location)],
+    ['运行状态', statusTag(d.status), 'raw'],
+    ['当前设定值', (d.setpoint != null ? d.setpoint : '—') + ' ' + m.unit],
+    ['设定范围', m.min + '–' + m.max + m.unit + '（步进 ' + m.step + '）'],
+    ['设备型号', d.model || '—'], ['生产厂家', d.maker || '—']
+  ];
+  var html = '<div class="drawer-section">运行参数</div><div class="detail-info">' +
+    rows.map(function(r){
+      return '<div class="detail-row"><span class="detail-label">' + r[0] + '</span><span class="detail-value">' + (r[2] === 'raw' ? r[1] : esc(r[1])) + '</span></div>';
+    }).join('') + '</div>';
+  html += '<div class="drawer-section">指令历史（' + cmds.length + '）</div>';
+  html += cmds.length ? cmds.map(function(c){
+    return '<div class="detail-row" style="border-bottom:1px dashed var(--border-default);"><span class="detail-label">' + esc(c.time) + '</span>' +
+      '<span class="detail-value">' + esc(c.action) + ' · ' + esc(c.value) + ' · <span class="' + (c.result === '成功' ? 'result-ok' : 'result-fail') + '">' + esc(c.result) + '</span> · ' + esc(c.operator) + '</span></div>';
+  }).join('') : '<div style="font-size:12.5px;color:var(--text-tertiary);">暂无指令记录</div>';
+  openDrawer('运行监控 · ' + d.name, html);
 }
 
-/* ---------- 指令列表 ---------- */
-function renderCommands() {
-  var list = DeviceStore.commands().filter(function (c) { return c.deviceId === currentId; })
-    .sort(function (a, b) { return (b.createTime || '').localeCompare(a.createTime || ''); }).slice(0, 10);
+/* ---------- 指令记录 ---------- */
+function cmdFiltered(){
+  var dev = document.getElementById('cmdDeviceSelect').value;
+  var res = document.getElementById('cmdResultSelect').value;
+  var kw = document.getElementById('cmdSearch').value.trim().toLowerCase();
+  return FS.list('commands').filter(function(x){
+    if (dev && x.device !== dev) return false;
+    if (res && x.result !== res) return false;
+    if (kw){
+      var hay = [x.id, x.device, x.action, x.value, x.operator, x.result].join(' ').toLowerCase();
+      if (hay.indexOf(kw) < 0) return false;
+    }
+    return true;
+  });
+}
+function renderCmds(){
+  var list = cmdFiltered();
+  var totalPages = Math.max(1, Math.ceil(list.length / CMD_PAGE_SIZE));
+  if (cmdPage > totalPages) cmdPage = totalPages;
+  var pageData = list.slice((cmdPage-1)*CMD_PAGE_SIZE, cmdPage*CMD_PAGE_SIZE);
+  document.getElementById('cmdCount').textContent = '共 ' + list.length + ' 条';
   var body = document.getElementById('cmdBody');
-  if (!list.length) {
-    body.innerHTML = '<tr class="empty-row"><td colspan="6">该设备暂无控制指令</td></tr>';
-    return;
+  if (!pageData.length){
+    body.innerHTML = '<tr class="empty-row"><td colspan="7">暂无符合条件的指令记录</td></tr>';
+  } else {
+    body.innerHTML = pageData.map(function(c){
+      return '<tr>' +
+        '<td><strong>' + esc(c.id) + '</strong></td>' +
+        '<td>' + esc(c.time) + '</td>' +
+        '<td>' + esc(c.device) + '</td>' +
+        '<td>' + esc(c.action) + '</td>' +
+        '<td>' + esc(c.value) + '</td>' +
+        '<td><span class="' + (c.result === '成功' ? 'result-ok' : 'result-fail') + '">' + esc(c.result) + '</span></td>' +
+        '<td>' + esc(c.operator) + '</td></tr>';
+    }).join('');
   }
-  body.innerHTML = list.map(function (c) {
-    var state = c.status === 'success' ? 'online' : c.status === 'failed' ? 'offline' : 'warning';
-    return '<tr>' +
-      '<td style="font-family:Consolas,monospace;font-size:11.5px;color:#2b6cb0;">' + DeviceUI.esc(c.id) + '</td>' +
-      '<td>' + DeviceUI.esc(c.type) + '</td>' +
-      '<td>' + DeviceUI.esc(c.content) + '</td>' +
-      '<td style="font-size:12px;">' + DeviceUI.esc(c.createTime) + '</td>' +
-      '<td>' + DeviceUI.statusTag(state, DeviceStore.COMMAND_STATUS_TEXT[c.status] || c.status) + '</td>' +
-      '<td>' + DeviceUI.esc(c.operator) + '</td>' +
-    '</tr>';
-  }).join('');
+  var pg = '<div class="pagination">';
+  pg += '<button class="page-btn ' + (cmdPage <= 1 ? 'disabled' : '') + '" onclick="gotoCmdPage(' + (cmdPage-1) + ')">‹</button>';
+  for (var i = 1; i <= totalPages; i++){
+    pg += '<button class="page-btn ' + (i === cmdPage ? 'active' : '') + '" onclick="gotoCmdPage(' + i + ')">' + i + '</button>';
+  }
+  pg += '<button class="page-btn ' + (cmdPage >= totalPages ? 'disabled' : '') + '" onclick="gotoCmdPage(' + (cmdPage+1) + ')">›</button>';
+  pg += '<span style="margin-left:16px;font-size:13px;color:#6b7b6b;">第 ' + cmdPage + ' 页/共 ' + totalPages + ' 页，共 ' + list.length + ' 条记录</span></div>';
+  document.getElementById('cmdPagination').innerHTML = pg;
+}
+function gotoCmdPage(n){
+  var totalPages = Math.max(1, Math.ceil(cmdFiltered().length / CMD_PAGE_SIZE));
+  if (n < 1 || n > totalPages) return;
+  cmdPage = n; renderCmds();
+}
+function resetCmdFilter(){
+  document.getElementById('cmdDeviceSelect').value = '';
+  document.getElementById('cmdResultSelect').value = '';
+  document.getElementById('cmdSearch').value = '';
+  cmdPage = 1; renderCmds();
+  DeviceUI.toast('已重置筛选条件', 'info');
+}
+function exportCommands(){
+  var headers = ['指令编号','时间','设备','指令','参数','结果','操作人'];
+  var rows = cmdFiltered().map(function(c){ return [c.id, c.time, c.device, c.action, c.value, c.result, c.operator]; });
+  DeviceUI.exportCsv('控制指令记录', headers, rows);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  var list = controlDevices();
-  currentId = list.length ? list[0].id : '';
-  renderDeviceList();
-  if (currentId) selectDevice(currentId);
-  else {
-    document.getElementById('metricGrid').innerHTML = metric('暂无可控设备', '—', '', '请先在设备台账中登记控制类设备', true);
-    document.getElementById('cmdBody').innerHTML = '<tr class="empty-row"><td colspan="6">暂无数据</td></tr>';
-  }
-
-  DeviceStore.subscribe(function (reason) {
-    if (reason === 'init') return;
-    renderDeviceList();
-    if (currentId) selectDevice(currentId);
-  });
+/* ---------- 刷新 / 初始化 ---------- */
+function refreshAll(){ renderBanner(); renderStats(); renderCtrl(); renderCmds(); }
+document.addEventListener('DOMContentLoaded', function(){
+  var devs = {};
+  FS.list('commands').forEach(function(c){ devs[c.device] = true; });
+  FS.list('devices').filter(function(d){ return d.control; }).forEach(function(d){ devs[d.id] = true; });
+  DeviceUI.fillSelect('cmdDeviceSelect', Object.keys(devs).sort(), '全部设备');
+  refreshAll();
+  document.getElementById('cmdDeviceSelect').addEventListener('change', function(){ cmdPage = 1; renderCmds(); });
+  document.getElementById('cmdResultSelect').addEventListener('change', function(){ cmdPage = 1; renderCmds(); });
+  document.getElementById('cmdSearch').addEventListener('input', function(){ cmdPage = 1; renderCmds(); });
+  window.addEventListener('fungiAlertChange', renderBanner);
 });
 </script>
 <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>

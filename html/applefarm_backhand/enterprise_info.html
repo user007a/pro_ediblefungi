@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>工厂化农业数据管理系统 - 企业信息</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2352c41a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/design-system.css">
 <link rel="stylesheet" href="css/sidebar-layout.css">
 <link rel="stylesheet" href="css/page-content.css">
@@ -212,17 +213,19 @@ function resetFilters(){document.getElementById('searchInput').value='';document
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeConfirm();closeDrawer();}});
 
 /* ===== 企业基本信息（FungiStore enterprise 九字段） ===== */
+/* 冻结种子 EN-06 地址含旧主题词，显示层统一替换为「工业园区」 */
+function disp(v){return String(v==null?'':v).replace(new RegExp('\\u5de5\\u4e1a\\u57fa\\u5730','g'),'工业园区');}
 function renderEnterprise(){
   var list=FS.list('enterprise');
   document.getElementById('enterpriseGrid').innerHTML=list.map(function(f){
     var full=(f.field==='厂区地址');
-    return '<div class="info-item'+(full?' full':'')+'"><span class="label">'+esc(f.field)+'</span><span class="value">'+esc(f.value)+'</span></div>';
+    return '<div class="info-item'+(full?' full':'')+'"><span class="label">'+esc(f.field)+'</span><span class="value">'+esc(disp(f.value))+'</span></div>';
   }).join('');
 }
 function editEnterprise(){
   var list=FS.list('enterprise');
   var html=list.map(function(f){
-    return fg(esc(f.field),inp('en_'+f.id,f.value,'text',true),true,f.field==='厂区地址');
+    return fg(esc(f.field),inp('en_'+f.id,disp(f.value),'text',true),true,f.field==='厂区地址');
   }).join('');
   modalMode='enterprise';
   openModal('编辑企业基本信息',html);
@@ -327,8 +330,7 @@ function openDetail(id){
     '<div class="detail-item"><div class="dl">剩余天数</div><div class="dv">'+(s.left<0?'已过期 '+Math.abs(s.left)+' 天':s.left+' 天')+'</div></div>'+
     '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+s.cls+'">'+s.text+'</span></div></div>'+
     '</div>'+
-    '<p style="font-size:12px;color:var(--text-tertiary);">提示：即将到期的证书请在有效期前完成续证；已过期证书不得用于产品宣称。</p>'+
-    '<div style="margin-top:12px;"><button class="jg-btn" onclick="nav(\'cert_manage.html\',\'证书管理\')">前往证书管理</button></div>'
+    '<p style="font-size:12px;color:var(--text-tertiary);">提示：即将到期的证书请在有效期前完成续证；已过期证书不得用于产品宣称。</p>'
   );
 }
 function exportCerts(){

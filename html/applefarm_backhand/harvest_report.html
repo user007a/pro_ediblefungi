@@ -3,27 +3,69 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智慧果园 - 采收日报</title>
-<!-- 使用设计系统: Design System v2.0 + sidebar-layout -->
+<title>工厂化农业数据管理系统 - 高压灭菌</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2352c41a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/design-system.css">
 <link rel="stylesheet" href="css/sidebar-layout.css">
 <link rel="stylesheet" href="css/page-content.css">
 <style>
-  #pagination-container { padding:12px 16px; }
-  .stat-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:16px; }
-  .stat-card { background:var(--bg-card, #fff); border:1px solid var(--border-color, #e8ece8); border-radius:var(--radius-card, 12px); padding:16px 18px; }
-  .stat-label { font-size:12px; color:var(--text-tertiary); margin-bottom:6px; }
-  .stat-value { font-size:22px; font-weight:600; line-height:1.2; }
-  .stat-value small { font-size:12px; font-weight:400; color:var(--text-tertiary); margin-left:4px; }
-  .stat-sub { margin-top:6px; font-size:12px; color:var(--text-tertiary); }
-  @media (max-width: 1100px) { .stat-grid { grid-template-columns:repeat(2, 1fr); } }
-  .tabs { margin-bottom:16px; }
-  .muted { color:var(--text-tertiary); font-size:12px; }
-  .text-right { text-align:right; }
+  .page-head{margin-bottom:16px;}
+  .page-head h1{font-size:18px;font-weight:700;margin:0;color:var(--text-primary);}
+  .page-head .crumb{font-size:12px;color:var(--text-tertiary);margin-top:4px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;}
+  .stat-card{background:var(--bg-card,#fff);border:1px solid var(--border-color,#e8ece8);border-radius:12px;padding:16px 18px;border-left:4px solid #1890ff;}
+  .stat-card.green{border-left-color:#52c41a;}
+  .stat-card.orange{border-left-color:#fa8c16;}
+  .stat-card.red{border-left-color:#ff4d4f;}
+  .stat-label{font-size:12px;color:var(--text-tertiary);margin-bottom:6px;}
+  .stat-value{font-size:22px;font-weight:600;line-height:1.2;}
+  .stat-value small{font-size:12px;font-weight:400;color:var(--text-tertiary);margin-left:4px;}
+  .stat-sub{margin-top:6px;font-size:12px;color:var(--text-tertiary);}
+  @media(max-width:1100px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+  th.sortable:hover{color:#1890ff;}
+  .sort-arrow{font-size:10px;margin-left:3px;color:#1890ff;}
+  .empty-cell{text-align:center;color:var(--text-tertiary);padding:32px 0!important;}
+  .row-btn{padding:3px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-default,#d9d9d9);background:#fff;color:var(--text-secondary,#555);cursor:pointer;margin-right:6px;white-space:nowrap;}
+  .row-btn:hover{border-color:#1890ff;color:#1890ff;}
+  .row-btn.danger{color:#ff4d4f;border-color:#ffccc7;}
+  .row-btn.danger:hover{background:#fff2f0;}
+  .row-btn.primary{color:#1890ff;border-color:#91d5ff;}
+  .row-btn.ok{color:#389e0d;border-color:#b7eb8f;}
+  .drawer-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;}
+  .drawer-mask.show{display:block;}
+  .drawer{position:fixed;top:0;right:-620px;width:600px;max-width:96vw;height:100vh;background:#fff;z-index:9999;box-shadow:-8px 0 32px rgba(0,0,0,.15);transition:right .25s ease;display:flex;flex-direction:column;}
+  .drawer.open{right:0;}
+  .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .drawer-header h3{margin:0;font-size:16px;font-weight:600;color:var(--text-primary);}
+  .drawer-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .drawer-close:hover{background:#f5f5f5;color:#333;}
+  .drawer-body{padding:20px 24px;overflow-y:auto;flex:1;}
+  .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 20px;margin-bottom:16px;}
+  .detail-item.full{grid-column:1/-1;}
+  .detail-item .dl{font-size:12px;color:var(--text-tertiary);margin-bottom:2px;}
+  .detail-item .dv{font-size:14px;color:var(--text-primary);font-weight:500;word-break:break-all;}
+  .drawer-sec{font-size:13px;font-weight:600;color:var(--text-primary);margin:18px 0 10px;padding-left:8px;border-left:3px solid #1890ff;}
+  .chart-box{background:#fff;border:1px solid #e8ece8;border-radius:10px;padding:12px;}
+  .chart-legend{display:flex;gap:16px;font-size:12px;color:var(--text-tertiary);margin-top:6px;flex-wrap:wrap;}
+  .chart-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;}
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{width:560px;max-width:92vw;max-height:86vh;background:#fff;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .modal-header h3{font-size:16px;font-weight:600;margin:0;}
+  .modal-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .modal-body{padding:20px 24px;overflow-y:auto;}
+  .form-group{margin-bottom:14px;}
+  .form-group.full{grid-column:1/-1;}
+  .form-group label{display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;}
+  .form-group label .req{color:#ff4d4f;margin-left:2px;}
+  #modal .modal-body input,#modal .modal-body select,#modal .modal-body textarea{width:100%;padding:9px 12px;border:1.5px solid #d9d9d9;border-radius:8px;font-size:13px!important;background:#fff;outline:none;font-family:inherit;box-sizing:border-box;}
+  #modal .modal-body input:focus,#modal .modal-body select:focus{border-color:#1890ff;box-shadow:0 0 0 3px rgba(24,144,255,.1);}
+  .modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:14px 24px;border-top:1px solid #eef1ef;flex:none;}
+  .toast-undo{display:none;padding:3px 12px;border-radius:6px;border:1px solid currentColor;background:rgba(255,255,255,.6);font-size:12px;font-weight:600;cursor:pointer;color:inherit;}
 </style>
-<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
-  .main-wrapper{margin-left:0!important;width:100%!important;}
-</style>
+<style id="standalone-fix">.main-wrapper{margin-left:0!important;width:100%!important;}</style>
 <link rel="stylesheet" href="css/unified-theme.css">
 <link rel="stylesheet" href="css/typography.css">
 </head>
@@ -31,338 +73,356 @@
 
 <div class="app-layout">
   <div class="main-wrapper">
+    <div class="tab-bar"><div class="tab-bar-actions"><button class="tab-close-all" title="关闭全部标签"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg></button></div></div>
+    <main class="main-content"><div class="content-wrapper">
 
-    <div class="tab-bar">
-      <div class="tab-bar-actions">
-        <button class="tab-close-all" title="关闭全部标签">
-          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 3L11 11M11 3L3 11"/>
-          </svg>
-        </button>
+      <div class="page-head">
+        <h1>高压灭菌</h1>
+        <div class="crumb">生产管理 / 高压灭菌 · 灭菌锅次、温度曲线与人工复判</div>
       </div>
-    </div>
 
-    <main class="main-content">
-      <div class="content-wrapper">
+      <div class="stat-grid" id="statGrid"></div>
 
-        <!-- 搜索栏区 -->
-        <div class="page-section search-section">
-          <div class="search-bar">
-            <select class="search-select" id="baseSelect">
-              <option value="">全部基地</option>
-            </select>
-            <input type="date" class="search-input date-input" id="startDate" placeholder="开始日期">
-            <span class="date-separator">至</span>
-            <input type="date" class="search-input date-input" id="endDate" placeholder="结束日期">
-            <input type="text" class="search-input" placeholder="搜索批次、地块或品种..." id="searchInput">
-            <div class="search-actions">
-              <button class="jg-btn jg-btn-primary" onclick="handleSearch()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-                </svg>搜索
-              </button>
-              <button class="jg-btn" onclick="smartReset()">重置</button>
-            </div>
+      <div class="page-section search-section">
+        <div class="search-bar">
+          <select class="search-select" id="filterSelect" onchange="renderTable()">
+            <option value="">全部锅号</option>
+          </select>
+          <select class="search-select" id="reviewFilter" onchange="renderTable()">
+            <option value="">全部复判</option>
+            <option value="待复判">待复判</option>
+            <option value="通过">通过</option>
+            <option value="报废">报废</option>
+          </select>
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索灭菌单、批次、操作人..." oninput="renderTable()">
+          <div class="search-actions">
+            <button class="jg-btn" onclick="resetFilters()">重置</button>
           </div>
         </div>
+      </div>
 
-        <!-- 统计卡片 -->
-        <div class="page-section">
-          <div class="stat-grid" id="statGrid"></div>
+      <div class="page-section action-bar">
+        <div class="action-left">
+          <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openStForm()">+ 新建灭菌单</button>
+          <button class="jg-btn" id="exportBtn" onclick="exportSt()">导出CSV</button>
+          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete('sterilize','灭菌单')">批量删除</button>
+          <span class="selected-info" id="selInfo"></span>
         </div>
-
-        <!-- Tab 切换 -->
-        <div class="tabs" id="reportTabs">
-          <div class="tab-item active" data-tab="daily">采收日报</div>
-          <div class="tab-item" data-tab="recon">批次对账</div>
-        </div>
-
-        <!-- 操作按钮区 -->
-        <div class="page-section action-bar">
-          <button class="jg-btn" onclick="exportView()">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
-              <path d="M3 10L8 15L13 10"/><path d="M8 15V3"/>
-            </svg>
-            导出当前视图
-          </button>
-          <label id="abnormalOnlyWrap" style="display:none;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);margin-left:8px;">
-            <input type="checkbox" id="abnormalOnly" onchange="handleSearch()">
-            仅看对账异常
-          </label>
-        </div>
-
-        <!-- 数据列表区 -->
-        <div class="page-section data-section">
-          <div class="data-table-wrapper">
-            <table class="data-table">
-              <thead id="reportThead"></thead>
-              <tbody id="dataTableBody"></tbody>
-            </table>
-          </div>
-          <div id="pagination-container"></div>
+        <div class="action-right">
+          <button class="jg-btn" onclick="nav('alert_overview.html','预警总览')">预警联动</button>
         </div>
       </div>
-    </main>
+
+      <div class="page-section data-section">
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+                <th class="sortable" data-key="id" onclick="sortBy('id')">灭菌单<span class="sort-arrow"></span></th>
+                <th>锅号</th>
+                <th>批次</th>
+                <th class="sortable" data-key="bags" onclick="sortBy('bags')">袋数<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="hold" onclick="sortBy('hold')">保温min<span class="sort-arrow"></span></th>
+                <th class="sortable" data-key="peak" onclick="sortBy('peak')">峰值°C<span class="sort-arrow"></span></th>
+                <th>操作人</th>
+                <th>复判</th>
+                <th>状态</th>
+                <th class="sortable" data-key="time" onclick="sortBy('time')">时间<span class="sort-arrow"></span></th>
+                <th style="width:210px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div></main>
   </div>
 </div>
 
-<!-- 引入交互脚本 -->
-<script src="js/common-functions.js"></script>
-<script src="js/export-helper.js"></script>
-<script src="js/shared/harvest-store.js"></script>
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header"><h3 id="drawerTitle">详情</h3><button class="drawer-close" id="drawerClose" onclick="closeDrawer()">×</button></div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header"><h3 id="modalTitle">编辑</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeModal()">取消</button><button class="jg-btn jg-btn-primary" id="modalSave" onclick="saveModal()">保存</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal-box" style="width:420px;">
+    <div class="modal-header"><h3>操作确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
+    <div class="modal-body"><p id="confirmText" style="margin:0;font-size:14px;color:var(--text-primary);"></p></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="doConfirm()">确认</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="toast-message" id="toastMessage"></span><button class="toast-undo" id="toastUndo">撤销</button></div>
+
+<script src="js/shared/fungi-store.js"></script>
+<script src="js/shared/fungi-alert-data.js"></script>
 <script>
-// 采收日报 / 批次对账：数据全部来自共享数据源 harvest-store.js
-let currentTab = 'daily';
+var FS = window.FungiStore;
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function today(){return FS.dayKey(0);}
+function nowHM(){var d=new Date();return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+function nowStamp(){return today()+' '+nowHM();}
+function nav(url,title){try{if(window.parent&&window.parent!==window&&typeof window.parent.openPage==='function'){window.parent.openPage(url,title);return;}}catch(e){}location.href=url;}
+var toastTimer=null;
+function showToast(msg,type,undoFn){var t=document.getElementById('toast');document.getElementById('toastMessage').textContent=msg;t.className='toast toast-'+(type||'success')+' show';var ub=document.getElementById('toastUndo');if(undoFn){ub.style.display='inline-block';ub.onclick=function(){hideToast();undoFn();};}else{ub.style.display='none';ub.onclick=null;}clearTimeout(toastTimer);toastTimer=setTimeout(hideToast,undoFn?6000:2600);}
+function hideToast(){document.getElementById('toast').classList.remove('show');}
+function openModal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.add('show');}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+var confirmCb=null;
+function askConfirm(msg,cb){document.getElementById('confirmText').textContent=msg;confirmCb=cb;document.getElementById('confirmModal').classList.add('show');}
+function doConfirm(){var cb=confirmCb;closeConfirm();if(cb)cb();}
+function closeConfirm(){confirmCb=null;document.getElementById('confirmModal').classList.remove('show');}
+function openDrawer(title,html){document.getElementById('drawerTitle').textContent=title;document.getElementById('drawerBody').innerHTML=html;document.getElementById('drawer').classList.add('open');document.getElementById('drawerMask').classList.add('show');}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawerMask').classList.remove('show');}
+function rowClick(e,id){if(e.target.closest('button,input,select,a,label'))return;openDetail(id);}
+function val(id){var el=document.getElementById(id);return el?el.value.trim():'';}
+function reqOK(){var ok=true;document.querySelectorAll('#modalBody [data-req]').forEach(function(el){if(!String(el.value).trim()){el.style.borderColor='#ff4d4f';ok=false;}else{el.style.borderColor='';}});if(!ok)showToast('请填写完整必填项（红框）','error');return ok;}
+function fg(label,html,req,full){return '<div class="form-group'+(full?' full':'')+'"><label>'+label+(req?'<span class="req">*</span>':'')+'</label>'+html+'</div>';}
+function inp(id,v,type,req){return '<input id="'+id+'" type="'+(type||'text')+'" value="'+esc(v==null?'':v)+'"'+(req?' data-req="1"':'')+'>';}
+function sel(id,opts,v,req){return '<select id="'+id+'"'+(req?' data-req="1"':'')+'>'+opts.map(function(o){var ov=typeof o==='object'?o.v:o;var ot=typeof o==='object'?o.t:o;return '<option value="'+esc(ov)+'"'+(String(ov)===String(v)?' selected':'')+'>'+esc(ot)+'</option>';}).join('')+'</select>';}
+var selected={};
+function toggleAll(cb){document.querySelectorAll('#tableBody .row-check').forEach(function(c){c.checked=cb.checked;selected[c.dataset.id]=cb.checked;});updateSelInfo();}
+function toggleRow(cb){selected[cb.dataset.id]=cb.checked;updateSelInfo();}
+function updateSelInfo(){var n=Object.keys(selected).filter(function(k){return selected[k];}).length;var el=document.getElementById('selInfo');if(el)el.textContent=n?('已选 '+n+' 条'):'';var all=document.getElementById('selectAll');if(all){var boxes=document.querySelectorAll('#tableBody .row-check');all.checked=boxes.length>0&&n===boxes.length;}}
+function removeRow(col,id,label){var idx=FS.list(col).findIndex(function(x){return x.id===id;});askConfirm('确认删除「'+label+'」？删除后可撤销。',function(){var gone=FS.remove(col,id);delete selected[id];renderAll();showToast('已删除「'+label+'」','success',function(){FS.restore(col,gone,idx);renderAll();showToast('已撤销删除','success');});});}
+function batchDelete(col,label){var ids=Object.keys(selected).filter(function(k){return selected[k];});if(!ids.length){showToast('请先勾选要删除的记录','warning');return;}askConfirm('确认删除选中的 '+ids.length+' 条'+label+'？删除后可撤销。',function(){var list=FS.list(col);var removed=ids.map(function(id){return {obj:FS.get(col,id),idx:list.findIndex(function(x){return x.id===id;})};}).filter(function(r){return r.obj;}).sort(function(a,b){return a.idx-b.idx;});ids.forEach(function(id){FS.remove(col,id);});selected={};renderAll();showToast('已删除 '+removed.length+' 条'+label,'success',function(){removed.forEach(function(r){FS.restore(col,r.obj,r.idx);});renderAll();showToast('已撤销批量删除','success');});});}
+function exportCSV(name,headers,rows){if(!rows.length){showToast('当前视图暂无可导出数据','warning');return;}var csv='﻿'+[headers].concat(rows).map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'_'+today()+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);showToast('导出成功，文件已下载','success');}
+var sortKey='',sortDir=1;
+function sortBy(k){if(sortKey===k){sortDir=-sortDir;}else{sortKey=k;sortDir=1;}renderTable();}
+function applySort(rows){if(!sortKey)return rows;return rows.slice().sort(function(a,b){var x=a[sortKey],y=b[sortKey];if(typeof x==='number'&&typeof y==='number')return (x-y)*sortDir;return String(x==null?'':x).localeCompare(String(y==null?'':y),'zh')*sortDir;});}
+function paintArrows(){document.querySelectorAll('th.sortable').forEach(function(th){var a=th.querySelector('.sort-arrow');if(a)a.textContent=th.dataset.key===sortKey?(sortDir>0?'▲':'▼'):'';});}
+function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('filterSelect').value='';document.getElementById('reviewFilter').value='';renderAll();}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeConfirm();closeDrawer();}});
 
-function baseFilter() { return document.getElementById('baseSelect').value; }
-function startFilter() { return document.getElementById('startDate').value; }
-function endFilter() { return document.getElementById('endDate').value; }
-function keywordFilter() { return document.getElementById('searchInput').value.trim().toLowerCase(); }
-
-/** 记录级公共筛选：基地 + 采收日期 + 关键词 */
-function filteredRecords() {
-  const base = baseFilter();
-  const start = startFilter();
-  const end = endFilter();
-  const kw = keywordFilter();
-  return HarvestStore.records().filter(function (r) {
-    const day = String(r.endTime || r.startTime || '').slice(0, 10);
-    if (base && r.base !== base) return false;
-    if (start && day < start) return false;
-    if (end && day > end) return false;
-    if (kw) {
-      const hay = [r.batchNo, r.plot, r.plotName, r.variety, r.harvesters].join(' ').toLowerCase();
-      if (hay.indexOf(kw) === -1) return false;
-    }
+/* ===== 高压灭菌 ===== */
+function hasGap(r){return (r.curve||[]).some(function(p){return p.temp===null;});}
+function stRows(){
+  var kw=document.getElementById('searchInput').value.trim().toLowerCase();
+  var pot=document.getElementById('filterSelect').value;
+  var rv=document.getElementById('reviewFilter').value;
+  return FS.list('sterilize').filter(function(r){
+    if(pot&&r.pot!==pot)return false;
+    if(rv&&r.review!==rv)return false;
+    if(kw&&(r.id+' '+r.batch+' '+r.operator).toLowerCase().indexOf(kw)===-1)return false;
     return true;
   });
 }
-
-/** 日报：按采收日期聚合 */
-function dailyRows() {
-  const map = {};
-  filteredRecords().forEach(function (r) {
-    const day = String(r.endTime || r.startTime || '').slice(0, 10) || '-';
-    if (!map[day]) map[day] = { day: day, batches: 0, completed: 0, qty: 0, plots: {}, harvesters: {} };
-    const row = map[day];
-    row.batches += 1;
-    if (r.status === 'completed') {
-      row.completed += 1;
-      row.qty += Number(r.qty || 0);
-    }
-    if (r.plot) row.plots[r.plot] = 1;
-    if (r.harvesters) row.harvesters[r.harvesters] = 1;
-  });
-  return Object.keys(map).sort().reverse().map(function (k) {
-    const row = map[k];
-    row.plotCount = Object.keys(row.plots).length;
-    row.harvesterNames = Object.keys(row.harvesters).join('、');
-    return row;
-  });
-}
-
-/** 批次对账：实采 → 处理 → 在库/发运 的缺口归因 */
-function reconRows() {
-  const recMap = {};
-  HarvestStore.records().forEach(function (r) { recMap[r.batchNo] = r; });
-
-  const base = baseFilter();
-  const start = startFilter();
-  const end = endFilter();
-  const kw = keywordFilter();
-  const onlyAbnormal = document.getElementById('abnormalOnly').checked;
-
-  return HarvestStore.reconcile().map(function (row) {
-    const rec = recMap[row.batchNo] || {};
-    return {
-      batchNo: row.batchNo,
-      plot: rec.plot || '-',
-      plotName: rec.plotName || '',
-      variety: rec.variety || '-',
-      harvested: row.harvested,
-      processed: row.processed,
-      inProcess: row.inProcess,
-      stored: row.stored,
-      shipped: row.shipped,
-      pending: row.pending,
-      pendingProcess: row.pendingProcess,
-      balance: row.balance,
-      abnormal: row.abnormal,
-      day: String(rec.endTime || rec.startTime || '').slice(0, 10),
-      base: rec.base || ''
-    };
-  }).filter(function (row) {
-    if (base && row.base !== base) return false;
-    if (start && row.day && row.day < start) return false;
-    if (end && row.day && row.day > end) return false;
-    if (kw) {
-      const hay = [row.batchNo, row.plot, row.plotName, row.variety].join(' ').toLowerCase();
-      if (hay.indexOf(kw) === -1) return false;
-    }
-    if (onlyAbnormal && !row.abnormal) return false;
-    return true;
-  }).sort(function (a, b) {
-    if (a.abnormal !== b.abnormal) return a.abnormal ? -1 : 1;
-    return a.batchNo < b.batchNo ? 1 : -1;
-  });
-}
-
-function currentRows() { return currentTab === 'daily' ? dailyRows() : reconRows(); }
-
-function renderStats() {
-  const records = filteredRecords();
-  const completed = records.filter(function (r) { return r.status === 'completed'; });
-  const qty = completed.reduce(function (a, r) { return a + Number(r.qty || 0); }, 0);
-  const plots = {};
-  records.forEach(function (r) { if (r.plot) plots[r.plot] = 1; });
-  const abnormal = HarvestStore.reconcile().filter(function (r) { return r.abnormal; }).length;
-  const cards = [
-    { label: '实采量', value: qty.toLocaleString(), unit: 'kg', sub: '仅统计已完成采收' },
-    { label: '采收批次', value: records.length, unit: '批', sub: '已完成 ' + completed.length + ' 批' },
-    { label: '涉及地块', value: Object.keys(plots).length, unit: '块', sub: '跨基地采收' },
-    { label: '对账异常', value: abnormal, unit: '批', sub: abnormal ? '存在数量缺口，请核查' : '全链路数量守恒' }
+function renderStats(){
+  var rs=FS.list('sterilize');
+  var todayRs=rs.filter(function(r){return String(r.time).slice(0,10)===today();});
+  var done=rs.filter(function(r){return r.status==='已完成';}).length;
+  var gaps=rs.filter(hasGap).length;
+  var avgHold=rs.length?Math.round(rs.reduce(function(s,r){return s+Number(r.hold||0);},0)/rs.length):0;
+  var cards=[
+    {label:'今日锅次',value:todayRs.length,unit:'锅',sub:'今日灭菌锅次合计',cls:''},
+    {label:'已完成',value:done,unit:'单',sub:'复判通过并完成灭菌',cls:'green'},
+    {label:'曲线缺口',value:gaps,unit:'单',sub:gaps?'存在缺口待人工复判':'曲线完整',cls:'red'},
+    {label:'平均保温',value:avgHold,unit:'min',sub:'工艺要求 121°C ≥ 120min',cls:'orange'}
   ];
-  document.getElementById('statGrid').innerHTML = cards.map(function (c) {
-    return '<div class="stat-card"><div class="stat-label">' + c.label + '</div>' +
-      '<div class="stat-value">' + c.value + ' <small>' + c.unit + '</small></div>' +
-      '<div class="stat-sub">' + c.sub + '</div></div>';
+  document.getElementById('statGrid').innerHTML=cards.map(function(c){
+    return '<div class="stat-card '+c.cls+'"><div class="stat-label">'+c.label+'</div><div class="stat-value">'+esc(c.value)+(c.unit?'<small>'+c.unit+'</small>':'')+'</div><div class="stat-sub">'+esc(c.sub)+'</div></div>';
   }).join('');
 }
-
-function plotText(row) {
-  if (!row.plot || row.plot === '-') return '-';
-  return row.plotName ? row.plot + ' · ' + row.plotName : row.plot;
-}
-
-function renderRow(item, index) {
-  if (currentTab === 'daily') {
-    return '<tr>' +
-      '<td>' + (index + 1) + '</td>' +
-      '<td><strong>' + item.day + '</strong></td>' +
-      '<td class="text-right">' + item.batches + '</td>' +
-      '<td class="text-right">' + item.completed + '</td>' +
-      '<td class="text-right">' + item.qty.toLocaleString() + '</td>' +
-      '<td class="text-right">' + item.plotCount + '</td>' +
-      '<td>' + (item.harvesterNames || '-') + '</td>' +
+function reviewCls(rv){return rv==='通过'?'normal':rv==='报废'?'danger':'warning';}
+function statusCls(st){return st==='已完成'?'normal':st==='已报废'?'inactive':'danger';}
+function renderTable(){
+  var rows=applySort(stRows());
+  var body=document.getElementById('tableBody');
+  if(!rows.length){body.innerHTML='<tr><td colspan="12" class="empty-cell">暂无符合条件的灭菌单，点击「新建灭菌单」添加</td></tr>';updateSelInfo();paintArrows();return;}
+  body.innerHTML=rows.map(function(r){
+    var batch=FS.get('batches',r.batch);
+    var scrapTag=batch&&batch.scrap?' <span class="status-tag danger">已报废</span>':'';
+    var reviewBtns=r.review==='待复判'?
+      '<button class="row-btn ok" onclick="passReview(\''+r.id+'\')">通过</button><button class="row-btn danger" onclick="scrapReview(\''+r.id+'\')">报废</button>':'';
+    return '<tr onclick="rowClick(event,\''+r.id+'\')" style="cursor:pointer;">'+
+      '<td><input type="checkbox" class="row-check" data-id="'+r.id+'" '+(selected[r.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+      '<td><strong>'+esc(r.id)+'</strong></td>'+
+      '<td>'+esc(r.pot)+'</td>'+
+      '<td>'+esc(r.batch)+scrapTag+'</td>'+
+      '<td class="text-right">'+Number(r.bags).toLocaleString()+'</td>'+
+      '<td class="text-right">'+r.hold+'</td>'+
+      '<td class="text-right">'+Number(r.peak).toFixed(1)+'</td>'+
+      '<td>'+esc(r.operator)+'</td>'+
+      '<td><span class="status-tag '+reviewCls(r.review)+'">'+esc(r.review)+'</span></td>'+
+      '<td><span class="status-tag '+statusCls(r.status)+'">'+esc(r.status)+'</span></td>'+
+      '<td>'+esc(r.time)+'</td>'+
+      '<td>'+reviewBtns+'<button class="row-btn row-edit" onclick="openStForm(\''+r.id+'\')">编辑</button><button class="row-btn danger row-del" onclick="removeRow(\'sterilize\',\''+r.id+'\',\''+esc(r.id)+'\')">删除</button></td>'+
     '</tr>';
+  }).join('');
+  updateSelInfo();paintArrows();
+}
+function renderAll(){renderStats();renderTable();}
+
+/* ===== 复判流转 ===== */
+function passReview(id){
+  var r=FS.get('sterilize',id);if(!r)return;
+  askConfirm('确认「'+r.id+'」灭菌复判通过？通过后批次 '+r.batch+' 将转入接种，关联预警 FA-261116-02 闭环。',function(){
+    FS.update('sterilize',id,{review:'通过',status:'已完成'});
+    if(window.FungiAlertData)FungiAlertData.update('FA-261116-02',{status:'closed'});
+    if(FS.get('batches',r.batch))FS.update('batches',r.batch,{stage:'接种'});
+    closeDrawer();renderAll();
+    showToast('复判通过：批次 '+r.batch+' 转入接种，预警 FA-261116-02 已闭环','success');
+  });
+}
+function scrapReview(id){
+  var r=FS.get('sterilize',id);if(!r)return;
+  askConfirm('确认将「'+r.id+'」判定报废？批次 '+r.batch+' 将被标记报废，不得转入接种。',function(){
+    FS.update('sterilize',id,{review:'报废',status:'已报废'});
+    if(FS.get('batches',r.batch))FS.update('batches',r.batch,{scrap:true});
+    closeDrawer();renderAll();
+    showToast('已报废：批次 '+r.batch+' 已标记报废，请安排无害化处理','warning');
+  });
+}
+
+/* ===== 灭菌曲线 SVG ===== */
+function curveSVG(curve){
+  var W=560,H=250,L=46,R=540,T=16,B=210;
+  var maxT=210,maxC=130;
+  function x(t){return L+(t/maxT)*(R-L);}
+  function y(c){return B-(c/maxC)*(B-T);}
+  var s='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;" role="img" aria-label="灭菌温度曲线">';
+  for(var c=0;c<=120;c+=20){
+    s+='<line x1="'+L+'" y1="'+y(c)+'" x2="'+R+'" y2="'+y(c)+'" stroke="#f0f0f0" stroke-width="1"/>'+
+       '<text x="'+(L-6)+'" y="'+(y(c)+4)+'" text-anchor="end" font-size="10" fill="#8c8c8c">'+c+'</text>';
   }
-  const tag = item.abnormal
-    ? '<span class="status-tag abnormal">有缺口</span>'
-    : '<span class="status-tag normal">对账平衡</span>';
-  return '<tr>' +
-    '<td>' + (index + 1) + '</td>' +
-    '<td><strong>' + item.batchNo + '</strong></td>' +
-    '<td>' + plotText(item) + '</td>' +
-    '<td>' + item.variety + '</td>' +
-    '<td class="text-right">' + Number(item.harvested).toLocaleString() + '</td>' +
-    '<td class="text-right">' + Number(item.processed).toLocaleString() + '</td>' +
-    '<td class="text-right">' + Number(item.inProcess).toLocaleString() + '</td>' +
-    '<td class="text-right">' + Number(item.stored).toLocaleString() + '</td>' +
-    '<td class="text-right">' + Number(item.shipped).toLocaleString() + '</td>' +
-    '<td class="text-right">' + Number(item.pending).toLocaleString() + '</td>' +
-    '<td class="text-right">' + Number(item.pendingProcess).toLocaleString() + '</td>' +
-    '<td class="text-right">' + Number(item.balance).toLocaleString() + '</td>' +
-    '<td>' + tag + '</td>' +
-  '</tr>';
-}
-
-function renderHead() {
-  const thead = document.getElementById('reportThead');
-  if (currentTab === 'daily') {
-    thead.innerHTML = '<tr>' +
-      '<th style="width:60px;">序号</th>' +
-      '<th style="width:140px;">采收日期</th>' +
-      '<th style="width:110px;">采收批次</th>' +
-      '<th style="width:110px;">完成批次</th>' +
-      '<th style="width:130px;">实采量(kg)</th>' +
-      '<th style="width:110px;">涉及地块</th>' +
-      '<th>采收人员</th>' +
-    '</tr>';
-  } else {
-    thead.innerHTML = '<tr>' +
-      '<th style="width:56px;">序号</th>' +
-      '<th style="width:140px;">批次号</th>' +
-      '<th style="width:150px;">地块</th>' +
-      '<th style="width:100px;">品种</th>' +
-      '<th style="width:90px;">实采</th>' +
-      '<th style="width:90px;">已处理</th>' +
-      '<th style="width:90px;">处理中</th>' +
-      '<th style="width:90px;">在库</th>' +
-      '<th style="width:90px;">已发</th>' +
-      '<th style="width:90px;">待发</th>' +
-      '<th style="width:110px;">待建处理单</th>' +
-      '<th style="width:100px;">处理缺口</th>' +
-      '<th style="width:100px;">结论</th>' +
-    '</tr>';
+  for(var t=0;t<=maxT;t+=30){
+    s+='<line x1="'+x(t)+'" y1="'+T+'" x2="'+x(t)+'" y2="'+B+'" stroke="#f7f7f7" stroke-width="1"/>'+
+       '<text x="'+x(t)+'" y="'+(B+14)+'" text-anchor="middle" font-size="10" fill="#8c8c8c">'+t+'</text>';
   }
-}
-
-function handleSearch() {
-  renderStats();
-  Pagination.init({
-    currentPage: 1,
-    pageSize: 10,
-    data: currentRows(),
-    containerId: 'pagination-container',
-    tbodyId: 'dataTableBody',
-    renderRow: renderRow
-  });
-}
-
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('#reportTabs .tab-item').forEach(function (el) {
-    el.classList.toggle('active', el.getAttribute('data-tab') === tab);
-  });
-  document.getElementById('abnormalOnlyWrap').style.display = tab === 'recon' ? 'inline-flex' : 'none';
-  renderHead();
-  handleSearch();
-}
-
-async function exportView() {
-  const rows = currentRows();
-  if (!rows.length) { Toast.info('当前视图暂无可导出数据'); return; }
-  let headers, data;
-  if (currentTab === 'daily') {
-    headers = ['采收日期', '采收批次', '完成批次', '实采量(kg)', '涉及地块', '采收人员'];
-    data = rows.map(function (r) { return [r.day, r.batches, r.completed, r.qty, r.plotCount, r.harvesterNames]; });
-  } else {
-    headers = ['批次号', '地块', '品种', '实采', '已处理', '处理中', '在库', '已发', '待发', '待建处理单', '处理缺口', '结论'];
-    data = rows.map(function (r) {
-      return [r.batchNo, plotText(r), r.variety, r.harvested, r.processed, r.inProcess, r.stored,
-        r.shipped, r.pending, r.pendingProcess, r.balance, r.abnormal ? '有缺口' : '对账平衡'];
-    });
+  s+='<text x="'+(R)+'" y="'+(B+28)+'" text-anchor="end" font-size="10" fill="#8c8c8c">时间(min)</text>'+
+     '<text x="'+(L-32)+'" y="'+(T+2)+'" font-size="10" fill="#8c8c8c">°C</text>';
+  s+='<line x1="'+L+'" y1="'+y(121)+'" x2="'+R+'" y2="'+y(121)+'" stroke="#52c41a" stroke-width="1" stroke-dasharray="4 3"/>'+
+     '<text x="'+(R-4)+'" y="'+(y(121)-4)+'" text-anchor="end" font-size="10" fill="#52c41a">121°C 保温线</text>';
+  var pts=curve||[];
+  var gaps=[],start=null;
+  for(var i=0;i<pts.length;i++){
+    if(pts[i].temp===null){if(start===null)start=i;}
+    else if(start!==null){gaps.push([start,i-1]);start=null;}
   }
-  const result = await ExportHelper.exportData({
-    filename: (currentTab === 'daily' ? '采收日报_' : '批次对账_') + ExportHelper.stamp(),
-    format: 'excel',
-    headers: headers,
-    rows: data
+  if(start!==null)gaps.push([start,pts.length-1]);
+  gaps.forEach(function(g){
+    var x1=x(pts[g[0]].t-15),x2=x(pts[g[1]].t+15);
+    x1=Math.max(L,x1);x2=Math.min(R,x2);
+    s+='<rect x="'+x1+'" y="'+T+'" width="'+(x2-x1)+'" height="'+(B-T)+'" fill="rgba(255,77,79,.12)" stroke="#ff4d4f" stroke-width="1" stroke-dasharray="4 3"/>'+
+       '<text x="'+((x1+x2)/2)+'" y="'+(T+14)+'" text-anchor="middle" font-size="10" fill="#ff4d4f">曲线缺口</text>';
   });
-  Toast.success(result === 'csv-fallback' ? 'Excel 组件加载失败，已导出为 CSV' : '导出成功，文件已下载');
+  var seg=[],segs=[];
+  pts.forEach(function(p){
+    if(p.temp===null){if(seg.length)segs.push(seg);seg=[];}
+    else seg.push(p);
+  });
+  if(seg.length)segs.push(seg);
+  segs.forEach(function(sg){
+    s+='<polyline points="'+sg.map(function(p){return x(p.t)+','+y(p.temp);}).join(' ')+'" fill="none" stroke="#1890ff" stroke-width="2"/>';
+  });
+  var valid=pts.filter(function(p){return p.temp!==null;});
+  if(valid.length){
+    var peak=valid.reduce(function(a,b){return b.temp>a.temp?b:a;});
+    s+='<circle cx="'+x(peak.t)+'" cy="'+y(peak.temp)+'" r="3" fill="#1890ff"/>'+
+       '<text x="'+(x(peak.t)+6)+'" y="'+(y(peak.temp)-6)+'" font-size="10" fill="#1890ff">峰值 '+peak.temp+'°C</text>';
+  }
+  s+='</svg>';
+  return s;
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-  const baseSelect = document.getElementById('baseSelect');
-  HarvestStore.bases().forEach(function (b) {
-    const opt = document.createElement('option');
-    opt.value = b;
-    opt.textContent = b;
-    baseSelect.appendChild(opt);
+/* ===== 新建 / 编辑 ===== */
+function makeCurve(){
+  var pts=[],t=0,temp=24;
+  for(var i=0;i<14;i++){
+    t+=15;
+    if(i<4)temp=24+i*26;
+    else if(i<10)temp=+(121+(i%2?0.4:-0.3)).toFixed(1);
+    else temp=121-(i-9)*22;
+    pts.push({t:t,temp:temp});
+  }
+  return pts;
+}
+var editingId='';
+function batchOptions(){
+  return FS.list('batches').map(function(b){return {v:b.id,t:b.id+' · '+b.variety+' · '+b.stage};});
+}
+function openStForm(id){
+  editingId=id||'';
+  var r=id?FS.get('sterilize',id):null;
+  var pots=['MJ-01','MJ-02','MJ-03','MJ-04'];
+  openModal(r?'编辑灭菌单':'新建灭菌单',
+    fg('锅号',sel('f_pot',pots,r?r.pot:'MJ-01',true),true)+
+    fg('批次',sel('f_batch',batchOptions(),r?r.batch:(batchOptions()[0]||{v:''}).v,true),true)+
+    fg('袋数',inp('f_bags',r?r.bags:1800,'number',true),true)+
+    fg('保温时长(min)',inp('f_hold',r?r.hold:120,'number',true),true)+
+    fg('峰值温度(°C)',inp('f_peak',r?r.peak:121.3,'number',true),true)+
+    fg('操作人',inp('f_operator',r?r.operator:'','text',true),true)
+  );
+}
+function saveModal(){
+  if(!reqOK())return;
+  var bags=Number(val('f_bags')),hold=Number(val('f_hold')),peak=Number(val('f_peak'));
+  if(!(bags>0)){showToast('袋数必须为正数','error');return;}
+  if(!(hold>0)){showToast('保温时长必须为正数','error');return;}
+  if(!(peak>=100&&peak<=135)){showToast('峰值温度需在 100-135°C 之间','error');return;}
+  var patch={pot:val('f_pot'),batch:val('f_batch'),bags:bags,hold:hold,peak:peak,operator:val('f_operator')};
+  if(editingId){
+    FS.update('sterilize',editingId,patch);
+    closeModal();renderAll();showToast('灭菌单已更新','success');return;
+  }
+  patch.review='通过';patch.status='已完成';patch.time=nowStamp();patch.curve=makeCurve();
+  var created=FS.add('sterilize',patch);
+  closeModal();renderAll();
+  showToast('灭菌单 '+created.id+' 已创建（曲线完整，自动通过）','success');
+}
+function openDetail(id){
+  var r=FS.get('sterilize',id);if(!r)return;
+  var batch=FS.get('batches',r.batch);
+  var alert=window.FungiAlertData?FungiAlertData.get('FA-261116-02'):null;
+  var reviewBtns=r.review==='待复判'?
+    '<div style="margin-top:14px;display:flex;gap:10px;"><button class="jg-btn jg-btn-primary" onclick="passReview(\''+r.id+'\')">复判通过</button><button class="jg-btn" style="color:#ff4d4f;border-color:#ffccc7;" onclick="scrapReview(\''+r.id+'\')">判定报废</button></div>':'';
+  openDrawer('灭菌单详情 · '+r.id,
+    '<div class="detail-grid">'+
+    '<div class="detail-item"><div class="dl">灭菌单</div><div class="dv">'+esc(r.id)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">锅号</div><div class="dv">'+esc(r.pot)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">批次</div><div class="dv">'+esc(r.batch)+(batch&&batch.scrap?'（已报废）':'')+'</div></div>'+
+    '<div class="detail-item"><div class="dl">袋数</div><div class="dv">'+Number(r.bags).toLocaleString()+' 袋</div></div>'+
+    '<div class="detail-item"><div class="dl">保温时长</div><div class="dv">'+r.hold+' min</div></div>'+
+    '<div class="detail-item"><div class="dl">峰值温度</div><div class="dv">'+Number(r.peak).toFixed(1)+' °C</div></div>'+
+    '<div class="detail-item"><div class="dl">操作人</div><div class="dv">'+esc(r.operator)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">时间</div><div class="dv">'+esc(r.time)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">复判</div><div class="dv"><span class="status-tag '+reviewCls(r.review)+'">'+esc(r.review)+'</span></div></div>'+
+    '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+statusCls(r.status)+'">'+esc(r.status)+'</span></div></div>'+
+    '</div>'+
+    '<div class="drawer-sec">灭菌温度曲线</div>'+
+    '<div class="chart-box">'+curveSVG(r.curve)+
+    '<div class="chart-legend"><span><i style="background:#1890ff;"></i>温度曲线</span><span><i style="background:#52c41a;"></i>121°C 保温线</span><span><i style="background:rgba(255,77,79,.35);border:1px dashed #ff4d4f;"></i>曲线缺口（需人工复判）</span></div></div>'+
+    (hasGap(r)?'<p style="font-size:12px;color:#ff4d4f;margin-top:10px;">曲线存在缺口：灭菌中途断电导致数据缺失，请结合生物指示剂结果人工复判。</p>':'')+
+    (alert&&r.review==='待复判'?'<p style="font-size:12px;color:var(--text-tertiary);margin-top:6px;">关联预警：'+esc(alert.id)+' '+esc(alert.title)+'（'+esc(alert.statusText)+'）</p>':'')+
+    reviewBtns
+  );
+}
+function exportSt(){
+  var rows=applySort(stRows());
+  exportCSV('高压灭菌',['灭菌单','锅号','批次','袋数','保温min','峰值°C','操作人','复判','状态','时间'],rows.map(function(r){
+    return [r.id,r.pot,r.batch,r.bags,r.hold,r.peak,r.operator,r.review,r.status,r.time];
+  }));
+}
+(function initPotFilter(){
+  var pots={};
+  FS.list('sterilize').forEach(function(r){pots[r.pot]=1;});
+  var f=document.getElementById('filterSelect');
+  Object.keys(pots).sort().forEach(function(p){
+    var o=document.createElement('option');o.value=p;o.textContent=p;f.appendChild(o);
   });
-
-  document.querySelectorAll('#reportTabs .tab-item').forEach(function (el) {
-    el.addEventListener('click', function () { switchTab(el.getAttribute('data-tab')); });
-  });
-
-  renderHead();
-  handleSearch();
-  if (HarvestStore.subscribe) HarvestStore.subscribe(handleSearch);
-});
+})();
+renderAll();
 </script>
-<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
-<script src="js/icons.js"></script>
-<script src="js/search-helper.js"></script>
-<script src="js/typography.js"></script>
 </body>
 </html>

@@ -682,6 +682,48 @@
       }
     }
 
+    /* 演示种子：仅键不存在时写入；8 条覆盖 6 工序，默认拌料装袋 Tab 3 条 */
+    function seedRecordsIfEmpty() {
+      var raw = null;
+      try { raw = localStorage.getItem(RECORD_KEY); } catch (e) { return; }
+      if (raw !== null) {
+        try { var exist = JSON.parse(raw); if (Array.isArray(exist) && exist.length) return; } catch (e) { /* 坏数据视为空 */ }
+      }
+      function day(offset) {
+        var d = new Date(Date.now() - offset * 86400000);
+        return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+      }
+      function stamp(offset) { return day(offset).replace(/-/g, ''); }
+      function mk(n, stageName, batch, house, operator, time, fields, remark) {
+        var st = stageByName(stageName);
+        var desc = st.desc(fields);
+        if (remark) desc += ' · 备注：' + remark;
+        return {
+          id: 'proc_seed_' + n, stage: stageName, batch: batch, house: house,
+          operator: operator, time: time, fields: fields, photo: st.photo,
+          status: 'submitted', desc: desc
+        };
+      }
+      saveRecords([
+        mk(1, '拌料装袋', 'JB-' + stamp(0) + '-05', '拌料车间 一车间', '李国强', day(0) + ' 07:10',
+          { formula: 'PF-2026-08', feedKg: 1200, bagCount: 2400, moisture: 62 }, ''),
+        mk(2, '拌料装袋', 'JB-' + stamp(0) + '-06', '拌料车间 二车间', '张建国', day(0) + ' 08:05',
+          { formula: 'PF-2026-08', feedKg: 1000, bagCount: 2000, moisture: 61 }, ''),
+        mk(3, '拌料装袋', 'JB-' + stamp(1) + '-03', '拌料车间 一车间', '李国强', day(1) + ' 16:30',
+          { formula: 'PF-2026-07', feedKg: 1500, bagCount: 3000, moisture: 63 }, '棉籽壳含水率偏高，加水量下调 2%'),
+        mk(4, '接种', 'JB-' + stamp(0) + '-01', '接种室 A', '张建国', day(0) + ' 09:05',
+          { strainBatch: '菌种-X2', inocCount: 2400, roomTemp: 18, disinfection: '紫外 30min + 酒精擦拭' }, ''),
+        mk(5, '接种', 'JB-' + stamp(0) + '-02', '接种室 B', '王芳', day(0) + ' 09:40',
+          { strainBatch: '菌种-X2', inocCount: 2000, roomTemp: 17.5, disinfection: '紫外 40min + 酒精擦拭' }, ''),
+        mk(6, '培养', 'JB-' + stamp(6) + '-02', '培养房 C-01', '李国强', day(2) + ' 10:20',
+          { room: '培养房 C-01', temp: 22, humidity: 65, fullBagRate: 96, contamRate: 0.8 }, ''),
+        mk(7, '出菇', 'JB-' + stamp(6) + '-02', '菇房 3号', '李国强', day(0) + ' 08:10',
+          { room: '菇房 3号', temp: 18.4, humidity: 92, co2: 685, light: 120 }, ''),
+        mk(8, '采收', 'JB-' + stamp(10) + '-01', '采后处理间', '王芳', day(0) + ' 07:00',
+          { weight: 420, gradeA: 356, gradeB: 52 }, '第二潮菇采收')
+      ]);
+    }
+
     function todayPrefix() {
       var d = new Date();
       return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
@@ -1125,6 +1167,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
       initFromUrl();
+      seedRecordsIfEmpty();
       refresh();
       MobileStore.renderSyncBar(document.getElementById('syncBar'));
 

@@ -74,23 +74,9 @@
     .brand-text{min-width:0;display:block}
     .brand-text strong{display:block;font-size:15px;line-height:1.3;letter-spacing:.01em;white-space:nowrap}
     .brand-text em{display:block;font-style:normal;font-size:10.5px;color:var(--faint);letter-spacing:.06em;white-space:nowrap}
-    .top-right{display:flex;align-items:center;gap:16px}
-    .clock{display:flex;align-items:baseline;gap:9px}
+    .clock{display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-left:auto;text-align:right}
     .clock b{font-family:var(--disp);font-weight:400;font-size:21px;line-height:1;color:var(--pine);font-variant-numeric:tabular-nums}
-    .clock span{font-size:11.5px;color:var(--muted);white-space:nowrap}
-    .syspill{
-      display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
-      padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;
-      background:var(--pine-soft);color:var(--pine);border:1px solid #CBDCC6;
-    }
-    .syspill i{width:7px;height:7px;border-radius:50%;background:var(--pine-2);box-shadow:0 0 0 3px rgba(62,122,87,.15)}
-    .syspill.warn{background:var(--amber-soft);color:var(--amber);border-color:var(--amber-line)}
-    .syspill.warn i{background:var(--amber-bright);box-shadow:0 0 0 3px rgba(232,162,61,.18)}
-    .nav-btn{
-      padding:8px 18px;border-radius:var(--r);background:var(--amber-bright);color:#2A1804;
-      font-weight:700;font-size:13px;text-decoration:none;white-space:nowrap;transition:background .18s;
-    }
-    .nav-btn:hover{background:#F2B350}
+    .clock span{font-size:11.5px;line-height:1;color:var(--muted);white-space:nowrap}
 
     /* ===== 门厅主区 ===== */
     .gate{display:grid;grid-template-columns:352px minmax(0,1fr);gap:34px;align-items:start;padding:30px 0 34px;animation:gateIn .45s ease both}
@@ -138,7 +124,7 @@
     .syslist li{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
     .syslist i{width:7px;height:7px;border-radius:50%;background:var(--pine-2);flex:none}
     .syslist li.warn i{background:var(--amber-bright)}
-    .syslist em{font-style:normal;margin-left:auto;font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+    .syslist em{font-style:normal;margin-left:auto;font-size:11px;color:var(--faint)}
     .syslist b{font-weight:600}
 
     /* ===== 入口矩阵 ===== */
@@ -162,9 +148,6 @@
     .c-fav[hidden]{display:none}
     .c-role{margin:2px 0 0;font-size:11.5px;color:var(--muted)}
     .nb{white-space:nowrap}
-    .c-state{display:inline-flex;align-items:center;gap:6px;flex:none;font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums;padding-top:3px}
-    .c-state i{width:7px;height:7px;border-radius:50%;background:var(--pine-2)}
-    .c-state.warn i{background:var(--amber-bright)}
     .c-method{
       display:flex;align-items:center;gap:8px;margin:13px 0 0;padding:7px 11px;
       background:var(--pine-soft);border:1px solid #CBDCC6;border-radius:4px;
@@ -214,8 +197,6 @@
     .card-dark .c-ico{background:rgba(255,255,255,.12)}
     .card-dark .c-titles h3{color:#fff}
     .card-dark .c-role{color:rgba(237,243,234,.62)}
-    .card-dark .c-state{color:rgba(237,243,234,.55)}
-    .card-dark .c-state i{background:#6FCF97}
     .card-dark .c-method{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#F2D9A8}
     .card-dark .c-feats li{color:rgba(237,243,234,.85)}
     .card-dark .c-feats svg{stroke:var(--amber-bright)}
@@ -250,17 +231,13 @@
       .syslist{margin:14px 0 0}
       .card-grid{grid-template-columns:minmax(0,1fr)}
       .c-qr{display:none}
-      .syspill{display:none}
     }
     @media (max-width:560px){
       .topbar{gap:10px}
-      .top-right{gap:10px}
       .brand{gap:8px}
       .brand-logo{width:30px;height:30px}
       .brand-text strong{font-size:13.5px}
       .clock b{font-size:15px}
-      .nav-btn{padding:7px 12px;font-size:12px}
-      .syspill{padding:4px 9px;font-size:11px}
       .c-split{display:block}
     }
     @media (prefers-reduced-motion:reduce){
@@ -281,13 +258,9 @@
           <em>工厂化农业数据管理平台 · TXS-2026-KJXN-07</em>
         </span>
       </a>
-      <div class="top-right">
-        <div class="clock num" aria-label="当前时间">
-          <b id="clkTime">--:--:--</b>
-          <span id="clkDate"></span>
-        </div>
-        <span class="syspill" id="sysPill"><i aria-hidden="true"></i><span id="sysPillText">系统状态检测中</span></span>
-        <a class="nav-btn" data-sys="admin" data-name="管理后台" href="applefarm_backhand/login.html">管理登录</a>
+      <div class="clock num" aria-label="当前时间">
+        <b id="clkTime">--:--:--</b>
+        <span id="clkDate"></span>
       </div>
     </header>
 
@@ -364,23 +337,14 @@
     tick(); setInterval(tick, 1000);
 
     /* ---- 服务状态 ---- */
-    var bad = D.systems.filter(function (s) { return s.state !== 'ok'; });
-    var pill = $('sysPill');
-    if (bad.length) {
-      pill.className = 'syspill warn';
-      $('sysPillText').textContent = bad.length + ' 个系统维护中';
-    } else {
-      $('sysPillText').textContent = '全部系统服务正常';
-    }
     $('sysList').innerHTML = D.systems.map(function (s) {
       return '<li class="' + (s.state === 'ok' ? '' : 'warn') + '"><i aria-hidden="true"></i><b>' + esc(s.name) + '</b><em>' +
-        esc(s.version) + ' · ' + (s.state === 'ok' ? '正常' : '维护') + '</em></li>';
+        (s.state === 'ok' ? '正常' : '维护') + '</em></li>';
     }).join('');
     $('brandKv').innerHTML =
       '<div><span>项目编号</span><b>' + esc(D.meta.code) + '</b></div>' +
-      '<div><span>平台版本</span><b>' + esc(D.meta.version) + ' · ' + esc(D.meta.updated) + '</b></div>' +
       '<div><span>覆盖规模</span><b>' + esc(D.meta.scale) + '</b></div>';
-    $('footMeta').innerHTML = '平台版本 ' + esc(D.meta.version) + '<span class="sep">|</span>建议使用 Chrome / Edge 浏览器';
+    $('footMeta').innerHTML = '建议使用 Chrome / Edge 浏览器';
 
     /* ---- 二维码（真实可扫） ---- */
     function qrSvg(text) {
@@ -500,8 +464,7 @@
         '<div class="c-head"><span class="c-ico" aria-hidden="true">' + ICO[s.id] + '</span>' +
         '<span class="c-titles"><h3>' + esc(s.name) +
         '<span class="c-fav"' + (fav ? '' : ' hidden') + '>常用</span></h3>' +
-        '<p class="c-role">' + nbSeg(s.role) + '</p></span>' +
-        '<span class="c-state' + (s.state === 'ok' ? '' : ' warn') + '"><i aria-hidden="true"></i>' + esc(s.version) + '</span></div>';
+        '<p class="c-role">' + nbSeg(s.role) + '</p></span></div>';
       var method = '<p class="c-method">' + KEY_ICO + esc(s.method) + '</p>';
       var body;
       if (s.views) {

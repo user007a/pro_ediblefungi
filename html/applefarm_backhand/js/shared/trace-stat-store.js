@@ -451,13 +451,53 @@
 
   function invalidate(){ cached = null; }
 
-  /** 统一取数入口：auto 优先真实数据，不可用时降级演示种子 */
+  /**
+   * 食用菌口径桥接：FungiStore.traceStats() 是全平台追溯统计的单点定义。
+   * 本文件保留对旧 TraceStore 的兼容，但优先读取 FungiStore，
+   * 确保「后台溯源统计 / 独立溯源驾驶舱 / 大屏质量追溯」三处数值完全一致。
+   */
+  function fromFungiStore(){
+    var F = global.FungiStore;
+    if (!F || typeof F.traceStats !== 'function') return null;
+    try {
+      var t = F.traceStats();
+      if (!t) return null;
+      return {
+        totalBatches: t.totalBatches,
+        totalIssued: t.totalIssued,
+        scanTrend: t.trend,
+        provinces: t.provinces,
+        provinceTotal: t.provinceTotal,
+        channels: t.channels,
+        codeStatus: t.codeStatus,
+        chainBlocks: DEFAULT_DATA.chainBlocks,
+        chainNodes: t.chainNodes,
+        chainConsensus: t.chainConsensus,
+        chainSuccessRate: t.chainSuccessRate,
+        certificates: DEFAULT_DATA.certificates,
+        flow: t.flow,
+        thisWeek: t.flow ? t.flow.thisWeek : DEFAULT_DATA.flow.thisWeek,
+        channelCount: t.flow ? t.flow.channelCount : DEFAULT_DATA.flow.channelCount,
+        avgDuration: t.flow ? t.flow.avgDuration : DEFAULT_DATA.flow.avgDuration,
+        passRate: DEFAULT_DATA.passRate,
+        avgResponse: t.avgResponse,
+        traceCoverage: t.traceCoverage,
+        satisfaction: t.satisfaction
+      };
+    } catch (e) {
+      console.warn('[TraceStatStore] FungiStore 桥接失败', e);
+      return null;
+    }
+  }
+
+  /** 统一取数入口：优先 FungiStore（食用菌口径），其次旧 TraceStore，最后演示种子 */
   function view(){
     ensureBound();
     if (mode() === 'demo') { lastSource = 'demo'; return ensure(); }
     if (!cached) {
-      cached = derive();
-      lastSource = cached ? 'real' : 'demo';
+      var fungi = fromFungiStore();
+      cached = fungi || derive();
+      lastSource = fungi ? 'fungi' : (cached ? 'real' : 'demo');
       lastAt = nowStamp();
     }
     return cached || ensure();
@@ -623,7 +663,8 @@
     sourceInfo: function(){
       return {
         mode: mode(),
-        source: mode() === 'demo' ? 'demo' : (cached ? 'real' : lastSource),
+        /* lastSource 才是真实取数来源：fungi=食用菌口径 / real=旧 TraceStore / demo=演示种子 */
+        source: mode() === 'demo' ? 'demo' : (cached ? lastSource : 'demo'),
         updatedAt: lastAt
       };
     },

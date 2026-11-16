@@ -581,6 +581,46 @@
       }
     }
 
+    /* 演示种子：仅键不存在时写入；4 条识别历史，风险高/中/低覆盖 */
+    function seedHistoryIfEmpty() {
+      var raw = null;
+      try { raw = localStorage.getItem(HISTORY_KEY); } catch (e) { return; }
+      if (raw !== null) {
+        try { var exist = JSON.parse(raw); if (Array.isArray(exist) && exist.length) return; } catch (e) { /* 坏数据视为空 */ }
+      }
+      function day(offset) {
+        var d = new Date(Date.now() - offset * 86400000);
+        var p = function (n) { return n < 10 ? '0' + n : '' + n; };
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+      }
+      writeList(HISTORY_KEY, [
+        {
+          id: 'dh_seed_1', image: SAMPLES.incubate.img, sample: SAMPLES.incubate.name,
+          object: '杏鲍菇（菌丝/菇体）', type: '绿霉（Trichoderma）', confidence: 96.8,
+          risk: '高风险', batch: SAMPLES.incubate.batch, house: SAMPLES.incubate.house,
+          time: day(0) + ' 09:05'
+        },
+        {
+          id: 'dh_seed_2', image: SAMPLES.fruiting.img, sample: SAMPLES.fruiting.name,
+          object: '杏鲍菇（菌丝/菇体）', type: '绿霉（Trichoderma）', confidence: 91.2,
+          risk: '中风险', batch: SAMPLES.fruiting.batch, house: SAMPLES.fruiting.house,
+          time: day(1) + ' 15:40'
+        },
+        {
+          id: 'dh_seed_3', image: SAMPLES.substrate.img, sample: SAMPLES.substrate.name,
+          object: '培养料（棉籽壳/麦麸）', type: '链孢霉（Neurospora）', confidence: 88.5,
+          risk: '中风险', batch: SAMPLES.substrate.batch, house: SAMPLES.substrate.house,
+          time: day(3) + ' 10:15'
+        },
+        {
+          id: 'dh_seed_4', image: SAMPLES.material.img, sample: SAMPLES.material.name,
+          object: '原料（棉籽壳/麦麸）', type: '无可见污染', confidence: 97.4,
+          risk: '低风险', batch: SAMPLES.material.batch, house: SAMPLES.material.house,
+          time: day(6) + ' 08:50'
+        }
+      ]);
+    }
+
     function pad2(n) { return n < 10 ? '0' + n : String(n); }
 
     function dateParts(ts) {
@@ -809,6 +849,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+      seedHistoryIfEmpty();
       renderHistory();
     });
   </script>

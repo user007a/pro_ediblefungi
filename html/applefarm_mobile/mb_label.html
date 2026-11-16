@@ -411,6 +411,43 @@
       }
     }
 
+    /* 演示种子：仅键不存在时写入；批次避开 SAMPLES，保证样例扫码不被重复开工拦截 */
+    function seedJobsIfEmpty() {
+      var raw = null;
+      try { raw = localStorage.getItem(SCAN_KEY); } catch (e) { return; }
+      if (raw !== null) {
+        try { var exist = JSON.parse(raw); if (Array.isArray(exist) && exist.length) return; } catch (e) { /* 坏数据视为空 */ }
+      }
+      function day(offset) {
+        var d = new Date(Date.now() - offset * 86400000);
+        var p = function (n) { return n < 10 ? '0' + n : '' + n; };
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+      }
+      function stamp(offset) { return day(offset).replace(/-/g, ''); }
+      saveJobs([
+        {
+          id: 'scan_seed_1', batch: 'JB-' + stamp(0) + '-01', stage: '灭菌接种',
+          operator: '张建国', house: '接种室 A', startTime: day(0) + ' 08:50',
+          remark: '菌袋表面消毒后转入接种室', status: 'submitted'
+        },
+        {
+          id: 'scan_seed_2', batch: 'JB-' + stamp(6) + '-02', stage: '出菇管理',
+          operator: '李国强', house: '三号出菇房 GF-03', startTime: day(0) + ' 07:35',
+          remark: '', status: 'submitted'
+        },
+        {
+          id: 'scan_seed_3', batch: 'JB-' + stamp(10) + '-01', stage: '采收',
+          operator: '王芳', house: '四号出菇房 GF-04', startTime: day(0) + ' 06:50',
+          remark: '第二潮菇采收', status: 'submitted'
+        },
+        {
+          id: 'scan_seed_4', batch: 'JB-' + stamp(1) + '-03', stage: '拌料装袋',
+          operator: '李国强', house: '拌料车间', startTime: day(1) + ' 16:20',
+          remark: '', status: 'submitted'
+        }
+      ]);
+    }
+
     function normBatch() {
       return document.getElementById('batchInput').value.trim().toUpperCase();
     }
@@ -654,6 +691,7 @@
       document.getElementById('operatorInput').value = currentOperator();
       document.getElementById('startTimeView').value = MobileStore.fmtTime(Date.now());
       renderStageChips();
+      seedJobsIfEmpty();
       renderRecent();
       MobileStore.renderSyncBar(document.getElementById('syncBar'));
 

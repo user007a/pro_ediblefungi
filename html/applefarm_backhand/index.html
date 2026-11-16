@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>食用菌工厂化农业数据管理平台 - 管理后台</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2352c41a'/%3E%3C/svg%3E">
     <script>
         // ========== 登录守卫（L-2）==========
         // 后台壳页必须登录后才可访问：未登录立即跳回登录页，避免直接输入 index.html 绕过鉴权。
@@ -99,26 +100,26 @@
                     <span class="menu-arrow text-gray-400">›</span>
                 </button>
                 <div class="menu-items pl-6" style="display:none;">
-                    <a href="material_io.html" target="mainFrame" onclick="openPage('material_io.html','菌包制备管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
-                        <span class="iconify mr-3 text-lg" data-icon="ri:box-1-line"></span><span>菌包制备管理</span>
+                    <a href="material_io.html" target="mainFrame" onclick="openPage('material_io.html','菌包制备')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:box-1-line"></span><span>菌包制备</span>
                     </a>
-                    <a href="harvest_report.html" target="mainFrame" onclick="openPage('harvest_report.html','高压灭菌管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
-                        <span class="iconify mr-3 text-lg" data-icon="ri:temp-hot-line"></span><span>高压灭菌管理</span>
+                    <a href="harvest_report.html" target="mainFrame" onclick="openPage('harvest_report.html','高压灭菌')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:temp-hot-line"></span><span>高压灭菌</span>
                     </a>
-                    <a href="farming_record.html" target="mainFrame" onclick="openPage('farming_record.html','无菌接种管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
-                        <span class="iconify mr-3 text-lg" data-icon="ri:syringe-line"></span><span>无菌接种管理</span>
+                    <a href="farming_record.html" target="mainFrame" onclick="openPage('farming_record.html','无菌接种')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:syringe-line"></span><span>无菌接种</span>
                     </a>
-                    <a href="harvest_record.html" target="mainFrame" onclick="openPage('harvest_record.html','菌丝培养管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
-                        <span class="iconify mr-3 text-lg" data-icon="ri:plant-line"></span><span>菌丝培养管理</span>
+                    <a href="harvest_record.html" target="mainFrame" onclick="openPage('harvest_record.html','菌丝培养')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:plant-line"></span><span>菌丝培养</span>
                     </a>
-                    <a href="harvest_plan.html" target="mainFrame" onclick="openPage('harvest_plan.html','出菇培育管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
-                        <span class="iconify mr-3 text-lg" data-icon="ri:leaf-line"></span><span>出菇培育管理</span>
+                    <a href="harvest_plan.html" target="mainFrame" onclick="openPage('harvest_plan.html','出菇培育')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:leaf-line"></span><span>出菇培育</span>
                     </a>
-                    <a href="harvest_process.html" target="mainFrame" onclick="openPage('harvest_process.html','采收分拣管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
-                        <span class="iconify mr-3 text-lg" data-icon="ri:scales-3-line"></span><span>采收分拣管理</span>
+                    <a href="harvest_process.html" target="mainFrame" onclick="openPage('harvest_process.html','采收分拣')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:scales-3-line"></span><span>采收分拣</span>
                     </a>
-                    <a href="harvest_storage.html" target="mainFrame" onclick="openPage('harvest_storage.html','仓储冷链管理')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
-                        <span class="iconify mr-3 text-lg" data-icon="ri:snowflake-line"></span><span>仓储冷链管理</span>
+                    <a href="harvest_storage.html" target="mainFrame" onclick="openPage('harvest_storage.html','仓储冷链')" class="flex items-center px-4 py-3 text-sm text-gray-300 hover:bg-white/10 rounded-md transition-all">
+                        <span class="iconify mr-3 text-lg" data-icon="ri:snowflake-line"></span><span>仓储冷链</span>
                     </a>
                 </div>
             </div>
@@ -794,6 +795,20 @@
         // ========== 默认高亮首页 ==========
         highlightMenu('home.html');
         setCrumb('首页');   // 默认面包屑只显示一级「首页」
+    </script>
+
+    <script>
+        // 平台名称（system_settings 保存的 mushroom_sys_settings）同步品牌与标题
+        (function applyPlatformName() {
+            var name = '工厂化农业数据管理系统';
+            try {
+                var s = JSON.parse(localStorage.getItem('mushroom_sys_settings') || 'null');
+                if (s && s.name) name = String(s.name);
+            } catch (e) {}
+            var brand = document.getElementById('brandText');
+            if (brand) brand.textContent = name;
+            document.title = name + ' - 管理后台';
+        })();
     </script>
 
 </body>

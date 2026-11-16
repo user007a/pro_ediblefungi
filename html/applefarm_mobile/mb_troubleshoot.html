@@ -677,6 +677,68 @@
     function saveOrders(list) {
       try { localStorage.setItem(ORDER_KEY, JSON.stringify(list)); } catch (e) { /* 存储失败忽略 */ }
     }
+    /* 演示种子：仅键不存在时写入，覆盖待受理/维修中/已完成三种状态 */
+    function seedOrders() {
+      var today = dateStr();
+      var yest = dateStr(new Date(Date.now() - 86400000));
+      var d2 = dateStr(new Date(Date.now() - 2 * 86400000));
+      var ts = today.replace(/-/g, '');
+      var ys = yest.replace(/-/g, '');
+      var d2s = d2.replace(/-/g, '');
+      return [
+        {
+          id: 'WX-' + ts + '-03', device: 'LED 补光灯 3#', circuit: 'DO-06', urgency: 'normal',
+          desc: '补光灯闪烁、亮度不稳，分段调光时偶发熄灭。', phone: '13800000002',
+          reporter: '张建国', time: today + ' 09:20', photo: '', status: 'done',
+          acceptTime: today + ' 09:31', repairBy: '赵志刚',
+          repairResult: '更换老化恒流驱动电源，复测 30%/60% 分段亮度稳定，无闪烁。',
+          repairTime: today + ' 10:05'
+        },
+        {
+          id: 'WX-' + ts + '-02', device: '超声波加湿器 5#', circuit: 'DO-03', urgency: 'urgent',
+          desc: '加湿量明显下降，出雾不均匀，疑似雾化片结垢堵塞。', phone: '13800000002',
+          reporter: '李国强', time: today + ' 08:42', photo: '', status: 'pending'
+        },
+        {
+          id: 'WX-' + ts + '-01', device: '循环风机 2#', circuit: 'DO-05', urgency: 'stop',
+          desc: '风机跳闸停机，复位后再次跳闸，伴有异响。', phone: '13800000003',
+          reporter: '王芳', time: today + ' 07:55', photo: '../applefarm_h5/images/trace_monitor.jpg',
+          status: 'repairing', acceptTime: today + ' 08:10', repairBy: '赵志刚'
+        },
+        {
+          id: 'WX-' + ys + '-02', device: '新风风机', circuit: 'DO-04', urgency: 'urgent',
+          desc: '新风量不足，菇房 CO₂ 降不下来，皮带打滑有焦味。', phone: '13800000003',
+          reporter: '张建国', time: yest + ' 16:40', photo: '', status: 'repairing',
+          acceptTime: yest + ' 17:05', repairBy: '孙卫东'
+        },
+        {
+          id: 'WX-' + ys + '-01', device: '风冷热泵 1#', circuit: 'DO-01', urgency: 'urgent',
+          desc: '制冷效果差，出风温度高于设定值 2.1℃。', phone: '13800000002',
+          reporter: '李国强', time: yest + ' 15:20', photo: '', status: 'done',
+          acceptTime: yest + ' 15:40', repairBy: '孙卫东',
+          repairResult: '清洗冷凝器翅片并复查制冷剂压力，出风温度恢复设定区间。',
+          repairTime: yest + ' 17:05'
+        },
+        {
+          id: 'WX-' + d2s + '-01', device: '风冷热泵 2#', circuit: 'DO-02', urgency: 'normal',
+          desc: '机组运行异响、振动偏大，疑似风机轴承磨损。', phone: '13800000002',
+          reporter: '王芳', time: d2 + ' 14:10', photo: '', status: 'done',
+          acceptTime: d2 + ' 14:35', repairBy: '赵志刚',
+          repairResult: '更换风机轴承并做动平衡校正，复测振动值回到正常区间。',
+          repairTime: d2 + ' 18:20'
+        }
+      ];
+    }
+    function seedOrdersIfEmpty() {
+      var raw = null;
+      try { raw = localStorage.getItem(ORDER_KEY); } catch (e) { return null; }
+      if (raw !== null) {
+        try { var exist = JSON.parse(raw); if (Array.isArray(exist) && exist.length) return null; } catch (e) { /* 坏数据视为空 */ }
+      }
+      var seeds = seedOrders();
+      saveOrders(seeds);
+      return seeds;
+    }
     function nextOrderNo(list) {
       var prefix = 'WX-' + dateStr().replace(/-/g, '') + '-';
       var max = 0;
@@ -958,7 +1020,7 @@
     }
 
     document.getElementById('reporterName').textContent = getUser();
-    orders = readOrders();
+    orders = seedOrdersIfEmpty() || readOrders();
     refresh();
 
     window.addEventListener('storage', function (e) {

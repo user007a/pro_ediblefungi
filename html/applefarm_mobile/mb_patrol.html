@@ -473,7 +473,9 @@
     var BATCHES = {
       'JB-20261116-01': { house: '一号出菇房 GF-01', variety: '杏鲍菇' },
       'JB-20261116-02': { house: '二号出菇房 GF-02', variety: '杏鲍菇' },
-      'JB-20261115-06': { house: '三号出菇房 GF-03', variety: '杏鲍菇' }
+      'JB-20261115-06': { house: '三号出菇房 GF-03', variety: '杏鲍菇' },
+      'JB-20261112-02': { house: '二号出菇房 GF-02', variety: '杏鲍菇' },
+      'JB-20261110-05': { house: '五号出菇房 GF-05', variety: '白玉菇' }
     };
     var SENSES = [
       { key: 'color', name: '色泽' },
@@ -510,6 +512,44 @@
     function saveRecords(arr) {
       try { localStorage.setItem(KEY, JSON.stringify(arr)); }
       catch (e) { toast('本地存储空间不足，保存失败', 'error'); }
+    }
+
+    /* 演示种子：仅键不存在时写入；今日 3 条 + 近 7 日 3 条，批次与采收页联动 */
+    function seedRecordsIfEmpty() {
+      var raw = null;
+      try { raw = localStorage.getItem(KEY); } catch (e) { return; }
+      if (raw !== null) {
+        try { var exist = JSON.parse(raw); if (Array.isArray(exist) && exist.length) return; } catch (e) { /* 坏数据视为空 */ }
+      }
+      function day(offset) { return dateKey(new Date(Date.now() - offset * 86400000)); }
+      function stamp(offset) { return day(offset).replace(/-/g, ''); }
+      function mk(no, offset, batch, count, avgW, dia, senses, badItems, disposal, inspector, hm) {
+        var meta = BATCHES[batch] || {};
+        var rec = {
+          id: 'ZJ-' + stamp(offset) + '-' + pad(no),
+          batch: batch, house: meta.house || '', variety: meta.variety || '杏鲍菇',
+          sampleCount: count, avgWeight: avgW, diameter: dia,
+          senses: senses,
+          conclusion: badItems.length ? '不合格' : '合格',
+          disposal: disposal, inspector: inspector,
+          time: day(offset) + ' ' + hm, status: 'submitted'
+        };
+        if (badItems.length) rec.badItems = badItems;
+        return rec;
+      }
+      var PASS = { color: 'pass', shape: 'pass', smell: 'pass', impurity: 'pass' };
+      saveRecords([
+        mk(1, 0, 'JB-20261116-01', 20, 0.21, 4.2, PASS, [], '', '周敏', '07:05'),
+        mk(2, 0, 'JB-20261116-02', 15, 0.19, 3.8, PASS, [], '', '周敏', '07:40'),
+        mk(3, 0, 'JB-20261115-06', 18, 0.22, 4.5,
+          { color: 'pass', shape: 'fail', smell: 'pass', impurity: 'pass' },
+          ['形态'], '隔离该批次菇体并转无害化处理，48 小时内复检相邻批次', '周敏', '08:20'),
+        mk(1, 2, 'JB-20261115-06', 20, 0.20, 4.1, PASS, [], '', '周敏', '07:15'),
+        mk(1, 4, 'JB-20261112-02', 16, 0.23, 4.6, PASS, [], '', '李国强', '07:50'),
+        mk(1, 5, 'JB-20261110-05', 12, 0.18, 3.5,
+          { color: 'fail', shape: 'pass', smell: 'fail', impurity: 'pass' },
+          ['色泽', '气味'], '整批降级转加工原料，禁止鲜销出库', '周敏', '08:10')
+      ]);
     }
 
     function todayRecords() {
@@ -854,6 +894,7 @@
     /* ---------- 初始化 ---------- */
     document.addEventListener('DOMContentLoaded', function () {
       initBatch();
+      seedRecordsIfEmpty();
       var now = new Date();
       $('qTime').value = dateKey(now) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
       $('qInspector').value = sessionStorage.getItem('loginUser') || '李国强';

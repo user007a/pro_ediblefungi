@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>工厂化农业数据管理系统 - 菌包制备管理</title>
+<title>工厂化农业数据管理系统 - 菌包制备</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2352c41a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/design-system.css">
 <link rel="stylesheet" href="css/sidebar-layout.css">
 <link rel="stylesheet" href="css/page-content.css">
@@ -80,8 +81,8 @@
     <main class="main-content"><div class="content-wrapper">
 
       <div class="page-head">
-        <h1>菌包制备管理</h1>
-        <div class="crumb">生产管理 / 菌包制备管理 · 配方拌料、装袋与灭菌流转</div>
+        <h1>菌包制备</h1>
+        <div class="crumb">生产管理 / 菌包制备 · 配方拌料、装袋与灭菌流转</div>
       </div>
 
       <div class="stat-grid" id="statGrid"></div>
@@ -371,7 +372,7 @@ function openDetail(id){
     items.map(function(it){
       return '<tr><td>'+esc(it.name)+'</td><td>'+it.pct+'%</td><td>'+it.need+' kg</td><td>'+(it.mat?'现存 '+Number(it.mat.stock).toLocaleString()+' '+esc(it.mat.unit):'未建档')+'</td></tr>';
     }).join('')+'</tbody></table>'+
-    '<div style="margin-top:14px;"><button class="jg-btn" onclick="nav(\'harvest_report.html\',\'高压灭菌管理\')">前往高压灭菌</button></div>'
+    '<div style="margin-top:14px;"><button class="jg-btn" onclick="nav(\'harvest_report.html\',\'高压灭菌\')">前往高压灭菌</button></div>'
   );
 }
 function exportRecipes(){

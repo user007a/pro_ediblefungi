@@ -464,7 +464,9 @@
     var BATCHES = {
       'JB-20261116-01': { house: '一号出菇房 GF-01', variety: '杏鲍菇' },
       'JB-20261116-02': { house: '二号出菇房 GF-02', variety: '杏鲍菇' },
-      'JB-20261115-06': { house: '三号出菇房 GF-03', variety: '杏鲍菇' }
+      'JB-20261115-06': { house: '三号出菇房 GF-03', variety: '杏鲍菇' },
+      'JB-20261112-02': { house: '二号出菇房 GF-02', variety: '杏鲍菇' },
+      'JB-20261110-05': { house: '五号出菇房 GF-05', variety: '白玉菇' }
     };
     var photoData = SAMPLE_PHOTO;
     var photoIsSample = true;
@@ -497,6 +499,40 @@
 
     function saveRecords(arr) {
       try { localStorage.setItem(KEY, JSON.stringify(arr)); } catch (e) { toast('本地存储空间不足，保存失败', 'error'); }
+    }
+
+    /* 演示种子：仅键不存在时写入；今日 3 条 + 昨日 3 条，批次与表单可选批次一致 */
+    function seedRecordsIfEmpty() {
+      var raw = null;
+      try { raw = localStorage.getItem(KEY); } catch (e) { return; }
+      if (raw !== null) {
+        try { var exist = JSON.parse(raw); if (Array.isArray(exist) && exist.length) return; } catch (e) { /* 坏数据视为空 */ }
+      }
+      function day(offset) {
+        var d = new Date(Date.now() - offset * 86400000);
+        return dateKey(d);
+      }
+      function stamp(offset) { return day(offset).replace(/-/g, ''); }
+      function mk(no, offset, batch, total, a, b, operator, hm, note) {
+        var meta = BATCHES[batch] || {};
+        return {
+          id: 'CS-' + stamp(offset) + '-' + pad(no),
+          batch: batch, house: meta.house || '', variety: meta.variety || '杏鲍菇',
+          total: total, gradeA: a, gradeB: b,
+          gradeC: Math.max(0, Math.round((total - a - b) * 10) / 10),
+          rateA: total > 0 ? Math.round(a / total * 1000) / 10 : 0,
+          operator: operator, time: day(offset) + ' ' + hm,
+          photo: SAMPLE_PHOTO, note: note, status: 'submitted'
+        };
+      }
+      saveRecords([
+        mk(1, 0, 'JB-20261116-01', 486.5, 402.0, 68.5, '王芳', '06:40', '第一潮菇，菇形整齐'),
+        mk(2, 0, 'JB-20261116-02', 372.0, 301.5, 58.0, '王芳', '07:15', ''),
+        mk(3, 0, 'JB-20261115-06', 298.4, 246.0, 41.2, '李国强', '08:05', '二次复采'),
+        mk(1, 1, 'JB-20261115-06', 315.2, 258.4, 45.0, '王芳', '06:50', ''),
+        mk(2, 1, 'JB-20261112-02', 402.6, 330.0, 60.2, '李国强', '07:30', '第一潮菇'),
+        mk(3, 1, 'JB-20261110-05', 268.0, 219.5, 39.5, '王芳', '08:20', '白玉菇出口规格抽检留样')
+      ]);
     }
 
     function todayRecords() {
@@ -836,6 +872,7 @@
     /* ---------- 初始化 ---------- */
     document.addEventListener('DOMContentLoaded', function () {
       initBatch();
+      seedRecordsIfEmpty();
       var now = new Date();
       $('fTime').value = dateKey(now) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
       $('fOperator').value = sessionStorage.getItem('loginUser') || '李国强';

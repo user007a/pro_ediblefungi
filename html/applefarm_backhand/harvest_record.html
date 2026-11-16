@@ -3,147 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>智慧果园 - 采收记录</title>
+<title>工厂化农业数据管理系统 - 菌丝培养</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2352c41a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/design-system.css">
 <link rel="stylesheet" href="css/sidebar-layout.css">
 <link rel="stylesheet" href="css/page-content.css">
 <style>
-  .module-card {
-    transition:all 0.2s ease;
-  }
-  .module-card:hover {
-    background:var(--bg-hover);
-    transform:translateY(-2px);
-    box-shadow:var(--shadow-md);
-  }
-  /* 分页栏样式（与农事计划一致） */
-  #pagination-container { padding:12px 16px; }
-  /* 顶部统计卡 */
-  .stat-grid {
-    display:grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap:16px;
-    margin-bottom:16px;
-  }
-  .stat-card {
-    background:var(--bg-card, #fff);
-    border:1px solid var(--border-color, #e8ece8);
-    border-radius:var(--radius-card, 12px);
-    padding:16px 18px;
-  }
-  .stat-label { font-size:12px; color:var(--text-tertiary); margin-bottom:6px; }
-  .stat-value { font-size:22px; font-weight:600; line-height:1.2; }
-  .stat-value small { font-size:12px; font-weight:400; color:var(--text-tertiary); margin-left:4px; }
-  .stat-sub { margin-top:6px; font-size:12px; color:var(--text-tertiary); }
-  @media (max-width: 1100px) { .stat-grid { grid-template-columns:repeat(2, 1fr); } }
-
-  /* ===== 采收人下拉多选 ===== */
-  .ms-select { position:relative; width:100%; }
-  .ms-control {
-    display:flex; flex-wrap:wrap; align-items:center; gap:6px;
-    min-height:38px; padding:5px 34px 5px 8px;
-    border:1px solid var(--u-border-strong, #e8e8e8);
-    border-radius:var(--u-radius-md, 6px);
-    background:var(--u-card-bg, #fff);
-    cursor:text; transition:border-color .18s ease, box-shadow .18s ease;
-  }
-  .ms-select.open .ms-control,
-  .ms-control:focus-within {
-    border-color:var(--u-primary, #1890ff);
-    box-shadow:0 0 0 2px rgba(24, 144, 255, .15);
-  }
-  .ms-tags { display:contents; }
-  .ms-tag {
-    display:inline-flex; align-items:center; gap:2px; max-width:100%;
-    height:24px; padding:0 4px 0 8px;
-    font-size:12px; line-height:1;
-    color:var(--u-primary, #1890ff);
-    background:var(--u-primary-bg, #e6f4ff);
-    border:1px solid #bae0ff; border-radius:4px;
-  }
-  .ms-tag > span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ms-tag-remove {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:16px; height:16px; padding:0; border:0; border-radius:50%;
-    background:transparent; color:var(--u-primary, #1890ff); cursor:pointer;
-    transition:background .15s ease;
-  }
-  .ms-tag-remove:hover { background:rgba(24, 144, 255, .16); }
-  .ms-tag-remove svg { width:9px; height:9px; }
-  .ms-input {
-    flex:1 1 60px; min-width:60px; width:auto;
-    height:24px !important; min-height:24px !important;
-    padding:0 !important; margin:0;
-    border:0 !important; background:transparent !important;
-    box-shadow:none !important; outline:none !important;
-    font-size:14px !important; line-height:24px; color:var(--u-text-1, #262626);
-  }
-  .ms-input::placeholder { color:var(--u-text-4, #bfbfbf); }
-  .ms-arrow {
-    position:absolute; right:11px; top:50%; transform:translateY(-50%);
-    color:#bfbfbf; pointer-events:none; transition:transform .18s ease, color .18s ease;
-  }
-  .ms-select.open .ms-arrow { transform:translateY(-50%) rotate(180deg); color:var(--u-primary, #1890ff); }
-  .ms-panel {
-    position:fixed; z-index:1100; display:none; flex-direction:column;
-    background:#fff; border:1px solid #e8e8e8; border-radius:8px;
-    box-shadow:0 12px 32px rgba(0, 0, 0, .16); overflow:hidden;
-  }
-  .ms-panel.show { display:flex; animation:msPanelIn .16s ease-out; }
-  @keyframes msPanelIn {
-    from { opacity:0; transform:translateY(-4px); }
-    to { opacity:1; transform:translateY(0); }
-  }
-  .ms-toolbar {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:7px 10px; font-size:12px; color:var(--u-text-3, #8c8c8c);
-    background:#fafafa; border-bottom:1px solid #f5f5f5;
-  }
-  .ms-toolbar-actions { display:flex; gap:2px; }
-  .ms-toolbar-actions button {
-    padding:2px 7px; border:0; border-radius:4px; background:transparent;
-    color:var(--u-primary, #1890ff); font-size:12px; cursor:pointer; transition:background .15s ease;
-  }
-  .ms-toolbar-actions button:hover { background:var(--u-primary-bg, #e6f4ff); }
-  .ms-options { max-height:216px; overflow-y:auto; padding:4px; }
-  .ms-option {
-    display:flex; align-items:center; gap:8px;
-    padding:7px 8px; border-radius:6px; cursor:pointer;
-    font-size:13px; color:var(--u-text-1, #262626);
-    user-select:none; transition:background .15s ease;
-  }
-  .ms-option:hover { background:#f5faff; }
-  .ms-option.checked { background:var(--u-primary-bg, #e6f4ff); color:var(--u-primary, #1890ff); font-weight:500; }
-  .ms-check {
-    display:inline-flex; align-items:center; justify-content:center; flex:none;
-    width:16px; height:16px; border:1px solid #d9d9d9; border-radius:4px;
-    background:#fff; color:#fff; transition:all .15s ease;
-  }
-  .ms-check svg { width:10px; height:10px; opacity:0; }
-  .ms-option.checked .ms-check { background:var(--u-primary, #1890ff); border-color:var(--u-primary, #1890ff); }
-  .ms-option.checked .ms-check svg { opacity:1; }
-  .ms-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ms-empty { display:none; padding:18px 0; text-align:center; font-size:12px; color:var(--u-text-4, #bfbfbf); }
-  .ms-empty.show { display:block; }
-  .ms-hint { font-size:12px; color:var(--u-text-3, #8c8c8c); margin-top:2px; }
-
-  /* 弹窗内分区标题 */
-  .form-section-title {
-    display:flex; align-items:center; gap:8px;
-    margin:2px 0 -2px; font-size:13px; font-weight:600; color:var(--u-text-1, #262626);
-  }
-  .form-section-title::before {
-    content:''; width:3px; height:13px; border-radius:2px; background:var(--u-primary, #1890ff);
-  }
-  .form-section-title:not(:first-child) { margin-top:6px; }
-
-  /* 详情：采收人只读标签 */
-  .ms-readonly-tags { flex-wrap:wrap; gap:6px; }
-  .ms-tag-readonly { padding-right:8px; }
+  .page-head{margin-bottom:16px;}
+  .page-head h1{font-size:18px;font-weight:700;margin:0;color:var(--text-primary);}
+  .page-head .crumb{font-size:12px;color:var(--text-tertiary);margin-top:4px;}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;}
+  .stat-card{background:var(--bg-card,#fff);border:1px solid var(--border-color,#e8ece8);border-radius:12px;padding:16px 18px;border-left:4px solid #1890ff;}
+  .stat-card.green{border-left-color:#52c41a;}
+  .stat-card.orange{border-left-color:#fa8c16;}
+  .stat-card.red{border-left-color:#ff4d4f;}
+  .stat-label{font-size:12px;color:var(--text-tertiary);margin-bottom:6px;}
+  .stat-value{font-size:22px;font-weight:600;line-height:1.2;}
+  .stat-value small{font-size:12px;font-weight:400;color:var(--text-tertiary);margin-left:4px;}
+  .stat-sub{margin-top:6px;font-size:12px;color:var(--text-tertiary);}
+  @media(max-width:1100px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+  th.sortable:hover{color:#1890ff;}
+  .sort-arrow{font-size:10px;margin-left:3px;color:#1890ff;}
+  .empty-cell{text-align:center;color:var(--text-tertiary);padding:32px 0!important;}
+  .row-btn{padding:3px 10px;font-size:12px;border-radius:6px;border:1px solid var(--border-default,#d9d9d9);background:#fff;color:var(--text-secondary,#555);cursor:pointer;margin-right:6px;white-space:nowrap;}
+  .row-btn:hover{border-color:#1890ff;color:#1890ff;}
+  .row-btn.danger{color:#ff4d4f;border-color:#ffccc7;}
+  .row-btn.danger:hover{background:#fff2f0;}
+  .row-btn.primary{color:#1890ff;border-color:#91caff;}
+  .row-btn.ok{color:#52c41a;border-color:#b7eb8f;}
+  .chart-sec{background:var(--bg-card,#fff);border:1px solid var(--border-color,#e8ece8);border-radius:12px;padding:16px 18px;margin-bottom:16px;}
+  .chart-title{font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:8px;}
+  .chart-legend{display:flex;gap:18px;font-size:12px;color:var(--text-secondary);margin-top:6px;flex-wrap:wrap;}
+  .legend-dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+  .drawer-mask{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9998;}
+  .drawer-mask.show{display:block;}
+  .drawer{position:fixed;top:0;right:-580px;width:560px;max-width:94vw;height:100vh;background:#fff;z-index:9999;box-shadow:-8px 0 32px rgba(0,0,0,.15);transition:right .25s ease;display:flex;flex-direction:column;}
+  .drawer.open{right:0;}
+  .drawer-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .drawer-header h3{margin:0;font-size:16px;font-weight:600;color:var(--text-primary);}
+  .drawer-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .drawer-close:hover{background:#f5f5f5;color:#333;}
+  .drawer-body{padding:20px 24px;overflow-y:auto;flex:1;}
+  .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 20px;margin-bottom:16px;}
+  .detail-item.full{grid-column:1/-1;}
+  .detail-item .dl{font-size:12px;color:var(--text-tertiary);margin-bottom:2px;}
+  .detail-item .dv{font-size:14px;color:var(--text-primary);font-weight:500;word-break:break-all;}
+  .drawer-sec{font-size:13px;font-weight:600;color:var(--text-primary);margin:18px 0 10px;padding-left:8px;border-left:3px solid #1890ff;}
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{width:560px;max-width:92vw;max-height:86vh;background:#fff;border-radius:12px;display:flex;flex-direction:column;overflow:hidden;}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid #eef1ef;flex:none;}
+  .modal-header h3{font-size:16px;font-weight:600;margin:0;}
+  .modal-close{width:28px;height:28px;border:none;background:none;font-size:18px;cursor:pointer;color:#8c8c8c;border-radius:6px;}
+  .modal-body{padding:20px 24px;overflow-y:auto;}
+  .form-group{margin-bottom:14px;}
+  .form-group.full{grid-column:1/-1;}
+  .form-group label{display:block;font-size:13px;font-weight:500;color:var(--text-secondary);margin-bottom:6px;}
+  .form-group label .req{color:#ff4d4f;margin-left:2px;}
+  #modal .modal-body input,#modal .modal-body select,#modal .modal-body textarea{width:100%;padding:9px 12px;border:1.5px solid #d9d9d9;border-radius:8px;font-size:13px!important;background:#fff;outline:none;font-family:inherit;box-sizing:border-box;}
+  #modal .modal-body input:focus,#modal .modal-body select:focus{border-color:#1890ff;box-shadow:0 0 0 3px rgba(24,144,255,.1);}
+  .modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:14px 24px;border-top:1px solid #eef1ef;flex:none;}
+  .toast-undo{display:none;padding:3px 12px;border-radius:6px;border:1px solid currentColor;background:rgba(255,255,255,.6);font-size:12px;font-weight:600;cursor:pointer;color:inherit;}
 </style>
-<style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
-  .main-wrapper{margin-left:0!important;width:100%!important;}
-</style>
+<style id="standalone-fix">.main-wrapper{margin-left:0!important;width:100%!important;}</style>
 <link rel="stylesheet" href="css/unified-theme.css">
 <link rel="stylesheet" href="css/typography.css">
 </head>
@@ -151,1027 +74,323 @@
 
 <div class="app-layout">
   <div class="main-wrapper">
-    <div class="tab-bar">
-      <div class="tab-bar-actions">
-        <button class="tab-close-all" title="关闭全部标签">
-          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 3L11 11M11 3L3 11"/>
-          </svg>
-        </button>
+    <div class="tab-bar"><div class="tab-bar-actions"><button class="tab-close-all" title="关闭全部标签"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3L11 11M11 3L3 11"/></svg></button></div></div>
+    <main class="main-content"><div class="content-wrapper">
+
+      <div class="page-head">
+        <h1>菌丝培养</h1>
+        <div class="crumb">生产管理 / 菌丝培养 · 培养架台账、翻堆与污染剔除、满袋率趋势</div>
       </div>
-    </div>
 
-    <main class="main-content">
-      <div class="content-wrapper">
+      <div class="stat-grid" id="statGrid"></div>
 
-        <!-- 采收统计分析 -->
-        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
-          <div class="chart-section" style="margin-bottom:0;">
-            <h2 class="section-title">品种采收量占比</h2>
-            <div id="chart-variety" class="chart-container" style="height:260px;"></div>
-          </div>
-          <div class="chart-section" style="margin-bottom:0;">
-            <h2 class="section-title">基地采收量(kg)</h2>
-            <div id="chart-base" class="chart-container" style="height:260px;"></div>
-          </div>
-          <div class="chart-section" style="margin-bottom:0;">
-            <h2 class="section-title">采收量趋势(kg)</h2>
-            <div id="chart-trend" class="chart-container" style="height:260px;"></div>
-          </div>
-        </div>
+      <div class="chart-sec">
+        <div class="chart-title">满袋率趋势（按培养天数）</div>
+        <div id="chartBox"></div>
+        <div class="chart-legend"><span><span class="legend-dot" style="background:#1890ff;"></span>满袋率%</span><span><span class="legend-dot" style="background:#fa8c16;"></span>92.6% 工厂均值参考线</span></div>
+      </div>
 
-        <!-- 统计卡条 -->
-        <div class="stat-grid" id="statGrid" style="margin-top:16px;"></div>
-
-        <div class="page-section search-section">
-          <div class="search-bar">
-            <select class="search-select" id="baseSelect">
-              <option value="">全部基地</option>
-            </select>
-            <select class="search-select" id="statusSelect" style="min-width:120px;">
-              <option value="">全部状态</option>
-              <option value="pending">待处理</option>
-              <option value="processing">处理中</option>
-              <option value="completed">已完成</option>
-            </select>
-            <select class="search-select" id="levelSelect" style="min-width:100px;">
-              <option value="">全部等级</option>
-              <option value="level1">一级</option>
-              <option value="level2">二级</option>
-              <option value="level3">三级</option>
-            </select>
-            <input type="date" class="search-input" id="startDate" placeholder="开始日期">
-            <span class="date-separator">至</span>
-            <input type="date" class="search-input" id="endDate" placeholder="结束日期">
-            <input type="text" class="search-input" placeholder="搜索记录编号/批次号..." id="searchInput">
-          <div class="search-actions"><button class="jg-btn jg-btn-primary" onclick="handleSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>搜索</button><button class="jg-btn" onclick="smartReset()">重置</button></div>
-          </div>
-        </div>
-
-        <div class="page-section action-bar">
-          <button class="jg-btn jg-btn-primary" onclick="showAdd()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;">
-              <path d="M12 5v14"/>
-              <path d="M5 12h14"/>
-            </svg>
-            新建记录
-          </button>
-          <button class="jg-btn" onclick="Modal.show('modal-export')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;margin-right:6px;">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" x2="12" y1="15" y2="3"/>
-            </svg>
-            导出记录
-          </button>
-        </div>
-
-        <div class="page-section data-section">
-          <div class="data-table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th style="width:60px;">序号</th>
-                  <th style="width:120px;">记录编号</th>
-                  <th style="width:120px;">关联计划</th>
-                  <th style="width:140px;">批次号</th>
-                  <th style="width:140px;">所属基地</th>
-                  <th style="width:150px;">地块</th>
-                  <th style="width:100px;">品种</th>
-                  <th style="width:100px;">采收量(kg)</th>
-                  <th style="width:80px;">等级</th>
-                  <th style="width:80px;">状态</th>
-                  <th style="width:100px;">采收日期</th>
-                  <th style="width:210px;">操作</th>
-                </tr>
-              </thead>
-              <tbody id="dataTableBody">
-              </tbody>
-            </table>
-          </div>
-          <div id="pagination-container">
+      <div class="page-section search-section">
+        <div class="search-bar">
+          <select class="search-select" id="filterSelect" onchange="renderTable()">
+            <option value="">全部污染状态</option>
+            <option value="high">污染率≥3%</option>
+            <option value="mid">污染率1-3%</option>
+            <option value="low">污染率&lt;1%</option>
+          </select>
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索培养单、批次、架位..." oninput="renderTable()">
+          <div class="search-actions">
+            <button class="jg-btn" onclick="resetFilters()">重置</button>
           </div>
         </div>
       </div>
-    </main>
+
+      <div class="page-section action-bar">
+        <div class="action-left">
+          <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openForm()">+ 新建培养单</button>
+          <button class="jg-btn" id="exportBtn" onclick="exportCurrent()">导出CSV</button>
+          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete('culture','培养单')">批量删除</button>
+          <span class="selected-info" id="selInfo"></span>
+        </div>
+      </div>
+
+      <div class="page-section data-section">
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead><tr>
+              <th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+              <th class="sortable" data-key="id" onclick="sortBy('id')">培养单号<span class="sort-arrow"></span></th>
+              <th>批次</th><th>架位</th>
+              <th class="sortable" data-key="days" onclick="sortBy('days')">培养天数<span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="fullRate" onclick="sortBy('fullRate')">满袋率%<span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="temp" onclick="sortBy('temp')">温度°C<span class="sort-arrow"></span></th>
+              <th class="sortable" data-key="cullRate" onclick="sortBy('cullRate')">污染率%<span class="sort-arrow"></span></th>
+              <th>上次翻堆</th>
+              <th style="width:250px;">操作</th>
+            </tr></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div></main>
   </div>
 </div>
 
-  <div id="modal-add-record" class="modal-overlay">
-    <div class="modal-box" style="max-width:600px;">
-      <div class="modal-header">
-        <h3 class="modal-title">新建采收记录</h3>
-        <button class="modal-close">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 4L12 12M12 4L4 12"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form id="form-add-record" class="modal-form">
-          <div class="form-section-title">基础信息</div>
-          <div class="form-group full">
-            <label>关联计划</label>
-            <select class="form-control" id="add-plan"></select>
-            <div style="font-size:12px;color:var(--text-tertiary);margin-top:4px;">选择计划后自动带出批次号、地块、基地与品种</div>
-          </div>
-          <div class="form-group">
-            <label>批次号</label>
-            <input type="text" class="form-control" id="add-batch" readonly placeholder="由关联计划带出">
-          </div>
-          <div class="form-group">
-            <label>地块编号</label>
-            <select class="form-control" id="add-plot"></select>
-          </div>
-          <div class="form-group">
-            <label>所属基地</label>
-            <select class="form-control" id="add-base"></select>
-          </div>
-          <div class="form-group">
-            <label>品种</label>
-            <select class="form-control" id="add-variety"></select>
-          </div>
-          <div class="form-section-title">采收信息</div>
-          <div class="form-group">
-            <label>采收量(kg)</label>
-            <input type="number" class="form-control" id="add-quantity" placeholder="请输入采收量" min="1">
-          </div>
-          <div class="form-group">
-            <label>苹果等级</label>
-            <select class="form-control" id="add-level"></select>
-          </div>
-          <div class="form-group full">
-            <label>采收人</label>
-            <div class="ms-select" id="add-harvesters"></div>
-            <div class="ms-hint">支持多选，已选人员以标签展示，点击标签右侧 × 可移除</div>
-          </div>
-          <div class="form-section-title">作业时间与备注</div>
-          <div class="form-group">
-            <label>采收开始时间</label>
-            <input type="datetime-local" class="form-control" id="add-start">
-          </div>
-          <div class="form-group">
-            <label>采收结束时间</label>
-            <input type="datetime-local" class="form-control" id="add-end">
-          </div>
-          <div class="form-group">
-            <label>备注</label>
-            <textarea class="form-control" rows="3" id="add-remark" placeholder="请输入备注信息"></textarea>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="jg-btn" onclick="Modal.hide('modal-add-record')">取消</button>
-        <button class="jg-btn jg-btn-primary" onclick="submitAddRecord()">确定</button>
-      </div>
-    </div>
+<div class="drawer-mask" id="drawerMask" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header"><h3 id="drawerTitle">详情</h3><button class="drawer-close" id="drawerClose" onclick="closeDrawer()">×</button></div>
+  <div class="drawer-body" id="drawerBody"></div>
+</div>
+
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header"><h3 id="modalTitle">编辑</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeModal()">取消</button><button class="jg-btn jg-btn-primary" id="modalSave" onclick="saveModal()">保存</button></div>
   </div>
+</div>
 
-  <div id="modal-export" class="modal-overlay">
-    <div class="modal-box" style="max-width:420px;">
-      <div class="modal-header">
-        <h3 class="modal-title">导出记录</h3>
-        <button class="modal-close">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 4L12 12M12 4L4 12"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="form-row">
-          <div class="form-item">
-            <label>选择导出格式</label>
-            <select class="form-select" id="exportFormat">
-              <option value="excel">Excel (.xlsx)</option>
-              <option value="csv">CSV (.csv)</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-row">
-          <div class="form-item">
-            <label>导出范围</label>
-            <div style="display:flex;gap:16px;">
-              <label class="checkbox-label">
-                <input type="radio" name="exportType" value="all" checked>
-                <span>导出全部记录</span>
-              </label>
-              <label class="checkbox-label">
-                <input type="radio" name="exportType" value="filtered">
-                <span>导出筛选结果</span>
-              </label>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="jg-btn" onclick="Modal.hide('modal-export')">取消</button>
-        <button class="jg-btn jg-btn-primary" onclick="handleExport()">导出</button>
-      </div>
-    </div>
+<div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal-box" style="width:420px;">
+    <div class="modal-header"><h3>删除确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
+    <div class="modal-body"><p id="confirmText" style="margin:0;font-size:14px;color:var(--text-primary);"></p></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="doConfirm()">确认删除</button></div>
   </div>
+</div>
 
-  <div id="modal-detail" class="modal-overlay">
-    <div class="modal-box" style="max-width:640px;">
-      <div class="modal-header">
-        <h3 class="modal-title">采收记录详情</h3>
-        <button class="modal-close">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 4L12 12M12 4L4 12"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="detail-grid">
-          <div class="detail-item">
-            <span class="detail-label">记录编号</span>
-            <span class="detail-value" id="detail-id"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">状态</span>
-            <span class="detail-value" id="detail-status"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">关联计划</span>
-            <span class="detail-value" id="detail-plan"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">批次号</span>
-            <span class="detail-value" id="detail-batch"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">所属基地</span>
-            <span class="detail-value" id="detail-base"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">地块</span>
-            <span class="detail-value" id="detail-plot"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">品种</span>
-            <span class="detail-value" id="detail-variety"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">采收量</span>
-            <span class="detail-value" id="detail-quantity"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">苹果等级</span>
-            <span class="detail-value" id="detail-level"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">采收开始时间</span>
-            <span class="detail-value" id="detail-start"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">采收结束时间</span>
-            <span class="detail-value" id="detail-end"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">采收人</span>
-            <span class="detail-value ms-readonly-tags" id="detail-harvesters"></span>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">追溯码</span>
-            <span class="detail-value" id="detail-trace"></span>
-          </div>
-        </div>
-        <div style="margin-top:16px; padding:12px; background:var(--gray-50); border-radius:8px;">
-          <div style="font-size:12px; color:var(--text-tertiary); margin-bottom:4px;">备注</div>
-          <div style="font-weight:500;" id="detail-remark">-</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="jg-btn" id="btn-trace" onclick="generateTraceCode()">生成追溯码</button>
-        <button class="jg-btn jg-btn-primary" onclick="Modal.hide('modal-detail')">关闭</button>
-      </div>
-    </div>
-  </div>
+<div class="toast" id="toast"><span class="toast-message" id="toastMessage"></span><button class="toast-undo" id="toastUndo">撤销</button></div>
 
-  <div id="modal-edit" class="modal-overlay">
-    <div class="modal-box" style="max-width:600px;">
-      <div class="modal-header">
-        <h3 class="modal-title">编辑采收记录</h3>
-        <button class="modal-close">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 4L12 12M12 4L4 12"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <form id="form-edit-record" class="modal-form">
-          <div class="form-section-title">基础信息</div>
-          <div class="form-group full">
-            <label>关联计划</label>
-            <select class="form-control" id="edit-plan"></select>
-          </div>
-          <div class="form-group">
-            <label>批次号</label>
-            <input type="text" class="form-control" id="edit-batch" readonly>
-          </div>
-          <div class="form-group">
-            <label>地块编号</label>
-            <select class="form-control" id="edit-plot"></select>
-          </div>
-          <div class="form-group">
-            <label>所属基地</label>
-            <select class="form-control" id="edit-base"></select>
-          </div>
-          <div class="form-group">
-            <label>品种</label>
-            <select class="form-control" id="edit-variety"></select>
-          </div>
-          <div class="form-section-title">采收信息</div>
-          <div class="form-group">
-            <label>采收量(kg)</label>
-            <input type="number" class="form-control" id="edit-quantity" min="1">
-          </div>
-          <div class="form-group">
-            <label>苹果等级</label>
-            <select class="form-control" id="edit-level"></select>
-          </div>
-          <div class="form-group full">
-            <label>采收人</label>
-            <div class="ms-select" id="edit-harvesters"></div>
-            <div class="ms-hint">支持多选，已选人员以标签展示，点击标签右侧 × 可移除</div>
-          </div>
-          <div class="form-section-title">作业时间与备注</div>
-          <div class="form-group">
-            <label>采收开始时间</label>
-            <input type="datetime-local" class="form-control" id="edit-start">
-          </div>
-          <div class="form-group">
-            <label>采收结束时间</label>
-            <input type="datetime-local" class="form-control" id="edit-end">
-          </div>
-          <div class="form-group">
-            <label>备注</label>
-            <textarea class="form-control" rows="3" id="edit-remark"></textarea>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="jg-btn" onclick="Modal.hide('modal-edit')">取消</button>
-        <button class="jg-btn jg-btn-primary" onclick="submitEditRecord()">确定</button>
-      </div>
-    </div>
-  </div>
+<script src="js/shared/fungi-store.js"></script>
+<script>
+var FS = window.FungiStore;
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function today(){return FS.dayKey(0);}
+function nowHM(){var d=new Date();return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+function nowStamp(){return today()+' '+nowHM();}
+function nav(url,title){try{if(window.parent&&window.parent!==window&&typeof window.parent.openPage==='function'){window.parent.openPage(url,title);return;}}catch(e){}location.href=url;}
+var toastTimer=null;
+function showToast(msg,type,undoFn){var t=document.getElementById('toast');document.getElementById('toastMessage').textContent=msg;t.className='toast toast-'+(type||'success')+' show';var ub=document.getElementById('toastUndo');if(undoFn){ub.style.display='inline-block';ub.onclick=function(){hideToast();undoFn();};}else{ub.style.display='none';ub.onclick=null;}clearTimeout(toastTimer);toastTimer=setTimeout(hideToast,undoFn?6000:2600);}
+function hideToast(){document.getElementById('toast').classList.remove('show');}
+function openModal(title,html){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=html;document.getElementById('modal').classList.add('show');}
+function closeModal(){document.getElementById('modal').classList.remove('show');}
+var confirmCb=null;
+function askConfirm(msg,cb){document.getElementById('confirmText').textContent=msg;confirmCb=cb;document.getElementById('confirmModal').classList.add('show');}
+function doConfirm(){var cb=confirmCb;closeConfirm();if(cb)cb();}
+function closeConfirm(){confirmCb=null;document.getElementById('confirmModal').classList.remove('show');}
+function openDrawer(title,html){document.getElementById('drawerTitle').textContent=title;document.getElementById('drawerBody').innerHTML=html;document.getElementById('drawer').classList.add('open');document.getElementById('drawerMask').classList.add('show');}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawerMask').classList.remove('show');}
+function rowClick(e,id){if(e.target.closest('button,input,select,a,label'))return;openDetail(id);}
+function val(id){var el=document.getElementById(id);return el?el.value.trim():'';}
+function reqOK(){var ok=true;document.querySelectorAll('#modalBody [data-req]').forEach(function(el){if(!String(el.value).trim()){el.style.borderColor='#ff4d4f';ok=false;}else{el.style.borderColor='';}});if(!ok)showToast('请填写完整必填项（红框）','error');return ok;}
+function fg(label,html,req,full){return '<div class="form-group'+(full?' full':'')+'"><label>'+label+(req?'<span class="req">*</span>':'')+'</label>'+html+'</div>';}
+function inp(id,v,type,req){return '<input id="'+id+'" type="'+(type||'text')+'" value="'+esc(v==null?'':v)+'"'+(req?' data-req="1"':'')+'>';}
+function sel(id,opts,v,req){return '<select id="'+id+'"'+(req?' data-req="1"':'')+'>'+opts.map(function(o){var ov=typeof o==='object'?o.v:o;var ot=typeof o==='object'?o.t:o;return '<option value="'+esc(ov)+'"'+(String(ov)===String(v)?' selected':'')+'>'+esc(ot)+'</option>';}).join('')+'</select>';}
+var selected={};
+function toggleAll(cb){document.querySelectorAll('#tableBody .row-check').forEach(function(c){c.checked=cb.checked;selected[c.dataset.id]=cb.checked;});updateSelInfo();}
+function toggleRow(cb){selected[cb.dataset.id]=cb.checked;updateSelInfo();}
+function updateSelInfo(){var n=Object.keys(selected).filter(function(k){return selected[k];}).length;var el=document.getElementById('selInfo');if(el)el.textContent=n?('已选 '+n+' 条'):'';var all=document.getElementById('selectAll');if(all){var boxes=document.querySelectorAll('#tableBody .row-check');all.checked=boxes.length>0&&n===boxes.length;}}
+function removeRow(col,id,label){var idx=FS.list(col).findIndex(function(x){return x.id===id;});askConfirm('确认删除「'+label+'」？删除后可撤销。',function(){var gone=FS.remove(col,id);delete selected[id];renderAll();showToast('已删除「'+label+'」','success',function(){FS.restore(col,gone,idx);renderAll();showToast('已撤销删除','success');});});}
+function batchDelete(col,label){var ids=Object.keys(selected).filter(function(k){return selected[k];});if(!ids.length){showToast('请先勾选要删除的记录','warning');return;}askConfirm('确认删除选中的 '+ids.length+' 条'+label+'？删除后可撤销。',function(){var list=FS.list(col);var removed=ids.map(function(id){return {obj:FS.get(col,id),idx:list.findIndex(function(x){return x.id===id;})};}).filter(function(r){return r.obj;}).sort(function(a,b){return a.idx-b.idx;});ids.forEach(function(id){FS.remove(col,id);});selected={};renderAll();showToast('已删除 '+removed.length+' 条'+label,'success',function(){removed.forEach(function(r){FS.restore(col,r.obj,r.idx);});renderAll();showToast('已撤销批量删除','success');});});}
+function exportCSV(name,headers,rows){if(!rows.length){showToast('当前视图暂无可导出数据','warning');return;}var csv='﻿'+[headers].concat(rows).map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(',');}).join('\r\n');var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'_'+today()+'.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);showToast('导出成功，文件已下载','success');}
+var sortKey='',sortDir=1;
+function sortBy(k){if(sortKey===k){sortDir=-sortDir;}else{sortKey=k;sortDir=1;}renderTable();}
+function applySort(rows){if(!sortKey)return rows;return rows.slice().sort(function(a,b){var x=a[sortKey],y=b[sortKey];if(typeof x==='number'&&typeof y==='number')return (x-y)*sortDir;return String(x==null?'':x).localeCompare(String(y==null?'':y),'zh')*sortDir;});}
+function paintArrows(){document.querySelectorAll('th.sortable').forEach(function(th){var a=th.querySelector('.sort-arrow');if(a)a.textContent=th.dataset.key===sortKey?(sortDir>0?'▲':'▼'):'';});}
+function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('filterSelect').value='';renderAll();}
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeConfirm();closeDrawer();}});
 
-  <div id="modal-delete" class="modal-overlay">
-    <div class="modal-box" style="max-width:400px;">
-      <div class="modal-header">
-        <h3 class="modal-title">确认删除</h3>
-        <button class="modal-close">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 4L12 12M12 4L4 12"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <p>确定要删除这条采收记录吗？此操作不可撤销。</p>
-      </div>
-      <div class="modal-footer">
-        <button class="jg-btn" onclick="Modal.hide('modal-delete')">取消</button>
-        <button class="jg-btn jg-btn-danger" onclick="confirmDelete()">删除</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="js/common-functions.js"></script>
-  <script src="js/components/chart.js"></script>
-  <script src="js/export-helper.js"></script>
-  <script src="js/shared/harvest-store.js"></script>
-  <script>
-    // 当前查看的记录ID
-    let currentRecordId = '';
-    let editingId = null;
-    let deletingId = null;
-
-    /* ================= 采收人下拉多选 ================= */
-    const HARVESTER_OPTIONS = ['惠加宁','黄忠坚','徐水应','朱泉龙','陈小忠','廖春亮','李建明','李根','张才孙','刘全国','毛定卫','叶三东','周才贵','程名高','邓小华','周成友','危红卫','方超','曹红英','崔新根','超级用户'];
-    const harvesterSelects = {};
-    const MS_CHECK_SVG = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.2 5 8.7 9.5 3.5"/></svg>';
-    const MS_CLOSE_SVG = '<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M2 2 8 8M8 2 2 8"/></svg>';
-    const MS_ARROW_SVG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-
-    function msEscape(str) {
-      return String(str == null ? '' : str).replace(/[&<>"']/g, function (c) {
-        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-      });
+/* ===== 菌丝培养 ===== */
+function currentRows(){
+  var kw=document.getElementById('searchInput').value.trim().toLowerCase();
+  var fv=document.getElementById('filterSelect').value;
+  return FS.list('culture').filter(function(r){
+    var c=Number(r.cullRate||0);
+    if(fv==='high'&&!(c>=3))return false;
+    if(fv==='mid'&&!(c>=1&&c<3))return false;
+    if(fv==='low'&&!(c<1))return false;
+    if(kw&&(r.id+' '+r.batch+' '+r.shelf).toLowerCase().indexOf(kw)===-1)return false;
+    return true;
+  });
+}
+function renderStats(){
+  var rows=FS.list('culture');
+  var avg=rows.length?rows.reduce(function(s,r){return s+Number(r.fullRate||0);},0)/rows.length:0;
+  var maxR=rows.slice().sort(function(a,b){return Number(b.cullRate||0)-Number(a.cullRate||0);})[0];
+  var turned=rows.filter(function(r){return String(r.turnLast).slice(0,10)===today();}).length;
+  var cards=[
+    {label:'在培养批次',value:rows.length,unit:'批',sub:'PY-01 培养车间在架',cls:''},
+    {label:'平均满袋率',value:avg.toFixed(1),unit:'%',sub:'工厂均值参考 92.6%',cls:'green'},
+    {label:'污染率最高',value:maxR?Number(maxR.cullRate).toFixed(1):'—',unit:maxR?'%':'',sub:maxR?maxR.batch+' · '+maxR.shelf:'暂无数据',cls:'orange'},
+    {label:'今日翻堆',value:turned,unit:'架',sub:'翻堆散热防烧菌',cls:'red'}
+  ];
+  document.getElementById('statGrid').innerHTML=cards.map(function(c){
+    return '<div class="stat-card '+c.cls+'"><div class="stat-label">'+c.label+'</div><div class="stat-value">'+esc(c.value)+(c.unit?'<small>'+c.unit+'</small>':'')+'</div><div class="stat-sub">'+esc(c.sub)+'</div></div>';
+  }).join('');
+}
+function renderChart(){
+  var rows=FS.list('culture').slice().sort(function(a,b){return Number(a.days)-Number(b.days);});
+  var box=document.getElementById('chartBox');
+  if(!rows.length){box.innerHTML='<p style="font-size:13px;color:var(--text-tertiary);margin:8px 0;">暂无培养数据</p>';return;}
+  var W=920,H=240,L=48,R=900,T=18,B=200;
+  var maxDay=Math.max.apply(null,rows.map(function(r){return Number(r.days);}));
+  var minDay=Math.min.apply(null,rows.map(function(r){return Number(r.days);}));
+  var span=Math.max(maxDay-minDay,1);
+  function x(d){return L+(Number(d)-minDay)/span*(R-L);}
+  function y(v){return B-(v/100)*(B-T);}
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block;" role="img" aria-label="满袋率趋势">';
+  [0,20,40,60,80,100].forEach(function(v){
+    svg+='<line x1="'+L+'" y1="'+y(v)+'" x2="'+R+'" y2="'+y(v)+'" stroke="#eef1ef"/>'+
+      '<text x="'+(L-8)+'" y="'+(y(v)+4)+'" text-anchor="end" font-size="11" fill="#8c9a8e">'+v+'</text>';
+  });
+  svg+='<line x1="'+L+'" y1="'+y(92.6)+'" x2="'+R+'" y2="'+y(92.6)+'" stroke="#fa8c16" stroke-dasharray="5 4"/>'+
+    '<text x="'+(L+6)+'" y="'+(y(92.6)-5)+'" text-anchor="start" font-size="11" fill="#fa8c16">92.6%</text>';
+  var ticked={};
+  rows.forEach(function(r){
+    if(ticked[r.days])return;ticked[r.days]=1;
+    svg+='<text x="'+x(r.days)+'" y="'+(B+18)+'" text-anchor="middle" font-size="11" fill="#8c9a8e">'+r.days+'天</text>';
+  });
+  svg+='<text x="'+((L+R)/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="11" fill="#8c9a8e">培养天数</text>';
+  var pts=rows.map(function(r){return x(r.days)+','+y(Number(r.fullRate));}).join(' ');
+  svg+='<polyline points="'+pts+'" fill="none" stroke="#1890ff" stroke-width="2.5"/>';
+  var lastX=-1e9;
+  rows.forEach(function(r){
+    var px=x(r.days),py=y(Number(r.fullRate));
+    var ly=py-10,lx=px,anchor='middle';
+    if(px-lastX<46){
+      if(py+20<=B+6){ly=py+20;}
+      else{lx=px+26;anchor='start';}
     }
+    if(px<L+20&&anchor==='middle'){lx=px-6;anchor='start';}
+    svg+='<circle cx="'+px+'" cy="'+py+'" r="4" fill="#1890ff"/>'+
+      '<text x="'+lx+'" y="'+ly+'" text-anchor="'+anchor+'" font-size="11" font-weight="600" fill="#1890ff">'+Number(r.fullRate).toFixed(0)+'%</text>';
+    lastX=px;
+  });
+  svg+='</svg>';
+  box.innerHTML=svg;
+}
+function renderTable(){
+  var rows=applySort(currentRows());
+  var body=document.getElementById('tableBody');
+  if(!rows.length){body.innerHTML='<tr><td colspan="10" class="empty-cell">暂无符合条件的培养记录，点击「新建培养单」添加</td></tr>';updateSelInfo();paintArrows();return;}
+  body.innerHTML=rows.map(function(r){
+    var c=Number(r.cullRate||0);
+    var b=FS.get('batches',r.batch);
+    var moved=b&&b.stage==='出菇';
+    return '<tr onclick="rowClick(event,\''+r.id+'\')" style="cursor:pointer;">'+
+      '<td><input type="checkbox" class="row-check" data-id="'+r.id+'" '+(selected[r.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+      '<td><strong>'+esc(r.id)+'</strong></td><td>'+esc(r.batch)+'</td><td>'+esc(r.shelf)+'</td>'+
+      '<td class="text-right">'+Number(r.days)+'</td>'+
+      '<td class="text-right">'+Number(r.fullRate).toFixed(1)+'</td>'+
+      '<td class="text-right">'+Number(r.temp).toFixed(1)+'</td>'+
+      '<td class="text-right" style="color:'+(c>=3?'#ff4d4f':c>=1?'#fa8c16':'inherit')+';">'+c.toFixed(1)+'</td>'+
+      '<td>'+esc(r.turnLast)+'</td>'+
+      '<td>'+
+        '<button class="row-btn primary" onclick="turnOver(\''+r.id+'\')">翻堆</button>'+
+        '<button class="row-btn danger" onclick="openCull(\''+r.id+'\')">污染剔除</button>'+
+        (moved?'<span class="status-tag active">已转出菇</span>':'<button class="row-btn ok" onclick="toFruiting(\''+r.id+'\')">转出菇</button>')+
+        '<button class="row-btn row-edit" onclick="openForm(\''+r.id+'\')">编辑</button>'+
+        '<button class="row-btn danger row-del" onclick="removeRow(\'culture\',\''+r.id+'\',\''+esc(r.id)+'\')">删除</button>'+
+      '</td></tr>';
+  }).join('');
+  updateSelInfo();paintArrows();
+}
+function renderAll(){renderStats();renderChart();renderTable();}
 
-    function splitHarvesters(str) {
-      return String(str || '').split(/[、,,，\s]+/).filter(Boolean);
-    }
-
-    function initHarvesterSelect(hostId) {
-      const host = document.getElementById(hostId);
-      if (!host || harvesterSelects[hostId]) return;
-      const selected = new Set();
-
-      host.classList.add('ms-select');
-      host.innerHTML =
-        '<div class="ms-control" tabindex="0">' +
-          '<div class="ms-tags"></div>' +
-          '<input class="ms-input" type="text" autocomplete="off" placeholder="请选择采收人">' +
-          '<span class="ms-arrow">' + MS_ARROW_SVG + '</span>' +
-        '</div>' +
-        '<div class="ms-panel">' +
-          '<div class="ms-toolbar">' +
-            '<span class="ms-count">已选 0 人</span>' +
-            '<span class="ms-toolbar-actions">' +
-              '<button type="button" data-act="all">全选</button>' +
-              '<button type="button" data-act="clear">清空</button>' +
-            '</span>' +
-          '</div>' +
-          '<div class="ms-options">' +
-            HARVESTER_OPTIONS.map(function (name) {
-              return '<div class="ms-option" data-value="' + msEscape(name) + '">' +
-                '<span class="ms-check">' + MS_CHECK_SVG + '</span>' +
-                '<span class="ms-name">' + msEscape(name) + '</span>' +
-              '</div>';
-            }).join('') +
-            '<div class="ms-empty">未找到匹配人员</div>' +
-          '</div>' +
-        '</div>';
-
-      const inst = {
-        host: host,
-        control: host.querySelector('.ms-control'),
-        input: host.querySelector('.ms-input'),
-        tags: host.querySelector('.ms-tags'),
-        panel: host.querySelector('.ms-panel'),
-        optionsBox: host.querySelector('.ms-options'),
-        empty: host.querySelector('.ms-empty'),
-        count: host.querySelector('.ms-count'),
-        optionEls: [],
-        selected: selected
-      };
-      inst.optionEls = Array.prototype.slice.call(host.querySelectorAll('.ms-option'));
-      inst.getValues = function () { return Array.from(selected); };
-      inst.setValues = function (values) {
-        selected.clear();
-        (values || []).forEach(function (v) {
-          if (HARVESTER_OPTIONS.indexOf(v) > -1) selected.add(v);
-        });
-        inst.input.value = '';
-        filterHarvesterOptions(inst, '');
-        renderHarvesterSelect(inst);
-      };
-      inst.clear = function () { inst.setValues([]); };
-
-      // 面板挂在 body 下，避免被弹窗 overflow / transform 裁切
-      document.body.appendChild(inst.panel);
-      harvesterSelects[hostId] = inst;
-      bindHarvesterSelect(inst);
-      inst.setValues([]);
-    }
-
-    function renderHarvesterSelect(inst) {
-      inst.tags.innerHTML = Array.from(inst.selected).map(function (name) {
-        return '<span class="ms-tag">' +
-          '<span>' + msEscape(name) + '</span>' +
-          '<button type="button" class="ms-tag-remove" data-value="' + msEscape(name) + '" title="移除">' + MS_CLOSE_SVG + '</button>' +
-        '</span>';
-      }).join('');
-      inst.input.placeholder = inst.selected.size ? '' : '请选择采收人';
-      inst.count.textContent = '已选 ' + inst.selected.size + ' 人';
-      inst.optionEls.forEach(function (el) {
-        el.classList.toggle('checked', inst.selected.has(el.dataset.value));
-      });
-    }
-
-    function filterHarvesterOptions(inst, keyword) {
-      const kw = String(keyword || '').trim().toLowerCase();
-      let visible = 0;
-      inst.optionEls.forEach(function (el) {
-        const hit = !kw || el.dataset.value.toLowerCase().indexOf(kw) > -1;
-        el.style.display = hit ? '' : 'none';
-        if (hit) visible++;
-      });
-      inst.empty.classList.toggle('show', visible === 0);
-    }
-
-    function bindHarvesterSelect(inst) {
-      inst.control.addEventListener('click', function (e) {
-        if (e.target.closest('.ms-tag-remove')) return;
-        openHarvesterPanel(inst);
-        inst.input.focus();
-      });
-      inst.input.addEventListener('focus', function () { openHarvesterPanel(inst); });
-      inst.input.addEventListener('input', function () { filterHarvesterOptions(inst, this.value); });
-      inst.tags.addEventListener('click', function (e) {
-        const btn = e.target.closest('.ms-tag-remove');
-        if (!btn) return;
-        e.stopPropagation();
-        inst.selected.delete(btn.dataset.value);
-        renderHarvesterSelect(inst);
-      });
-      inst.optionsBox.addEventListener('click', function (e) {
-        const opt = e.target.closest('.ms-option');
-        if (!opt) return;
-        const value = opt.dataset.value;
-        if (inst.selected.has(value)) inst.selected.delete(value);
-        else inst.selected.add(value);
-        renderHarvesterSelect(inst);
-        inst.input.focus();
-      });
-      inst.panel.addEventListener('click', function (e) {
-        const btn = e.target.closest('button[data-act]');
-        if (!btn) return;
-        if (btn.dataset.act === 'all') {
-          HARVESTER_OPTIONS.forEach(function (v) { inst.selected.add(v); });
-        } else {
-          inst.selected.clear();
-        }
-        renderHarvesterSelect(inst);
-        inst.input.focus();
-      });
-      inst.input.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-          e.stopPropagation();
-          closeHarvesterPanel(inst);
-          inst.control.focus();
-        }
-      });
-    }
-
-    function openHarvesterPanel(inst) {
-      Object.keys(harvesterSelects).forEach(function (id) {
-        if (harvesterSelects[id] !== inst) closeHarvesterPanel(harvesterSelects[id]);
-      });
-      inst.panel.classList.add('show');
-      inst.host.classList.add('open');
-      positionHarvesterPanel(inst);
-    }
-
-    function closeHarvesterPanel(inst) {
-      inst.panel.classList.remove('show');
-      inst.host.classList.remove('open');
-    }
-
-    function positionHarvesterPanel(inst) {
-      const rect = inst.control.getBoundingClientRect();
-      const gap = 6;
-      inst.panel.style.width = rect.width + 'px';
-      const panelHeight = inst.panel.offsetHeight || 280;
-      const spaceBelow = window.innerHeight - rect.bottom - gap;
-      const spaceAbove = rect.top - gap;
-      let top = rect.bottom + gap;
-      if (spaceBelow < panelHeight && spaceAbove > spaceBelow) {
-        top = Math.max(8, rect.top - gap - panelHeight);
-      }
-      const left = Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8));
-      inst.panel.style.top = top + 'px';
-      inst.panel.style.left = left + 'px';
-    }
-
-    // 点击外部关闭
-    document.addEventListener('mousedown', function (e) {
-      Object.keys(harvesterSelects).forEach(function (id) {
-        const inst = harvesterSelects[id];
-        if (!inst.panel.classList.contains('show')) return;
-        if (inst.host.contains(e.target) || inst.panel.contains(e.target)) return;
-        closeHarvesterPanel(inst);
-      });
-    });
-    // 滚动 / 缩放时跟随定位
-    document.addEventListener('scroll', function (e) {
-      Object.keys(harvesterSelects).forEach(function (id) {
-        const inst = harvesterSelects[id];
-        if (!inst.panel.classList.contains('show')) return;
-        if (inst.panel.contains(e.target)) return;
-        positionHarvesterPanel(inst);
-      });
-    }, true);
-    window.addEventListener('resize', function () {
-      Object.keys(harvesterSelects).forEach(function (id) {
-        const inst = harvesterSelects[id];
-        if (inst.panel.classList.contains('show')) positionHarvesterPanel(inst);
-      });
-    });
-
-    function harvesterChipsHtml(str) {
-      const arr = splitHarvesters(str);
-      if (!arr.length) return '<span style="color:var(--text-tertiary);">-</span>';
-      return arr.map(function (name) {
-        return '<span class="ms-tag ms-tag-readonly">' + msEscape(name) + '</span>';
-      }).join('');
-    }
-
-    // 状态标签（由共享数据源统一口径）
-    function getStatusTag(status) {
-      return '<span class="status-tag ' + HarvestStore.statusTag('records', status) + '">' +
-        HarvestStore.statusText('records', status) + '</span>';
-    }
-
-    function fmtQty(v) {
-      const n = Number(v) || 0;
-      return n.toLocaleString() + ' kg';
-    }
-
-    // 地块标签：编号 + 名称
-    function plotLabel(code, name) {
-      if (!code) return '-';
-      return name ? (code + ' · ' + name) : code;
-    }
-
-    function findRecord(id) {
-      return HarvestStore.get('records', id);
-    }
-
-    // 渲染表格行（操作按钮按状态流转显示）
-    function renderRow(item, index) {
-      let actions = `<button class="action-btn detail" onclick="showDetail('${item.id}')">详情</button>`
-        + `<button class="action-btn edit" onclick="showEdit('${item.id}')">编辑</button>`;
-
-      if (item.status === 'pending') {
-        actions += `<button class="action-btn edit" onclick="advanceStatus('${item.id}','processing')">开始处理</button>`;
-      } else if (item.status === 'processing') {
-        actions += `<button class="action-btn edit" onclick="advanceStatus('${item.id}','completed')">完成</button>`;
-      }
-      actions += `<button class="action-btn delete" onclick="showDeleteConfirm('${item.id}')">删除</button>`;
-
-      return `
-        <tr>
-          <td>${index + 1}</td>
-          <td><strong>${item.id}</strong></td>
-          <td>${item.planId || '-'}</td>
-          <td><strong>${item.batchNo || '-'}</strong></td>
-          <td>${item.base || '-'}</td>
-          <td>${plotLabel(item.plot, item.plotName)}</td>
-          <td>${item.variety || '-'}</td>
-          <td class="text-right">${fmtQty(item.qty)}</td>
-          <td>${item.levelName || '-'}</td>
-          <td>${getStatusTag(item.status)}</td>
-          <td>${String(item.startTime || '').slice(0, 10)}</td>
-          <td><div class="action-btns">${actions}</div></td>
-        </tr>
-      `;
-    }
-
-    // 搜索：基地 + 状态 + 等级 + 日期范围 + 关键词
-    function handleSearch() {
-      const base = document.getElementById('baseSelect').value;
-      const status = document.getElementById('statusSelect').value;
-      const level = document.getElementById('levelSelect').value;
-      const startDate = document.getElementById('startDate').value;
-      const endDate = document.getElementById('endDate').value;
-      const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
-
-      const filteredData = HarvestStore.records().filter(item => {
-        if (base && item.base !== base) return false;
-        if (status && item.status !== status) return false;
-        if (level && item.level !== level) return false;
-        const recordDate = String(item.startTime || '').slice(0, 10);
-        if (startDate && recordDate < startDate) return false;
-        if (endDate && recordDate > endDate) return false;
-        if (keyword) {
-          const hay = (item.id + ' ' + (item.batchNo || '') + ' ' + (item.plotName || '')).toLowerCase();
-          if (hay.indexOf(keyword) < 0) return false;
-        }
-        return true;
-      });
-
-      Pagination.updateData(filteredData);
-      renderCharts(filteredData);
-      renderStats();
-      Toast.info('找到 ' + filteredData.length + ' 条记录');
-    }
-
-    // 顶部统计卡
-    function renderStats() {
-      const records = HarvestStore.records();
-      const totalQty = records.reduce((s, r) => s + (Number(r.qty) || 0), 0);
-      const done = records.filter(r => r.status === 'completed');
-      const doneQty = done.reduce((s, r) => s + (Number(r.qty) || 0), 0);
-      const pending = records.filter(r => r.status === 'pending').length;
-      const processing = records.filter(r => r.status === 'processing').length;
-      const traced = records.filter(r => !!r.traceCode).length;
-
-      const cards = [
-        { label: '采收记录数', value: records.length, unit: '条', sub: '待处理 ' + pending + ' 条 / 处理中 ' + processing + ' 条' },
-        { label: '累计采收量', value: totalQty.toLocaleString(), unit: 'kg', sub: '已完成 ' + doneQty.toLocaleString() + ' kg' },
-        { label: '已完成占比', value: totalQty > 0 ? Math.round(doneQty / totalQty * 100) : 0, unit: '%', sub: '按采收量统计' },
-        { label: '追溯码覆盖', value: traced, unit: '条', sub: '未生成 ' + (records.length - traced) + ' 条' }
-      ];
-      document.getElementById('statGrid').innerHTML = cards.map(c =>
-        '<div class="stat-card">'
-        + '<div class="stat-label">' + c.label + '</div>'
-        + '<div class="stat-value">' + c.value + '<small>' + c.unit + '</small></div>'
-        + '<div class="stat-sub">' + c.sub + '</div>'
-        + '</div>'
-      ).join('');
-    }
-
-    // 统计分析图表（F-109：品种 / 基地 / 时间 三个维度）
-    function renderCharts(data) {
-      const varietyMap = {};
-      const baseMap = {};
-      const dateMap = {};
-      data.forEach(item => {
-        const qty = Number(item.qty) || 0;
-        varietyMap[item.variety] = (varietyMap[item.variety] || 0) + qty;
-        baseMap[item.base] = (baseMap[item.base] || 0) + qty;
-        const d = String(item.startTime || '').slice(0, 10);
-        dateMap[d] = (dateMap[d] || 0) + qty;
-      });
-
-      const dates = Object.keys(dateMap).sort();
-
-      Chart.donut('#chart-variety', {
-        series: Object.keys(varietyMap).map(name => ({ name: name, value: varietyMap[name] }))
-      });
-      Chart.bar('#chart-base', {
-        categories: Object.keys(baseMap),
-        series: [{ name: '采收量', data: Object.keys(baseMap).map(k => baseMap[k]) }]
-      });
-      Chart.line('#chart-trend', {
-        categories: dates,
-        series: [{ name: '采收量', data: dates.map(d => dateMap[d]) }]
-      });
-    }
-
-    function showDetail(id) {
-      const item = findRecord(id);
-      if (!item) return;
-      currentRecordId = id;
-      document.getElementById('detail-id').textContent = item.id;
-      document.getElementById('detail-status').innerHTML = getStatusTag(item.status);
-      document.getElementById('detail-plan').textContent = item.planId || '-';
-      document.getElementById('detail-batch').textContent = item.batchNo || '-';
-      document.getElementById('detail-base').textContent = item.base || '-';
-      document.getElementById('detail-plot').textContent = plotLabel(item.plot, item.plotName);
-      document.getElementById('detail-variety').textContent = item.variety || '-';
-      document.getElementById('detail-quantity').textContent = fmtQty(item.qty);
-      document.getElementById('detail-level').textContent = item.levelName || '-';
-      document.getElementById('detail-start').textContent = item.startTime || '-';
-      document.getElementById('detail-end').textContent = item.endTime || '-';
-      document.getElementById('detail-harvesters').innerHTML = harvesterChipsHtml(item.harvesters);
-      document.getElementById('detail-trace').textContent = item.traceCode || '未生成';
-      document.getElementById('detail-remark').textContent = item.remark || '-';
-      updateTraceButton(item);
-      Modal.show('modal-detail');
-    }
-
-    function updateTraceButton(item) {
-      const btn = document.getElementById('btn-trace');
-      if (item.traceCode) {
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
-        btn.style.cursor = 'not-allowed';
-        btn.textContent = '追溯码已生成';
-      } else {
-        btn.disabled = false;
-        btn.style.opacity = '';
-        btn.style.cursor = '';
-        btn.textContent = '生成追溯码';
-      }
-    }
-
-    // 生成追溯码（F-110：沿用溯源编码页 SNZG-YYYYMMDD-NNNN 规则并回写溯源库）
-    function generateTraceCode() {
-      const res = HarvestStore.generateTraceCode(currentRecordId);
-      if (!res.ok) {
-        Toast.warning(res.message);
-        return;
-      }
-      const item = findRecord(currentRecordId);
-      document.getElementById('detail-trace').textContent = res.code;
-      updateTraceButton(item);
-      Toast.success('追溯码已生成：' + res.code);
-    }
-
-    // 状态流转（待处理 → 处理中 → 已完成），走共享数据源的守卫
-    function advanceStatus(id, to) {
-      const res = HarvestStore.advance('records', id, to);
-      if (!res.ok) {
-        Toast.warning(res.message);
-        return;
-      }
-      handleSearch();
-      Toast.success(res.item.id + ' 已更新为「' + HarvestStore.statusText('records', res.item.status) + '」');
-    }
-
-    function showAdd() {
-      document.getElementById('form-add-record').reset();
-      fillPlans(document.getElementById('add-plan'), '');
-      fillPlots(document.getElementById('add-plot'), '');
-      fillBases(document.getElementById('add-base'), '');
-      fillVarieties(document.getElementById('add-variety'), '');
-      fillGrades(document.getElementById('add-level'), '');
-      document.getElementById('add-batch').value = '';
-      harvesterSelects['add-harvesters'].clear();
-      Modal.show('modal-add-record');
-    }
-
-    function submitAddRecord() {
-      const res = HarvestStore.saveRecord({
-        planId: document.getElementById('add-plan').value,
-        plot: document.getElementById('add-plot').value,
-        base: document.getElementById('add-base').value,
-        variety: document.getElementById('add-variety').value,
-        qty: document.getElementById('add-quantity').value,
-        level: document.getElementById('add-level').value,
-        harvesters: harvesterSelects['add-harvesters'].getValues().join('、'),
-        startTime: document.getElementById('add-start').value,
-        endTime: document.getElementById('add-end').value,
-        remark: document.getElementById('add-remark').value.trim()
-      });
-      if (!res.ok) {
-        Toast.warning(res.message);
-        return;
-      }
-      Modal.hide('modal-add-record');
-      handleSearch();
-      Toast.success('采收记录创建成功，批次号 ' + (res.item.batchNo || '-'));
-    }
-
-    function showEdit(id) {
-      const item = findRecord(id);
-      if (!item) return;
-      editingId = id;
-      fillPlans(document.getElementById('edit-plan'), item.planId);
-      fillPlots(document.getElementById('edit-plot'), item.plot);
-      fillBases(document.getElementById('edit-base'), item.base);
-      fillVarieties(document.getElementById('edit-variety'), item.variety);
-      fillGrades(document.getElementById('edit-level'), item.level);
-      document.getElementById('edit-batch').value = item.batchNo || '';
-      document.getElementById('edit-quantity').value = item.qty;
-      // 多选下拉：根据 harvesters 字符串（如「惠加宁、黄忠坚」）回填选中项
-      harvesterSelects['edit-harvesters'].setValues(splitHarvesters(item.harvesters));
-      document.getElementById('edit-start').value = String(item.startTime || '').replace(' ', 'T');
-      document.getElementById('edit-end').value = String(item.endTime || '').replace(' ', 'T');
-      document.getElementById('edit-remark').value = item.remark || '';
-      Modal.show('modal-edit');
-    }
-
-    function submitEditRecord() {
-      const res = HarvestStore.saveRecord({
-        id: editingId,
-        planId: document.getElementById('edit-plan').value,
-        plot: document.getElementById('edit-plot').value,
-        base: document.getElementById('edit-base').value,
-        variety: document.getElementById('edit-variety').value,
-        qty: document.getElementById('edit-quantity').value,
-        level: document.getElementById('edit-level').value,
-        harvesters: harvesterSelects['edit-harvesters'].getValues().join('、'),
-        startTime: document.getElementById('edit-start').value,
-        endTime: document.getElementById('edit-end').value,
-        remark: document.getElementById('edit-remark').value.trim()
-      });
-      if (!res.ok) {
-        Toast.warning(res.message);
-        return;
-      }
-      Modal.hide('modal-edit');
-      handleSearch();
-      Toast.success('修改成功');
-    }
-
-    function showDeleteConfirm(id) {
-      deletingId = id;
-      Modal.show('modal-delete');
-    }
-
-    function confirmDelete() {
-      const res = HarvestStore.remove('records', deletingId);
-      Modal.hide('modal-delete');
-      if (!res.ok) {
-        Toast.warning(res.message);
-        return;
-      }
-      handleSearch();
-      Toast.success('删除成功');
-    }
-
-    // 真实导出（Excel / CSV）
-    async function handleExport() {
-      const scope = document.querySelector('input[name="exportType"]:checked').value;
-      const rows = (scope === 'filtered' ? Pagination.filteredData : HarvestStore.records());
-      const result = await ExportHelper.exportData({
-        filename: '采收记录_' + ExportHelper.stamp(),
-        format: document.getElementById('exportFormat').value,
-        headers: ['记录编号', '关联计划', '批次号', '所属基地', '地块', '品种', '采收量(kg)', '等级', '状态', '采收开始时间', '采收结束时间', '采收人', '追溯码', '备注'],
-        rows: rows.map(r => [r.id, r.planId || '', r.batchNo || '', r.base || '', plotLabel(r.plot, r.plotName), r.variety || '',
-          r.qty, r.levelName || '', HarvestStore.statusText('records', r.status), r.startTime || '', r.endTime || '',
-          r.harvesters || '', r.traceCode || '', r.remark || ''])
-      });
-      Modal.hide('modal-export');
-      Toast.success(result === 'csv-fallback' ? 'Excel 组件加载失败，已导出为 CSV' : '导出成功，文件已下载');
-    }
-
-    /* ---------- 下拉数据填充（统一取自共享数据源） ---------- */
-
-    function fillBaseFilter() {
-      const sel = document.getElementById('baseSelect');
-      const current = sel.value;
-      sel.innerHTML = '<option value="">全部基地</option>' +
-        HarvestStore.bases().map(b => `<option value="${b}">${b}</option>`).join('');
-      sel.value = current;
-    }
-
-    function fillPlans(select, selected) {
-      const plans = HarvestStore.plans()
-        .filter(p => p.status !== 'cancelled')
-        .map(p => ({ id: p.id, name: p.name, batchNo: p.batchNo, plot: p.plot, base: p.base, variety: p.variety }));
-      select.innerHTML = '<option value="">请选择关联计划</option>' +
-        plans.map(p => `<option value="${p.id}"${p.id === selected ? ' selected' : ''}>${p.id} · ${p.name}（${p.batchNo || '无批次'}）</option>`).join('');
-    }
-
-    function fillPlots(select, selected) {
-      select.innerHTML = '<option value="">请选择地块</option>' +
-        HarvestStore.plots().map(p =>
-          `<option value="${p.code}"${p.code === selected ? ' selected' : ''}>${p.code} · ${p.name}（${p.base}）</option>`
-        ).join('');
-    }
-
-    function fillBases(select, selected) {
-      select.innerHTML = '<option value="">请选择基地</option>' +
-        HarvestStore.bases().map(b => `<option value="${b}"${b === selected ? ' selected' : ''}>${b}</option>`).join('');
-    }
-
-    function fillVarieties(select, selected) {
-      select.innerHTML = '<option value="">请选择品种</option>' +
-        HarvestStore.varieties().map(v => `<option value="${v}"${v === selected ? ' selected' : ''}>${v}</option>`).join('');
-    }
-
-    function fillGrades(select, selected) {
-      select.innerHTML = '<option value="">请选择等级</option>' +
-        HarvestStore.grades().map(g => `<option value="${g.code}"${g.code === selected ? ' selected' : ''}>${g.name}</option>`).join('');
-    }
-
-    // 选择地块后自动带出所属基地与品种（与地块主数据保持一致）
-    function bindPlotAutoFill(plotId, baseId, varietyId) {
-      document.getElementById(plotId).addEventListener('change', function () {
-        const plot = HarvestStore.plotOf(this.value);
-        if (plot) {
-          document.getElementById(baseId).value = plot.base;
-          document.getElementById(varietyId).value = plot.variety;
-        }
-      });
-    }
-
-    // 选择计划后带出批次号、地块、基地、品种
-    function bindPlanAutoFill(planId, batchId, plotId, baseId, varietyId) {
-      document.getElementById(planId).addEventListener('change', function () {
-        const plan = HarvestStore.get('plans', this.value);
-        document.getElementById(batchId).value = plan ? (plan.batchNo || '') : '';
-        if (!plan) return;
-        const plotSel = document.getElementById(plotId);
-        if (plan.plot && plotSel.querySelector('option[value="' + plan.plot + '"]')) {
-          plotSel.value = plan.plot;
-        }
-        document.getElementById(baseId).value = plan.base || '';
-        document.getElementById(varietyId).value = plan.variety || '';
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      initHarvesterSelect('add-harvesters');
-      initHarvesterSelect('edit-harvesters');
-      fillBaseFilter();
-      fillPlans(document.getElementById('add-plan'), '');
-      fillPlans(document.getElementById('edit-plan'), '');
-      fillPlots(document.getElementById('add-plot'), '');
-      fillPlots(document.getElementById('edit-plot'), '');
-      fillBases(document.getElementById('add-base'), '');
-      fillBases(document.getElementById('edit-base'), '');
-      fillVarieties(document.getElementById('add-variety'), '');
-      fillVarieties(document.getElementById('edit-variety'), '');
-      fillGrades(document.getElementById('add-level'), '');
-      fillGrades(document.getElementById('edit-level'), '');
-      bindPlotAutoFill('add-plot', 'add-base', 'add-variety');
-      bindPlotAutoFill('edit-plot', 'edit-base', 'edit-variety');
-      bindPlanAutoFill('add-plan', 'add-batch', 'add-plot', 'add-base', 'add-variety');
-      bindPlanAutoFill('edit-plan', 'edit-batch', 'edit-plot', 'edit-base', 'edit-variety');
-
-      Pagination.init({
-        currentPage: 1,
-        pageSize: 10,
-        data: HarvestStore.records(),
-        containerId: 'pagination-container',
-        tbodyId: 'dataTableBody',
-        renderRow: renderRow
-      });
-
-      renderCharts(HarvestStore.records());
-      renderStats();
-
-      // 采收计划页写入共享数据源后，本页同步刷新
-      HarvestStore.subscribe(function(reason) {
-        if (reason === 'init') return;
-        fillBaseFilter();
-        fillPlans(document.getElementById('add-plan'), document.getElementById('add-plan').value);
-        fillPlans(document.getElementById('edit-plan'), document.getElementById('edit-plan').value);
-        Pagination.updateData(HarvestStore.records());
-        renderCharts(HarvestStore.records());
-        renderStats();
-      });
-    });
-  </script>
-<script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
-<script src="js/icons.js"></script>
-  <script src="js/search-helper.js"></script>
-  <script src="js/typography.js"></script>
+function turnOver(id){
+  var r=FS.get('culture',id);if(!r)return;
+  FS.update('culture',id,{turnLast:nowStamp()});
+  renderAll();
+  showToast('「'+r.shelf+'」翻堆完成，散热计时已重置','success');
+}
+var cullId='';
+function openCull(id){
+  var r=FS.get('culture',id);if(!r)return;
+  cullId=id;
+  openModal('污染剔除 · '+r.id,
+    '<p style="margin:0 0 12px;font-size:13px;color:var(--text-secondary);">架位 '+esc(r.shelf)+' · 批次 '+esc(r.batch)+'，当前污染率 '+Number(r.cullRate).toFixed(1)+'%。剔除污染袋后录入最新污染率。</p>'+
+    fg('最新污染率(%)',inp('f_cull',Number(r.cullRate),'number',true),true,true)
+  );
+}
+function toFruiting(id){
+  var r=FS.get('culture',id);if(!r)return;
+  if(!FS.get('batches',r.batch)){showToast('批次「'+r.batch+'」不存在于批次台账','error');return;}
+  askConfirm('确认将批次「'+r.batch+'」（'+r.shelf+'）转入出菇培育？转入后批次阶段更新为「出菇」。',function(){
+    FS.update('batches',r.batch,{stage:'出菇'});
+    renderAll();
+    showToast('批次「'+r.batch+'」已转出菇，可在出菇培育中创建培育单','success');
+  });
+}
+var editingId='';
+function batchOptions(){return FS.list('batches').map(function(b){return {v:b.id,t:b.id+' · '+b.variety};});}
+function openForm(id){
+  cullId='';
+  editingId=id||'';
+  var r=id?FS.get('culture',id):null;
+  openModal(r?'编辑培养单':'新建培养单',
+    fg('批次',sel('f_batch',batchOptions(),r?r.batch:(batchOptions()[0]||{v:''}).v,true),true)+
+    fg('架位',inp('f_shelf',r?r.shelf:'PY-01-A01','text',true),true)+
+    fg('培养天数',inp('f_days',r?r.days:1,'number',true),true)+
+    fg('满袋率(%)',inp('f_full',r?r.fullRate:5,'number',true),true)+
+    fg('温度(°C)',inp('f_temp',r?r.temp:24,'number',true),true)+
+    fg('污染率(%)',inp('f_cullRate',r?r.cullRate:0.2,'number',true),true)+
+    fg('上次翻堆',inp('f_turn',r?r.turnLast:nowStamp(),'text',true),true,true)
+  );
+}
+function saveModal(){
+  if(cullId&&document.getElementById('f_cull')){
+    if(!reqOK())return;
+    var cv=Number(val('f_cull'));
+    if(!(cv>=0&&cv<=100)){showToast('污染率需在 0-100 之间','error');return;}
+    var cid=cullId;cullId='';
+    FS.update('culture',cid,{cullRate:cv});
+    closeModal();renderAll();
+    showToast('污染剔除已记录，最新污染率 '+cv.toFixed(1)+'%','success');
+    return;
+  }
+  if(!reqOK())return;
+  var days=Number(val('f_days')),full=Number(val('f_full')),temp=Number(val('f_temp')),cull=Number(val('f_cullRate'));
+  if(!(days>=0)){showToast('培养天数不能为负','error');return;}
+  if(!(full>=0&&full<=100)){showToast('满袋率需在 0-100 之间','error');return;}
+  if(!(cull>=0&&cull<=100)){showToast('污染率需在 0-100 之间','error');return;}
+  var patch={batch:val('f_batch'),shelf:val('f_shelf'),days:days,fullRate:full,temp:temp,cullRate:cull,turnLast:val('f_turn')};
+  if(editingId){FS.update('culture',editingId,patch);showToast('培养单已更新','success');}
+  else{FS.add('culture',patch);showToast('培养单已创建','success');}
+  closeModal();renderAll();
+}
+function openDetail(id){
+  var r=FS.get('culture',id);if(!r)return;
+  var b=FS.get('batches',r.batch);
+  var env=FS.envCurrent('PY-01');
+  openDrawer('培养单详情 · '+r.id,
+    '<div class="detail-grid">'+
+    '<div class="detail-item"><div class="dl">培养单号</div><div class="dv">'+esc(r.id)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">批次</div><div class="dv">'+esc(r.batch)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">架位</div><div class="dv">'+esc(r.shelf)+'</div></div>'+
+    '<div class="detail-item"><div class="dl">培养天数</div><div class="dv">'+Number(r.days)+' 天</div></div>'+
+    '<div class="detail-item"><div class="dl">满袋率</div><div class="dv">'+Number(r.fullRate).toFixed(1)+'%</div></div>'+
+    '<div class="detail-item"><div class="dl">架内温度</div><div class="dv">'+Number(r.temp).toFixed(1)+' °C</div></div>'+
+    '<div class="detail-item"><div class="dl">污染率</div><div class="dv">'+Number(r.cullRate).toFixed(1)+'%</div></div>'+
+    '<div class="detail-item"><div class="dl">上次翻堆</div><div class="dv">'+esc(r.turnLast)+'</div></div>'+
+    (b?'<div class="detail-item"><div class="dl">批次阶段</div><div class="dv">'+esc(b.stage)+'</div></div><div class="detail-item"><div class="dl">品种</div><div class="dv">'+esc(b.variety)+'</div></div>':'')+
+    '</div>'+
+    '<div class="drawer-sec">培养车间实时环境（PY-01）</div>'+
+    '<div class="detail-grid">'+
+    '<div class="detail-item"><div class="dl">温度</div><div class="dv">'+env.temp.toFixed(1)+' °C</div></div>'+
+    '<div class="detail-item"><div class="dl">湿度</div><div class="dv">'+env.hum.toFixed(0)+'%</div></div>'+
+    '<div class="detail-item"><div class="dl">CO₂</div><div class="dv">'+env.co2.toFixed(0)+' ppm</div></div>'+
+    '<div class="detail-item"><div class="dl">光照</div><div class="dv">'+env.light.toFixed(0)+' lx</div></div>'+
+    '</div>'+
+    '<div style="margin-top:12px;display:flex;gap:8px;">'+
+    '<button class="jg-btn" onclick="turnOver(\''+r.id+'\');closeDrawer();">翻堆</button>'+
+    '<button class="jg-btn" onclick="nav(\'harvest_plan.html\',\'出菇培育\')">前往出菇培育</button></div>'
+  );
+}
+function exportCurrent(){
+  var rows=applySort(currentRows());
+  exportCSV('菌丝培养',['培养单号','批次','架位','培养天数','满袋率%','温度°C','污染率%','上次翻堆'],rows.map(function(r){return [r.id,r.batch,r.shelf,r.days,r.fullRate,r.temp,r.cullRate,r.turnLast];}));
+}
+renderAll();
+</script>
 </body>
 </html>

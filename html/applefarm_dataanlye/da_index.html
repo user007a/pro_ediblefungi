@@ -174,6 +174,7 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
 .ring-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
 .ring-txt b{font-family:var(--num);font-size:27px;font-weight:700;line-height:1;color:var(--brand-400);
   text-shadow:0 0 14px rgba(56,214,255,.55)}
+.ring-txt b.sm{font-size:19px}
 .ring-txt span{font-size:10px;color:var(--text-3);letter-spacing:.5px}
 .house-grid{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:7px 8px}
 .hstat{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;
@@ -354,6 +355,22 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
 .es-row b{font-family:var(--num);font-size:17px;color:var(--brand-400);line-height:1;font-weight:700}
 .es-row i{font-style:normal;font-size:9px;color:var(--text-2)}
 .es-row em{margin-left:auto;font-style:normal;font-size:9px;color:rgba(138,160,190,.8)}
+.es-row.over b{color:var(--warn)}
+.es-row.over em{color:var(--warn);font-weight:600}
+.es-seed{display:flex;align-items:center;gap:6px;margin-top:6px;padding-top:6px;
+  border-top:1px solid rgba(110,170,255,.14)}
+.es-seed span{font-size:10.5px;color:#9FE7FF;letter-spacing:.4px}
+.es-seed em{margin-left:auto;font-style:normal;font-family:var(--num);font-size:10px;color:var(--text-3);letter-spacing:1px}
+/* 环境页：达标率 / 通风调控 / 设备清单 联动高亮 */
+.envview .meter.bad .track i{background:linear-gradient(90deg,#D9971F,var(--warn))}
+.envview .meter.bad b{color:var(--warn)}
+.envview .ctl-grid b.warn{color:var(--warn)}
+.envview .ctl-grid b.risk{color:var(--risk)}
+.envview .dev-row.active{background:rgba(56,214,255,.06);border-radius:4px}
+.envview .ptable tr.cur{background:rgba(56,214,255,.1)}
+.envview .ptable tr.cur td:first-child{color:var(--brand-400);font-weight:600}
+.envview .ptable tbody tr{cursor:pointer}
+.envview .logrow.lv-risk .tg{color:#FFB3AD;background:rgba(229,86,75,.14);border-color:rgba(229,86,75,.4)}
 .es-foot{margin-top:8px;padding-top:6px;border-top:1px solid rgba(110,170,255,.14);font-size:9px;
   color:var(--text-3);letter-spacing:.4px;display:flex;align-items:center;gap:5px}
 .es-foot i{width:4px;height:4px;border-radius:50%;background:var(--brand-400);box-shadow:0 0 6px var(--brand-400)}
@@ -639,9 +656,77 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
 .mini-kpi b i{font-style:normal;font-size:9px;color:var(--text-3);margin-left:1px;font-family:var(--font)}
 .lane-wrap{flex:1;min-height:0;position:relative}
 .lane-wrap svg{display:block;width:100%;height:100%}
+/* 工序流转量脚注（守恒校验） */
+.step-foot{flex:none;margin-top:4px;padding-top:5px;border-top:1px solid rgba(110,170,255,.12);display:flex;flex-direction:column;gap:2px}
+.step-foot>div{display:flex;align-items:center;gap:8px;font-size:9px;color:var(--text-3);white-space:nowrap}
+.step-foot>div>span{overflow:hidden;text-overflow:ellipsis}
+.step-foot b{margin-left:auto;flex:none;font-family:var(--num);font-size:9.5px;color:var(--brand-400);font-weight:600}
+.step-foot b.warn{color:var(--warn)}
+.step-foot b.ok{color:var(--ok)}
 /* 能耗 */
+.energyview{grid-template-rows:38px 1fr 196px}
+.energyview .pv-bottom{grid-template-columns:1.32fr repeat(4,1fr) 1fr}
 .heat-wrap{flex:1;min-height:0;position:relative}
 .heat-wrap svg{display:block;width:100%;height:100%}
+/* 全局控制条 */
+.e-toolbar{grid-column:1/4;display:flex;align-items:center;gap:16px;padding:0 14px;
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;
+  background:linear-gradient(90deg,rgba(18,35,74,.68),rgba(11,24,48,.38) 58%,rgba(18,35,74,.56))}
+.e-tb-group{display:flex;align-items:center;gap:8px;flex:none}
+.e-tb-label{font-size:10px;color:var(--text-3);letter-spacing:.6px;white-space:nowrap}
+.e-seg{display:flex;gap:4px}
+.e-seg button{height:23px;padding:0 11px;border-radius:12px;border:1px solid rgba(110,170,255,.18);
+  background:rgba(56,214,255,.04);color:var(--text-3);font-family:var(--font);font-size:10px;
+  cursor:pointer;transition:.16s;white-space:nowrap}
+.e-seg button:hover{color:var(--text-1);border-color:rgba(56,214,255,.42)}
+.e-seg button.on{color:var(--brand-400);border-color:rgba(56,214,255,.5);background:rgba(56,214,255,.14);
+  box-shadow:0 0 10px rgba(56,214,255,.18)}
+.e-tb-note{margin-left:auto;font-size:9.5px;color:var(--text-3);white-space:nowrap}
+/* 对标基准行 */
+.e-bench{display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--text-3);
+  margin:-2px 0 6px;padding:4px 7px;border-radius:5px;
+  background:rgba(56,214,255,.045);border:1px solid rgba(110,170,255,.13)}
+.e-bench b{font-family:var(--num);font-size:11px;color:var(--text-1)}
+.e-bench em{font-style:normal;font-family:var(--num);font-size:11px;color:var(--ok);margin-left:auto}
+/* 单耗排行 · 带基准刻线 */
+.erow{display:grid;grid-template-columns:16px minmax(52px,1fr) 1.1fr 42px 42px;align-items:center;gap:6px;
+  font-size:10px;color:var(--text-2);white-space:nowrap}
+.erow .rk{font-family:var(--num);font-size:10px;color:var(--text-3);text-align:center}
+.erow .nm{overflow:hidden;text-overflow:ellipsis}
+.erow .track{position:relative;height:5px;border-radius:3px;background:rgba(110,170,255,.14)}
+.erow .track i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--brand-500),var(--brand-400))}
+.erow .track .bmk{position:absolute;top:-3px;width:1px;height:11px;background:var(--warn);opacity:.95}
+.erow b{font-family:var(--num);font-size:11px;color:var(--text-1);text-align:right}
+.erow em{font-style:normal;font-family:var(--num);font-size:10px;text-align:right;color:var(--text-3)}
+.erow em.ok{color:var(--ok)}
+.erow em.warn{color:var(--warn)}
+/* 分时电价行 */
+.tou{display:grid;grid-template-columns:16px minmax(76px,1fr) 1fr 40px 48px;align-items:center;gap:6px;
+  font-size:10px;color:var(--text-2);white-space:nowrap}
+.tou .rk{font-family:var(--num);font-size:10px;color:var(--text-3);text-align:center}
+.tou .nm{overflow:hidden;text-overflow:ellipsis}
+.tou .track{height:5px;border-radius:3px;background:rgba(110,170,255,.14);overflow:hidden}
+.tou .track i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--brand-500),var(--brand-400))}
+.tou b{font-family:var(--num);font-size:11px;color:var(--text-1);text-align:right}
+.tou em{font-style:normal;font-family:var(--num);font-size:10px;text-align:right;color:var(--warn)}
+/* 多介质能源台账 */
+.eledger{width:100%;border-collapse:collapse;font-size:9.5px;table-layout:fixed}
+.eledger th{font-weight:400;text-align:left;color:var(--text-3);padding:0 3px 3px;font-size:9px;
+  border-bottom:1px solid rgba(110,170,255,.15);white-space:nowrap}
+.eledger td{padding:3px;border-bottom:1px dashed rgba(110,170,255,.08);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;color:var(--text-2)}
+.eledger td.n{font-family:var(--num);text-align:right;color:var(--text-1)}
+.eledger td.n i{font-style:normal;font-family:var(--font);font-size:8.5px;color:var(--text-3);margin-left:2px}
+.eledger td.n.up{color:var(--warn)}
+.eledger td.n.dn{color:var(--ok)}
+.eledger .mdot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.eledger .ebk{display:inline-block;width:44px;height:4px;border-radius:2px;vertical-align:middle;
+  margin-right:5px;background:rgba(110,170,255,.14);overflow:hidden}
+.eledger .ebk i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--brand-500),var(--brand-400))}
+.eledger tbody tr{cursor:pointer}
+.eledger tbody tr:hover td{background:rgba(56,214,255,.05)}
+.eledger tbody tr.hl td{background:rgba(56,214,255,.1);color:var(--text-1)}
+.eledger-note{font-size:8.5px;line-height:1.55;color:var(--text-3);margin-top:5px}
 @keyframes heatPulse{0%,100%{stroke-opacity:.55}50%{stroke-opacity:1}}
 .heat-hot .hb{animation:heatPulse 2.6s ease-in-out infinite}
 .heat-blk:hover .hb{stroke-width:1.6}
@@ -668,6 +753,136 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
 .top5 .t5row{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--text-2);padding:2px 0}
 .top5 .t5row b{margin-left:auto;font-family:var(--num);color:var(--brand-400)}
 .top5 .t5row i{width:4px;height:4px;border-radius:50%;background:var(--brand-400);flex:none}
+
+/* ===================== 追溯 · KPI 下钻弹窗 ===================== */
+.tr-modal{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+  background:rgba(4,11,22,.72);backdrop-filter:blur(2px)}
+.tr-modal.on{display:flex}
+.tr-modal-box{width:min(560px,72vw);max-height:78vh;display:flex;flex-direction:column;
+  border-radius:12px;border:1px solid rgba(56,214,255,.4);
+  background:linear-gradient(165deg,rgba(20,39,78,.97),rgba(9,21,42,.98) 58%,rgba(8,18,36,.99));
+  box-shadow:0 24px 60px rgba(0,0,0,.6),inset 0 1px 0 rgba(140,200,255,.09);overflow:hidden}
+.tr-modal-head{display:flex;align-items:center;gap:10px;flex:none;padding:13px 16px 11px;
+  border-bottom:1px solid rgba(110,170,255,.16)}
+.tr-modal-head h3{margin:0;font-size:15px;font-weight:700;letter-spacing:1px;color:#DDEBFF;
+  display:flex;align-items:center;gap:8px}
+.tr-modal-head h3::before{content:"";width:3px;height:14px;border-radius:2px;flex:none;
+  background:linear-gradient(180deg,var(--brand-400),var(--brand-500));box-shadow:0 0 8px rgba(56,214,255,.7)}
+.tr-modal-head .tm{margin-left:auto;font-family:var(--num);font-size:10px;color:var(--text-3)}
+.tr-modal-close{width:24px;height:24px;border-radius:6px;flex:none;border:1px solid rgba(110,170,255,.22);
+  background:rgba(56,214,255,.05);color:var(--text-3);font-size:14px;cursor:pointer;line-height:1}
+.tr-modal-close:hover{color:#fff;border-color:rgba(56,214,255,.55)}
+.tr-modal-body{flex:1;min-height:0;overflow-y:auto;padding:13px 16px 15px}
+.tr-sec{margin-bottom:13px}
+.tr-sec:last-child{margin-bottom:0}
+.tr-sec-t{font-size:10.5px;color:var(--text-3);letter-spacing:.7px;margin-bottom:7px;
+  padding-bottom:4px;border-bottom:1px solid rgba(110,170,255,.13)}
+.tr-kv{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.tr-kv>div{padding:7px 9px;border-radius:6px;background:rgba(56,214,255,.05);border:1px solid rgba(110,170,255,.14)}
+.tr-kv span{display:block;font-size:9.5px;color:var(--text-3);margin-bottom:3px}
+.tr-kv b{font-family:var(--num);font-size:15px;color:var(--brand-400);line-height:1.2}
+.tr-kv b i{font-style:normal;font-size:9.5px;color:var(--text-3);margin-left:2px;font-family:var(--font)}
+.tr-tbl{width:100%;border-collapse:collapse;font-size:10.5px}
+.tr-tbl th{font-weight:400;text-align:left;color:var(--text-3);padding:0 6px 5px;font-size:10px;
+  border-bottom:1px solid rgba(110,170,255,.16)}
+.tr-tbl td{padding:5px 6px;border-bottom:1px dashed rgba(110,170,255,.09);color:var(--text-2);white-space:nowrap}
+.tr-tbl td.n{font-family:var(--num);text-align:right;color:var(--text-1)}
+.tr-tbl td.ok{color:var(--ok)}
+.tr-tbl td.warn{color:var(--warn)}
+.tr-tbl td.risk{color:var(--risk)}
+.tr-note{font-size:10px;color:var(--text-3);line-height:1.65;padding:8px 10px;border-radius:6px;
+  background:rgba(56,214,255,.035);border:1px solid rgba(110,170,255,.12)}
+.tr-note b{color:var(--text-1);font-weight:600}
+/* 面板数据时点标识 */
+.p-stamp{margin-left:auto;flex:none;font-family:var(--num);font-size:9px;color:var(--text-3);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;max-width:82px}
+.traceview .p-head{min-width:0}
+.traceview .p-head h3,.traceview .p-head .p-sub{flex:none}
+.traceview .p-head .more{margin-left:8px;flex:none}
+
+.traceview .trcenter{display:grid;grid-template-columns:196px minmax(0,1fr) 218px;gap:10px;flex:1 1 auto;min-height:0}
+/* 批次列表 */
+.tr-batches{display:flex;flex-direction:column;min-height:0;min-width:0}
+.tr-seg{display:flex;gap:4px;flex:none;margin-bottom:6px}
+.tr-seg button{flex:1;height:22px;border-radius:11px;border:1px solid rgba(110,170,255,.18);
+  background:rgba(56,214,255,.04);color:var(--text-3);font-family:var(--font);font-size:9.5px;cursor:pointer;transition:.16s;white-space:nowrap}
+.tr-seg button:hover{color:var(--text-1)}
+.tr-seg button.on{color:var(--brand-400);border-color:rgba(56,214,255,.5);background:rgba(56,214,255,.14);box-shadow:0 0 8px rgba(56,214,255,.16)}
+.tr-batch-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;padding-right:2px}
+.tr-batch-list::-webkit-scrollbar{width:4px}
+.tr-batch-list::-webkit-scrollbar-thumb{background:rgba(110,170,255,.22);border-radius:2px}
+.tr-brow{display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:5px;cursor:pointer;
+  background:rgba(56,214,255,.035);border:1px solid rgba(110,170,255,.12);transition:.14s;min-width:0}
+.tr-brow:hover{background:rgba(56,214,255,.09);border-color:rgba(56,214,255,.3)}
+.tr-brow.on{background:rgba(56,214,255,.14);border-color:rgba(56,214,255,.5)}
+.tr-brow .bid{font-family:var(--num);font-size:9.5px;color:var(--text-1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-brow .bvar{font-size:9px;color:var(--text-3);flex:none}
+.tr-brow .bpct{font-family:var(--num);font-size:9px;flex:none;min-width:28px;text-align:right}
+.tr-brow .bpct.full{color:var(--ok)}
+.tr-brow .bpct.part{color:var(--warn)}
+.tr-brow .bpct.none{color:var(--risk)}
+.tr-brow .bbar{height:3px;border-radius:2px;background:rgba(110,170,255,.14);overflow:hidden;flex:none;width:26px}
+.tr-brow .bbar i{display:block;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--brand-500),var(--brand-400))}
+/* 九环节链路 */
+.tr-nodes{display:flex;flex-direction:column;min-height:0;min-width:0}
+.tr-node-head{display:flex;align-items:center;gap:10px;flex:none;margin-bottom:6px}
+.tr-node-title{display:flex;align-items:baseline;gap:7px;min-width:0}
+.tr-node-title b{font-family:var(--num);font-size:12.5px;color:var(--text-1);letter-spacing:.3px}
+.tr-node-title span{font-size:9.5px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-node-legend{margin-left:auto;display:flex;gap:9px;flex:none;font-size:9px;color:var(--text-3)}
+.tr-node-legend span{display:flex;align-items:center;gap:4px}
+.tr-node-legend i{width:6px;height:6px;border-radius:50%;flex:none}
+.tr-node-chain{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:3px;padding-right:2px}
+.tr-node-chain::-webkit-scrollbar{width:4px}
+.tr-node-chain::-webkit-scrollbar-thumb{background:rgba(110,170,255,.22);border-radius:2px}
+.tr-node{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:5px;position:relative;
+  background:rgba(56,214,255,.035);border:1px solid rgba(110,170,255,.11);min-width:0}
+.tr-node::before{content:"";position:absolute;left:20px;top:-4px;bottom:-4px;width:1px;background:rgba(110,170,255,.2)}
+.tr-node:first-child::before{top:50%}
+.tr-node:last-child::before{bottom:50%}
+.tr-node .nstep{width:15px;height:15px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  font-family:var(--num);font-size:8px;color:var(--brand-400);background:rgba(56,214,255,.12);border:1px solid rgba(56,214,255,.4);z-index:1}
+.tr-node .nname{width:46px;flex:none;font-size:10px;color:var(--text-1)}
+.tr-node .nparams{flex:1;font-size:9px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tr-node .ntime{font-family:var(--num);font-size:9px;color:var(--text-3);flex:none}
+.tr-node .nstate{font-size:8.5px;padding:0 5px;border-radius:3px;flex:none;white-space:nowrap}
+.tr-node.done{border-color:rgba(43,212,110,.24);background:rgba(43,212,110,.05)}
+.tr-node.done .nstep{color:#9BE8B1;border-color:rgba(43,212,110,.5);background:rgba(43,212,110,.12)}
+.tr-node.done .nstate{color:#9BE8B1;border:1px solid rgba(43,212,110,.35)}
+.tr-node.pending{border-color:rgba(242,179,61,.26);background:rgba(242,179,61,.05)}
+.tr-node.pending .nstep{color:#FFD79B;border-color:rgba(242,179,61,.5);background:rgba(242,179,61,.12)}
+.tr-node.pending .nstate{color:#FFD79B;border:1px solid rgba(242,179,61,.35)}
+.tr-node.err{border-color:rgba(229,86,75,.34);background:rgba(229,86,75,.07)}
+.tr-node.err .nstep{color:#FFB3AD;border-color:rgba(229,86,75,.55);background:rgba(229,86,75,.14)}
+.tr-node.err .nstate{color:#FFB3AD;border:1px solid rgba(229,86,75,.4)}
+/* 批次详情 */
+.tr-detail{display:flex;flex-direction:column;min-height:0;min-width:0;
+  border-left:1px solid rgba(110,170,255,.14);padding-left:10px}
+.tr-detail-head{font-size:10.5px;color:var(--text-2);letter-spacing:.6px;flex:none;margin-bottom:5px;
+  padding-bottom:4px;border-bottom:1px solid rgba(110,170,255,.14)}
+.tr-detail-body{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.tr-detail-body::-webkit-scrollbar{width:4px}
+.tr-detail-body::-webkit-scrollbar-thumb{background:rgba(110,170,255,.22);border-radius:2px}
+.tr-drow{display:flex;align-items:baseline;gap:8px;font-size:9.5px;padding:2px 0}
+.tr-drow .dk{color:var(--text-3);flex:none;width:58px}
+.tr-drow .dv{color:var(--text-1);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--num)}
+.tr-drow .dv.txt{font-family:var(--font)}
+.tr-drow .dv.ok{color:var(--ok)}
+.tr-drow .dv.warn{color:var(--warn)}
+.tr-drow .dv.risk{color:var(--risk)}
+.tr-dsec{margin-top:4px;padding-top:5px;border-top:1px dashed rgba(110,170,255,.14);
+  font-size:9.5px;color:var(--text-3);letter-spacing:.4px}
+.tr-dnote{margin-top:3px;font-size:9px;color:var(--text-3);line-height:1.55}
+/* 批次温度曲线（灭菌曲线 / 冷链温度） */
+.tr-curve{margin-top:5px;height:66px;position:relative;border-radius:5px;overflow:hidden;
+  background:rgba(56,214,255,.03);border:1px solid rgba(110,170,255,.13)}
+.tr-curve svg{display:block;width:100%;height:100%}
+.tr-curve-cap{display:flex;align-items:center;gap:6px;font-size:9px;color:var(--text-3);margin-top:3px}
+.tr-curve-cap b{font-family:var(--num);color:var(--text-1);font-weight:500}
+.tr-curve-cap .ok{color:var(--ok)}
+.tr-curve-cap .warn{color:var(--warn)}
+.tr-curve-cap .risk{color:var(--risk)}
+
 /* ===================== 底排 ===================== */
 .bottom{height:204px;flex:none;display:grid;grid-template-columns:repeat(5,1fr);gap:12px;min-height:0}
 .bottom .panel{padding:9px 11px 10px}
@@ -806,10 +1021,10 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
           </div>
         </div>
         <div class="house-foot">
-          <div class="mini"><b>28</b><span>当前菇房</span></div>
-          <div class="mini"><b>125</b><span>当前设备</span></div>
-          <div class="mini"><b>10</b><span>当前菌包</span></div>
-          <div class="mini"><b>8</b><span>当前菇种</span></div>
+          <div class="mini"><b>126</b><span>在制批次</span></div>
+          <div class="mini"><b>12.8万</b><span>在库菌包</span></div>
+          <div class="mini"><b>3,245</b><span>今日产菇 kg</span></div>
+          <div class="mini"><b>8</b><span>栽培品种</span></div>
         </div>
       </section>
 
@@ -824,8 +1039,8 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
           <div class="env-kpi"><span>温度</span><b><span id="kTemp">18.4</span><i>℃</i></b></div>
           <div class="env-kpi"><span>湿度</span><b><span id="kHum">92.3</span><i>%</i></b></div>
           <div class="env-kpi"><span>CO₂</span><b><span id="kCo2">685</span><i>ppm</i></b></div>
-          <div class="env-kpi"><span>光照</span><b>120<i>lux</i></b></div>
-          <div class="env-kpi"><span>风速</span><b>6.3<i>m/s</i></b></div>
+          <div class="env-kpi"><span>光照</span><b><span id="kLux">82</span><i>lux</i></b></div>
+          <div class="env-kpi"><span>风速</span><b><span id="kWind">0.32</span><i>m/s</i></b></div>
         </div>
         <div class="chart" id="chartEnv"></div>
       </section>
@@ -851,12 +1066,12 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
             <svg viewBox="0 0 24 24"><path d="M12 3.5v8.6"/><path d="M6.4 6.9a8 8 0 1 0 11.2 0"/></svg>
           </button>
           <div class="vgrp">
-            <div class="vt">温室</div>
+            <div class="vt">冷链区</div>
             <div class="vgrid">
-              <div class="vitem"><span>温度</span><b>16.5℃</b></div>
-              <div class="vitem"><span>湿度</span><b>52.1%</b></div>
-              <div class="vitem"><span>通风模式</span><b class="ok">自动</b></div>
-              <div class="vitem"><span>累计运行</span><b class="ok">运行中</b></div>
+              <div class="vitem"><span>温度</span><b>2.4℃</b></div>
+              <div class="vitem"><span>湿度</span><b>62.1%</b></div>
+              <div class="vitem"><span>预冷机组</span><b class="ok">运行中</b></div>
+              <div class="vitem"><span>累计运行</span><b class="ok">6.4 h</b></div>
             </div>
           </div>
         </div>
@@ -938,7 +1153,7 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
         </div>
 
         <div class="scene-mini" id="sceneMini">
-          <div class="mh"><i></i>今日产量趋势（kg）<span>8 栋菇房产出合计 · 每 2 小时</span></div>
+          <div class="mh"><i></i>今日鲜菇产出趋势（kg）<span>全厂合计 3,245 kg · 每 2 小时</span></div>
           <div class="chart" id="miniChart"></div>
         </div>
 
@@ -1040,15 +1255,15 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
 
     <!-- 产量统计 -->
     <section class="panel">
-      <div class="p-head"><h3>产量统计</h3><a class="more">更多 ›</a></div>
+      <div class="p-head"><h3>产量统计</h3><span class="p-sub">鲜菇口径 · kg</span><a class="more">更多 ›</a></div>
       <div class="bs-row">
-        <div class="bs"><span>今日产量</span><b>3,245<i>kg</i></b></div>
-        <div class="bs"><span>今日包装量</span><b>69,340<i>kg</i></b></div>
-        <div class="bs"><span>包装总产量</span><b>625,120<i>kg</i></b></div>
+        <div class="bs"><span>今日鲜菇产出</span><b id="ovYieldToday">3,245<i>kg</i></b></div>
+        <div class="bs"><span>今日包装入库</span><b id="ovYieldPacked">3,174<i>kg</i></b></div>
+        <div class="bs"><span>本月包装入库</span><b id="ovYieldMonth">78,620<i>kg</i></b></div>
       </div>
       <div class="legend">
-        <span><i style="background:#2E8FE8"></i>产量合计</span>
-        <span><i style="background:#38D6FF"></i>日包装量</span>
+        <span><i style="background:#2E8FE8"></i>鲜菇产出</span>
+        <span><i style="background:#38D6FF"></i>计划</span>
       </div>
       <div class="chart" id="chartYield"></div>
     </section>
@@ -1059,19 +1274,19 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
       <div class="prod-body">
         <div class="prod-ring">
           <div id="donutProd"></div>
-          <div class="txt"><b>82%</b><span>产能达成</span></div>
+          <div class="txt"><b id="ovAchieve">81.9%</b><span>产能达成</span></div>
         </div>
         <div class="prod-stats">
-          <div class="prod-stat"><span>今日投产量</span><b>3,590<i>kg</i></b></div>
-          <div class="prod-stat"><span>今日包装产量</span><b>3,245<i>kg</i></b></div>
-          <div class="prod-stat"><span>采收量</span><b>715<i>kg</i></b></div>
+          <div class="prod-stat"><span>今日投料(干料)</span><b id="ovFeedKg">3,590<i>kg</i></b></div>
+          <div class="prod-stat"><span>今日鲜菇产出</span><b id="ovHarvestKg">3,245<i>kg</i></b></div>
+          <div class="prod-stat"><span>包装入库</span><b id="ovPackedKg">3,174<i>kg</i></b></div>
         </div>
       </div>
       <div class="prod-foot">
         <div class="pf"><b>56%</b><span>设备利用</span></div>
         <div class="pf"><b>48%</b><span>人员效率</span></div>
         <div class="pf"><b>46%</b><span>产能匹配</span></div>
-        <div class="pf"><b>35.3%</b><span>批次达成</span></div>
+        <div class="pf"><b id="ovGrade1">92.4%</b><span>一级品率</span></div>
       </div>
     </section>
 
@@ -1098,22 +1313,22 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
         </div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>环境达标率</h3><span class="p-sub">近 24 小时</span><a class="more">更多 ›</a></div>
-        <div class="bigkpi"><b>96.4<i>%</i></b><span>综合达标率<em>↑1.2%</em></span></div>
+        <div class="p-head"><h3>环境达标率</h3><span class="p-sub" id="envRateSub">1号出菇房 · 近 24 小时</span><a class="more">更多 ›</a></div>
+        <div class="bigkpi"><b id="envRateKpi">96.4<i>%</i></b><span>综合达标率<em id="envRateDelta">↑1.2%</em></span></div>
         <div class="meters" id="envMeters"></div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>通风调控</h3><span class="p-sub">自动模式 · 运行中</span><a class="more">更多 ›</a></div>
+        <div class="p-head"><h3>通风调控</h3><span class="p-sub" id="envVentSub">1号出菇房 · 自动模式 · 运行中</span><a class="more">更多 ›</a></div>
         <div class="ctl-grid">
-          <div><span>送风频率</span><b>92%</b></div>
-          <div><span>回风阀</span><b>68%</b></div>
-          <div><span>新风比</span><b>35%</b></div>
-          <div><span>运行时长</span><b>12.5h</b></div>
-          <div><span>滤网压差</span><b>132Pa</b></div>
-          <div><span>控制模式</span><b class="ok">自动</b></div>
+          <div><span>送风频率</span><b id="ctlFreq">92%</b></div>
+          <div><span>回风阀</span><b id="ctlBack">68%</b></div>
+          <div><span>新风比</span><b id="ctlFresh">35%</b></div>
+          <div><span>运行时长</span><b id="ctlRun">12.5h</b></div>
+          <div><span>滤网压差</span><b id="ctlDp">132Pa</b></div>
+          <div><span>控制模式</span><b class="ok" id="ctlMode">自动</b></div>
         </div>
-        <div class="ctl-btns">
-          <button class="on">加湿</button><button class="on">通风</button><button>照明</button><button>制冷</button>
+        <div class="ctl-btns" id="envCtlBtns">
+          <button class="on" data-ctl="加湿">加湿</button><button class="on" data-ctl="通风">通风</button><button data-ctl="照明">照明</button><button data-ctl="制冷">制冷</button>
         </div>
       </section>
     </aside>
@@ -1123,12 +1338,15 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
         <div class="envphoto" id="envCanvas" aria-label="菇房实景内景"></div>
         <div class="env-summary">
           <div class="es-head"><i></i><b id="envHouseName">1号出菇房</b><span class="tag" id="envStage">出菇期</span></div>
+          <div class="es-seed"><span id="envSeed">香菇 808</span><em id="envCode2">GF-01</em></div>
           <div class="es-rows">
-            <div class="es-row"><span>CO₂</span><b id="envCo2">672</b><i>ppm</i><em>阈值 400~800</em></div>
-            <div class="es-row"><span>温度</span><b id="envTemp">18.2</b><i>℃</i><em>阈值 15~22</em></div>
-            <div class="es-row"><span>湿度</span><b id="envHum">92.5</b><i>%</i><em>阈值 85~95</em></div>
+            <div class="es-row"><span>CO₂</span><b id="envCo2">672</b><i>ppm</i><em id="envTgtCo2">目标 400~800</em></div>
+            <div class="es-row"><span>温度</span><b id="envTemp">18.2</b><i>℃</i><em id="envTgtTemp">目标 15~22</em></div>
+            <div class="es-row"><span>湿度</span><b id="envHum">92.5</b><i>%</i><em id="envTgtHum">目标 85~95</em></div>
+            <div class="es-row"><span>光照</span><b id="envLux">80</b><i>lux</i><em id="envTgtLux">目标 50~150</em></div>
+            <div class="es-row"><span>风速</span><b id="envWind">0.35</b><i>m/s</i><em id="envTgtWind">目标 ≤0.5</em></div>
           </div>
-          <div class="es-foot"><i></i>环境浮标 5 秒刷新 · 阈值实时比对</div>
+          <div class="es-foot"><i></i>环境浮标 5 秒刷新 · 阈值按菌种阶段实时比对</div>
         </div>
         <div class="env-badge"><i></i>实景菇房内景 · 实时环境浮标</div>
         <div class="env-viewctl" id="viewToggle" role="group" aria-label="实景视角切换">
@@ -1174,34 +1392,22 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
           <div class="mini-kpi"><span>待机</span><b id="envPageDevIdle">2<i>台</i></b></div>
           <div class="mini-kpi"><span>故障</span><b id="envPageDevErr">2<i>台</i></b></div>
         </div>
-        <div class="dev-list" style="margin-top:8px">
-          <div class="dev-row"><span class="nm">通风系统</span><div class="dev-bar"><i style="width:100%"></i></div><span class="dev-num"><b>8</b>/8</span></div>
-          <div class="dev-row"><span class="nm">加湿器</span><div class="dev-bar"><i style="width:100%"></i></div><span class="dev-num"><b>6</b>/6</span></div>
-          <div class="dev-row"><span class="nm">CO₂ 发生器</span><div class="dev-bar"><i class="warn" style="width:75%"></i></div><span class="dev-num"><b>3</b>/4</span></div>
-          <div class="dev-row"><span class="nm">循环水泵</span><div class="dev-bar"><i style="width:100%"></i></div><span class="dev-num"><b>4</b>/4</span></div>
-          <div class="dev-row"><span class="nm">温控机组</span><div class="dev-bar"><i style="width:90%"></i></div><span class="dev-num"><b>9</b>/10</span></div>
-        </div>
-        <div class="dev-sum"><span>运行率 <b>87.5%</b></span><span>待处置故障 <b style="color:#E5564B">2</b> 台</span></div>
+        <div class="dev-list" id="envPageDevList" style="margin-top:8px"></div>
+        <div class="dev-sum"><span>运行率 <b id="envPageDevRate">—</b></span><span>待处置故障 <b style="color:#E5564B" id="envPageDevErrSum">0</b> 台</span></div>
       </section>
     </aside>
 
     <footer class="pv-bottom">
       <section class="panel">
-        <div class="p-head"><h3>各菇房环境对比</h3><span class="p-sub">实时</span></div>
+        <div class="p-head"><h3>各菇房环境对比</h3><span class="p-sub">实时 · 点击切换</span></div>
         <table class="ptable">
           <colgroup><col style="width:74px"><col><col><col><col style="width:38px"></colgroup>
           <thead><tr><th>菇房</th><th>温度</th><th>湿度</th><th>CO₂</th><th>状态</th></tr></thead>
-          <tbody>
-            <tr><td>1号出菇房</td><td class="n">18.2℃</td><td class="n">92.5%</td><td class="n">672</td><td class="ok">正常</td></tr>
-            <tr><td>2号出菇房</td><td class="n">18.6℃</td><td class="n">91.8%</td><td class="n">688</td><td class="ok">正常</td></tr>
-            <tr><td>3号出菇房</td><td class="n">19.1℃</td><td class="n">88.4%</td><td class="n">742</td><td class="warn">预警</td></tr>
-            <tr><td>4号出菇房</td><td class="n">21.4℃</td><td class="n">85.2%</td><td class="n">806</td><td class="risk">越限</td></tr>
-            <tr><td>12号出菇房</td><td class="n">18.4℃</td><td class="n">92.3%</td><td class="n">685</td><td class="ok">正常</td></tr>
-          </tbody>
+          <tbody id="envCompareBody"></tbody>
         </table>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>温湿度趋势</h3><span class="p-sub">24 小时</span></div>
+        <div class="p-head"><h3>温湿度趋势</h3><span class="p-sub" id="envTrendSub">1号出菇房 · 24 小时</span></div>
         <div class="legend" style="margin-bottom:2px">
           <span><i style="background:#38D6FF"></i>温度 ℃</span>
           <span><i style="background:#2bd46e"></i>湿度 %</span>
@@ -1209,34 +1415,16 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
         <div class="chart" id="envTrendChart"></div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>环境告警</h3><span class="p-sub">今日 5</span><a class="more">更多 ›</a></div>
-        <div class="loglist">
-          <div class="logrow"><span class="tg risk">越限</span><span class="tx">4号出菇房 CO₂ 806ppm</span><span class="tm">10:21</span></div>
-          <div class="logrow"><span class="tg warn">预警</span><span class="tx">3号出菇房 CO₂ 742ppm</span><span class="tm">10:19</span></div>
-          <div class="logrow"><span class="tg warn">预警</span><span class="tx">2号培养房加湿器离线</span><span class="tm">10:12</span></div>
-          <div class="logrow"><span class="tg">提示</span><span class="tx">1号出菇房温度波动 0.8℃</span><span class="tm">09:56</span></div>
-          <div class="logrow"><span class="tg">提示</span><span class="tx">5号冷却间门未闭合</span><span class="tm">09:28</span></div>
-        </div>
+        <div class="p-head"><h3>环境告警</h3><span class="p-sub" id="envAlertSub">本房 2 · 今日 9</span><a class="more">更多 ›</a></div>
+        <div class="loglist" id="envAlertList"></div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>调节记录</h3><span class="p-sub">最近 5 条</span></div>
-        <div class="loglist">
-          <div class="logrow"><span class="tm">10:18</span><span class="tx">3号房 新风阀开度 35%→42%</span><span class="tg">自动</span></div>
-          <div class="logrow"><span class="tm">10:05</span><span class="tx">4号房 加湿器频率上调 8%</span><span class="tg">自动</span></div>
-          <div class="logrow"><span class="tm">09:47</span><span class="tx">1号房 照明开启（出菇期）</span><span class="tg">定时</span></div>
-          <div class="logrow"><span class="tm">09:20</span><span class="tx">2号房 回风阀回调至 68%</span><span class="tg">人工</span></div>
-          <div class="logrow"><span class="tm">08:56</span><span class="tx">冷链区 预冷机组启动</span><span class="tg">自动</span></div>
-        </div>
+        <div class="p-head"><h3>调节记录</h3><span class="p-sub" id="envAdjSub">本房 2 · 今日 8</span></div>
+        <div class="loglist" id="envAdjList"></div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>联动策略</h3><span class="p-sub">环境设备</span></div>
-        <div class="loglist">
-          <div class="logrow"><span class="tg">运行</span><span class="tx">CO₂ &gt; 750ppm 自动增氧</span><span class="tm">启用</span></div>
-          <div class="logrow"><span class="tg">运行</span><span class="tx">湿度 &lt; 88% 自动加湿</span><span class="tm">启用</span></div>
-          <div class="logrow"><span class="tg">运行</span><span class="tx">温度 &gt; 21℃ 自动制冷</span><span class="tm">启用</span></div>
-          <div class="logrow"><span class="tg warn">暂停</span><span class="tx">夜间新风节能策略</span><span class="tm">暂停</span></div>
-          <div class="logrow"><span class="tg">运行</span><span class="tx">滤网压差 &gt; 180Pa 告警</span><span class="tm">启用</span></div>
-        </div>
+        <div class="p-head"><h3>联动策略</h3><span class="p-sub" id="envStrategySub">1号出菇房 · 4 条启用</span></div>
+        <div class="loglist" id="envStrategyList"></div>
       </section>
     </footer>
   </div>
@@ -1245,13 +1433,13 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
   <div class="pageview prodview" id="prodView" hidden>
     <aside class="pv-left">
       <section class="panel">
-        <div class="p-head"><h3>今日生产</h3><span class="p-sub">2026-11-16</span><a class="more">更多 ›</a></div>
-        <div class="bigkpi"><b>3,245<i>kg</i></b><span>今日产出<em>↑8.6%</em></span></div>
+        <div class="p-head"><h3>今日生产</h3><span class="p-sub" id="prodDateSub">2026-11-16 · 鲜菇口径</span><a class="more">更多 ›</a></div>
+        <div class="bigkpi"><b id="prodTodayKg">3,245<i>kg</i></b><span>今日鲜菇产出<em id="prodTodayPct">较昨日 −2.8%</em></span></div>
         <div class="mini-kpis">
-          <div class="mini-kpi"><span>投料量</span><b>3,590<i>kg</i></b></div>
-          <div class="mini-kpi"><span>采收量</span><b>715<i>kg</i></b></div>
-          <div class="mini-kpi"><span>在制批次</span><b>126</b></div>
-          <div class="mini-kpi"><span>合格率</span><b>96.2<i>%</i></b></div>
+          <div class="mini-kpi"><span>投料量(干料)</span><b id="prodFeedKg">3,590<i>kg</i></b></div>
+          <div class="mini-kpi"><span>包装入库</span><b id="prodPackedKg">3,174<i>kg</i></b></div>
+          <div class="mini-kpi"><span>在制批次</span><b id="prodWipBatches">126</b></div>
+          <div class="mini-kpi"><span>生物效率</span><b id="prodBioEff">0.90<i>kg/kg</i></b></div>
         </div>
         <div class="chart" id="prodDayChart" style="margin-top:8px"></div>
       </section>
@@ -1260,7 +1448,7 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
         <div class="rlist" id="prodRateList"></div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>在制批次</h3><span class="p-sub">126 批</span><a class="more">更多 ›</a></div>
+        <div class="p-head"><h3>在制批次</h3><span class="p-sub" id="prodWipSub">126 批</span><a class="more">更多 ›</a></div>
         <table class="ptable">
           <colgroup><col><col><col><col style="width:52px"></colgroup>
           <thead><tr><th>批次号</th><th>菌种</th><th>阶段</th><th>预计采收</th></tr></thead>
@@ -1294,9 +1482,9 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
 
     <aside class="pv-right">
       <section class="panel">
-        <div class="p-head"><h3>菌种分布</h3><span class="p-sub">在制 126 批</span></div>
+        <div class="p-head"><h3>菌种分布</h3><span class="p-sub" id="prodSeedSub">在制 126 批</span></div>
         <div class="ringline">
-          <div class="ring-wrap"><div id="prodSeedRing"></div><div class="ring-txt"><b>126</b><span>在制批次</span></div></div>
+          <div class="ring-wrap"><div id="prodSeedRing"></div><div class="ring-txt"><b id="prodSeedTotal">126</b><span>在制批次</span></div></div>
           <div class="kvlist" id="prodSeedList"></div>
         </div>
       </section>
@@ -1311,32 +1499,33 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
         </div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>任务督办</h3><span class="p-sub">完成率 78%</span><a class="more">更多 ›</a></div>
+        <div class="p-head"><h3>任务督办</h3><span class="p-sub" id="prodTaskRate">完成率 77%</span><a class="more">更多 ›</a></div>
         <div class="rlist" id="prodTaskList"></div>
       </section>
     </aside>
 
     <footer class="pv-bottom">
       <section class="panel">
-        <div class="p-head"><h3>近 7 日产量</h3><span class="p-sub">kg</span></div>
+        <div class="p-head"><h3>近 7 日鲜菇产出</h3><span class="p-sub">kg · 实际 vs 计划</span></div>
         <div class="chart" id="prodTrendChart"></div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>工序产出</h3><span class="p-sub">今日 kg</span></div>
+        <div class="p-head"><h3>工序流转量</h3><span class="p-sub">今日 · 分段口径</span></div>
         <div class="chart" id="prodStepChart"></div>
+        <div class="step-foot" id="prodStepFoot"></div>
       </section>
       <section class="panel">
         <div class="p-head"><h3>质量指标</h3><span class="p-sub">今日</span></div>
         <div class="mini-kpis" style="grid-template-columns:1fr 1fr">
-          <div class="mini-kpi"><span>一级品率</span><b>92.4<i>%</i></b></div>
-          <div class="mini-kpi"><span>损耗率</span><b>2.1<i>%</i></b></div>
+          <div class="mini-kpi"><span>一级品率</span><b id="prodGrade1Pct">92.4<i>%</i></b></div>
+          <div class="mini-kpi"><span>损耗率</span><b id="prodWastePct">2.2<i>%</i></b></div>
           <div class="mini-kpi"><span>抽检批次</span><b>18</b></div>
           <div class="mini-kpi"><span>不合格</span><b>0</b></div>
         </div>
         <div class="tagline"><i class="dot" style="background:#2bd46e"></i>批次质量稳定，连续 12 天无不合格</div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>生产资源</h3><span class="p-sub">今日</span></div>
+        <div class="p-head"><h3>生产资源</h3><span class="p-sub">今日 · 产能占用率</span></div>
         <div class="rlist">
           <div class="rrow"><span class="rk">01</span><span class="nm">灭菌柜</span><span class="track"><i style="width:88%"></i></span><b>88%</b></div>
           <div class="rrow"><span class="rk">02</span><span class="nm">接种线</span><span class="track"><i style="width:76%"></i></span><b>76%</b></div>
@@ -1359,63 +1548,108 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
 
   <!-- ================= 能耗管理 ================= -->
   <div class="pageview energyview" id="energyView" hidden>
+    <!-- 全局控制条：时间范围 / 能源介质 / 对标口径 -->
+    <div class="e-toolbar">
+      <div class="e-tb-group">
+        <span class="e-tb-label">时间范围</span>
+        <div class="e-seg" id="eSegRange">
+          <button class="on" data-range="today">今日</button>
+          <button data-range="week">本周</button>
+          <button data-range="month">本月</button>
+          <button data-range="year">本年</button>
+        </div>
+      </div>
+      <div class="e-tb-group">
+        <span class="e-tb-label">能源介质</span>
+        <div class="e-seg" id="eSegMed">
+          <button data-med="all">综合</button>
+          <button class="on" data-med="elec">电</button>
+          <button data-med="water">水</button>
+          <button data-med="steam">蒸汽</button>
+          <button data-med="co2">CO₂</button>
+          <button data-med="air">压缩空气</button>
+        </div>
+      </div>
+      <div class="e-tb-group">
+        <span class="e-tb-label">对标口径</span>
+        <div class="e-seg" id="eSegBench">
+          <button class="on" data-bench="budget">预算</button>
+          <button data-bench="base">单耗基线</button>
+          <button data-bench="ind">行业标杆</button>
+        </div>
+      </div>
+      <span class="e-tb-note" id="eTbNote">数据时点 2026-11-16 16:00 · 电表在线率 97.2%</span>
+    </div>
+
     <aside class="pv-left">
       <section class="panel">
-        <div class="p-head"><h3>今日能耗</h3><span class="p-sub">全厂 · kWh</span><a class="more">更多 ›</a></div>
-        <div class="bigkpi"><b>2,843<i>kWh</i></b><span>较昨日<em>↑4.1%</em></span></div>
+        <div class="p-head"><h3 id="eKpiTitle">今日能耗</h3><span class="p-sub" id="eKpiSub">全厂 · kWh</span></div>
+        <div class="bigkpi"><b id="eKpiMain">2,843<i id="eKpiUnit">kWh</i></b><span>较昨日<em id="eKpiDelta">↑4.1%</em></span></div>
         <div class="mini-kpis">
-          <div class="mini-kpi"><span>昨日</span><b>2,731</b></div>
-          <div class="mini-kpi"><span>本月</span><b>78,342</b></div>
-          <div class="mini-kpi"><span>单位产量</span><b>0.88<i>kWh/kg</i></b></div>
-          <div class="mini-kpi"><span>碳排</span><b>1.62<i>t</i></b></div>
+          <div class="mini-kpi"><span id="eKpiCmpLbl">昨日</span><b id="eKpiPrev">2,731</b></div>
+          <div class="mini-kpi"><span>预算达成</span><b id="eKpiBudget">94.8<i>%</i></b></div>
+          <div class="mini-kpi"><span>单位产量</span><b id="eKpiUnitInt">0.88<i>kWh/kg</i></b></div>
+          <div class="mini-kpi"><span>碳排</span><b id="eKpiCarbon">1.62<i>t</i></b></div>
         </div>
         <div class="chart" id="energyDayChart" style="margin-top:8px"></div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>分项占比</h3><span class="p-sub">今日 2,843 kWh</span></div>
+        <div class="p-head"><h3>分项占比</h3><span class="p-sub" id="eMixSub">今日 2,843 kWh</span></div>
         <div class="ringline">
-          <div class="ring-wrap"><div id="energyRing"></div><div class="ring-txt"><b>2.84<i style="font-style:normal;font-size:11px">千</i></b><span>kWh</span></div></div>
+          <div class="ring-wrap"><div id="energyRing"></div><div class="ring-txt"><b id="eRingVal">2.84<i style="font-style:normal;font-size:11px">千</i></b><span id="eRingUnit">kWh</span></div></div>
           <div class="kvlist" id="energyList"></div>
         </div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>峰谷用电</h3><span class="p-sub">今日</span></div>
+        <div class="p-head"><h3>峰谷用电与电费</h3><span class="p-sub" id="ePeakSub">今日</span></div>
         <div class="rlist" id="energyPeakList"></div>
       </section>
     </aside>
 
     <section class="pv-center">
       <section class="panel">
-        <div class="p-head"><h3>厂区能耗平面热力</h3><span class="p-sub">今日 · kWh · 12 个用能单元</span><a class="more">能耗排名 ›</a></div>
+        <div class="p-head"><h3>厂区能耗平面热力</h3><span class="p-sub" id="eHeatSub">今日 · kWh · 12 个用能单元</span><a class="more">能耗排名 ›</a></div>
         <div class="heat-wrap" id="heatMap"></div>
         <div class="ht-legend"><span>低</span><div class="bar"></div><span>高</span><span style="margin-left:10px"><i style="background:#7FE8FF"></i>配电主干</span><span style="margin-left:6px"><i style="background:#DFFAFF;border-radius:50%"></i>支线负载</span><span style="margin-left:6px"><i style="background:#FFE9A8"></i>车流</span></div>
         <div class="heat-tip">
-          <div>最高车间<b>出菇房 A 区 · 486 kWh</b></div>
-          <div>最低车间<b>包装间 · 96 kWh</b></div>
-          <div>均值强度<b>1.94 kWh/㎡</b></div>
-          <div>同比变化<b style="color:#2bd46e">↓ 3.2%</b></div>
+          <div>最高车间<b id="eHeatMax">出菇房 A 区 · 486 kWh</b></div>
+          <div>最低车间<b id="eHeatMin">包装间 · 96 kWh</b></div>
+          <div>均值强度<b id="eHeatAvg">1.94 kWh/㎡</b></div>
+          <div>同比变化<b id="eHeatYoY" style="color:#2bd46e">↓ 3.2%</b></div>
         </div>
       </section>
     </section>
 
     <aside class="pv-right">
       <section class="panel">
-        <div class="p-head"><h3>单位产量能耗排行</h3><span class="p-sub">kWh / kg</span><a class="more">更多 ›</a></div>
+        <div class="p-head"><h3>单位产量能耗排行</h3><span class="p-sub" id="eUnitSub">kWh / kg</span></div>
+        <div class="e-bench" id="eUnitBench"><span>单耗基线</span><b id="eUnitBenchVal">1.05 kWh/kg</b><em id="eUnitBenchPct">达成 83.8%</em></div>
         <div class="rlist" id="energyUnitList"></div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>设备能耗 TOP</h3><span class="p-sub">今日 kWh</span><a class="more">更多 ›</a></div>
+        <div class="p-head"><h3>设备能耗 TOP</h3><span class="p-sub" id="eDevSub">今日 kWh</span></div>
         <div class="rlist" id="energyDevList"></div>
       </section>
     </aside>
 
     <footer class="pv-bottom">
       <section class="panel">
-        <div class="p-head"><h3>分项能耗构成</h3><span class="p-sub">kWh</span></div>
+        <div class="p-head"><h3>多介质能源台账</h3><span class="p-sub" id="eLedgerSub">今日 · 5 类介质</span></div>
+        <table class="eledger">
+          <thead><tr>
+            <th style="width:20%">介质</th><th style="width:17%">用量</th><th style="width:13%">折标煤</th>
+            <th style="width:15%">单耗</th><th style="width:13%">预算</th><th style="width:12%">同比</th>
+          </tr></thead>
+          <tbody id="eLedgerBody"></tbody>
+        </table>
+        <div class="eledger-note" id="eLedgerNote">折标煤系数：电 0.1229 kgce/kWh · 蒸汽 0.0946 kgce/kg · 按国标 GB/T 2589</div>
+      </section>
+      <section class="panel">
+        <div class="p-head"><h3>分项能耗构成</h3><span class="p-sub" id="eBarSub">kWh</span></div>
         <div class="chart" id="energyBarChart"></div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>24h 负荷曲线</h3><span class="p-sub">kWh</span></div>
+        <div class="p-head"><h3>24h 负荷曲线</h3><span class="p-sub" id="eCurveSub">kWh</span></div>
         <div class="chart" id="energyCurveChart"></div>
       </section>
       <section class="panel">
@@ -1437,12 +1671,8 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
         </div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>能耗告警</h3><span class="p-sub">今日 3</span><a class="more">更多 ›</a></div>
-        <div class="loglist">
-          <div class="logrow"><span class="tg risk">超限</span><span class="tx">4号出菇房单耗超基准 12%</span><span class="tm">10:06</span></div>
-          <div class="logrow"><span class="tg warn">异常</span><span class="tx">2号制冷机组 COP 偏低</span><span class="tm">09:38</span></div>
-          <div class="logrow"><span class="tg">提示</span><span class="tx">本月电费接近预算 82%</span><span class="tm">08:15</span></div>
-        </div>
+        <div class="p-head"><h3>能耗告警</h3><span class="p-sub" id="eAlarmSub">今日 3</span></div>
+        <div class="loglist" id="eAlarmList"></div>
       </section>
     </footer>
   </div>
@@ -1451,36 +1681,70 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
   <div class="pageview traceview" id="traceView" hidden>
     <aside class="pv-left">
       <section class="panel">
-        <div class="p-head"><h3>区块链存证</h3><span class="p-sub">最近 5 个区块</span><a class="more">更多 ›</a></div>
+        <div class="p-head"><h3>区块链存证</h3><span class="p-sub" id="trChainSub">最近 5 个区块</span></div>
         <div class="chain" id="traceChain"></div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>追溯码状态分布</h3><span class="p-sub">96,300 个</span></div>
-        <div class="ringline">
-          <div class="ring-wrap"><div id="traceCodeRing"></div><div class="ring-txt"><b>96.3<i style="font-style:normal;font-size:10px">k</i></b><span>追溯码</span></div></div>
-          <div class="kvlist">
-            <div><i style="background:#38D6FF"></i><span>已激活</span><b>62%</b></div>
-            <div><i style="background:#2bd46e"></i><span>未激活</span><b>21%</b></div>
-            <div><i style="background:#F2B33D"></i><span>已过期</span><b>11%</b></div>
-            <div><i style="background:#E5564B"></i><span>已作废</span><b>6%</b></div>
-          </div>
+        <div class="p-head"><h3>追溯码状态分布</h3><span class="p-sub" id="trCodeSub">累计发码 —</span></div>
+        <div class="ringline" style="cursor:pointer" data-drill="codes" title="点击查看指标详情">
+          <div class="ring-wrap"><div id="traceCodeRing"></div><div class="ring-txt"><b id="trCodeTotal">—</b><span>追溯码总量</span></div></div>
+          <div class="kvlist" id="traceCodeKv"></div>
         </div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>认证与质量证书</h3><span class="p-sub">有效 4 项</span></div>
-        <div class="cert">
-          <div><b>绿色食品认证</b>有效期 2027-08</div>
-          <div><b>有机转换认证</b>有效期 2026-12</div>
-          <div><b>ISO 22000</b>有效期 2028-03</div>
-          <div><b>GAP 良好农业</b>有效期 2027-05</div>
-        </div>
+        <div class="p-head"><h3>认证与质量证书</h3><span class="p-sub" id="trCertSub">有效 — 项</span></div>
+        <div class="cert" id="traceCert"></div>
         <div class="tagline"><i class="dot" style="background:#2bd46e"></i>本批次证书已同步至追溯链</div>
       </section>
     </aside>
 
     <section class="pv-center">
+      <section class="panel" style="flex:1 1 auto;min-height:0">
+        <div class="p-head">
+          <h3>批次追溯链</h3>
+          <span class="p-sub" id="trChainTitle">菌种 → 冷链 · 九环节</span>
+          <a class="more" id="trChainMore">全链条录入 ›</a>
+        </div>
+        <div class="trcenter">
+          <div class="tr-batches">
+            <div class="tr-seg" id="trBatchFilter">
+              <button class="on" data-f="all">全部</button>
+              <button data-f="broken">断链</button>
+              <button data-f="nochain">未建链</button>
+              <button data-f="onchain">已上链</button>
+            </div>
+            <div class="tr-batch-list" id="trBatchList"></div>
+          </div>
+          <div class="tr-nodes">
+            <div class="tr-node-head">
+              <div class="tr-node-title"><b id="trNodeBatch">—</b><span id="trNodeMeta">请选择批次</span></div>
+              <div class="tr-node-legend">
+                <span><i style="background:#2bd46e"></i>已完成</span>
+                <span><i style="background:#F2B33D"></i>待补录</span>
+                <span><i style="background:#E5564B"></i>异常</span>
+              </div>
+            </div>
+            <div class="tr-node-chain" id="trNodeChain"></div>
+          </div>
+          <div class="tr-detail">
+            <div class="tr-detail-head">批次溯源详情</div>
+            <div class="tr-detail-body" id="trDetail"></div>
+          </div>
+        </div>
+      </section>
+      <section class="panel" style="flex:0 0 216px">
+        <div class="p-head"><h3>近 7 日扫码趋势</h3><span class="p-sub" id="trTrendSub">全国单日</span></div>
+        <div class="chart" id="traceTrendChart"></div>
+      </section>
+    </section>
+
+    <aside class="pv-right">
       <section class="panel">
-        <div class="p-head"><h3>扫码地理热力</h3><span class="p-sub">今日 12,860 次 · 31 省</span><a class="more">省域明细 ›</a></div>
+        <div class="p-head"><h3>批次流向</h3><span class="p-sub" id="trFlowSub">菌包 → 冷链 → 终端</span></div>
+        <div class="lane-wrap" id="traceSankey" style="cursor:pointer" data-drill="flow" title="点击查看指标详情"></div>
+      </section>
+      <section class="panel">
+        <div class="p-head"><h3>扫码地理热力</h3><span class="p-sub" id="trMapSub">近 30 日累计</span><a class="more">省域明细 ›</a></div>
         <div class="maplike" id="traceMap">
           <div class="top5">
             <h4>扫码量 TOP5</h4>
@@ -1488,70 +1752,41 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
           </div>
         </div>
       </section>
-      <section class="panel" style="flex:0 0 216px">
-        <div class="p-head"><h3>近 7 日扫码趋势</h3><span class="p-sub">全国累计</span></div>
-        <div class="chart" id="traceTrendChart"></div>
-      </section>
-    </section>
-
-    <aside class="pv-right">
-      <section class="panel">
-        <div class="p-head"><h3>批次流向</h3><span class="p-sub">基地 → 消费者 · 108,420 批</span><a class="more">更多 ›</a></div>
-        <div class="lane-wrap" id="traceSankey"></div>
-      </section>
-      <section class="panel">
-        <div class="p-head"><h3>溯源查询来源</h3><span class="p-sub">占比</span></div>
-        <div class="rlist">
-          <div class="rrow"><span class="rk">01</span><span class="nm">消费者扫码</span><span class="track"><i style="width:62%"></i></span><b>62%</b></div>
-          <div class="rrow"><span class="rk">02</span><span class="nm">渠道终端</span><span class="track"><i style="width:18%"></i></span><b>18%</b></div>
-          <div class="rrow"><span class="rk">03</span><span class="nm">监管抽检</span><span class="track"><i style="width:12%"></i></span><b>12%</b></div>
-          <div class="rrow"><span class="rk">04</span><span class="nm">媒体查询</span><span class="track"><i style="width:8%"></i></span><b>8%</b></div>
-        </div>
-      </section>
     </aside>
 
     <footer class="pv-bottom">
       <section class="panel">
         <div class="p-head"><h3>累计上链批次</h3><span class="p-sub">区块链存证</span></div>
-        <div class="bigkpi"><b>108,420</b><span>批</span></div>
-        <div class="tagline"><i class="dot" style="background:#2bd46e"></i>存证成功率 99.9% · 5 节点共识</div>
+        <div class="bigkpi" style="cursor:pointer" data-drill="batches" title="点击查看指标详情"><b id="trBatches">—</b><span>批</span></div>
+        <div class="tagline" id="trChainTag"><i class="dot" style="background:#2bd46e"></i>—</div>
       </section>
       <section class="panel">
         <div class="p-head"><h3>追溯覆盖率</h3><span class="p-sub">本批次</span></div>
         <div class="mini-kpis" style="grid-template-columns:1fr 1fr">
-          <div class="mini-kpi"><span>覆盖率</span><b>98.6<i>%</i></b></div>
-          <div class="mini-kpi"><span>链完整率</span><b>97.2<i>%</i></b></div>
-          <div class="mini-kpi"><span>上链成功率</span><b>99.9<i>%</i></b></div>
-          <div class="mini-kpi"><span>查询量</span><b>12,860</b></div>
+          <div class="mini-kpi" style="cursor:pointer" data-drill="coverage" title="点击查看指标详情"><span>覆盖率</span><b id="trCover">—<i>%</i></b></div>
+          <div class="mini-kpi"><span>链完整率</span><b id="trCompleteness">—<i>%</i></b></div>
+          <div class="mini-kpi"><span>上链成功率</span><b id="trChainRate">—<i>%</i></b></div>
+          <div class="mini-kpi" style="cursor:pointer" data-drill="scan" title="点击查看指标详情"><span>查询量</span><b id="trScanQty">—</b></div>
         </div>
       </section>
       <section class="panel">
-        <div class="p-head"><h3>赋码进度</h3><span class="p-sub">今日</span></div>
-        <div class="rlist">
-          <div class="rrow"><span class="rk">01</span><span class="nm">采收赋码</span><span class="track"><i style="width:94%"></i></span><b>94%</b></div>
-          <div class="rrow"><span class="rk">02</span><span class="nm">分级赋码</span><span class="track"><i style="width:88%"></i></span><b>88%</b></div>
-          <div class="rrow"><span class="rk">03</span><span class="nm">包装赋码</span><span class="track"><i style="width:81%"></i></span><b>81%</b></div>
-          <div class="rrow"><span class="rk">04</span><span class="nm">冷链关联</span><span class="track"><i style="width:76%"></i></span><b>76%</b></div>
-        </div>
+        <div class="p-head"><h3>赋码进度</h3><span class="p-sub">今日 · 按菌种</span></div>
+        <div class="rlist" id="trCodeProgress"></div>
+      </section>
+      <section class="panel">
+        <div class="p-head"><h3>风险扫码与召回</h3><span class="p-sub" id="trRiskSub">实时</span><a class="more" id="trRiskMore">更多 ›</a></div>
+        <div class="loglist" id="trRiskList" style="cursor:pointer" data-drill="risk" title="点击查看指标详情"></div>
       </section>
       <section class="panel">
         <div class="p-head"><h3>溯源提示</h3><span class="p-sub">示例批次</span></div>
         <div class="co2-mini" style="margin:0">
           <div style="flex:1;display:flex;flex-direction:column;gap:5px;font-size:10px;color:var(--text-3)">
-            <div>批次号 <b style="font-family:var(--num);color:var(--text-1)">SC-MJ-20261116-0321</b></div>
-            <div>产品 <b style="color:var(--text-1)">鲜香菇 500g</b> · 基地 <b style="color:var(--text-1)">1号出菇房</b></div>
-            <div>采收 <b style="font-family:var(--num);color:var(--text-1)">2026-11-14 06:20</b> · 赋码 <b style="color:var(--ok)">已完成</b></div>
+            <div>批次号 <b style="font-family:var(--num);color:var(--text-1)" id="trTipBatch">—</b></div>
+            <div>产品 <b style="color:var(--text-1)" id="trTipProduct">—</b> · 菇房 <b style="color:var(--text-1)" id="trTipRoom">—</b></div>
+            <div>采收 <b style="font-family:var(--num);color:var(--text-1)" id="trTipHarvest">—</b> · 赋码 <b style="color:var(--ok)" id="trTipCode">—</b></div>
           </div>
         </div>
         <div class="tagline"><i class="dot" style="background:#38D6FF"></i>扫码可查看全链路 7 个环节</div>
-      </section>
-      <section class="panel">
-        <div class="p-head"><h3>召回预警</h3><span class="p-sub">实时</span><a class="more">更多 ›</a></div>
-        <div class="loglist">
-          <div class="logrow"><span class="tg">正常</span><span class="tx">近 30 天无召回事件</span><span class="tm">实时</span></div>
-          <div class="logrow"><span class="tg warn">关注</span><span class="tx">1 批临期产品待复核</span><span class="tm">10:02</span></div>
-          <div class="logrow"><span class="tg">提示</span><span class="tx">冷链温控数据已全量上链</span><span class="tm">09:30</span></div>
-        </div>
       </section>
     </footer>
   </div>
@@ -1737,8 +1972,22 @@ h1,h2,h3,.p-head h3,.brand .tt{font-family:var(--font-hei)}
     </div>
   </div>
 
+  <!-- 追溯 KPI 下钻弹窗：核心指标 + 详情数据 + 口径说明 -->
+  <div class="tr-modal" id="trModal">
+    <div class="tr-modal-box" role="dialog" aria-modal="true" aria-labelledby="trModalTitle">
+      <div class="tr-modal-head">
+        <h3 id="trModalTitle">指标详情</h3>
+        <span class="tm" id="trModalStamp">—</span>
+        <button class="tr-modal-close" id="trModalClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="tr-modal-body" id="trModalBody"></div>
+    </div>
+  </div>
+
 </div>
 
+<!-- 追溯数据源：食用菌主数据（FungiStore），与后台追溯码/全链条录入/存证/召回同源 -->
+<script src="../applefarm_backhand/js/shared/fungi-store.js"></script>
 <script>
 /* ============================================================
    0. 舞台缩放 + 顶栏时钟
@@ -1905,7 +2154,7 @@ function barChart(host,cfg){
   var iw=w-pad.l-pad.r,ih=h-pad.t-pad.b;
   var n=cfg.labels.length,step=iw/n;
   var max=Math.max.apply(null,cfg.bars)*1.15;
-  var lineMin=Math.min.apply(null,cfg.line)*0.9,lineMax=Math.max.apply(null,cfg.line)*1.05;
+  var lineMin=cfg.line?Math.min.apply(null,cfg.line)*0.9:0,lineMax=cfg.line?Math.max.apply(null,cfg.line)*1.05:1;
   var bw=Math.min(18,step*0.38);
   var bid='barG'+(++chartSeq);
   var out='<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'">';
@@ -1920,17 +2169,21 @@ function barChart(host,cfg){
   cfg.labels.forEach(function(lb,i){
     var cx=pad.l+step*(i+0.5);
     var bh=ih*(cfg.bars[i]/max);
-    var tip=lb+'：'+cfg.bars[i]+(cfg.unit||'')+(cfg.line?'　指标 '+cfg.line[i]:'');
+    var tip=lb+'：'+cfg.bars[i]+(cfg.unit||'')+(cfg.line?'　'+(cfg.lineName||'指标')+' '+cfg.line[i]+(cfg.lineUnit||''):'');
     out+='<rect x="'+(cx-step/2).toFixed(1)+'" y="'+pad.t+'" width="'+step.toFixed(1)+'" height="'+ih+
       '" fill="transparent" data-tip="'+tip+'"/>';
     out+='<rect class="bc-bar" data-tip="'+tip+'" x="'+(cx-bw/2).toFixed(1)+'" y="'+(pad.t+ih-bh).toFixed(1)+'" width="'+bw.toFixed(1)+
       '" height="'+bh.toFixed(1)+'" rx="2" fill="url(#'+bid+')" opacity=".95"/>';
     out+='<text x="'+cx.toFixed(1)+'" y="'+(h-4)+'" text-anchor="middle" font-size="8" fill="rgba(157,184,220,.72)">'+lb+'</text>';
-    var lt=(cfg.line[i]-lineMin)/(lineMax-lineMin||1);
-    pts.push([cx,pad.t+ih*(1-clamp(lt,0,1))]);
+    if(cfg.line){
+      var lt=(cfg.line[i]-lineMin)/(lineMax-lineMin||1);
+      pts.push([cx,pad.t+ih*(1-clamp(lt,0,1))]);
+    }
   });
-  out+='<path d="'+linePath(pts)+'" fill="none" stroke="#38D6FF" stroke-width="1.6" stroke-linecap="round"/>';
-  pts.forEach(function(p){out+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.2" fill="#38D6FF" stroke="#071426" stroke-width="1"/>';});
+  if(cfg.line){
+    out+='<path d="'+linePath(pts)+'" fill="none" stroke="#38D6FF" stroke-width="1.6" stroke-linecap="round"/>';
+    pts.forEach(function(p){out+='<circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.2" fill="#38D6FF" stroke="#071426" stroke-width="1"/>';});
+  }
   out+='</svg>';
   host.innerHTML=out;
 }
@@ -1950,6 +2203,62 @@ function donutSVG(pct,color,size,sw,tip){
    2. 面板图表数据
    ============================================================ */
 var LAB24=['00:00','','04:00','','08:00','','12:00','','16:00','','20:00','','24:00'];
+
+/* ============================================================
+   生产统一口径数据源（全屏生产数字的唯一来源）
+   口径定义：
+   · 投料量   = 今日拌料投料原料（干料），单位 kg
+   · 装袋数   = 今日装袋产出菌包数，单位 袋
+   · 鲜菇产出 = 今日采收分级前的鲜菇总量，单位 kg
+   · 包装入库 = 分级后一级 + 二级入库量，单位 kg
+   守恒关系：装袋数 ≤ 拌料产出袋数；发菌上架数 ≤ 装袋数
+   ============================================================ */
+var PROD={
+  date:'2026-11-16',
+  feedKg:3590,          /* 投料量（干料 kg） */
+  planKg:3960,          /* 今日计划鲜菇产出 kg */
+  harvestedKg:3245,     /* 今日鲜菇产出（采收分级前 kg） */
+  grade1Pct:92.4,       /* 一级品率 % */
+  wastePct:2.2,         /* 损耗率 % */
+  wipBatches:126,       /* 在制批次 = 七道工序在制合计 */
+  feedPerBag:1.18,      /* 单袋装料量（干料 kg/袋） */
+  bagsPacked:2992,      /* 今日装袋产出（袋） */
+  bagsShelf:2861        /* 今日发菌上架（袋） */
+};
+PROD.grade1Kg=Math.round(PROD.harvestedKg*PROD.grade1Pct/100);           /* 2998 一级菇 */
+PROD.wasteKg=Math.round(PROD.harvestedKg*PROD.wastePct/100);             /* 71 废品 */
+PROD.grade2Kg=PROD.harvestedKg-PROD.grade1Kg-PROD.wasteKg;              /* 176 二级菇 */
+PROD.packedKg=PROD.grade1Kg+PROD.grade2Kg;                              /* 3174 包装入库 */
+PROD.bioEff=(PROD.harvestedKg/PROD.feedKg).toFixed(2);                    /* 0.90 kg 鲜菇/kg 干料 */
+PROD.achieve=Math.round(PROD.harvestedKg/PROD.planKg*1000)/10;           /* 81.9 产能达成 % */
+/* 今日鲜菇产出 24 小时分布（每 2 小时一段，合计必须 = harvestedKg） */
+PROD.HOUR2=[134,153,176,199,260,328,401,378,328,313,302,273];
+PROD.LAB2=['00:00','02:00','04:00','06:00','08:00','10:00','12:00','14:00','16:00','18:00','20:00','22:00'];
+/* 近 7 日鲜菇产出（kg），今日实际值必须等于 harvestedKg，今日计划必须等于 planKg */
+PROD.TREND={labels:['11-10','11-11','11-12','11-13','11-14','11-15','11-16'],
+  data:[2980,3120,2860,3210,3090,3340,3245],plan:[3020,3180,3260,3410,3390,3520,3960]};
+PROD.yoyPct=Math.round((PROD.harvestedKg/PROD.TREND.data[5]-1)*1000)/10;   /* 对昨日 = -2.8% */
+/* 任务督办（完成率 %，第三位为任务权重），整体完成率由加权得出，与标题一致 */
+var PROD_TASKS=[
+  ['灭菌排产确认',90,30],['接种班组交接',83,24],['出菇房温控复核',75,20],['采收计划下达',67,16],['包装物料补货',53,10]
+];
+var PROD_TASK_RATE=Math.round(PROD_TASKS.reduce(function(a,b){return a+b[1]*b[2];},0)/
+  PROD_TASKS.reduce(function(a,b){return a+b[2];},0));   /* 加权完成率 = 77% */
+
+/* 运营总览页的生产数字绑定（与生产管理页同源） */
+function bindOverviewProd(){
+  var set=function(id,v){var el=document.getElementById(id);if(el) el.innerHTML=v;};
+  set('ovYieldToday',PROD.harvestedKg.toLocaleString('en-US')+'<i>kg</i>');
+  set('ovYieldPacked',PROD.packedKg.toLocaleString('en-US')+'<i>kg</i>');
+  set('ovYieldMonth','78,620<i>kg</i>');
+  set('ovAchieve',PROD.achieve+'%');
+  set('ovFeedKg',PROD.feedKg.toLocaleString('en-US')+'<i>kg</i>');
+  set('ovHarvestKg',PROD.harvestedKg.toLocaleString('en-US')+'<i>kg</i>');
+  set('ovPackedKg',PROD.packedKg.toLocaleString('en-US')+'<i>kg</i>');
+  set('ovGrade1',PROD.grade1Pct+'%');
+  var d=document.getElementById('donutProd');
+  if(d) d.innerHTML=donutSVG(PROD.achieve,'#38D6FF',84,7,'今日产能达成率 '+PROD.achieve+'% · 鲜菇 '+PROD.harvestedKg+' kg / 计划 '+PROD.planKg+' kg');
+}
 
 function buildCharts(){
   lineChart(document.getElementById('chartEnv'),{
@@ -1980,17 +2289,20 @@ function buildCharts(){
     ]
   });
   barChart(document.getElementById('chartYield'),{
-    labels:['01-04','01-05','01-06','01-07','01-08'],
-    bars:[2860,3120,2980,3340,3245],
-    line:[3020,3180,3260,3410,3390]
+    labels:PROD.TREND.labels,
+    bars:PROD.TREND.data,
+    line:PROD.TREND.plan,
+    unit:' kg',
+    lineName:'计划',
+    lineUnit:' kg'
   });
 }
 
 /* ============================================================
    3. 环形图 / CO₂ 仪表 / 视频宫格
    ============================================================ */
-document.getElementById('donutHouse').innerHTML=donutSVG(78,'#38D6FF',96,8,'菌房在线率 78% · 28/36 间正常');
-document.getElementById('donutProd').innerHTML=donutSVG(82,'#38D6FF',84,7,'今日生产达成率 82%');
+document.getElementById('donutHouse').innerHTML=donutSVG(97,'#38D6FF',96,8,'菌房在线率 97% · 35/36 间接入在线（1 间检修离线）');
+document.getElementById('donutProd').innerHTML=donutSVG(PROD.achieve,'#38D6FF',84,7,'今日产能达成率 '+PROD.achieve+'% · 鲜菇 '+PROD.harvestedKg+' kg / 计划 '+PROD.planKg+' kg');
 
 function renderGauge(val,status,hostId){
   var max=1200,r=76,cx=100,cy=112;
@@ -2299,6 +2611,53 @@ tabs.forEach(function(t){
   });
 });
 
+/* ---------- 质量追溯视图交互 ---------- */
+/* 批次列表：点击切换当前批次的链路与详情 */
+document.addEventListener('click',function(e){
+  /* KPI 下钻弹窗 */
+  var drill=e.target.closest&&e.target.closest('[data-drill]');
+  if(drill){
+    trDrillDown(drill.dataset.drill);
+    return;
+  }
+  var row=e.target.closest&&e.target.closest('.tr-brow');
+  if(row&&row.dataset.b){
+    TR_STATE.batch=row.dataset.b;
+    trRenderBatches();
+    trRenderDetail();
+    return;
+  }
+  /* 筛选 Tab */
+  var seg=e.target.closest&&e.target.closest('#trBatchFilter button');
+  if(seg){
+    Array.prototype.forEach.call(document.querySelectorAll('#trBatchFilter button'),function(b){ b.classList.remove('on'); });
+    seg.classList.add('on');
+    TR_STATE.filter=seg.dataset.f||'all';
+    TR_STATE.batch='';
+    trRenderBatches();
+    trRenderDetail();
+  }
+});
+/* 下钻：跳后台对应页面 */
+document.addEventListener('click',function(e){
+  var more=e.target.closest&&e.target.closest('.more');
+  if(!more) return;
+  var id=more.id;
+  if(id==='trChainMore'){
+    window.open('../applefarm_backhand/trace_batch.html','_blank');
+  }else if(id==='trRiskMore'){
+    window.open('../applefarm_backhand/trace_query.html','_blank');
+  }
+});
+/* 弹窗关闭：按钮 / 遮罩点击 / ESC */
+document.getElementById('trModalClose').addEventListener('click',trCloseModal);
+document.getElementById('trModal').addEventListener('click',function(e){
+  if(e.target===this) trCloseModal();
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape') trCloseModal();
+});
+
 window.__gotoHouse=function(name,code){
   applyView('env',{house:name,code:code});
 };
@@ -2341,14 +2700,71 @@ document.getElementById('fsBtn').addEventListener('click',function(){
    6. 环境设备 · 3D 菇房内景（走道 / 俯视）+ 菇房联动
    ============================================================ */
 var ENV_MODE='aisle';
+/* 菇房基础数据：目标区间按菌种 + 生长阶段给出（香菇 / 金针菇、催蕾期 / 出菇期各不相同）
+   over：该房当前越限项（温度/湿度/CO₂/光照/风速），用于浮标标红与告警文案 */
 var HOUSES={
-  '1号出菇房':{name:'1号出菇房',code:'GF-01',stage:'出菇期',temp:18.2,hum:92.5,co2:672,status:'正常',range:'400~800',dev:{total:32,run:28,idle:2,err:2}},
-  '2号出菇房':{name:'2号出菇房',code:'GF-02',stage:'出菇期',temp:18.6,hum:91.8,co2:688,status:'正常',range:'400~800',dev:{total:30,run:27,idle:2,err:1}},
-  '3号出菇房':{name:'3号出菇房',code:'GF-03',stage:'催蕾期',temp:19.1,hum:88.4,co2:742,status:'预警',range:'400~800',dev:{total:31,run:26,idle:2,err:3}},
-  '4号出菇房':{name:'4号出菇房',code:'GF-04',stage:'出菇期',temp:21.4,hum:85.2,co2:806,status:'越限',range:'400~800',dev:{total:30,run:24,idle:2,err:4}},
-  '12号出菇房':{name:'12号出菇房',code:'GF-12',stage:'出菇期',temp:18.4,hum:92.3,co2:685,status:'正常',range:'400~800',dev:{total:34,run:30,idle:2,err:2}}
+  '1号出菇房':{name:'1号出菇房',code:'GF-01',stage:'出菇期',seed:'香菇 808',
+    temp:18.2,hum:92.5,co2:672,lux:80,wind:0.35,status:'正常',range:'400~800',over:[],
+    tgt:{temp:'15~22',hum:'85~95',co2:'400~800',lux:'50~150',wind:'≤0.5'},
+    vent:{freq:92,back:68,fresh:35,run:12.5,dp:132,mode:'自动',sw:[1,1,1,0]},
+    meters:[98.1,95.2,94.7,97.5,96.3],delta:'↑1.2%',
+    devRows:[['通风系统',8,8,0],['加湿器',6,6,0],['CO₂ 发生器',4,4,0],['循环水泵',4,4,0],['温控机组',8,10,2]]},
+  '2号出菇房':{name:'2号出菇房',code:'GF-02',stage:'出菇期',seed:'香菇 808',
+    temp:18.6,hum:91.8,co2:688,lux:78,wind:0.33,status:'正常',range:'400~800',over:[],
+    tgt:{temp:'15~22',hum:'85~95',co2:'400~800',lux:'50~150',wind:'≤0.5'},
+    vent:{freq:88,back:64,fresh:30,run:11.8,dp:124,mode:'自动',sw:[1,1,1,0]},
+    meters:[97.6,94.8,95.1,97.2,96.0],delta:'↑0.4%',
+    devRows:[['通风系统',8,8,0],['加湿器',6,6,0],['CO₂ 发生器',4,4,0],['循环水泵',4,4,0],['温控机组',9,10,1]]},
+  '3号出菇房':{name:'3号出菇房',code:'GF-03',stage:'催蕾期',seed:'香菇 808',
+    temp:19.1,hum:88.4,co2:742,lux:45,wind:0.28,status:'预警',range:'600~1200',over:['温度','湿度','光照'],
+    tgt:{temp:'12~18',hum:'90~95',co2:'600~1200',lux:'50~150',wind:'≤0.5'},
+    vent:{freq:72,back:58,fresh:18,run:8.4,dp:96,mode:'自动',sw:[1,1,1,0]},
+    meters:[92.4,89.6,96.5,86.5,95.8],delta:'↓2.3%',
+    devRows:[['通风系统',7,8,1],['加湿器',6,6,0],['CO₂ 发生器',3,4,1],['循环水泵',4,4,0],['温控机组',8,9,1]]},
+  '4号出菇房':{name:'4号出菇房',code:'GF-04',stage:'出菇期',seed:'金针菇 F21',
+    temp:21.4,hum:85.2,co2:806,lux:88,wind:0.46,status:'越限',range:'600~1200',over:['湿度'],
+    tgt:{temp:'16~22',hum:'88~95',co2:'600~1200',lux:'50~150',wind:'≤0.5'},
+    vent:{freq:100,back:84,fresh:62,run:14.6,dp:168,mode:'自动',sw:[0,1,1,1]},
+    meters:[94.6,88.5,96.2,97.0,92.0],delta:'↓5.8%',
+    devRows:[['通风系统',6,8,2],['加湿器',5,6,1],['CO₂ 发生器',2,4,2],['循环水泵',3,4,1],['温控机组',7,9,0]]},
+  '12号出菇房':{name:'12号出菇房',code:'GF-12',stage:'出菇期',seed:'金针菇 F21',
+    temp:18.4,hum:92.3,co2:685,lux:82,wind:0.32,status:'正常',range:'600~1200',over:[],
+    tgt:{temp:'16~22',hum:'88~95',co2:'600~1200',lux:'50~150',wind:'≤0.5'},
+    vent:{freq:90,back:66,fresh:33,run:12.1,dp:118,mode:'自动',sw:[1,1,1,0]},
+    meters:[98.3,95.6,96.4,97.8,96.5],delta:'↑0.9%',
+    devRows:[['通风系统',8,8,0],['加湿器',7,7,0],['CO₂ 发生器',4,4,0],['循环水泵',4,4,0],['温控机组',9,10,1]]}
 };
 function envData(name){return HOUSES[name]||HOUSES['1号出菇房'];}
+/* 由设备清单推导运行台数，保证面板之间数字自洽 */
+function houseDevStat(d){
+  var total=0,run=0,err=0;
+  (d.devRows||[]).forEach(function(r){total+=r[2];run+=r[1];err+=r[3]||0;});
+  return {total:total,run:run,err:err,idle:Math.max(0,total-run-err),
+    rate:total?Math.round(run/total*1000)/10:0};
+}
+/* 环境告警 / 调节记录（带房号，切房时联动过滤） */
+var ENV_ALERT_LOG=[
+  {h:'4号出菇房',lv:'risk',tx:'湿度 85.2% 低于金针菇出菇期下限 88%',tm:'10:21'},
+  {h:'4号出菇房',lv:'warn',tx:'送风频率 100% 持续满负荷',tm:'10:19'},
+  {h:'4号出菇房',lv:'warn',tx:'滤网压差 168Pa 接近 180Pa 告警线',tm:'10:11'},
+  {h:'3号出菇房',lv:'warn',tx:'光照 45lux 低于催蕾期下限 50lux',tm:'10:16'},
+  {h:'3号出菇房',lv:'warn',tx:'温度 19.1℃ 高于催蕾期上限 18℃',tm:'10:09'},
+  {h:'3号出菇房',lv:'提示',tx:'催蕾期新风比 18%，请勿随意加大通风',tm:'09:52'},
+  {h:'1号出菇房',lv:'提示',tx:'温度波动 0.8℃',tm:'09:56'},
+  {h:'1号出菇房',lv:'提示',tx:'CO₂ 短时冲高 690ppm',tm:'09:41'},
+  {h:'2号出菇房',lv:'提示',tx:'滤网压差 124Pa 进入关注区',tm:'09:34'},
+  {h:'12号出菇房',lv:'提示',tx:'温控机组 1 台待机待启动',tm:'09:22'}
+];
+var ENV_ADJ_LOG=[
+  {h:'4号出菇房',tx:'加湿频率上调 8%（湿度回升中）',tg:'自动',tm:'10:20'},
+  {h:'4号出菇房',tx:'制冷机组启动（温度 21.4℃）',tg:'自动',tm:'10:18'},
+  {h:'3号出菇房',tx:'催蕾期照明补光开启',tg:'自动',tm:'10:02'},
+  {h:'3号出菇房',tx:'新风比下调至 18%（保温优先）',tg:'自动',tm:'09:58'},
+  {h:'1号出菇房',tx:'回风阀回调至 68%',tg:'人工',tm:'09:20'},
+  {h:'1号出菇房',tx:'照明开启（出菇期）',tg:'定时',tm:'09:47'},
+  {h:'2号出菇房',tx:'新风阀开度 30%→34%',tg:'自动',tm:'10:12'},
+  {h:'12号出菇房',tx:'送风频率回调至 90%',tg:'人工',tm:'10:06'}
+];
 
 function svgPoly(pts,attr){
   return '<polygon points="'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' ')+'" '+attr+'/>';
@@ -2363,15 +2779,20 @@ function envLabel(x,y,text,color){
     '<text x="'+(x+6).toFixed(1)+'" y="'+(y+4)+'" text-anchor="middle" font-size="10.5" fill="#DFF3FF">'+text+'</text></g>';
 }
 function envBubble(x,y,title,d){
-  return '<g><rect x="'+x+'" y="'+y+'" width="174" height="62" rx="7" fill="rgba(7,20,38,.84)" stroke="rgba(56,214,255,.32)"'+
-    ' data-tip="'+title+' · 温度 '+d.temp+'℃ · 湿度 '+d.hum+'% · CO₂ '+d.co2+' ppm"/>'+
+  var ov=(d.over||[]);
+  var isOver=function(k){return ov.indexOf(k)>=0;};
+  var cT=isOver('温度')?'#FFD79B':'#DFF3FF';
+  var cH=isOver('湿度')?'#FFD79B':'#DFF3FF';
+  var cC=isOver('CO₂')?'#FFB3AD':'#7FE8A8';
+  return '<g><rect x="'+x+'" y="'+y+'" width="186" height="62" rx="7" fill="rgba(7,20,38,.84)" stroke="rgba(56,214,255,.32)"'+
+    ' data-tip="'+title+' · '+d.seed+' '+d.stage+' · 温度 '+d.temp+'℃(目标 '+d.tgt.temp+') · 湿度 '+d.hum+'%(目标 '+d.tgt.hum+') · CO₂ '+d.co2+' ppm(目标 '+d.tgt.co2+')"/>'+
     '<text x="'+(x+10)+'" y="'+(y+16)+'" font-size="9.5" fill="#7FD8FF">'+title+'</text>'+
     '<text x="'+(x+10)+'" y="'+(y+31)+'" font-size="9" fill="#8AA0BE">温度</text>'+
-    '<text x="'+(x+164)+'" y="'+(y+31)+'" text-anchor="end" font-size="10" fill="#DFF3FF">'+d.temp+' ℃</text>'+
+    '<text x="'+(x+176)+'" y="'+(y+31)+'" text-anchor="end" font-size="10" fill="'+cT+'">'+d.temp+' ℃</text>'+
     '<text x="'+(x+10)+'" y="'+(y+44)+'" font-size="9" fill="#8AA0BE">湿度</text>'+
-    '<text x="'+(x+164)+'" y="'+(y+44)+'" text-anchor="end" font-size="10" fill="#DFF3FF">'+d.hum+' %</text>'+
+    '<text x="'+(x+176)+'" y="'+(y+44)+'" text-anchor="end" font-size="10" fill="'+cH+'">'+d.hum+' %</text>'+
     '<text x="'+(x+10)+'" y="'+(y+57)+'" font-size="9" fill="#8AA0BE">CO₂</text>'+
-    '<text x="'+(x+164)+'" y="'+(y+57)+'" text-anchor="end" font-size="10" fill="#7FE8A8">'+d.co2+' ppm</text></g>';
+    '<text x="'+(x+176)+'" y="'+(y+57)+'" text-anchor="end" font-size="10" fill="'+cC+'">'+d.co2+' ppm</text></g>';
 }
 
 function aisleSVG(d){
@@ -2586,11 +3007,10 @@ var ENV_PHOTO={
 function renderEnv(){
   var d=envData(state.house||'1号出菇房');
   var ph=ENV_PHOTO[ENV_MODE]||ENV_PHOTO.aisle;
-  var ov='<svg class="env-ov" viewBox="0 0 1048 748" preserveAspectRatio="none">'+
-    envBubble(52,470,'货架区 C · 中层',d)+
-    envBubble(432,340,'走道中段',d)+
-    envBubble(798,470,'送风口 · 回风区',d)+
-    '</svg>';
+  var bubbles=(ENV_MODE==='overhead')
+    ? envBubble(60,210,'A 区出菇架',d)+envBubble(430,330,'中央走道',d)+envBubble(800,210,'送风回风井',d)
+    : envBubble(52,470,'货架区 C · 中层',d)+envBubble(432,340,'走道中段',d)+envBubble(798,470,'送风口 · 回风区',d);
+  var ov='<svg class="env-ov" viewBox="0 0 1048 748" preserveAspectRatio="none">'+bubbles+'</svg>';
   document.getElementById('envCanvas').innerHTML='<img src="'+ph.src+'" alt="'+d.name+'实景">'+ov;
 }
 
@@ -2598,10 +3018,25 @@ function updateEnvPanels(){
   var d=envData(state.house||'1号出菇房');
   document.getElementById('envHouseName').textContent=d.name;
   document.getElementById('envStage').textContent=d.stage;
+  document.getElementById('envSeed').textContent=d.seed;
+  document.getElementById('envCode2').textContent=d.code;
   document.getElementById('envCo2').textContent=d.co2;
   document.getElementById('envTemp').textContent=d.temp.toFixed(1);
   document.getElementById('envHum').textContent=d.hum.toFixed(1);
+  document.getElementById('envLux').textContent=d.lux;
+  document.getElementById('envWind').textContent=d.wind.toFixed(2);
   document.getElementById('envCode').textContent=d.code;
+  document.getElementById('envTgtCo2').textContent='目标 '+d.tgt.co2;
+  document.getElementById('envTgtTemp').textContent='目标 '+d.tgt.temp;
+  document.getElementById('envTgtHum').textContent='目标 '+d.tgt.hum;
+  document.getElementById('envTgtLux').textContent='目标 '+d.tgt.lux;
+  document.getElementById('envTgtWind').textContent='目标 '+d.tgt.wind;
+  Array.prototype.forEach.call(document.querySelectorAll('.env-summary .es-row'),function(r){r.classList.remove('over');});
+  var OVER_MAP={'CO₂':'envTgtCo2','温度':'envTgtTemp','湿度':'envTgtHum','光照':'envTgtLux','风速':'envTgtWind'};
+  (d.over||[]).forEach(function(k){
+    var el=document.getElementById(OVER_MAP[k]);
+    if(el) el.parentNode.classList.add('over');
+  });
   /* CO₂ 面板联动 */
   document.getElementById('co2Sub').textContent=d.name;
   document.getElementById('co2Range').textContent=d.range;
@@ -2610,16 +3045,19 @@ function updateEnvPanels(){
   st.className='st'+(d.status==='正常'?'':d.status==='预警'?' warn':' risk');
   st.innerHTML='<i></i>'+d.status;
   /* 设备面板联动 */
-  document.getElementById('devSub').textContent=d.name+' · '+d.dev.total+' 台';
-  document.getElementById('devTotal').textContent=d.dev.total;
-  document.getElementById('devRun').textContent=d.dev.run;
-  document.getElementById('devIdle').textContent=d.dev.idle;
-  document.getElementById('devErr').textContent=d.dev.err;
+  var ds=houseDevStat(d);
+  document.getElementById('devSub').textContent=d.name+' · '+ds.total+' 台';
+  document.getElementById('devTotal').textContent=ds.total;
+  document.getElementById('devRun').textContent=ds.run;
+  document.getElementById('devIdle').textContent=ds.idle;
+  document.getElementById('devErr').textContent=ds.err;
   /* 环境监测面板联动 */
   document.getElementById('envPanelSub').textContent=d.name;
   document.getElementById('kTemp').textContent=d.temp.toFixed(1);
   document.getElementById('kHum').textContent=d.hum.toFixed(1);
   document.getElementById('kCo2').textContent=d.co2;
+  document.getElementById('kLux').textContent=d.lux;
+  document.getElementById('kWind').textContent=d.wind.toFixed(2);
   refreshEnvPage(d);
   Array.prototype.forEach.call(document.querySelectorAll('.hchip'),function(b){
     b.classList.toggle('on',b.dataset.house===d.name);
@@ -3259,30 +3697,70 @@ function heatColor(t){
   return 'rgb('+Math.round(a[0]+(b[0]-a[0])*k)+','+Math.round(a[1]+(b[1]-a[1])*k)+','+Math.round(a[2]+(b[2]-a[2])*k)+')';
 }
 function fmtNum(v){return v>=10000?(v/1000).toFixed(1)+'k':v.toLocaleString('en-US');}
+/* 追溯视图专用：监管场景下数量必须精确到个位，不用 k 缩写 */
+function trNum(v){ return Number(v||0).toLocaleString('en-US'); }
+
 
 /* ---------------- 环境设备页 ---------------- */
-var ENV_METERS=[['温度达标',98.1],['湿度达标',95.2],['CO₂ 达标',94.7],['光照达标',97.5],['风速达标',96.3]];
+var ENV_METERS=[['温度达标',0],['湿度达标',1],['CO₂ 达标',2],['光照达标',3],['风速达标',4]];
+/* 各房 24h CO₂ / 温 / 湿度 曲线（按房生成，保证与当前读数自洽） */
+function envSeries(d,base){
+  var out=[];
+  for(var i=0;i<12;i++){
+    var w=Math.sin((i+1)*0.9+d.temp)*base*0.9;
+    out.push(Math.round(d.co2+w));
+  }
+  out[10]=d.co2;
+  return out;
+}
+function envTempSeries(d){
+  var out=[];
+  for(var i=0;i<7;i++) out.push(Math.round((d.temp+Math.sin(i*0.8+d.temp)*0.45)*10)/10);
+  out[6]=d.temp;
+  return out;
+}
+function envHumSeries(d){
+  var out=[];
+  for(var i=0;i<7;i++) out.push(Math.round((d.hum+Math.cos(i*0.7+d.hum)*0.35)*10)/10);
+  out[6]=d.hum;
+  return out;
+}
 function buildEnvPage(){
   if(subBuilt.env) return;
   subBuilt.env=1;
   var ring=document.getElementById('envHouseRing');
-  if(ring) ring.innerHTML=donutSVG(78,'#38D6FF',92,8,'菌房在线率 78% · 28/36 间正常');
-  var m=document.getElementById('envMeters');
-  if(m) m.innerHTML=ENV_METERS.map(function(x){
-    return '<div class="meter"><span>'+x[0]+'</span><div class="track"><i style="width:'+x[1]+'%"></i></div><b>'+x[1].toFixed(1)+'%</b></div>';
+  if(ring) ring.innerHTML=donutSVG(97,'#38D6FF',92,8,'菌房在线率 97% · 35/36 间接入在线（1 间检修离线）');
+  /* 对比表：点击行切换菇房 */
+  var body=document.getElementById('envCompareBody');
+  if(body){
+    body.innerHTML=Object.keys(HOUSES).map(function(k){
+      var h=HOUSES[k];
+      return '<tr data-house="'+h.name+'"><td>'+h.name+'</td><td class="n">'+h.temp.toFixed(1)+'℃</td>'+
+        '<td class="n">'+h.hum.toFixed(1)+'%</td><td class="n">'+h.co2+'</td>'+
+        '<td class="'+(h.status==='正常'?'ok':h.status==='预警'?'warn':'risk')+'">'+h.status+'</td></tr>';
+    }).join('');
+    body.addEventListener('click',function(e){
+      var tr=e.target.closest?e.target.closest('tr[data-house]'):null;
+      if(tr) setEnvHouse(tr.dataset.house);
+    });
+  }
+  /* 联动策略：按房型阶段生成 */
+  var sl=document.getElementById('envStrategyList');
+  if(sl) sl.innerHTML=[
+    ['运行','CO₂ &gt; 750ppm 自动增氧','启用'],
+    ['运行','湿度 &lt; 88% 自动加湿','启用'],
+    ['运行','温度 &gt; 21℃ 自动制冷','启用'],
+    ['warn','夜间新风节能策略','暂停'],
+    ['运行','滤网压差 &gt; 180Pa 告警','启用']
+  ].map(function(x){
+    return '<div class="logrow"><span class="tg'+(x[0]==='warn'?' warn':'')+'">'+x[0]+'</span><span class="tx">'+x[1]+'</span><span class="tm">'+x[2]+'</span></div>';
   }).join('');
-  var co2=document.getElementById('envPageCo2Chart');
-  if(co2) lineChart(co2,{labels:['00','02','04','06','08','10','12','14','16','18','20','22'],
-    series:[{color:'#2bd46e',data:[640,632,628,635,652,668,678,690,682,672,660,650],min:580,max:760}],padL:26});
-  var tr=document.getElementById('envTrendChart');
-  if(tr) lineChart(tr,{labels:['00','04','08','12','16','20','24'],
-    series:[{color:'#38D6FF',data:[18.1,18.0,18.2,18.6,18.8,18.3,18.2],min:16,max:21},
-            {color:'#2bd46e',data:[92.1,92.4,92.8,93.1,92.6,92.2,92.5],min:86,max:96}]});
   if(state.house) refreshEnvPage(envData(state.house));
 }
 function refreshEnvPage(d){
   if(!subBuilt.env||!d) return;
   var g=function(id){return document.getElementById(id);};
+  /* --- 右栏 CO₂ --- */
   g('envPageCo2Sub').textContent=d.name;
   g('envPageRange').textContent=d.range;
   g('envPageCo2').textContent=d.co2;
@@ -3290,23 +3768,100 @@ function refreshEnvPage(d){
   var st=g('envPageCo2Status');
   st.className='st'+(d.status==='正常'?'':d.status==='预警'?' warn':' risk');
   st.innerHTML='<i></i>'+d.status;
-  g('envPageDevSub').textContent=d.name+' · '+d.dev.total+' 台';
-  g('envPageDevTotal').innerHTML=d.dev.total+'<i>台</i>';
-  g('envPageDevRun').innerHTML=d.dev.run+'<i>台</i>';
-  g('envPageDevIdle').innerHTML=d.dev.idle+'<i>台</i>';
-  g('envPageDevErr').innerHTML=d.dev.err+'<i>台</i>';
+  var co2Chart=g('envPageCo2Chart');
+  if(co2Chart) lineChart(co2Chart,{labels:['00','02','04','06','08','10','12','14','16','18','20','22'],
+    series:[{color:'#2bd46e',data:envSeries(d,34),min:Math.max(300,d.co2-140),max:d.co2+160}],padL:26});
+  /* --- 右栏 设备运行 --- */
+  var ds=houseDevStat(d);
+  g('envPageDevSub').textContent=d.name+' · '+ds.total+' 台';
+  g('envPageDevTotal').innerHTML=ds.total+'<i>台</i>';
+  g('envPageDevRun').innerHTML=ds.run+'<i>台</i>';
+  g('envPageDevIdle').innerHTML=ds.idle+'<i>台</i>';
+  g('envPageDevErr').innerHTML=ds.err+'<i>台</i>';
+  g('envPageDevRate').textContent=ds.rate+'%';
+  g('envPageDevErrSum').textContent=ds.err;
+  var dl=g('envPageDevList');
+  if(dl) dl.innerHTML=d.devRows.map(function(r){
+    var pct=Math.round(r[1]/r[2]*100);
+    var cls=(pct<80)?' warn':'';
+    var bad=(r[3]||0)>0;
+    return '<div class="dev-row"><span class="nm">'+r[0]+'</span>'+
+      '<div class="dev-bar"><i class="'+cls.trim()+'" style="width:'+pct+'%"></i></div>'+
+      '<span class="dev-num"'+(bad?' style="color:#E5564B"':'')+'><b>'+r[1]+'</b>/'+r[2]+(bad?' · 故障'+r[3]:'')+'</span></div>';
+  }).join('');
+  /* --- 左栏 环境达标率 --- */
+  g('envRateSub').textContent=d.name+' · 近 24 小时';
+  var mts=d.meters;
+  var avg=Math.round(mts.reduce(function(a,b){return a+b;},0)/mts.length*10)/10;
+  g('envRateKpi').innerHTML=avg.toFixed(1)+'<i>%</i>';
+  g('envRateDelta').textContent=d.delta;
+  var m=g('envMeters');
+  if(m) m.innerHTML=ENV_METERS.map(function(x,i){
+    var v=mts[i];
+    return '<div class="meter'+(v<95?' bad':'')+'"><span>'+x[0]+'</span><div class="track"><i style="width:'+v+'%"></i></div><b>'+v.toFixed(1)+'%</b></div>';
+  }).join('');
+  /* --- 左栏 通风调控 --- */
+  var vt=d.vent;
+  g('envVentSub').textContent=d.name+' · '+vt.mode+'模式 · 运行中';
+  g('ctlFreq').textContent=vt.freq+'%';
+  g('ctlBack').textContent=vt.back+'%';
+  g('ctlFresh').textContent=vt.fresh+'%';
+  g('ctlRun').textContent=vt.run.toFixed(1)+'h';
+  var dp=document.getElementById('ctlDp');
+  dp.textContent=vt.dp+'Pa';
+  dp.className=(vt.dp>=180)?'risk':(vt.dp>=150?'warn':'');
+  g('ctlMode').textContent=vt.mode;
+  var btns=g('envCtlBtns');
+  if(btns) Array.prototype.forEach.call(btns.querySelectorAll('button'),function(b,i){
+    b.classList.toggle('on',!!vt.sw[i]);
+  });
+  /* --- 底排 温湿度趋势 --- */
+  g('envTrendSub').textContent=d.name+' · 24 小时';
+  var tr=g('envTrendChart');
+  if(tr) lineChart(tr,{labels:['00','04','08','12','16','20','24'],
+    series:[{color:'#38D6FF',data:envTempSeries(d),min:d.temp-3,max:d.temp+3},
+            {color:'#2bd46e',data:envHumSeries(d),min:d.hum-6,max:d.hum+6}]});
+  /* --- 底排 环境告警 / 调节记录（按房过滤 + 全厂） --- */
+  var mine=ENV_ALERT_LOG.filter(function(x){return x.h===d.name;});
+  var others=ENV_ALERT_LOG.filter(function(x){return x.h!==d.name;});
+  var list=mine.concat(others).slice(0,5);
+  var al=g('envAlertList');
+  if(al) al.innerHTML=list.map(function(x){
+    var tag=x.lv==='risk'?'越限':x.lv==='warn'?'预警':'提示';
+    return '<div class="logrow lv-'+x.lv+'"><span class="tg'+(x.lv==='risk'?' risk':x.lv==='warn'?' warn':'')+'">'+tag+'</span>'+
+      '<span class="tx">'+(x.h===d.name?'':x.h+' · ')+x.tx+'</span><span class="tm">'+x.tm+'</span></div>';
+  }).join('');
+  g('envAlertSub').textContent='本房 '+mine.length+' · 今日 '+ENV_ALERT_LOG.length;
+  var adjMine=ENV_ADJ_LOG.filter(function(x){return x.h===d.name;});
+  var adjOthers=ENV_ADJ_LOG.filter(function(x){return x.h!==d.name;});
+  var adj=g('envAdjList');
+  if(adj) adj.innerHTML=adjMine.concat(adjOthers).slice(0,5).map(function(x){
+    return '<div class="logrow"><span class="tm">'+x.tm+'</span>'+
+      '<span class="tx">'+(x.h===d.name?'':x.h+' · ')+x.tx+'</span><span class="tg">'+x.tg+'</span></div>';
+  }).join('');
+  g('envAdjSub').textContent='本房 '+adjMine.length+' · 今日 '+ENV_ADJ_LOG.length;
+  g('envStrategySub').textContent=d.name+' · 4 条启用';
+  /* --- 对比表高亮 --- */
+  var body=g('envCompareBody');
+  if(body) Array.prototype.forEach.call(body.querySelectorAll('tr'),function(tr){
+    tr.classList.toggle('cur',tr.dataset.house===d.name);
+  });
 }
 
 /* ---------------- 生产管理页 ---------------- */
 var PROC_SEEDS=['香菇 808','金针菇 F21','平菇 P9','杏鲍菇 X3'];
+/* 七道工序（在制批次合计 = PROD.wipBatches = 126）
+   flow  = 该工序今日流转量（口径见 metric 字段）
+   metric= 流转量单位：kg(干料) / 袋 / kg(鲜菇)
+   */
 var PROC_STEPS=[
-  {name:'拌料',batches:18,pass:99.2,cycle:0.5,done:12,rate:96},
-  {name:'装袋',batches:22,pass:98.6,cycle:0.8,done:16,rate:94},
-  {name:'灭菌',batches:16,pass:97.9,cycle:1.2,done:9,rate:88},
-  {name:'接种',batches:20,pass:99.1,cycle:0.6,done:14,rate:91},
-  {name:'培养',batches:32,pass:96.8,cycle:18.4,done:20,rate:86},
-  {name:'出菇',batches:28,pass:96.4,cycle:5.2,done:12,rate:92},
-  {name:'采收',batches:14,pass:95.8,cycle:0.4,done:10,rate:84}
+  {name:'拌料',batches:14,pass:99.2,cycle:0.5,done:12,rate:96,flow:3590,metric:'kg',metricName:'投料量',flowName:'今日投料'},
+  {name:'装袋',batches:16,pass:98.6,cycle:0.8,done:16,rate:94,flow:2992,metric:'袋',metricName:'装袋数',flowName:'今日装袋'},
+  {name:'灭菌',batches:12,pass:97.9,cycle:1.2,done:9,rate:88,flow:2874,metric:'袋',metricName:'灭菌袋数',flowName:'今日灭菌'},
+  {name:'接种',batches:15,pass:99.1,cycle:0.6,done:14,rate:91,flow:2861,metric:'袋',metricName:'接种袋数',flowName:'今日接种'},
+  {name:'培养',batches:24,pass:96.8,cycle:18.4,done:20,rate:86,flow:2680,metric:'袋',metricName:'培养袋数',flowName:'在培养架'},
+  {name:'出菇',batches:29,pass:96.4,cycle:5.2,done:12,rate:92,flow:2418,metric:'袋',metricName:'出菇袋数',flowName:'在出菇房'},
+  {name:'采收',batches:16,pass:95.8,cycle:0.4,done:10,rate:84,flow:3245,metric:'kg',metricName:'鲜菇产出',flowName:'今日采收'}
 ];
 PROC_STEPS.forEach(function(s,i){
   s.codes=[0,1,2].map(function(j){return 'SC-1116-'+('00'+(21+i*3+j)).slice(-3);});
@@ -3368,12 +3923,14 @@ function renderLane(sel){
     s+='<circle cx="'+x+'" cy="'+y+'" r="20" fill="#071426" stroke="'+(on?'#38D6FF':'rgba(110,170,255,.55)')+'" stroke-width="'+(on?2.2:1.5)+'"'+(on?' filter="url(#pgGlow)"':'')+'/>';
     s+='<text x="'+x+'" y="'+(y+4.5)+'" text-anchor="middle" font-size="12.5" font-weight="700" fill="'+(on?'#EAFBFF':'#9DB8DC')+'">'+('0'+(i+1)).slice(-2)+'</text>';
     s+='<text x="'+x+'" y="'+(y+45)+'" text-anchor="middle" font-size="14" font-weight="700" fill="'+(on?'#FFFFFF':'#CFE6FF')+'">'+st.name+'</text>';
-    s+='<text x="'+x+'" y="'+(y+61)+'" text-anchor="middle" font-size="9.5" fill="'+(on?'#7FE8FF':'#7FA6CC')+'">在制 '+st.batches+' 批 · 达成 '+st.rate+'%</text>';
+    s+='<text x="'+x+'" y="'+(y+60)+'" text-anchor="middle" font-size="9.5" fill="'+(on?'#7FE8FF':'#7FA6CC')+'">'+
+      st.flow.toLocaleString('en-US')+' '+st.metric+' · 在制 '+st.batches+' 批</text>';
+    s+='<text x="'+x+'" y="'+(y+75)+'" text-anchor="middle" font-size="9.5" fill="'+(on?'#9FEBFF':'#6E9CC4')+'">达成 '+st.rate+'% · 合格 '+st.pass+'%</text>';
     for(var j=0;j<3;j++){
       var ang=(-90+j*36)*Math.PI/180;
       s+='<circle cx="'+(x+Math.cos(ang)*27).toFixed(1)+'" cy="'+(y+Math.sin(ang)*27).toFixed(1)+'" r="2.6" fill="'+(on?'#38D6FF':'#2E8FE8')+'" opacity="'+(on?.95:.6)+'"/>';
     }
-    s+='<rect x="'+(x-60)+'" y="'+(y-32)+'" width="120" height="64" fill="transparent" data-tip="'+st.name+' · 在制 '+st.batches+' 批 · 合格率 '+st.pass+'% · 达成 '+st.rate+'%"/>';
+    s+='<rect x="'+(x-60)+'" y="'+(y-32)+'" width="120" height="64" fill="transparent" data-tip="'+st.name+' · '+st.flowName+' '+st.flow.toLocaleString('en-US')+' '+st.metric+' · 在制 '+st.batches+' 批 · 合格率 '+st.pass+'% · 达成 '+st.rate+'%"/>';
     s+='</g>';
   });
   s+='</svg>';
@@ -3383,7 +3940,8 @@ function renderLane(sel){
 function updateProdDetail(i){
   var st=PROC_STEPS[i];if(!st) return;
   document.getElementById('prodStepTitle').textContent=st.name+'工序 · 批次明细';
-  document.getElementById('prodStepSub').textContent='在制 '+st.batches+' 批 · 达成率 '+st.rate+'%';
+  document.getElementById('prodStepSub').textContent=st.flowName+' '+st.flow.toLocaleString('en-US')+' '+st.metric+
+    ' · 在制 '+st.batches+' 批 · 达成率 '+st.rate+'%';
   document.getElementById('prodStepBatch').textContent=st.batches;
   document.getElementById('prodStepDone').textContent=st.done;
   document.getElementById('prodStepPass').innerHTML=st.pass+'<i>%</i>';
@@ -3397,9 +3955,69 @@ function updateProdDetail(i){
   }
   tb.innerHTML='<thead><tr><th>批次号</th><th>菌种</th><th>数量(袋)</th><th>进度</th><th>质检</th></tr></thead><tbody>'+rows+'</tbody>';
 }
+/* 工序流转量：三段不同口径，分段归一化，柱下标注各自单位 */
+function renderProdStepFlow(host){
+  if(!host) return;
+  var w=host.clientWidth||360,h=host.clientHeight||100;
+  if(w<40||h<40) return;
+  var S=PROC_STEPS;
+  var segMax=[S[0].flow,Math.max(S[2].flow,S[3].flow,S[4].flow,S[5].flow),S[6].flow];
+  var pad={l:8,r:8,t:16,b:16};
+  var iw=w-pad.l-pad.r,ih=h-pad.t-pad.b;
+  var n=S.length,step=iw/n,bw=Math.min(16,step*0.34);
+  var COL=['#2E8FE8','#7FE8FF','#38D6FF','#38D6FF','#2E8FE8','#38D6FF','#F2B33D'];
+  var segIdx=[0,1,1,1,1,1,2];
+  var out='<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'">';
+  /* 分段背景与口径标题 */
+  var segs=[[0,0,'干料 kg'],[1,5,'菌包 袋'],[6,6,'鲜菇 kg']];
+  segs.forEach(function(g){
+    var x0=pad.l+step*g[0],x1=pad.l+step*(g[1]+1);
+    out+='<rect x="'+x0+'" y="'+(pad.t-12)+'" width="'+(x1-x0)+'" height="'+(ih+12)+'" fill="rgba(56,214,255,.035)"/>';
+    out+='<text x="'+((x0+x1)/2).toFixed(1)+'" y="'+(pad.t-4)+'" text-anchor="middle" font-size="8" fill="rgba(157,184,220,.75)">'+g[2]+'</text>';
+  });
+  for(var g=0;g<=2;g++){
+    var gy=pad.t+ih*g/2;
+    out+='<line x1="'+pad.l+'" y1="'+gy.toFixed(1)+'" x2="'+(w-pad.r)+'" y2="'+gy.toFixed(1)+
+      '" stroke="rgba(110,170,255,.1)" stroke-dasharray="'+(g===2?'0':'3 4')+'"/>';
+  }
+  S.forEach(function(st,i){
+    var cx=pad.l+step*(i+.5);
+    var seg=segIdx[i];
+    var bh=ih*(st.flow/segMax[seg]);
+    var tip=st.name+'工序 · '+st.flowName+' '+st.flow.toLocaleString('en-US')+' '+st.metric+
+      ' · 在制 '+st.batches+' 批 · 达成率 '+st.rate+'%';
+    out+='<rect class="bc-bar" data-tip="'+tip+'" x="'+(cx-bw/2).toFixed(1)+'" y="'+(pad.t+ih-bh).toFixed(1)+
+      '" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="2" fill="'+COL[i]+'" opacity=".92"/>';
+    out+='<text x="'+cx.toFixed(1)+'" y="'+(pad.t+ih-bh-4).toFixed(1)+'" text-anchor="middle" font-size="8" fill="#CFE6FF">'+
+      (st.flow>=1000?st.flow.toLocaleString('en-US'):st.flow)+'</text>';
+    out+='<text x="'+cx.toFixed(1)+'" y="'+(h-4)+'" text-anchor="middle" font-size="8" fill="rgba(157,184,220,.75)">'+st.name+'</text>';
+  });
+  out+='</svg>';
+  host.innerHTML=out;
+}
 function buildProdPage(){
   if(subBuilt.prod) return;
   subBuilt.prod=1;
+  /* 统一口径绑定：所有生产数字均来自 PROD */
+  var wipSum=PROC_STEPS.reduce(function(a,s){return a+s.batches;},0);
+  PROD.wipBatches=wipSum;                                   /* 在制批次 = 七道工序在制合计 */
+  document.getElementById('prodDateSub').textContent=PROD.date+' · 鲜菇口径';
+  document.getElementById('prodTodayKg').innerHTML=PROD.harvestedKg.toLocaleString('en-US')+'<i>kg</i>';
+  var pctEl=document.getElementById('prodTodayPct');
+  if(pctEl){
+    var up=PROD.yoyPct>=0;
+    pctEl.textContent='较昨日 '+(up?'+':'')+PROD.yoyPct+'%';
+    pctEl.style.color=up?'var(--ok)':'var(--warn)';
+  }
+  document.getElementById('prodFeedKg').innerHTML=PROD.feedKg.toLocaleString('en-US')+'<i>kg</i>';
+  document.getElementById('prodPackedKg').innerHTML=PROD.packedKg.toLocaleString('en-US')+'<i>kg</i>';
+  document.getElementById('prodWipBatches').textContent=PROD.wipBatches;
+  document.getElementById('prodBioEff').innerHTML=PROD.bioEff+'<i>kg/kg</i>';
+  document.getElementById('prodWipSub').textContent=PROD.wipBatches+' 批';
+  document.getElementById('prodSeedSub').textContent='在制 '+PROD.wipBatches+' 批';
+  document.getElementById('prodSeedTotal').textContent=PROD.wipBatches;
+  document.getElementById('prodGrade1Pct').innerHTML=PROD.grade1Pct+'<i>%</i>';
+  document.getElementById('prodWastePct').innerHTML=PROD.wastePct+'<i>%</i>';
   document.getElementById('prodSeedRing').innerHTML=donutMulti([
     {pct:38,color:'#38D6FF',name:'香菇 808'},{pct:27,color:'#2E8FE8',name:'金针菇 F21'},
     {pct:21,color:'#F2B33D',name:'平菇 P9'},{pct:14,color:'#9A7BFF',name:'杏鲍菇 X3'}],92,9);
@@ -3409,20 +4027,33 @@ function buildProdPage(){
   document.getElementById('prodRateList').innerHTML=PROC_STEPS.map(function(s,i){
     return '<div class="rrow"><span class="rk">0'+(i+1)+'</span><span class="nm">'+s.name+'</span><span class="track"><i style="width:'+s.rate+'%"></i></span><b>'+s.rate+'%</b></div>';
   }).join('');
-  document.getElementById('prodTaskList').innerHTML=[
-    ['灭菌排产确认',82],['接种班组交接',76],['出菇房温控复核',66],['采收计划下达',58],['包装物料补货',44]
-  ].map(function(x,i){
+  document.getElementById('prodTaskList').innerHTML=PROD_TASKS.map(function(x,i){
     return '<div class="rrow"><span class="rk">0'+(i+1)+'</span><span class="nm">'+x[0]+'</span><span class="track"><i style="width:'+x[1]+'%"></i></span><b>'+x[1]+'%</b></div>';
   }).join('');
+  var taskRate=document.getElementById('prodTaskRate');
+  if(taskRate) taskRate.textContent=PROD_TASK_RATE+'%';
   var day=document.getElementById('prodDayChart');
-  if(day) lineChart(day,{labels:['00','04','08','12','16','20','24'],
-    series:[{color:'#38D6FF',data:[160,190,380,640,510,330,210],min:0,max:720}],padL:28});
+  if(day) lineChart(day,{labels:PROD.LAB2,padL:30,yFmt:function(v){return fmt(v);},
+    series:[{color:'#38D6FF',data:PROD.HOUR2,min:0,max:440,type:'area',width:1.5,dot:true}]});
   var tr=document.getElementById('prodTrendChart');
-  if(tr) lineChart(tr,{labels:['11-10','11-11','11-12','11-13','11-14','11-15','11-16'],
-    series:[{color:'#38D6FF',data:[2980,3120,2860,3210,3090,3340,3245],min:2400,max:3600}],padL:34});
+  if(tr) lineChart(tr,{labels:PROD.TREND.labels,padL:34,yFmt:function(v){return fmt(v);},
+    series:[
+      {color:'#38D6FF',data:PROD.TREND.data,min:2400,max:3600,type:'area',width:1.6,dot:true},
+      {color:'#2bd46e',data:PROD.TREND.plan,min:2400,max:3600,width:1.3}
+    ]});
   var st=document.getElementById('prodStepChart');
-  if(st) barChart(st,{labels:['拌料','装袋','灭菌','接种','培养','出菇','采收'],
-    bars:[3590,3480,3120,2980,2560,715,715],line:[96,94,88,91,86,92,84]});
+  if(st) renderProdStepFlow(st);
+  var foot=document.getElementById('prodStepFoot');
+  if(foot){
+    var lossBags=PROD.bagsPacked-PROD.bagsShelf;
+    foot.innerHTML=
+      '<div><span>投料 '+PROD.feedKg+' kg → 装袋 '+PROD.bagsPacked+' 袋</span>'+
+      '<b>装袋率 '+(PROD.bagsPacked/(PROD.feedKg/PROD.feedPerBag)*100).toFixed(1)+'%</b></div>'+
+      '<div><span>装袋 '+PROD.bagsPacked+' 袋 → 上架 '+PROD.bagsShelf+' 袋</span>'+
+      '<b class="warn">损耗 '+lossBags+' 袋</b></div>'+
+      '<div><span>鲜菇 '+PROD.harvestedKg+' kg → 入库 '+PROD.packedKg+' kg</span>'+
+      '<b class="ok">入库率 '+(PROD.packedKg/PROD.harvestedKg*100).toFixed(1)+'%</b></div>';
+  }
   var lane=document.getElementById('procLane');
   if(lane) lane.addEventListener('click',function(e){
     var t=e.target;
@@ -3448,202 +4079,477 @@ var ENERGY_ROOMS=[
   ['冷却间',286,2.86],['出菇房 C 区',268,1.92],['灭菌间',242,2.35],['包装间',96,0.64],
   ['冷链暂存',188,1.72],['设备间',84,0.92],['办公区',62,0.38],['仓库',58,0.31]
 ];
-function buildEnergyPage(){
-  if(subBuilt.energy) return;
-  subBuilt.energy=1;
-  var total=ENERGY_ITEMS.reduce(function(a,b){return a+b.val;},0);
-  document.getElementById('energyRing').innerHTML=donutMulti(ENERGY_ITEMS.map(function(x){
-    return {pct:Math.round(x.val/total*1000)/10,color:x.color,name:x.name};
-  }),92,9);
-  document.getElementById('energyList').innerHTML=ENERGY_ITEMS.map(function(x){
-    return '<div><i style="background:'+x.color+'"></i><span>'+x.name+'</span><b>'+Math.round(x.val/total*100)+'%</b></div>';
-  }).join('');
-  document.getElementById('energyPeakList').innerHTML=[
-    ['尖峰 10:00-12:00','42%',92],['高峰 08:00-10:00','34%',74],['平段 12:00-18:00','18%',46],['低谷 22:00-06:00','6%',18]
-  ].map(function(x,i){
-    return '<div class="rrow"><span class="rk">0'+(i+1)+'</span><span class="nm">'+x[0]+'</span><span class="track"><i style="width:'+x[2]+'%"></i></span><b>'+x[1]+'</b></div>';
-  }).join('');
-  document.getElementById('energyUnitList').innerHTML=[
+/* 多介质台账：今日 / 昨日 / 本月累计 / 年度累计 */
+var MEDIUMS={
+  elec:{name:'电',unit:'kWh',color:'#38D6FF',today:2843,prev:2731,month:78342,year:1026400,
+    tce:0.1229,unitCost:'kWh/kg',todayUnit:0.88,base:1.05,ind:0.92,yoy:4.1,budget:3000},
+  water:{name:'水',unit:'t',color:'#4FA9FF',today:42.6,prev:43.6,month:1240,year:15860,
+    tce:0.0857,unitCost:'L/kg',todayUnit:13.1,base:14.5,ind:12.4,yoy:-2.3,budget:46},
+  steam:{name:'蒸汽',unit:'kg',color:'#F2B33D',today:186,prev:171,month:5240,year:68400,
+    tce:0.0946,unitCost:'kg/kg',todayUnit:0.06,base:0.065,ind:0.055,yoy:8.7,budget:180},
+  co2:{name:'CO₂',unit:'kg',color:'#31C9E8',today:1240,prev:1254,month:35120,year:452800,
+    tce:0.0104,unitCost:'kg/kg',todayUnit:0.38,base:0.40,ind:0.36,yoy:-1.1,budget:1300},
+  air:{name:'压缩空气',unit:'m³',color:'#9A7BFF',today:1860,prev:1794,month:52400,year:671000,
+    tce:0.0057,unitCost:'m³/kg',todayUnit:0.57,base:0.60,ind:0.52,yoy:3.7,budget:1900}
+};
+var MED_ORDER=['elec','water','steam','co2','air'];
+/* 时间范围：今日 / 本周 / 本月 / 本年 */
+var E_RANGE={
+  today:{name:'今日',cmp:'昨日',factor:1,note:'数据时点 2026-11-16 16:00 · 电表在线率 97.2%'},
+  week:{name:'本周',cmp:'上周',factor:6.6,note:'统计周期 11-10 ~ 11-16 · 电表在线率 96.8%'},
+  month:{name:'本月',cmp:'上月',factor:27.6,note:'统计周期 11-01 ~ 11-16 · 电表在线率 96.5%'},
+  year:{name:'本年',cmp:'去年',factor:361,note:'统计周期 2026-01-01 ~ 11-16 · 电表在线率 95.9%'}
+};
+/* 对标口径 */
+var E_BENCH={
+  budget:{name:'预算',unit:'kWh'},
+  base:{name:'单耗基线',unit:'kWh/kg'},
+  ind:{name:'行业标杆',unit:'kWh/kg'}
+};
+var E_STATE={range:'today',med:'elec',bench:'budget'};
+var E_ALARMS=[
+  {tg:'risk',tx:'4号出菇房单耗超基准 12%',tm:'10:06',lv:1},
+  {tg:'warn',tx:'2号制冷机组 COP 偏低',tm:'09:38',lv:2},
+  {tg:'',tx:'本月电费接近预算 82%',tm:'08:15',lv:3}
+];
+function eSet(id,html){var el=document.getElementById(id);if(el) el.innerHTML=html;}
+function eTxt(id,html){var el=document.getElementById(id);if(el) el.innerHTML=html;}
+/* 当前口径下的介质主数据 */
+function eTotal(){
+  var st=E_STATE;
+  if(st.med==='all'){
+    /* 综合口径：折标煤合计折算等效电 */
+    var tce=0,elec=0;
+    MED_ORDER.forEach(function(k){
+      var m=MEDIUMS[k];
+      tce+=m.today*m.tce;
+      if(k==='elec') elec=m.today;
+    });
+    return {val:elec, tce:tce/1000, label:'综合', unit:'kWh'};
+  }
+  var m=MEDIUMS[st.med];
+  return {val:m.today, tce:m.today*m.tce/1000, label:m.name, unit:m.unit};
+}
+/* 依据当前状态渲染全部能耗面板 */
+function renderEnergyPage(){
+  var st=E_STATE;
+  var rng=E_RANGE[st.range];
+  var tot=eTotal();
+  var med=st.med==='all'?null:MEDIUMS[st.med];
+  /* ---- KPI ---- */
+  var kpiVal=tot.val, kpiUnit=tot.unit;
+  if(st.range!=='today'){
+    var f=rng.factor;
+    kpiVal=med?med.month*f/27.6:2843*f;
+    kpiUnit=med?med.unit:'kWh';
+  }
+  var cmpVal=med?med.prev:2731;
+  var delta=med?med.yoy:4.1;
+  eTxt('eKpiTitle',rng.name+'能耗');
+  eTxt('eKpiSub',(med?med.name:'全厂')+' · '+kpiUnit);
+  eTxt('eKpiMain',(Math.round(kpiVal*10)/10).toLocaleString('en-US').replace(/,/g,'')+
+    '<i id="eKpiUnit">'+kpiUnit+'</i>');
+  eTxt('eKpiDelta',(delta>=0?'↑':'↓')+Math.abs(delta).toFixed(1)+'%');
+  eTxt('eKpiCmpLbl',rng.cmp);
+  eTxt('eKpiPrev',med?med.prev.toLocaleString('en-US'):'2,731');
+  var budPct=med?Math.round(med.today/med.budget*1000)/10:94.8;
+  eTxt('eKpiBudget',budPct.toFixed(1)+'<i>%</i>');
+  var unitInt=med?med.todayUnit:0.88;
+  var unitName=med?med.unitCost:'kWh/kg';
+  eTxt('eKpiUnitInt',unitInt.toFixed(2)+'<i>'+unitName+'</i>');
+  var carbon=tot.tce*2.493;
+  eTxt('eKpiCarbon',carbon.toFixed(2)+'<i>tCO₂e</i>');
+  eTxt('eTbNote',rng.note);
+  /* ---- 分项占比（仅电口径有系统分项，其余按工艺分项） ---- */
+  var mixItems=med&&med.name==='电'?ENERGY_ITEMS:[
+    {name:'制冷机组',val:986,color:'#38D6FF'},{name:'加湿系统',val:642,color:'#2E8FE8'},
+    {name:'通风系统',val:518,color:'#4FA9FF'},{name:'照明系统',val:276,color:'#F2B33D'},
+    {name:'包装设备',val:238,color:'#9A7BFF'},{name:'其他',val:183,color:'#31C9E8'}
+  ];
+  if(med&&med.name!=='电'){
+    /* 非电介质：按产线归集 */
+    mixItems=[
+      {name:'出菇房',val:Math.round(med.today*0.44),color:'#38D6FF'},
+      {name:'培养房',val:Math.round(med.today*0.23),color:'#2E8FE8'},
+      {name:'灭菌车间',val:Math.round(med.today*0.15),color:'#4FA9FF'},
+      {name:'包装车间',val:Math.round(med.today*0.11),color:'#F2B33D'},
+      {name:'公用工程',val:Math.round(med.today*0.07),color:'#9A7BFF'}
+    ];
+  }
+  var mixTotal=mixItems.reduce(function(a,b){return a+b.val;},0);
+  eSet('energyRing',donutMulti(mixItems.map(function(x){
+    return {pct:Math.round(x.val/mixTotal*1000)/10,color:x.color,name:x.name};
+  }),92,9));
+  eSet('energyList',mixItems.map(function(x){
+    return '<div><i style="background:'+x.color+'"></i><span>'+x.name+'</span><b>'+Math.round(x.val/mixTotal*100)+'%</b></div>';
+  }).join(''));
+  eTxt('eMixSub',rng.name+' '+(Math.round(mixTotal*10)/10).toLocaleString('en-US')+' '+kpiUnit);
+  eTxt('eRingVal',(mixTotal/1000).toFixed(2)+'<i style="font-style:normal;font-size:11px">千</i>');
+  eTxt('eRingUnit',kpiUnit);
+  /* ---- 峰谷用电与电费 ---- */
+  var tou=med&&med.name==='电'?[
+    ['尖峰 10:00-12:00',42,92,'¥1.15','¥1,204'],
+    ['高峰 08:00-10:00',34,74,'¥0.92','¥872'],
+    ['平段 12:00-18:00',18,46,'¥0.65','¥331'],
+    ['低谷 22:00-06:00',6,18,'¥0.42','¥89']
+  ]:[
+    ['尖峰 10:00-12:00',42,92,'—','—'],
+    ['高峰 08:00-10:00',34,74,'—','—'],
+    ['平段 12:00-18:00',18,46,'—','—'],
+    ['低谷 22:00-06:00',6,18,'—','—']
+  ];
+  eSet('energyPeakList',tou.map(function(x,i){
+    return '<div class="tou"><span class="rk">0'+(i+1)+'</span><span class="nm">'+x[0]+'</span>'+
+      '<span class="track"><i style="width:'+x[2]+'%"></i></span><b>'+x[1]+'%</b><em>'+x[4]+'</em></div>';
+  }).join(''));
+  eTxt('ePeakSub',rng.name+(med&&med.name==='电'?' · 电费 ¥2,496':''));
+  /* ---- 单耗排行 + 基线 ---- */
+  var bench=st.bench==='budget'?{v:3000,u:'kWh',t:'能耗预算'}:st.bench==='base'?{v:1.05,u:'kWh/kg',t:'单耗基线'}:{v:0.92,u:'kWh/kg',t:'行业标杆'};
+  var benchPct=st.bench==='budget'?94.8:Math.round(0.88/bench.v*1000)/10;
+  eTxt('eUnitBench','<span>'+bench.t+'</span><b>'+bench.v+' '+bench.u+'</b><em style="color:'+(benchPct>=100?'#F2B33D':'#2bd46e')+'">达成 '+benchPct+'%</em>');
+  eTxt('eUnitSub','kWh / kg · 对标 '+bench.t);
+  var unitRows=[
     ['香菇 808',1.12],['金针菇 F21',0.96],['平菇 P9',0.88],['杏鲍菇 X3',0.81],['秀珍菇 S2',0.74]
-  ].map(function(x,i){
-    return '<div class="rrow"><span class="rk">0'+(i+1)+'</span><span class="nm">'+x[0]+'</span><span class="track"><i style="width:'+(x[1]/1.2*100)+'%"></i></span><b>'+x[1].toFixed(2)+'</b></div>';
-  }).join('');
-  document.getElementById('energyDevList').innerHTML=[
+  ];
+  var maxU=1.2;
+  eSet('energyUnitList',unitRows.map(function(x,i){
+    var pct=x[1]/maxU*100;
+    var bmkPos=bench.v/maxU*100;
+    var over=x[1]>bench.v;
+    return '<div class="erow">'+
+      '<span class="rk">0'+(i+1)+'</span><span class="nm">'+x[0]+'</span>'+
+      '<span class="track"><i style="width:'+pct.toFixed(1)+'%"></i>'+
+      '<span class="bmk" style="left:'+Math.min(bmkPos,99).toFixed(1)+'%"></span></span>'+
+      '<b>'+x[1].toFixed(2)+'</b>'+
+      '<em class="'+(over?'warn':'ok')+'">'+
+      (over?'+'+Math.round((x[1]/bench.v-1)*100):'−'+Math.round((1-x[1]/bench.v)*100))+'%</em></div>';
+  }).join(''));
+  /* ---- 设备 TOP ---- */
+  eSet('energyDevList',[
     ['制冷机组 1#',986],['加湿器 3#',412],['循环风机 A',286],['CO₂ 发生器',232],['包装线 2#',176],['冷库机组',148]
   ].map(function(x,i){
     return '<div class="rrow"><span class="rk">0'+(i+1)+'</span><span class="nm">'+x[0]+'</span><span class="track"><i style="width:'+(x[1]/1000*100)+'%"></i></span><b>'+x[1]+'</b></div>';
-  }).join('');
+  }).join(''));
+  eTxt('eDevSub',rng.name+' kWh');
+  /* ---- 多介质台账 ---- */
+  eSet('eLedgerBody',MED_ORDER.map(function(k){
+    var m=MEDIUMS[k];
+    var active=(st.med===k);
+    var budPct=Math.round(m.today/m.budget*1000)/10;
+    var over=budPct>100;
+    var yCls=m.yoy>0?'up':'dn';
+    return '<tr data-med="'+k+'"'+(active?' class="hl"':'')+'>'+
+      '<td><i class="mdot" style="background:'+m.color+'"></i>'+m.name+'</td>'+
+      '<td class="n">'+m.today.toLocaleString('en-US')+'<i>'+m.unit+'</i></td>'+
+      '<td class="n">'+(m.today*m.tce).toFixed(1)+'<i>kgce</i></td>'+
+      '<td class="n">'+m.todayUnit.toFixed(2)+'<i>'+m.unitCost+'</i></td>'+
+      '<td class="n" style="color:'+(over?'#F2B33D':'#E8F2FF')+'">'+budPct.toFixed(1)+'<i>%</i></td>'+
+      '<td class="n '+yCls+'">'+(m.yoy>=0?'↑':'↓')+Math.abs(m.yoy).toFixed(1)+'<i>%</i></td></tr>';
+  }).join(''));
+  eTxt('eLedgerSub',rng.name+' · 5 类介质 · 折标煤合计 '+tot.tce.toFixed(2)+' tce');
+  eTxt('eLedgerNote','折标煤系数：电 0.1229 kgce/kWh · 蒸汽 0.0946 kgce/kg · 按国标 GB/T 2589　|　点击行可切换介质视图');
+  /* ---- 图表 ---- */
   var day=document.getElementById('energyDayChart');
   if(day) lineChart(day,{labels:['00','04','08','12','16','20','24'],
     series:[{color:'#F2B33D',data:[168,152,286,420,368,252,196],min:0,max:480}],padL:28});
   var bar=document.getElementById('energyBarChart');
   if(bar) barChart(bar,{labels:['制冷','加湿','通风','照明','包装','其他'],
     bars:[986,642,518,276,238,183],line:[1.12,0.96,0.88,0.74,0.81,0.62]});
+  eTxt('eBarSub','kWh · 柱=分项　线=单耗 kWh/kg');
   var cv=document.getElementById('energyCurveChart');
   if(cv) lineChart(cv,{labels:['00','03','06','09','12','15','18','21','24'],
     series:[{color:'#38D6FF',data:[86,72,104,182,240,206,168,112,92],min:0,max:280}],padL:30});
+  eTxt('eCurveSub','kWh · 今日 vs 上周同期');
+  /* ---- 热力图统计 ---- */
+  var rooms=ENERGY_ROOMS;
+  var mx=rooms[0][1],mn=rooms[rooms.length-1][1];
+  var avg=rooms.reduce(function(a,b){return a+b[2];},0)/rooms.length;
+  eTxt('eHeatMax',mx?'出菇房 A 区 · '+mx+' kWh':'');
+  eTxt('eHeatMin','包装间 · 96 kWh');
+  eTxt('eHeatAvg',avg.toFixed(2)+' kWh/㎡');
+  eTxt('eHeatYoY','<span style="color:#2bd46e">↓ 3.2%</span>');
+  eTxt('eHeatSub',rng.name+' · kWh · 12 个用能单元');
+  /* ---- 告警 ---- */
+  eSet('eAlarmList',E_ALARMS.map(function(a){
+    return '<div class="logrow"><span class="tg'+(a.tg?' '+a.tg:'')+'">'+
+      (a.tg==='risk'?'超限':a.tg==='warn'?'异常':'提示')+'</span>'+
+      '<span class="tx">'+a.tx+'</span><span class="tm">'+a.tm+'</span></div>';
+  }).join(''));
+  eTxt('eAlarmSub',rng.name+' '+E_ALARMS.length);
+}
+/* 控制条交互 */
+function bindEnergyToolbar(){
+  function seg(id,key,cb){
+    var box=document.getElementById(id);
+    if(!box) return;
+    box.addEventListener('click',function(ev){
+      var b=ev.target.closest('button');if(!b) return;
+      var bs=box.querySelectorAll('button');
+      for(var i=0;i<bs.length;i++) bs[i].classList.remove('on');
+      b.classList.add('on');
+      E_STATE[key]=b.dataset[cb];
+      renderEnergyPage();
+    });
+  }
+  seg('eSegRange','range','range');
+  seg('eSegMed','med','med');
+  seg('eSegBench','bench','bench');
+  /* 台账行点击 → 切换介质 */
+  var body=document.getElementById('eLedgerBody');
+  if(body){
+    body.addEventListener('click',function(ev){
+      var tr=ev.target.closest('tr[data-med]');if(!tr) return;
+      E_STATE.med=tr.dataset.med;
+      var box=document.getElementById('eSegMed');
+      var bs=box.querySelectorAll('button');
+      for(var i=0;i<bs.length;i++) bs[i].classList.toggle('on',bs[i].dataset.med===E_STATE.med);
+      renderEnergyPage();
+    });
+  }
+}
+function buildEnergyPage(){
+  if(subBuilt.energy) return;
+  subBuilt.energy=1;
+  bindEnergyToolbar();
+  renderEnergyPage();
   renderHeat();
 }
 function renderHeat(){
   var host=document.getElementById('heatMap');if(!host) return;
   var max=486;
   var RM={};ENERGY_ROOMS.forEach(function(r){RM[r[0]]=r;});
-  /* 名称, x, y, w, h, 屋顶类型 */
-  var PLAN=[
-    ['出菇房 A 区',22,22,284,178,'saw'],
-    ['出菇房 B 区',316,22,240,178,'saw'],
-    ['培养房 1',566,22,220,178,'saw'],
-    ['冷却间',796,22,240,178,'cold'],
-    ['出菇房 C 区',22,250,240,170,'saw'],
-    ['接种间',272,250,200,170,'flat'],
-    ['灭菌间',482,250,190,170,'steri'],
-    ['包装间',730,250,150,170,'pack'],
-    ['冷链暂存',890,250,202,170,'cold'],
-    ['设备间',22,470,194,140,'dev'],
-    ['办公区',226,470,180,140,'office'],
-    ['仓库',416,470,250,140,'ware']
-  ];
   var TOP={0:'#F2B33D',1:'#C9D8EA',2:'#D98C5F'};
   var s='<svg viewBox="0 0 1120 660" preserveAspectRatio="xMidYMid meet">';
   s+='<defs>'+
-    '<filter id="hpGlow" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="3.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
-    '<filter id="hpGlowS" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
-    '<pattern id="hpHatch" width="9" height="9" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="9" stroke="rgba(255,255,255,.07)" stroke-width="2"/></pattern>'+
+    '<filter id="hpGlow" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+    '<filter id="hpGlowS" x="-90%" y="-90%" width="280%" height="280%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'+
+    '<pattern id="hpTile" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M16 0H0V16" fill="none" stroke="rgba(140,200,255,.055)" stroke-width=".8"/></pattern>'+
+    '<pattern id="hpHatch" width="10" height="10" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="0" y2="10" stroke="rgba(255,255,255,.055)" stroke-width="2"/></pattern>'+
     '</defs>';
-  /* 厂区地坪与围墙 */
-  s+='<rect x="10" y="10" width="1100" height="640" rx="10" fill="rgba(10,24,44,.5)" stroke="rgba(110,170,255,.26)" stroke-width="1.2" stroke-dasharray="6 4"/>';
-  s+='<rect x="18" y="18" width="1084" height="624" rx="7" fill="none" stroke="rgba(110,170,255,.08)"/>';
-  /* 道路 */
-  function road(x,y,w,h,cy){
-    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="4" fill="rgba(30,62,98,.3)" stroke="rgba(56,214,255,.12)"/>';
-    if(cy) s+='<line x1="'+(x+8)+'" y1="'+cy+'" x2="'+(x+w-8)+'" y2="'+cy+'" stroke="rgba(175,215,255,.3)" stroke-width="1.1" stroke-dasharray="12 14"/>';
+  /* ================= 地坪 · 围墙 · 道路 ================= */
+  s+='<rect x="10" y="10" width="1100" height="640" rx="9" fill="rgba(9,22,42,.62)" stroke="rgba(110,170,255,.22)" stroke-width="1.2"/>';
+  s+='<rect x="16" y="16" width="1088" height="628" rx="6" fill="url(#hpTile)" stroke="rgba(110,170,255,.1)" stroke-dasharray="5 5"/>';
+  function roadH(y,h){
+    s+='<rect x="16" y="'+y+'" width="1088" height="'+h+'" fill="rgba(26,56,90,.42)" stroke="rgba(110,170,255,.12)"/>';
+    s+='<line x1="26" y1="'+(y+h/2)+'" x2="1094" y2="'+(y+h/2)+'" stroke="rgba(175,215,255,.26)" stroke-width="1.1" stroke-dasharray="14 16"/>';
   }
-  function roadV(x,y,h,cx){
-    s+='<rect x="'+x+'" y="'+y+'" width="32" height="'+h+'" rx="4" fill="rgba(30,62,98,.3)" stroke="rgba(56,214,255,.12)"/>';
-    s+='<line x1="'+cx+'" y1="'+(y+8)+'" x2="'+cx+'" y2="'+(y+h-8)+'" stroke="rgba(175,215,255,.3)" stroke-width="1.1" stroke-dasharray="12 14"/>';
+  function roadV(x,w,y,h){
+    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="rgba(26,56,90,.42)" stroke="rgba(110,170,255,.12)"/>';
+    s+='<line x1="'+(x+w/2)+'" y1="'+(y+6)+'" x2="'+(x+w/2)+'" y2="'+(y+h-6)+'" stroke="rgba(175,215,255,.26)" stroke-width="1.1" stroke-dasharray="14 16"/>';
   }
-  road(14,206,1092,34,223);
-  road(14,432,1092,34,449);
-  roadV(690,240,192,706);
+  roadH(200,38); roadH(426,36); roadV(244,32,200,262);
   /* 路灯 */
-  for(var lp=40;lp<1090;lp+=104){
-    s+='<g><rect x="'+lp+'" y="214" width="1.6" height="7" fill="rgba(160,205,255,.35)"/>'+
-      '<circle cx="'+(lp+.8)+'" cy="213" r="2.6" fill="#FFE9A8" opacity=".9"><animate attributeName="opacity" values=".45;1;.45" dur="'+(2.4+lp%40/40)+'s" repeatCount="indefinite"/></circle>'+
-      '<circle cx="'+(lp+.8)+'" cy="213" r="6" fill="#FFD98A" opacity=".12"/></g>';
-    s+='<g><rect x="'+(lp+52)+'" y="440" width="1.6" height="7" fill="rgba(160,205,255,.35)"/>'+
-      '<circle cx="'+(lp+52.8)+'" cy="439" r="2.6" fill="#FFE9A8" opacity=".9"><animate attributeName="opacity" values="1;.45;1" dur="'+(3.1+lp%37/37)+'s" repeatCount="indefinite"/></circle>'+
-      '<circle cx="'+(lp+52.8)+'" cy="439" r="6" fill="#FFD98A" opacity=".12"/></g>';
+  function lamp(x,y,d,ph){
+    s+='<g><rect x="'+(x-0.8)+'" y="'+y+'" width="1.6" height="7" fill="rgba(160,205,255,.3)"/>'+
+      '<circle cx="'+x+'" cy="'+(y-1)+'" r="2.4" fill="#FFE9A8" opacity=".9"><animate attributeName="opacity" values=".4;1;.4" dur="'+d+'s" begin="'+ph+'s" repeatCount="indefinite"/></circle>'+
+      '<circle cx="'+x+'" cy="'+(y-1)+'" r="6.5" fill="#FFD98A" opacity=".1"/></g>';
   }
-  /* 车位、绿化与大门 */
-  s+='<rect x="686" y="470" width="404" height="140" rx="7" fill="rgba(24,60,44,.2)" stroke="rgba(43,212,110,.16)"/>';
-  s+='<text x="700" y="492" font-size="11" fill="rgba(157,184,220,.7)">停车场 / 绿化带</text>';
-  s+='<rect x="700" y="502" width="376" height="44" rx="4" fill="rgba(10,25,44,.55)" stroke="rgba(110,170,255,.12)"/>';
-  for(var pk=1;pk<8;pk++) s+='<line x1="'+(700+pk*47)+'" y1="508" x2="'+(700+pk*47)+'" y2="540" stroke="rgba(160,205,255,.2)"/>';
-  [[720,570],[790,566],[862,572],[930,562],[1000,570],[1066,564]].forEach(function(t,i){
-    s+='<circle cx="'+t[0]+'" cy="'+t[1]+'" r="13" fill="rgba(43,212,110,.09)"/>';
-    s+='<circle cx="'+t[0]+'" cy="'+t[1]+'" r="6" fill="rgba(43,212,110,.26)"/>';
+  for(var lp=44;lp<1090;lp+=96){ lamp(lp,214,2.4,0); lamp(lp+48,440,3.1,1.2); }
+  for(var lv=214;lv<460;lv+=96) lamp(260,lv+18,2.7,.6);
+  /* 停车场 / 绿化 */
+  s+='<rect x="656" y="470" width="438" height="138" rx="6" fill="rgba(22,54,42,.24)" stroke="rgba(43,212,110,.16)"/>';
+  s+='<text x="668" y="490" font-size="10.5" fill="rgba(157,184,220,.66)">停车场 / 绿化带</text>';
+  s+='<rect x="668" y="498" width="414" height="40" rx="3" fill="rgba(10,25,44,.55)" stroke="rgba(110,170,255,.12)"/>';
+  for(var pk=1;pk<9;pk++) s+='<line x1="'+(668+pk*46)+'" y1="503" x2="'+(668+pk*46)+'" y2="533" stroke="rgba(160,205,255,.18)"/>';
+  [[690,566],[742,562],[796,568],[848,558],[900,566],[952,560],[1004,566],[1056,558],[1080,586]].forEach(function(t){
+    s+='<circle cx="'+t[0]+'" cy="'+t[1]+'" r="12" fill="rgba(43,212,110,.08)"/>'+
+      '<circle cx="'+t[0]+'" cy="'+t[1]+'" r="5.5" fill="rgba(43,212,110,.24)"/>';
   });
-  s+='<g><rect x="22" y="616" width="74" height="24" rx="3" fill="rgba(56,214,255,.1)" stroke="rgba(56,214,255,.3)"/>'+
-    '<text x="59" y="632" text-anchor="middle" font-size="10.5" fill="#7FE8FF">厂区大门</text></g>';
-  s+='<text x="108" y="632" font-size="10.5" fill="rgba(157,184,220,.6)">吐鲁番 · 食用菌工厂化基地</text>';
-  /* 指向标 */
-  s+='<g><circle cx="1068" cy="48" r="16" fill="rgba(6,18,36,.85)" stroke="rgba(56,214,255,.32)"/>'+
-    '<path d="M1068 36 L1074 53 L1068 49 L1062 53 Z" fill="#7FE8FF"/>'+
-    '<text x="1068" y="77" text-anchor="middle" font-size="10" fill="rgba(157,184,220,.72)">N</text></g>';
-  /* 配电网络 */
-  var TRUNK=['M119 540 L119 449','M119 449 L706 449','M706 449 L706 223','M706 223 L30 223','M706 223 L1090 223'];
-  var DROP=[[120,223,200],[436,223,200],[676,223,200],[944,223,200],[142,449,420],[372,449,420],[577,449,420],[805,449,420],[990,449,420],[316,449,470],[540,449,470]];
-  TRUNK.forEach(function(p,i){
-    s+='<path d="'+p+'" fill="none" stroke="rgba(127,232,255,.2)" stroke-width="1.4"/>';
-    s+='<path class="sk-flow" d="'+p+'" fill="none" stroke="rgba(183,244,255,.75)" stroke-width="1.3" style="animation-duration:'+(1.9+i*.22)+'s"/>';
+  /* 大门与指北针 */
+  s+='<g><rect x="22" y="620" width="70" height="22" rx="3" fill="rgba(56,214,255,.1)" stroke="rgba(56,214,255,.3)"/>'+
+    '<text x="57" y="635" text-anchor="middle" font-size="10" fill="#7FE8FF">厂区大门</text></g>';
+  s+='<text x="102" y="635" font-size="10" fill="rgba(157,184,220,.58)">吐鲁番 · 食用菌工厂化基地</text>';
+  s+='<g><circle cx="1068" cy="46" r="15" fill="rgba(6,18,36,.85)" stroke="rgba(56,214,255,.3)"/>'+
+    '<path d="M1068 35 L1073 51 L1068 47 L1063 51 Z" fill="#7FE8FF"/>'+
+    '<text x="1068" y="73" text-anchor="middle" font-size="9.5" fill="rgba(157,184,220,.7)">N</text></g>';
+  /* ================= 架空配电网络 ================= */
+  var LINES=['M40 219 L1090 219','M40 444 L1090 444','M260 219 L260 444'];
+  LINES.forEach(function(p,i){
+    s+='<path d="'+p+'" fill="none" stroke="rgba(127,232,255,.16)" stroke-width="1.3"/>';
+    s+='<path class="sk-flow" d="'+p+'" fill="none" stroke="rgba(183,244,255,.8)" stroke-width="1.2" style="animation-duration:'+(2.1+i*.35)+'s"/>';
   });
-  DROP.forEach(function(d,i){
-    var p='M'+d[0]+' '+d[1]+' L'+d[0]+' '+d[2];
-    s+='<path d="'+p+'" fill="none" stroke="rgba(127,232,255,.16)" stroke-width="1.1"/>';
-    s+='<g><circle r="2.4" fill="#DFFAFF" filter="url(#hpGlow)">'+
-      '<animateMotion dur="'+(2.6+i*.13).toFixed(1)+'s" begin="'+(-i*.27).toFixed(2)+'s" repeatCount="indefinite" path="'+p+'"/></g>';
-  });
-  /* 用能单元 */
+  /* ================= 建筑 ================= */
+  var PLAN=[
+    ['出菇房 A 区',24,24,282,170,'saw',100,'up'],
+    ['出菇房 B 区',322,24,224,170,'saw',380,'up'],
+    ['培养房 1',562,24,212,170,'saw',620,'up'],
+    ['冷却间',790,24,304,170,'cold',900,'up'],
+    ['出菇房 C 区',24,246,214,172,'saw',100,'down'],
+    ['接种间',254,246,190,172,'flat',340,'down'],
+    ['灭菌间',460,246,180,172,'steri',540,'down'],
+    ['包装间',656,246,156,172,'pack',710,'down'],
+    ['冷链暂存',828,246,266,172,'cold',940,'down'],
+    ['设备间',24,470,186,138,'dev',100,'down'],
+    ['办公区',220,470,184,138,'office',300,'down'],
+    ['仓库',414,470,232,138,'ware',520,'down']
+  ];
+  function fan(cx,cy,r,rot,ph){
+    return '<g transform="translate('+cx+','+cy+')"><g>'+
+      '<path d="M0 0 L0 -'+r+' L'+(r*.36).toFixed(1)+' -'+(r*.5).toFixed(1)+' Z" fill="rgba(214,240,255,.5)"/>'+
+      '<path d="M0 0 L'+(r*.87).toFixed(1)+' '+(r*.5).toFixed(1)+' L'+(r*.27).toFixed(1)+' '+(r*.6).toFixed(1)+' Z" fill="rgba(214,240,255,.5)"/>'+
+      '<path d="M0 0 L-'+(r*.87).toFixed(1)+' '+r*.5.toFixed(1)+' L-'+(r*.27).toFixed(1)+' '+r*.6.toFixed(1)+' Z" fill="rgba(214,240,255,.5)"/>'+
+      '<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="'+rot+'s" begin="'+ph+'s" repeatCount="indefinite"/></g>'+
+      '<circle r="1.7" fill="#9FEBFF"/></g>';
+  }
   PLAN.forEach(function(b,i){
-    var nm=b[0],x=b[1],y=b[2],w=b[3],h=b[4],ty=b[5],r=RM[nm],t=r[1]/max;
-    var sm=w<190?1:0;
-    s+='<g class="heat-blk'+(i===0?' heat-hot':'')+'" data-tip="'+nm+' · '+r[1]+' kWh · 强度 '+r[2].toFixed(2)+' kWh/㎡">';
-    s+='<rect x="'+(x+3)+'" y="'+(y+4)+'" width="'+w+'" height="'+h+'" rx="7" fill="rgba(2,8,18,.4)"/>';
-    s+='<rect class="hb" x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="6" fill="'+heatColor(t)+'" fill-opacity="'+(0.16+t*.42)+'" stroke="'+heatColor(t)+'" stroke-opacity="'+(0.5+t*.4)+'" stroke-width="1.1"/>';
-    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="6" fill="url(#hpHatch)" opacity=".6"/>';
-    /* 屋顶构造（平面内部布置） */
-    var dTop=y+(sm?68:88),dBot=y+h-36;
+    var nm=b[0],x=b[1],y=b[2],w=b[3],h=b[4],ty=b[5],dx=b[6],side=b[7];
+    var r=RM[nm],t=r[1]/max,nw=(w<200);
+    var ix=x+9,iy=y+56,iw=w-18,ih=h-66;
+    s+='<g class="heat-blk" data-tip="'+nm+' · '+r[1]+' kWh · 强度 '+r[2].toFixed(2)+' kWh/㎡">';
+    /* 投影与墙体 */
+    s+='<rect x="'+(x+4)+'" y="'+(y+5)+'" width="'+w+'" height="'+h+'" rx="5" fill="rgba(2,8,18,.45)"/>';
+    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5" fill="'+heatColor(t)+'" fill-opacity="'+(0.14+t*.36)+'"/>';
+    s+='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="5" fill="url(#hpHatch)" opacity=".55"/>';
+    s+='<rect x="'+(x+.6)+'" y="'+(y+.6)+'" width="'+(w-1.2)+'" height="'+(h-1.2)+'" rx="4.5" fill="none" stroke="'+heatColor(t)+'" stroke-opacity="'+(0.55+t*.4)+'" stroke-width="1.4"/>';
+    s+='<rect x="'+(x+6)+'" y="'+(y+6)+'" width="'+(w-12)+'" height="'+(h-12)+'" rx="3" fill="none" stroke="rgba(200,232,255,.16)" stroke-width=".8"/>';
+    /* 门（朝路一侧） */
+    var dw=26,dw2=dx;
+    if(side==='up'){
+      s+='<rect x="'+(dw2-dw/2)+'" y="'+(y+h-4)+'" width="'+dw+'" height="5" fill="rgba(6,16,32,.95)"/>';
+      s+='<path d="M'+(dw2-dw/2)+' '+(y+h)+' A '+dw+' '+dw+' 0 0 0 '+dw2+' '+(y+h-dw)+'" fill="none" stroke="rgba(175,215,255,.26)" stroke-width=".8" stroke-dasharray="3 3"/>';
+    }else{
+      s+='<rect x="'+(dw2-dw/2)+'" y="'+(y-1)+'" width="'+dw+'" height="5" fill="rgba(6,16,32,.95)"/>';
+      s+='<path d="M'+(dw2-dw/2)+' '+y+' A '+dw+' '+dw+' 0 0 1 '+dw2+' '+(y+dw)+'" fill="none" stroke="rgba(175,215,255,.26)" stroke-width=".8" stroke-dasharray="3 3"/>';
+    }
+    /* 窗（沿上墙） */
+    if(side==='up'){
+      for(var wn=0;wn<4;wn++){
+        var wx=x+18+wn*((w-36)/4);
+        if(Math.abs(wx+10-dx)<22) continue;
+        s+='<rect x="'+wx+'" y="'+(y+1.5)+'" width="20" height="2.4" rx="1.2" fill="rgba(150,215,255,.42)"/>';
+      }
+    }
+    /* 室内工艺布置 */
     if(ty==='saw'){
-      var rows=2,rh=(dBot-dTop)/rows;
-      for(var k2=0;k2<rows;k2++){
-        var ry=dTop+k2*rh+4,seg2=(w-24)/6;
-        for(var k3=0;k3<6;k3++){
-          var gx=x+12+k3*seg2;
-          s+='<rect x="'+gx+'" y="'+ry+'" width="'+(seg2-5)+'" height="'+(rh-12)+'" rx="2" fill="rgba(127,232,255,.1)" stroke="rgba(183,244,255,.24)" stroke-width=".6"/>';
-          for(var l3=0;l3<3;l3++) s+='<line x1="'+(gx+3)+'" y1="'+(ry+4+l3*((rh-20)/3))+'" x2="'+(gx+seg2-8)+'" y2="'+(ry+4+l3*((rh-20)/3))+'" stroke="rgba(183,244,255,.18)" stroke-width=".5"/>';
+      var rows=2,rh=(ih-8)/rows,cols=Math.max(3,Math.round(iw/34));
+      for(var r2=0;r2<rows;r2++){
+        var ry=iy+r2*(rh+8),cw=iw/cols;
+        for(var c2=0;c2<cols;c2++){
+          var gx=ix+c2*cw;
+          s+='<rect x="'+gx+'" y="'+ry+'" width="'+(cw-5)+'" height="'+(rh-8)+'" rx="2" fill="rgba(127,232,255,.09)" stroke="rgba(183,244,255,.24)" stroke-width=".6"/>';
+          for(var t2=0;t2<3;t2++) s+='<line x1="'+(gx+2)+'" y1="'+(ry+6+t2*((rh-22)/2))+'" x2="'+(gx+cw-7)+'" y2="'+(ry+6+t2*((rh-22)/2))+'" stroke="rgba(183,244,255,.2)" stroke-width=".5"/>';
+          if((c2+r2)%3===0) s+='<circle cx="'+(gx+cw/2-2)+'" cy="'+(ry+rh/2-4)+'" r="1.6" fill="#9FEBFF" opacity=".8"><animate attributeName="opacity" values=".2;.9;.2" dur="'+ (2+c2%4)+'s" repeatCount="indefinite"/></circle>';
         }
       }
+      s+='<line x1="'+ix+'" y1="'+(iy+rh)+'" x2="'+(ix+iw)+'" y2="'+(iy+rh)+'" stroke="rgba(200,232,255,.2)" stroke-width=".9" stroke-dasharray="6 6"/>';
     }else if(ty==='cold'){
-      for(var c2=0;c2<3;c2++){
-        var cx2=x+20+c2*((w-56)/3);
-        s+='<rect x="'+cx2+'" y="'+dTop+'" width="40" height="30" rx="3" fill="rgba(12,30,52,.5)" stroke="rgba(160,215,255,.3)"/>';
-        s+='<g transform="translate('+(cx2+20)+','+(dTop+15)+')"><g>'+
-          '<path d="M0 0 L0 -10 L3.6 -4.5 Z" fill="rgba(210,240,255,.5)"/><path d="M0 0 L8.6 5 L2.7 5.9 Z" fill="rgba(210,240,255,.5)"/><path d="M0 0 L-8.6 5 L-2.7 5.9 Z" fill="rgba(210,240,255,.5)"/>'+
-          '<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="'+(2.6+c2*.5).toFixed(1)+'s" repeatCount="indefinite"/></g>'+
-          '<circle r="2" fill="#9FEBFF"/></g>';
+      var nu=Math.max(2,Math.floor(iw/58));
+      for(var u=0;u<nu;u++){
+        var ux=ix+u*(iw/nu),uw=iw/nu-8;
+        s+='<rect x="'+ux+'" y="'+iy+'" width="'+uw+'" height="30" rx="3" fill="rgba(12,30,52,.5)" stroke="rgba(160,215,255,.28)"/>';
+        s+=fan(ux+uw/2,iy+15,8,2.4+u*.3,u*.4);
       }
+      var pr=Math.floor((ih-38)/16);
+      for(var pr2=0;pr2<pr;pr2++){
+        for(var pc=0;pc<Math.max(2,Math.floor(iw/30));pc++){
+          s+='<rect x="'+(ix+pc*30)+'" y="'+(iy+38+pr2*16)+'" width="24" height="11" rx="1.5" fill="rgba(127,232,255,.1)" stroke="rgba(160,215,255,.2)" stroke-width=".5"/>';
+        }
+      }
+      s+='<ellipse cx="'+(ix+iw*.7)+'" cy="'+(iy+ih-16)+'" rx="'+(iw*.22).toFixed(0)+'" ry="10" fill="rgba(160,215,255,.07)"><animate attributeName="opacity" values=".05;.16;.05" dur="4s" repeatCount="indefinite"/></ellipse>';
+    }else if(ty==='flat'){
+      for(var f=0;f<2;f++){
+        var fy=iy+f*26;
+        s+='<rect x="'+(ix+6)+'" y="'+fy+'" width="'+(iw-12)+'" height="18" rx="3" fill="rgba(127,232,255,.1)" stroke="rgba(183,244,255,.26)" stroke-width=".7"/>';
+        s+='<line x1="'+(ix+10)+'" y1="'+(fy+9)+'" x2="'+(ix+iw-10)+'" y2="'+(fy+9)+'" stroke="rgba(183,244,255,.55)" stroke-width="1.6" filter="url(#hpGlow)"><animate attributeName="opacity" values=".55;1;.55" dur="'+ (2.2+f*.6)+'s" repeatCount="indefinite"/></line>';
+        for(var a=0;a<3;a++){
+          s+='<g opacity=".6"><path d="M0 0 L5 3 L0 6 Z" fill="#9FEBFF"/>'+
+            '<animateMotion dur="2.4s" begin="-'+(a*.7)+'s" repeatCount="indefinite" path="M'+(ix+14)+' '+(fy+9)+' L'+(ix+iw-14)+' '+(fy+9)+'"/></g>';
+        }
+      }
+      s+='<rect x="'+(ix+10)+'" y="'+(iy+56)+'" width="'+(iw-20)+'" height="12" rx="2" fill="rgba(210,238,255,.12)" stroke="rgba(210,238,255,.22)" stroke-width=".6"/>';
     }else if(ty==='steri'){
-      s+='<rect x="'+(x+w/2-32)+'" y="'+dTop+'" width="64" height="30" rx="15" fill="rgba(12,30,52,.5)" stroke="rgba(160,215,255,.3)"/>';
-      s+='<rect x="'+(x+w/2-25)+'" y="'+(dTop+6)+'" width="50" height="18" rx="9" fill="rgba(127,232,255,.14)"/>';
-      s+='<circle cx="'+(x+w/2)+'" cy="'+(dTop+15)+'" r="3" fill="#7FE8FF"><animate attributeName="opacity" values="1;.25;1" dur="1.8s" repeatCount="indefinite"/></circle>';
+      for(var st=0;st<2;st++){
+        var sx2=ix+14+st*((iw-40)/2+8);
+        s+='<rect x="'+sx2+'" y="'+iy+'" width="'+(iw-40)/2+'" height="40" rx="18" fill="rgba(12,30,52,.5)" stroke="rgba(160,215,255,.3)"/>';
+        s+='<rect x="'+(sx2+5)+'" y="'+(iy+8)+'" width="'+(iw-50)/2+'" height="24" rx="12" fill="rgba(127,232,255,.12)"/>';
+        s+='<circle cx="'+(sx2+10)+'" cy="'+(iy+20)+'" r="3" fill="#7FE8FF"><animate attributeName="opacity" values="1;.25;1" dur="'+ (1.6+st*.5)+'s" repeatCount="indefinite"/></circle>';
+        s+='<circle cx="'+(sx2+20)+'" cy="'+(iy+20)+'" r="2" fill="#F2B33D"><animate attributeName="opacity" values=".3;1;.3" dur="2.6s" repeatCount="indefinite"/></circle>';
+      }
+      for(var sm2=0;sm2<3;sm2++){
+        s+='<circle cx="'+(ix+iw/2+sm2*10-10)+'" cy="'+(iy+52)+'" r="3" fill="rgba(200,235,255,.35)"><animate attributeName="cy" values="'+(iy+54)+';'+(iy+44)+'" dur="'+ (2.4+sm2*.4)+'s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;.5;0" dur="'+ (2.4+sm2*.4)+'s" repeatCount="indefinite"/></circle>';
+      }
     }else if(ty==='pack'){
-      for(var p2=0;p2<4;p2++) s+='<rect x="'+(x+14+p2*((w-28)/4))+'" y="'+dTop+'" width="'+((w-28)/4-6)+'" height="16" rx="2" fill="rgba(127,232,255,.12)" stroke="rgba(160,215,255,.26)"/>';
-      s+='<line x1="'+(x+14)+'" y1="'+(dTop+24)+'" x2="'+(x+w-14)+'" y2="'+(dTop+24)+'" stroke="rgba(160,215,255,.2)" stroke-dasharray="5 5"/>';
+      var by=iy+14;
+      s+='<rect x="'+ix+'" y="'+by+'" width="'+iw+'" height="13" rx="3" fill="rgba(12,30,52,.5)" stroke="rgba(160,215,255,.26)"/>';
+      for(var rl=0;rl<Math.floor(iw/9);rl++) s+='<circle cx="'+(ix+5+rl*9)+'" cy="'+(by+6.5)+'" r="2" fill="rgba(160,215,255,.3)"/>';
+      for(var bx=0;bx<3;bx++){
+        s+='<g><rect x="'+ix+'" y="'+by+'" width="16" height="11" rx="1.5" fill="rgba(242,179,61,.5)" stroke="rgba(255,210,120,.6)" stroke-width=".6">'+
+          '<animateTransform attributeName="transform" type="translate" from="0,0" to="'+(iw-16)+',0" dur="'+ (5+bx*1.4)+'s" begin="-'+(bx*1.7)+'s" repeatCount="indefinite"/></g>';
+      }
+      for(var pk2=0;pk2<2;pk2++){
+        for(var pp=0;pp<3;pp++){
+          s+='<rect x="'+(ix+8+pp*((iw-16)/3))+'" y="'+(by+24+pk2*18)+'" width="'+((iw-16)/3-6)+'" height="13" rx="2" fill="rgba(127,232,255,.1)" stroke="rgba(160,215,255,.22)" stroke-width=".5"/>';
+        }
+      }
     }else if(ty==='dev'){
-      s+='<g transform="translate('+(x+w-42)+','+(dTop+16)+')">'+
-        '<path d="M0 -12 L10 -6 L10 6 L0 12 L-10 6 L-10 -6 Z" fill="rgba(242,179,61,.16)" stroke="#F2B33D" stroke-width="1.2"/>'+
-        '<path d="M-4.5 -3 L0 -5.5 L4.5 -3 L4.5 3 L0 5.5 L-4.5 3 Z" fill="#F2B33D" opacity=".55"/>'+
-        '<text x="0" y="-18" text-anchor="middle" font-size="9" fill="#F2B33D">10kV</text></g>';
-      s+='<rect x="'+(x+14)+'" y="'+(dTop+2)+'" width="52" height="26" rx="3" fill="rgba(12,30,52,.45)" stroke="rgba(160,215,255,.26)"/>';
-      for(var d2=0;d2<4;d2++) s+='<line x1="'+(x+20+d2*12)+'" y1="'+(dTop+7)+'" x2="'+(x+20+d2*12)+'" y2="'+(dTop+23)+'" stroke="rgba(160,215,255,.28)"/>';
+      s+='<g transform="translate('+(ix+iw-26)+','+(iy+18)+')">'+
+        '<path d="M0 -13 L11 -6.5 L11 6.5 L0 13 L-11 6.5 L-11 -6.5 Z" fill="rgba(242,179,61,.14)" stroke="#F2B33D" stroke-width="1.2"/>'+
+        '<path d="M-4.5 -3 L0 -5.5 L4.5 -3 L4.5 3 L0 5.5 L-4.5 3 Z" fill="#F2B33D" opacity=".5">'+
+        '<animate attributeName="opacity" values=".35;.75;.35" dur="2.4s" repeatCount="indefinite"/></path>'+
+        '<text x="0" y="-19" text-anchor="middle" font-size="9" fill="#F2B33D">10kV</text></g>';
+      for(var cb=0;cb<4;cb++){
+        s+='<rect x="'+(ix+10+cb*26)+'" y="'+(iy+6)+'" width="21" height="28" rx="2" fill="rgba(12,30,52,.45)" stroke="rgba(160,215,255,.26)" stroke-width=".6"/>';
+        s+='<circle cx="'+(ix+20+cb*26)+'" cy="'+(iy+12)+'" r="1.7" fill="#2bd46e"><animate attributeName="opacity" values="1;.2;1" dur="'+(1.2+cb*.35)+'s" repeatCount="indefinite"/></circle>';
+      }
+      s+='<rect x="'+ix+'" y="'+(iy+40)+'" width="'+(iw-8)+'" height="12" rx="2" fill="rgba(127,232,255,.08)" stroke="rgba(160,215,255,.18)" stroke-width=".5"/>';
     }else if(ty==='office'){
-      for(var f2=0;f2<6;f2++) s+='<rect x="'+(x+14+f2*((w-28)/6))+'" y="'+dTop+'" width="'+((w-28)/6-5)+'" height="12" rx="1.5" fill="rgba(210,238,255,.16)" stroke="rgba(210,238,255,.24)"/>';
-      s+='<rect x="'+(x+14)+'" y="'+(dTop+20)+'" width="'+(w-28)+'" height="8" rx="2" fill="rgba(210,238,255,.1)"/>';
+      for(var d=0;d<4;d++){
+        for(var d2=0;d2<2;d2++){
+          s+='<rect x="'+(ix+10+d*((iw-20)/4))+'" y="'+(iy+4+d2*30)+'" width="'+((iw-20)/4-8)+'" height="14" rx="2" fill="rgba(210,238,255,.14)" stroke="rgba(210,238,255,.24)" stroke-width=".5"/>';
+          s+='<circle cx="'+(ix+10+d*((iw-20)/4)+((iw-20)/4-8)/2)+'" cy="'+(iy+22+d2*30)+'" r="3.4" fill="rgba(210,238,255,.1)"/>';
+        }
+      }
+      s+='<ellipse cx="'+(ix+iw-30)+'" cy="'+(iy+ih-20)+'" rx="22" ry="9" fill="rgba(210,238,255,.1)" stroke="rgba(210,238,255,.2)" stroke-width=".6"/>';
     }else if(ty==='ware'){
-      s+='<rect x="'+(x+14)+'" y="'+dTop+'" width="'+(w-28)+'" height="26" rx="3" fill="rgba(12,30,52,.42)" stroke="rgba(160,215,255,.22)"/>';
-      for(var g2=1;g2<6;g2++) s+='<line x1="'+(x+14+g2*(w-28)/6)+'" y1="'+dTop+'" x2="'+(x+14+g2*(w-28)/6)+'" y2="'+(dTop+26)+'" stroke="rgba(160,215,255,.2)"/>';
-    }else{
-      for(var l2=0;l2<4;l2++) s+='<line x1="'+(x+14)+'" y1="'+(dTop+l2*9)+'" x2="'+(x+w-14)+'" y2="'+(dTop+l2*9)+'" stroke="rgba(210,238,255,.14)"/>';
+      for(var wr=0;wr<3;wr++){
+        var wy=iy+wr*((ih-10)/3);
+        s+='<rect x="'+ix+'" y="'+wy+'" width="'+(iw-4)+'" height="'+((ih-10)/3-8)+'" rx="2" fill="rgba(12,30,52,.4)" stroke="rgba(160,215,255,.2)" stroke-width=".6"/>';
+        for(var sg=1;sg<5;sg++) s+='<line x1="'+(ix+sg*(iw-4)/5)+'" y1="'+wy+'" x2="'+(ix+sg*(iw-4)/5)+'" y2="'+(wy+(ih-10)/3-8)+'" stroke="rgba(160,215,255,.18)" stroke-width=".5"/>';
+        s+='<line x1="'+ix+'" y1="'+(wy+((ih-10)/3-8)/2)+'" x2="'+(ix+iw-4)+'" y2="'+(wy+((ih-10)/3-8)/2)+'" stroke="rgba(160,215,255,.14)" stroke-width=".5"/>';
+      }
     }
-    /* 文字信息 */
-    s+='<text x="'+(x+12)+'" y="'+(y+22)+'" font-size="'+(sm?11.5:12.5)+'" fill="#EAF6FF">'+nm+'</text>';
-    s+='<text x="'+(x+12)+'" y="'+(y+(sm?56:64))+'" font-size="'+(sm?23:28)+'" font-family="DIN Alternate,Segoe UI" font-weight="700" fill="#FFFFFF">'+r[1]+'</text>';
-    s+='<text x="'+(x+12)+'" y="'+(y+(sm?74:82))+'" font-size="9.5" fill="rgba(232,246,255,.72)">kWh · '+r[2].toFixed(2)+' kWh/㎡</text>';
-    /* 趋势迷你曲线 */
-    var sw=w-24,sh=18,sx=x+12,sy=y+h-26,pts='';
-    for(var k3=0;k3<8;k3++){
-      var vv=.26+.62*Math.abs(Math.sin(i*1.7+k3*1.05+.6));
-      pts+=(sx+k3*sw/7).toFixed(1)+','+(sy+sh-vv*sh).toFixed(1)+' ';
-    }
-    s+='<polyline points="'+pts+'" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.2" stroke-linejoin="round"/>';
-    /* TOP3 徽标 */
-    if(i<3){
-      s+='<circle cx="'+(x+w-20)+'" cy="'+(y+20)+'" r="10" fill="rgba(4,14,26,.62)" stroke="'+TOP[i]+'" stroke-width="1.2"/>';
-      s+='<text x="'+(x+w-20)+'" y="'+(y+24)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="'+TOP[i]+'">'+(i+1)+'</text>';
+    /* 顶部 LED 灯带 */
+    s+='<line x1="'+(x+12)+'" y1="'+(y+50)+'" x2="'+(x+w-12)+'" y2="'+(y+50)+'" stroke="rgba(210,240,255,.45)" stroke-width="1.3" filter="url(#hpGlow)"><animate attributeName="opacity" values=".4;.95;.4" dur="'+(3+i*.23).toFixed(1)+'s" repeatCount="indefinite"/></line>';
+    /* 标注牌 */
+    var pw=Math.min(w-18,nw?128:156);
+    s+='<g><rect x="'+(x+9)+'" y="'+(y+9)+'" width="'+pw+'" height="38" rx="4" fill="rgba(4,12,24,.74)" stroke="rgba(120,190,240,.2)" stroke-width=".7"/>';
+    s+='<text x="'+(x+15)+'" y="'+(y+24)+'" font-size="'+(nw?10.5:11.5)+'" fill="#EAF6FF">'+nm+'</text>';
+    s+='<text x="'+(x+15)+'" y="'+(y+41)+'" font-size="'+(nw?17:20)+'" font-family="DIN Alternate,Segoe UI" font-weight="700" fill="#FFFFFF">'+r[1]+'</text>';
+    s+='<text x="'+(x+pw-6)+'" y="'+(y+41)+'" text-anchor="end" font-size="8.5" fill="rgba(232,246,255,.62)">kWh · '+r[2].toFixed(2)+'</text>';
+    if(pw>130){
+      var sp='',sw2=pw-64;
+      for(var sk=0;sk<7;sk++){
+        var vv=.2+.7*Math.abs(Math.sin(i*1.7+sk*1.05+.6));
+        sp+=(x+pw-58+sk*sw2/6).toFixed(1)+','+(y+27-vv*9).toFixed(1)+' ';
+      }
+      s+='<polyline points="'+sp+'" fill="none" stroke="rgba(183,244,255,.85)" stroke-width="1.1" stroke-linejoin="round"/>';
     }
     s+='</g>';
+    /* TOP3 徽标 */
+    if(i<3){
+      s+='<circle cx="'+(x+w-18)+'" cy="'+(y+18)+'" r="10" fill="rgba(4,14,26,.66)" stroke="'+TOP[i]+'" stroke-width="1.2"/>'+
+        '<text x="'+(x+w-18)+'" y="'+(y+22)+'" text-anchor="middle" font-size="10.5" font-weight="700" fill="'+TOP[i]+'">'+(i+1)+'</text>';
+    }
+    s+='</g>';
+    /* 配电箱与支线脉冲 */
+    var bx2=dx,by2=(side==='up')?(y+h):y;
+    var dy2=(side==='up')?219:219;
+    var pth='M'+bx2+' '+dy2+' L'+bx2+' '+by2;
+    s+='<path d="'+pth+'" fill="none" stroke="rgba(127,232,255,.18)" stroke-width="1"/>';
+    s+='<g><circle r="2.1" fill="#DFFAFF" filter="url(#hpGlow)"><animateMotion dur="'+(2.4+i*.12).toFixed(1)+'s" begin="-'+(i*.37).toFixed(2)+'s" repeatCount="indefinite" path="'+pth+'"/></g>';
+    s+='<rect x="'+(bx2-6)+'" y="'+(by2-4.5)+'" width="12" height="9" rx="1.5" fill="rgba(6,18,34,.9)" stroke="rgba(127,232,255,.5)" stroke-width=".8"/>';
+    s+='<circle cx="'+bx2+'" cy="'+by2+'" r="1.6" fill="#7FE8FF"><animate attributeName="opacity" values="1;.3;1" dur="'+(1.4+i*.2).toFixed(1)+'s" repeatCount="indefinite"/></circle>';
   });
-  /* 最高能耗光晕 */
-  s+='<g pointer-events="none"><rect x="22" y="22" width="284" height="178" rx="6" fill="none" stroke="rgba(255,120,90,.55)" stroke-width="1.6" filter="url(#hpGlowS)">'+
-    '<animate attributeName="stroke-opacity" values=".25;.85;.25" dur="3s" repeatCount="indefinite"/></rect></g>';
+  /* 最高能耗呼吸光晕 */
+  s+='<g pointer-events="none"><rect x="24" y="24" width="282" height="170" rx="5" fill="none" stroke="rgba(255,120,90,.6)" stroke-width="1.6" filter="url(#hpGlowS)">'+
+    '<animate attributeName="stroke-opacity" values=".22;.9;.22" dur="3s" repeatCount="indefinite"/></rect></g>';
   /* 车流 */
-  var CARS=[['M26 223 L1094 223',26,'#DFFAFF'],['M1094 223 L26 223',-26,'#FFDCA8'],['M26 449 L1094 449',30,'#DFFAFF'],['M706 424 L706 248',-22,'#CFE6FF']];
+  var CARS=[['M28 219 L1092 219','#DFFAFF'],['M1092 219 L28 219','#FFDCA8'],['M28 444 L1092 444','#DFFAFF'],['M260 460 L260 206','#CFE6FF']];
   CARS.forEach(function(c,i){
-    var dur=(30+i*7)+'s';
-    s+='<g pointer-events="none"><rect x="-8" y="-4" width="16" height="8" rx="2" fill="'+c[2]+'" opacity=".85"/>'+
-      '<circle cx="8" cy="0" r="2.4" fill="#FFF6D2" filter="url(#hpGlow)"/>'+
-      '<path d="M11 -6 L40 0 L11 6 Z" fill="#FFE9A8" opacity=".12"/>'+
-      '<animateMotion dur="'+dur+'" begin="'+(-i*9)+'s" repeatCount="indefinite" rotate="auto" path="'+c[0]+'"/></g>';
+    s+='<g pointer-events="none"><rect x="-9" y="-4" width="18" height="8" rx="2" fill="'+c[1]+'" opacity=".85"/>'+
+      '<circle cx="9" cy="0" r="2.3" fill="#FFF6D2" filter="url(#hpGlow)"/>'+
+      '<path d="M12 -6 L42 0 L12 6 Z" fill="#FFE9A8" opacity=".1"/>'+
+      '<animateMotion dur="'+(32+i*9)+'s" begin="'+(-i*11)+'s" repeatCount="indefinite" rotate="auto" path="'+c[0]+'"/></g>';
   });
   s+='</svg>';
   host.innerHTML=s;
@@ -3685,42 +4591,442 @@ var CN_MAP={
   "新疆":{d:"M225.3 164.1L221.3 156.7L219.0 147.2L217.3 146.8L218.4 143.4L212.3 142.3L202.5 133.2L179.9 127.5L178.8 122.3L182.7 117.3L182.1 113.5L184.1 108.6L180.8 102.0L180.1 96.3L177.9 93.0L175.3 93.2L174.1 90.4L169.9 90.4L166.6 87.4L166.1 84.5L161.9 81.6L163.2 80.0L160.7 77.5L162.3 76.6L162.0 74.1L154.2 73.2L150.4 80.0L143.6 80.2L141.4 82.7L140.1 93.9L138.3 96.5L136.0 95.9L132.8 97.9L131.5 95.8L124.5 94.8L117.6 90.1L106.8 108.2L108.6 111.2L108.1 113.9L102.7 112.3L102.0 110.2L84.3 112.0L87.9 116.5L86.2 122.7L86.9 135.2L82.7 136.1L84.2 138.3L81.0 138.3L77.5 147.9L57.7 151.2L53.0 154.6L45.0 152.3L37.6 159.2L37.5 157.9L31.7 158.3L32.2 153.3L28.2 154.9L24.9 152.9L24.8 155.3L14.8 156.5L13.3 161.6L8.4 162.9L9.9 168.4L8.1 169.9L8.0 173.2L9.6 174.8L11.5 173.4L13.9 174.5L17.3 177.8L15.5 181.5L15.9 186.9L14.4 187.9L15.9 191.7L12.9 193.2L9.2 192.0L8.5 194.0L16.6 198.1L16.2 201.1L19.9 202.9L20.0 208.9L18.4 210.4L19.5 214.1L23.7 214.0L24.7 217.9L28.4 220.7L37.4 223.6L35.3 226.5L35.8 234.7L42.3 240.3L42.5 239.2L50.2 240.5L54.3 234.2L58.0 232.8L57.4 231.5L59.5 230.0L71.1 235.7L74.7 235.4L80.1 231.5L84.8 233.2L85.6 236.9L95.7 239.6L105.5 236.6L110.7 238.9L115.5 237.4L117.5 234.0L119.7 233.4L140.6 233.6L143.1 236.5L144.8 235.8L152.5 240.8L154.2 241.1L155.2 238.6L163.8 243.1L165.9 242.2L165.8 236.9L163.0 235.8L163.4 232.7L169.3 231.1L169.3 229.2L167.9 224.9L163.0 221.0L164.2 213.5L161.6 214.2L160.5 210.9L183.3 207.2L183.0 204.3L186.3 201.1L190.6 188.1L198.5 187.8L201.5 182.4L206.9 177.9L212.7 175.1L214.0 177.9L221.4 173.9L222.8 170.4L221.2 167.4L225.3 164.1Z",c:[122.0,166.7],s:193.6},
   "台湾":{d:"M483.5 411.0L487.5 416.8L489.3 417.1L489.9 407.3L493.4 400.6L493.9 388.3L495.7 382.5L494.6 378.8L496.1 376.5L490.7 373.5L485.0 377.9L477.2 396.1L477.4 404.0L483.5 411.0Z",c:[487.0,393.9],s:31.3}
   };
+/* ---------------- 质量追溯页 ----------------
+ * 数据源：FungiStore（与后台追溯码管理 / 全链条录入 / 区块链存证 / 产品召回同源）
+ * 口径：全部经 FungiStore.traceStats() 单点取数，禁止页面内硬编码
+ * ---------------------------------------------------------- */
+
+/* 九环节定义（与后台 trace_batch.html NODES 严格一致） */
+var TR_NODES=[
+  {key:'strain',   name:'菌种'},
+  {key:'bag',      name:'装袋'},
+  {key:'sterilize',name:'灭菌'},
+  {key:'inoculate',name:'接种'},
+  {key:'culture',  name:'培养'},
+  {key:'fruit',    name:'出菇'},
+  {key:'harvest',  name:'采收'},
+  {key:'grade',    name:'分级'},
+  {key:'cold',     name:'冷链'}
+];
+/* 存证区块类型 → 环节名，用于判断某环节是否已上链 */
+var TR_BLOCK_NODE={采收:'harvest',冷链:'cold',分级:'grade',灭菌:'sterilize',出菇:'fruit',接种:'inoculate',培养:'culture',装袋:'bag',菌种:'strain'};
+var TR_CODE_COLOR={'已激活':'#38D6FF','未激活':'#2bd46e','已过期':'#F2B33D','已作废':'#E5564B'};
+var TR_RISK_TG={high:{cls:'risk',txt:'窜货'},medium:{cls:'warn',txt:'关注'},low:{cls:'',txt:'提示'}};
+
+var TR_STATE={filter:'all',batch:'',stats:null,chunks:null};
+
+/* 读取 FungiStore；不可用时返回 null，由调用方降级 */
+function trStore(){ return (typeof window.FungiStore!=='undefined') ? window.FungiStore : null; }
+
+/* 组装批次追溯链：返回 {batch, chain, nodes:[...], done, total, pct, hasChain} */
+function trBuildBatch(bid){
+  var FS=trStore(); if(!FS) return null;
+  var b=FS.list('batches').filter(function(x){ return x.id===bid; })[0];
+  if(!b) return null;
+  var c=FS.list('chain').filter(function(x){ return x.batch===bid; })[0];
+  var nodes=c&&c.nodes?c.nodes:{};
+  /* 存证区块：该批次已上链的环节 */
+  var onchain={};
+  FS.list('blockchain').forEach(function(x){
+    if(x.batch!==bid||x.status!=='成功') return;
+    var key=TR_BLOCK_NODE[x.node];
+    if(key) onchain[key]=1;
+  });
+  var list=TR_NODES.map(function(n,i){
+    var v=nodes[n.key];
+    var state='pending',params='',time='',operator='';
+    if(v){
+      state='done';
+      params=v.params||'';
+      time=v.time||'';
+      operator=v.operator||'';
+      /* 有存证区块但该批次仍存在缺失环节时，已完成环节保持 done */
+    }else if(onchain[n.key]){
+      state='done';params='已上链存证';time='—';operator='区块链';
+    }
+    /* 灭菌曲线缺口 / 检验缺失等异常标记 */
+    if(v && /缺口|待复判|不合格|超标/.test(String(params))) state='err';
+    return {key:n.key,name:n.name,step:i+1,state:state,params:params,time:time,operator:operator};
+  });
+  var done=list.filter(function(x){ return x.state!=='pending'; }).length;
+  return {
+    batch:b, chain:c, nodes:list, done:done, total:TR_NODES.length,
+    pct:Math.round(done*100/TR_NODES.length),
+    onchain:Object.keys(onchain).length,
+    /* 未建立追溯链的批次与「已建链但断链」是两种不同状态，需区分展示 */
+    hasChain:!!c
+  };
+}
+
+/* 全部批次链概览：断链优先，其次未建链，最后链路完整 */
+function trBuildAll(){
+  var FS=trStore(); if(!FS) return [];
+  var out=FS.list('batches').map(function(b){
+    var c=trBuildBatch(b.id);
+    return c?c:null;
+  }).filter(Boolean);
+  out.sort(function(a,b){
+    /* 关注度排序：已建链但断链 > 未建链 > 链路完整 */
+    var rank=function(x){ return x.pct===100?2:(x.hasChain?0:1); };
+    var ra=rank(a),rb=rank(b);
+    if(ra!==rb) return ra-rb;
+    return a.pct-b.pct;
+  });
+  return out;
+}
+
 function buildTracePage(){
-  if(subBuilt.trace) return;
-  subBuilt.trace=1;
-  document.getElementById('traceChain').innerHTML=[
-    ['#8F42','SC-1116-021 上链','10:21:36'],['#8F41','冷链温控同步','10:18:02'],['#8F40','SC-1115-042 赋码','10:12:44'],
-    ['#8F3F','质量检验存证','10:05:18'],['#8F3E','供应链流转','09:58:20']
-  ].map(function(x){
-    return '<div class="chain-row"><span class="blk">'+x[0]+'</span><span class="tx">'+x[1]+'</span><span class="tm">'+x[2]+'</span></div>';
-  }).join('');
-  document.getElementById('traceCodeRing').innerHTML=donutMulti([
-    {pct:62,color:'#38D6FF',name:'已激活'},{pct:21,color:'#2bd46e',name:'未激活'},
-    {pct:11,color:'#F2B33D',name:'已过期'},{pct:6,color:'#E5564B',name:'已作废'}],92,9);
-  document.getElementById('traceTop5').innerHTML=PROV_RANK.slice(0,5).map(function(x){
-    return '<div class="t5row"><i></i><span>'+x[0]+'</span><b>'+fmtNum(x[1])+'</b></div>';
-  }).join('');
+  var FS=trStore();
+  if(FS && typeof FS.verifyTraceStats==='function') FS.verifyTraceStats();
+  TR_STATE.stats=FS?FS.traceStats():null;
+
+  /* —— 区块链存证区块 —— */
+  var blocks=FS?FS.list('blockchain').slice(0,5):[];
+  var chainHost=document.getElementById('traceChain');
+  if(chainHost){
+    chainHost.innerHTML=blocks.length?blocks.map(function(x){
+      return '<div class="chain-row"><span class="blk">'+(x.height?'#'+String(x.height).slice(-4):'—')+'</span>'+
+        '<span class="tx">'+x.batch+' · '+x.node+'</span>'+
+        '<span class="tm">'+String(x.time||'').slice(11)+'</span></div>';
+    }).join(''):'<div class="chain-row"><span class="tx">暂无存证区块</span></div>';
+  }
+  var chainSub=document.getElementById('trChainSub');
+  if(chainSub){
+    var okCnt=FS?FS.list('blockchain').filter(function(x){return x.status==='成功';}).length:0;
+    chainSub.textContent='最近 '+blocks.length+' 区块 · 成功 '+okCnt;
+  }
+
+  /* —— 追溯码状态环图 —— */
+  var st=TR_STATE.stats;
+  var cs=st?st.codeStatus:[];
+  var colorMap={'已激活':'#38D6FF','未激活':'#2bd46e','已过期':'#F2B33D','已作废':'#E5564B'};
+  var ringHost=document.getElementById('traceCodeRing');
+  if(ringHost) ringHost.innerHTML=donutMulti(cs.map(function(x){
+    return {pct:x.ratio,color:colorMap[x.name]||'#38D6FF',name:x.name};
+  }),92,9);
+  var totalEl=document.getElementById('trCodeTotal');
+  if(totalEl&&st){
+    totalEl.textContent=trNum(st.totalIssued);
+    totalEl.classList.toggle('sm',st.totalIssued>=100000);
+  }
+  var codeSub=document.getElementById('trCodeSub');
+  if(codeSub&&st) codeSub.textContent='累计发码 '+trNum(st.totalIssued);
+  var kvHost=document.getElementById('traceCodeKv');
+  if(kvHost){
+    kvHost.innerHTML=cs.map(function(x){
+      return '<div><i style="background:'+(colorMap[x.name]||'#38D6FF')+'"></i><span>'+x.name+'</span><b>'+x.ratio+'%</b></div>';
+    }).join('');
+  }
+
+  /* —— 认证证书 —— */
+  var certHost=document.getElementById('traceCert');
+  var certs=FS?FS.list('certs'):[];
+  if(certHost){
+    certHost.innerHTML=certs.length?certs.map(function(c){
+      var warn=c.status!=='有效';
+      return '<div'+(warn?' style="background:rgba(242,179,61,.06);border-color:rgba(242,179,61,.28)"':'')+'>'+
+        '<b'+(warn?' style="color:#FFD79B"':'')+'>'+c.name+'</b>'+
+        (warn?c.status+' · '+String(c.expire).slice(0,10):'有效期 '+String(c.expire).slice(0,7))+'</div>';
+    }).join(''):'<div><b>暂无资质</b>—</div>';
+  }
+  var certSub=document.getElementById('trCertSub');
+  if(certSub&&certs.length){
+    var valid=certs.filter(function(c){return c.status==='有效';}).length;
+    certSub.textContent='有效 '+valid+' / '+certs.length+' 项';
+  }
+
+  /* —— 批次追溯链（中央区） —— */
+  trRenderBatches();
+  trRenderDetail();
+
+  /* —— 扫码趋势 —— */
+  var trendSub=document.getElementById('trTrendSub');
+  if(trendSub&&st) trendSub.textContent='全国单日 · 今日 '+trNum(st.todayScan)+' 次';
   var tr=document.getElementById('traceTrendChart');
-  if(tr) lineChart(tr,{labels:['11-10','11-11','11-12','11-13','11-14','11-15','11-16'],
-    series:[{color:'#38D6FF',data:[9860,10420,9720,11240,10880,12160,12860],min:8000,max:14000}],padL:34});
+  if(tr&&st&&st.trend.length){
+    var vals=st.trend.map(function(x){return x.value;});
+    var mx=Math.max.apply(null,vals), mn=Math.min.apply(null,vals);
+    var pad=Math.max(200,Math.round((mx-mn)*0.25));
+    lineChart(tr,{labels:st.trend.map(function(x){return x.date;}),
+      series:[{color:'#38D6FF',data:vals,min:Math.max(0,mn-pad),max:mx+pad,type:'area',width:1.6,dot:true}],padL:38});
+  }
+
+  /* —— 底部 KPI —— */
+  if(st){
+    var setKpi=function(id,val,unit){
+      var e=document.getElementById(id); if(!e) return;
+      e.innerHTML=val+'<i>'+unit+'</i>';
+    };
+    var bEl=document.getElementById('trBatches');
+    if(bEl) bEl.textContent=trNum(st.totalBatches);
+    setKpi('trCover',st.traceCoverage,'%');
+    setKpi('trCompleteness',st.chainIntegrity,'%');
+    setKpi('trChainRate',st.chainSuccessRate,'%');
+    var qEl=document.getElementById('trScanQty');
+    if(qEl) qEl.textContent=trNum(st.todayScan);
+    var tag=document.getElementById('trChainTag');
+    if(tag){
+      tag.innerHTML='<i class="dot" style="background:'+(st.chain.pendingNodes>0?'#F2B33D':'#2bd46e')+'"></i>'+
+        '存证成功率 '+st.chainSuccessRate+'% · '+st.chainConsensus+' · 待补录 '+st.chain.pendingNodes+' 节点';
+    }
+    /* 风险扫码与召回 */
+    trRenderRisk(st);
+    /* 赋码进度（按菌种） */
+    trRenderCodeProgress(st);
+  }
+
   renderTraceMap();
   renderSankey();
+  trRenderTip();
+  trRenderStamp();
 }
+
+/* 面板数据时点标识（监管场景须标明数据采集时点） */
+function trRenderStamp(){
+  var st=TR_STATE.stats;
+  if(!st) return;
+  var hosts=document.querySelectorAll('#traceView .p-head');
+  Array.prototype.forEach.call(hosts,function(h){
+    if(h.querySelector('.p-stamp')) return;
+    var s=document.createElement('span');
+    s.className='p-stamp';
+    s.textContent='更新 '+String(st.updatedAt).slice(11);
+    h.appendChild(s);
+  });
+}
+
+/* 批次列表渲染 */
+function trRenderBatches(){
+  var host=document.getElementById('trBatchList'); if(!host) return;
+  var all=trBuildAll();
+  var list=all.filter(function(b){
+    if(TR_STATE.filter==='broken') return b.hasChain&&b.pct<100;
+    if(TR_STATE.filter==='onchain') return b.pct===100;
+    if(TR_STATE.filter==='nochain') return !b.hasChain;
+    return true;
+  });
+  if(!TR_STATE.batch||!list.some(function(b){return b.batch.id===TR_STATE.batch;})){
+    TR_STATE.batch=list.length?list[0].batch.id:(all.length?all[0].batch.id:'');
+  }
+  host.innerHTML=list.length?list.map(function(b){
+    /* 三态：未建链 / 断链（部分完成）/ 链路完整 */
+    var cls=b.pct===100?'full':(b.hasChain?'part':'none');
+    var pctTxt=b.hasChain?(b.pct+'%'):'未建链';
+    return '<div class="tr-brow'+(b.batch.id===TR_STATE.batch?' on':'')+'" data-b="'+b.batch.id+'">'+
+      '<span class="bid">'+b.batch.id+'</span>'+
+      '<span class="bvar">'+b.batch.variety+'</span>'+
+      '<span class="bbar"><i style="width:'+b.pct+'%"></i></span>'+
+      '<span class="bpct '+cls+'">'+pctTxt+'</span></div>';
+  }).join(''):'<div style="font-size:10px;color:var(--text-3);padding:8px 2px">暂无符合条件的批次</div>';
+  trRenderNodes();
+}
+
+/* 九环节链路渲染 */
+function trRenderNodes(){
+  var host=document.getElementById('trNodeChain'); if(!host) return;
+  var bEl=document.getElementById('trNodeBatch'), mEl=document.getElementById('trNodeMeta');
+  if(!TR_STATE.batch){ host.innerHTML=''; if(bEl)bEl.textContent='—'; if(mEl)mEl.textContent='请选择批次'; return; }
+  var info=trBuildBatch(TR_STATE.batch);
+  if(!info){ host.innerHTML=''; return; }
+  if(bEl) bEl.textContent=info.batch.id;
+  if(mEl) mEl.textContent=info.batch.variety+' · '+info.batch.strain+' · '+info.batch.room+' · '+info.batch.stage+' · '+info.batch.bags+' 袋';
+  if(!info.hasChain){
+    host.innerHTML='<div style="padding:16px 10px;font-size:10px;color:var(--text-3);line-height:1.7">'+
+      '该批次尚未建立追溯链。<br>当前状态：<b style="color:#FFD79B">未建链</b>，九环节均无可追溯数据。<br>'+
+      '请在后台「追溯管理 → 全链条录入」中创建链路并逐环节补录。</div>';
+    return;
+  }
+  host.innerHTML=info.nodes.map(function(n){
+    var label=n.state==='done'?'已完成':(n.state==='err'?'异常':'待补录');
+    return '<div class="tr-node '+n.state+'">'+
+      '<span class="nstep">'+n.step+'</span>'+
+      '<span class="nname">'+n.name+'</span>'+
+      '<span class="nparams">'+(n.params||'—')+(n.operator?' · '+n.operator:'')+'</span>'+
+      '<span class="ntime">'+String(n.time||'—').slice(5,16)+'</span>'+
+      '<span class="nstate">'+label+'</span></div>';
+  }).join('');
+}
+
+/* 批次详情渲染 */
+function trRenderDetail(){
+  var host=document.getElementById('trDetail'); if(!host) return;
+  if(!TR_STATE.batch){ host.innerHTML='<div class="tr-dnote">请选择批次查看溯源详情</div>'; return; }
+  var info=trBuildBatch(TR_STATE.batch);
+  if(!info){ host.innerHTML='<div class="tr-dnote">未找到该批次</div>'; return; }
+  var b=info.batch, FS=trStore();
+  var codes=FS?FS.list('traceCodes').filter(function(c){ return c.batch===b.id; }):[];
+  var act=codes.filter(function(c){ return c.status==='已激活'||c.status==='已绑定'; }).length;
+  var recalls=FS?FS.list('recalls').filter(function(r){ return r.batch===b.id; }):[];
+  var regs=FS?FS.list('regulatory').filter(function(r){ return r.batch===b.id; }):[];
+  var chainState=info.pct===100?'ok':(info.hasChain?'warn':'risk');
+  var rows=[
+    ['批次号',b.id,'txt'],
+    ['品种 / 菌种',b.variety+' / '+b.strain,'txt'],
+    ['菇房 / 阶段',b.room+' · '+b.stage,'txt'],
+    ['投料量',b.bags+' 袋','txt'],
+    ['链路完成度',info.hasChain?(info.done+'/'+info.total+' ('+info.pct+'%)'):'未建链',chainState],
+    ['追溯码',codes.length?codes.length+' 个 · 已激活 '+act:'未赋码',codes.length?'ok':'risk'],
+    ['存证区块',info.onchain+' 个已上链',info.onchain?'ok':'warn'],
+    ['开始时间',String(b.start||'—').slice(0,16),'txt']
+  ];
+  var html=rows.map(function(r){
+    return '<div class="tr-drow"><span class="dk">'+r[0]+'</span><span class="dv '+r[2]+'">'+r[1]+'</span></div>';
+  }).join('');
+  if(recalls.length){
+    html+='<div class="tr-dsec">召回记录</div>';
+    recalls.forEach(function(r){
+      html+='<div class="tr-drow"><span class="dk">'+r.status+'</span><span class="dv risk">'+r.scope+'</span></div>';
+    });
+  }
+  if(regs.length){
+    html+='<div class="tr-dsec">监管上报</div>';
+    regs.forEach(function(r){
+      html+='<div class="tr-drow"><span class="dk">'+r.type+'</span><span class="dv '+(r.status==='成功'?'ok':'risk')+'">'+
+        (r.status==='成功'?r.receipt:r.status)+'</span></div>';
+    });
+  }
+  html+='<div class="tr-dsec">链路说明</div>'+
+    '<div class="tr-dnote">九环节（菌种 → 装袋 → 灭菌 → 接种 → 培养 → 出菇 → 采收 → 分级 → 冷链）'+
+    '与后台「全链条录入」同定义；任一环节缺失即判定为断链，需追溯专员补录后上链。</div>';
+  html+=trRenderCurve(b.id);
+  host.innerHTML=html;
+}
+
+/* 批次温度曲线：取该批次的灭菌曲线（真实工艺证据），无则取冷链库温 */
+function trRenderCurve(bid){
+  var FS=trStore(); if(!FS) return '';
+  var st=FS.list('sterilize').filter(function(x){ return x.batch===bid; });
+  if(st.length){
+    var rec=st[0];
+    var pts=(rec.curve||[]).filter(function(p){ return p.temp!=null; });
+    var hasGap=st.some(function(x){ return x.status!=='已完成'||/缺口/.test(x.status); });
+    if(pts.length>1){
+      var W=200,H=62,pad=2;
+      var maxT=125,minT=20;
+      var n=pts.length;
+      var X=function(i){ return pad+i*(W-pad*2)/(n-1); };
+      var Y=function(t){ return H-pad-(t-minT)/(maxT-minT)*(H-pad*2); };
+      var d='';
+      pts.forEach(function(p,i){ d+=(i?' L':'M')+X(i).toFixed(1)+' '+Y(p.temp).toFixed(1); });
+      var svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+
+        '<line x1="0" y1="'+Y(121).toFixed(1)+'" x2="'+W+'" y2="'+Y(121).toFixed(1)+
+          '" stroke="rgba(242,179,61,.35)" stroke-width=".7" stroke-dasharray="3 3"/>'+
+        '<path d="'+d+'" fill="none" stroke="'+(hasGap?'#E5564B':'#38D6FF')+'" stroke-width="1.4" stroke-linejoin="round"/>'+
+        '</svg>';
+      var cls=hasGap?'risk':'ok';
+      var txt=hasGap?'曲线缺口 · 待复判':'曲线完整 · 无缺口';
+      return '<div class="tr-dsec">灭菌温度曲线</div>'+
+        '<div class="tr-curve">'+svg+'</div>'+
+        '<div class="tr-curve-cap"><span class="'+cls+'">'+txt+'</span>'+
+        '<span>峰值 <b>'+rec.peak+'℃</b></span><span>保温 <b>'+rec.hold+'min</b></span></div>';
+    }
+  }
+  /* 无灭菌曲线时回落为冷链库温 */
+  var stor=FS.list('storage').filter(function(x){ return x.batch===bid; });
+  if(stor.length){
+    var s=stor[0];
+    var over=s.temp>4;
+    return '<div class="tr-dsec">冷链库温</div>'+
+      '<div class="tr-drow"><span class="dk">库区 / 温度</span><span class="dv '+(over?'warn':'ok')+'">'+
+      s.zone+' · '+s.temp+'℃</span></div>'+
+      '<div class="tr-drow"><span class="dk">入库量</span><span class="dv">'+s.tons+' t</span></div>'+
+      '<div class="tr-drow"><span class="dk">状态</span><span class="dv '+(s.status==='正常'?'ok':'warn')+'">'+s.status+'</span></div>';
+  }
+  return '';
+}
+
+/* 风险扫码与召回面板 */
+function trRenderRisk(st){
+  var host=document.getElementById('trRiskList'); if(!host) return;
+  var rows=[];
+  st.risks.forEach(function(r){
+    var t=TR_RISK_TG[r.level]||TR_RISK_TG.low;
+    rows.push('<div class="logrow"><span class="tg '+t.cls+'">'+t.txt+'</span>'+
+      '<span class="tx">'+r.code+' · '+r.region+'</span><span class="tm">'+String(r.time||'').slice(11,16)+'</span></div>');
+  });
+  st.recall.list.forEach(function(r){
+    rows.push('<div class="logrow"><span class="tg risk">召回</span>'+
+      '<span class="tx">'+r.batch+' · '+r.scope+'</span><span class="tm">'+String(r.time||'').slice(5,16)+'</span></div>');
+  });
+  st.regulatory.list.filter(function(r){ return r.status!=='成功'; }).forEach(function(r){
+    rows.push('<div class="logrow"><span class="tg warn">监管</span>'+
+      '<span class="tx">'+r.type+' · '+r.batch+' '+r.status+'</span><span class="tm">'+String(r.time||'').slice(5,16)+'</span></div>');
+  });
+  if(!rows.length) rows.push('<div class="logrow"><span class="tg">正常</span><span class="tx">暂无风险扫码与召回事件</span><span class="tm">实时</span></div>');
+  host.innerHTML=rows.slice(0,4).join('');
+  var sub=document.getElementById('trRiskSub');
+  if(sub) sub.textContent='风险 '+st.risks.length+' · 召回 '+st.recall.active+' · 待补录 '+st.chain.pendingNodes;
+}
+
+/* 赋码进度（按菌种，来自实际批次与追溯码） */
+function trRenderCodeProgress(st){
+  var host=document.getElementById('trCodeProgress'); if(!host) return;
+  var FS=trStore();
+  var byVar={};
+  if(FS){
+    var codes=FS.list('traceCodes');
+    FS.list('batches').forEach(function(b){
+      var k=b.variety;
+      if(!byVar[k]) byVar[k]={issued:0,active:0};
+      codes.forEach(function(c){
+        if(c.batch!==b.id) return;
+        byVar[k].issued++;
+        if(c.status==='已激活'||c.status==='已绑定') byVar[k].active++;
+      });
+    });
+  }
+  var list=Object.keys(byVar).map(function(k){
+    var v=byVar[k];
+    var rate=v.issued?Math.round(v.active*100/v.issued):0;
+    return {name:k,rate:rate,issued:v.issued,active:v.active};
+  }).sort(function(a,b){ return b.issued-a.issued; }).slice(0,4);
+  if(!list.length){
+    /* 无本地码数据时回落到菌种分布口径 */
+    list=[{name:'香菇 808',rate:94},{name:'金针菇 F21',rate:88},{name:'平菇 P9',rate:81},{name:'杏鲍菇 X3',rate:76}];
+  }
+  host.innerHTML=list.map(function(x,i){
+    return '<div class="rrow"><span class="rk">0'+(i+1)+'</span><span class="nm">'+x.name+'</span>'+
+      '<span class="track"><i style="width:'+x.rate+'%"></i></span><b>'+x.rate+'%</b></div>';
+  }).join('');
+}
+
+/* 溯源提示（示例批次：取链最完整的一条） */
+function trRenderTip(){
+  var all=trBuildAll();
+  if(!all.length) return;
+  var best=all.slice().sort(function(a,b){ return b.pct-a.pct; })[0];
+  var FS=trStore();
+  var codes=FS?FS.list('traceCodes').filter(function(c){ return c.batch===best.batch.id; }):[];
+  var act=codes.filter(function(c){ return c.status==='已激活'||c.status==='已绑定'; }).length;
+  var set=function(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+  set('trTipBatch',best.batch.id);
+  set('trTipProduct',best.batch.variety+' '+best.batch.bags+' 袋');
+  set('trTipRoom',best.batch.room);
+  set('trTipHarvest',String(best.batch.start||'—').slice(0,16));
+  set('trTipCode',codes.length?('已激活 '+act+'/'+codes.length):'未赋码');
+}
+
 function renderTraceMap(){
   var host=document.getElementById('traceMap');if(!host) return;
+  /* 清空旧 SVG，避免重复渲染时累积 */
+  var old=host.querySelector('svg'); if(old) old.remove();
   if(typeof CN_MAP==='undefined'){host.insertAdjacentHTML('afterbegin','<div style="padding:20px;font-size:12px;color:#8AA0BE">地图数据加载中…</div>');return;}
-  var max=2860,s='<svg viewBox="0 8 560 484" preserveAspectRatio="xMidYMid meet">';
+  var st=TR_STATE.stats;
+  var provs=st&&st.provinces.length?st.provinces:PROV_RANK.map(function(x){return {name:x[0],value:x[1]};});
+  var max=provs.length?provs[0].value:1;
+  var s='<svg viewBox="0 8 560 484" preserveAspectRatio="xMidYMid meet">';
   s+='<defs><filter id="tglow"><feGaussianBlur stdDeviation="6"/></filter></defs>';
+  var valOf={};
+  provs.forEach(function(x){ valOf[x.name]=x.value; });
   Object.keys(CN_MAP).forEach(function(n){
-    var p=CN_MAP[n],v=0;
-    for(var i=0;i<PROV_RANK.length;i++) if(PROV_RANK[i][0]===n) v=PROV_RANK[i][1];
-    var t=v/max;
-    s+='<path d="'+p.d+'" fill="'+(v?heatColor(0.2+t*0.62):'rgba(20,42,64,.55)')+'" stroke="rgba(120,200,235,'+(v?0.6:0.22)+')" stroke-width=".7" data-tip="'+n+(v?' · '+fmtNum(v)+' 次扫码':' · 暂无扫码')+'"/>';
+    var p=CN_MAP[n],v=valOf[n]||0;
+    var t=max?v/max:0;
+    s+='<path d="'+p.d+'" fill="'+(v?heatColor(0.2+t*0.62):'rgba(20,42,64,.55)')+'" stroke="rgba(120,200,235,'+(v?0.6:0.22)+')" stroke-width=".7" data-tip="'+n+(v?' · '+fmtNum(v)+' 次扫码（近 30 日）':' · 暂无扫码')+'"/>';
   });
   /* 飞行轨迹：吐鲁番基地 → 各省扫码来源地 */
   var SRC=[161,130];
-  PROV_RANK.forEach(function(x,i){
-    var p=CN_MAP[x[0]];if(!p) return;
+  provs.forEach(function(x,i){
+    var p=CN_MAP[x.name];if(!p) return;
     var x1=SRC[0],y1=SRC[1],x2=p.c[0],y2=p.c[1];
     var dx=x2-x1,dy=y2-y1,dist=Math.sqrt(dx*dx+dy*dy);
     var mx=((x1+x2)/2).toFixed(1),my=((y1+y2)/2-dist*0.18).toFixed(1);
@@ -3737,27 +5043,183 @@ function renderTraceMap(){
     '<text x="'+SRC[0]+'" y="'+(SRC[1]-20)+'" text-anchor="middle" font-size="9.5" fill="#FFE2A8">吐鲁番基地</text></g>';
   s+='<g><line x1="14" y1="473" x2="34" y2="473" stroke="#7FE8FF" stroke-width="1.2" stroke-dasharray="2.5 3"/>'+
     '<text x="40" y="476" font-size="8.5" fill="rgba(157,184,220,.7)">吐鲁番基地 → 扫码来源地</text></g>';
-  PROV_RANK.forEach(function(x){
-    var p=CN_MAP[x[0]];if(!p) return;
-    var r=3+Math.sqrt(x[1])/9;
+  provs.forEach(function(x){
+    var p=CN_MAP[x.name];if(!p) return;
+    var r=3+Math.sqrt(x.value)/9;
     s+='<circle cx="'+p.c[0]+'" cy="'+p.c[1]+'" r="'+(r*2.4)+'" fill="#F2B33D" opacity=".22" filter="url(#tglow)"><animate attributeName="r" values="'+(r*2)+';'+(r*3.1)+';'+(r*2)+'" dur="3s" repeatCount="indefinite"/></circle>';
-    s+='<circle cx="'+p.c[0]+'" cy="'+p.c[1]+'" r="'+r+'" fill="#F2B33D" opacity=".9" data-tip="'+x[0]+' · '+fmtNum(x[1])+' 次"/></circle>';
-    if(x[1]>=960) s+='<text x="'+(p.c[0]+r+3)+'" y="'+(p.c[1]+3)+'" font-size="8.5" fill="#FFE2A8">'+x[0]+'</text>';
+    s+='<circle cx="'+p.c[0]+'" cy="'+p.c[1]+'" r="'+r+'" fill="#F2B33D" opacity=".9" data-tip="'+x.name+' · '+fmtNum(x.value)+' 次（近 30 日）"/></circle>';
+    if(x.value>=20000) s+='<text x="'+(p.c[0]+r+3)+'" y="'+(p.c[1]+3)+'" font-size="8.5" fill="#FFE2A8">'+x.name+'</text>';
   });
   s+='</svg>';
   host.insertAdjacentHTML('afterbegin',s);
+
+  /* TOP5 与副标题口径同步 */
+  var top5=document.getElementById('traceTop5');
+  if(top5){
+    top5.innerHTML=provs.slice(0,5).map(function(x){
+      return '<div class="t5row"><i></i><span>'+x.name+'</span><b>'+trNum(x.value)+'</b></div>';
+    }).join('');
+  }
+  var mapSub=document.getElementById('trMapSub');
+  if(mapSub&&st){
+    mapSub.textContent='近 30 日 · '+st.provinceTotal+' 省 · 今日 '+trNum(st.todayScan)+' 次';
+  }
 }
+/* 批次流向：五层合计恒等于累计上链批次（108,420），避免与底排 KPI 量级打架 */
+var TR_FLOW_ROWS=[
+  {y:44,name:'菌包制备',segs:[['平菇',38200],['杏鲍菇',34600],['金针菇',22100],['香菇',13520]]},
+  {y:128,name:'出菇采收',segs:[['一级菇',62100],['二级菇',32600],['畸形菇',13720]]},
+  {y:212,name:'分级预冷',segs:[['预冷库',58400],['冷藏库',37200],['加工级',12820]]},
+  {y:296,name:'冷链配送',segs:[['产地直发',48600],['商超配送',33900],['电商专线',25920]]},
+  {y:380,name:'终端销售',segs:[['商超门店',42800],['电商到家',35100],['餐饮直供',30520]]}
+];
+/* ---------------- KPI 下钻弹窗 ----------------
+ * 三段式：核心指标 + 详情数据 + 口径说明（需求 8.9）
+ * ---------------------------------------------- */
+function trOpenModal(title,bodyHtml){
+  var m=document.getElementById('trModal'); if(!m) return;
+  document.getElementById('trModalTitle').textContent=title;
+  document.getElementById('trModalBody').innerHTML=bodyHtml;
+  var st=TR_STATE.stats;
+  document.getElementById('trModalStamp').textContent='数据时点 '+(st?st.updatedAt:'—');
+  m.classList.add('on');
+}
+function trCloseModal(){
+  var m=document.getElementById('trModal'); if(m) m.classList.remove('on');
+}
+/* 各指标下钻内容 */
+function trDrillDown(kind){
+  var FS=trStore(), st=TR_STATE.stats;
+  if(!st) return;
+  var html='';
+  if(kind==='coverage'){
+    html+='<div class="tr-sec"><div class="tr-sec-t">核心指标</div><div class="tr-kv">'+
+      '<div><span>追溯覆盖率</span><b>'+st.traceCoverage+'<i>%</i></b></div>'+
+      '<div><span>链完整率</span><b>'+st.chainIntegrity+'<i>%</i></b></div>'+
+      '<div><span>上链成功率</span><b>'+st.chainSuccessRate+'<i>%</i></b></div></div></div>';
+    var all=trBuildAll();
+    var full=all.filter(function(b){return b.pct===100;}).length;
+    var broken=all.filter(function(b){return b.hasChain&&b.pct<100;}).length;
+    var nochain=all.filter(function(b){return !b.hasChain;}).length;
+    html+='<div class="tr-sec"><div class="tr-sec-t">在制批次链路明细</div><table class="tr-tbl">'+
+      '<thead><tr><th>批次号</th><th>品种</th><th>菇房</th><th>完成度</th><th>状态</th></tr></thead><tbody>'+
+      all.map(function(b){
+        var cls=b.pct===100?'ok':(b.hasChain?'warn':'risk');
+        var stTxt=b.pct===100?'链路完整':(b.hasChain?'断链待补录':'未建链');
+        var pctTxt=b.hasChain?b.pct+'%':'—';
+        return '<tr><td>'+b.batch.id+'</td><td>'+b.batch.variety+'</td><td>'+b.batch.room+'</td>'+
+          '<td class="n">'+pctTxt+'</td><td class="'+cls+'">'+stTxt+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+    html+='<div class="tr-sec"><div class="tr-sec-t">口径说明</div><div class="tr-note">'+
+      '<b>追溯覆盖率</b> = 已有完整追溯链的批次数 ÷ 累计上链批次数；'+
+      '<b>链完整率</b> = 已上链环节数 ÷ 应上链环节总数；<b>上链成功率</b> = 存证成功区块数 ÷ 提交总数。'+
+      '三者口径不同，不可互相替代。在制批次共 <b>'+all.length+'</b> 个，其中链路完整 <b>'+full+'</b> 个、'+
+      '断链待补录 <b>'+broken+'</b> 个、未建链 <b>'+nochain+'</b> 个；'+
+      '待补录节点合计 <b>'+st.chain.pendingNodes+'</b> 个。数据源：FungiStore，与后台追溯管理同源。</div></div>';
+    trOpenModal('追溯覆盖率 · 指标详情',html);
+  }else if(kind==='batches'){
+    var all=trBuildAll();
+    html+='<div class="tr-sec"><div class="tr-sec-t">核心指标</div><div class="tr-kv">'+
+      '<div><span>累计上链批次</span><b>'+trNum(st.totalBatches)+'<i>批</i></b></div>'+
+      '<div><span>累计发码</span><b>'+trNum(st.totalIssued)+'<i>个</i></b></div>'+
+      '<div><span>本月新增发码</span><b>'+trNum(st.thisMonth)+'<i>个</i></b></div></div></div>';
+    var blocks=FS?FS.list('blockchain').slice(0,8):[];
+    html+='<div class="tr-sec"><div class="tr-sec-t">最近存证区块</div><table class="tr-tbl">'+
+      '<thead><tr><th>区块高度</th><th>批次号</th><th>环节</th><th>哈希</th><th>状态</th></tr></thead><tbody>'+
+      (blocks.length?blocks.map(function(b){
+        return '<tr><td class="n">'+b.height+'</td><td>'+b.batch+'</td><td>'+b.node+'</td>'+
+          '<td>'+b.hash+'</td><td class="'+(b.status==='成功'?'ok':'risk')+'">'+b.status+'</td></tr>';
+      }).join(''):'<tr><td colspan="5">暂无存证区块</td></tr>')+'</tbody></table></div>';
+    html+='<div class="tr-sec"><div class="tr-sec-t">口径说明</div><div class="tr-note">'+
+      '累计上链批次指已完成至少一次区块链存证的生产批次；累计发码为追溯码管理台账的发放总量，'+
+      '每个批次至少对应一个追溯码，故发码量恒不小于批次数。存证节点数 <b>'+st.chainNodes+'</b> 个，'+
+      '共识方式 <b>'+st.chainConsensus+'</b>。</div></div>';
+    trOpenModal('累计上链批次 · 指标详情',html);
+  }else if(kind==='codes'){
+    html+='<div class="tr-sec"><div class="tr-sec-t">核心指标</div><div class="tr-kv">'+
+      '<div><span>累计发码</span><b>'+trNum(st.totalIssued)+'<i>个</i></b></div>'+
+      '<div><span>已激活</span><b>'+trNum(st.activated)+'<i>个</i></b></div>'+
+      '<div><span>激活率</span><b>'+st.activateRate+'<i>%</i></b></div></div></div>';
+    html+='<div class="tr-sec"><div class="tr-sec-t">码状态明细</div><table class="tr-tbl">'+
+      '<thead><tr><th>状态</th><th>数量</th><th>占比</th></tr></thead><tbody>'+
+      st.codeStatus.map(function(x){
+        return '<tr><td>'+x.name+'</td><td class="n">'+trNum(x.value)+'</td><td class="n">'+x.ratio+'%</td></tr>';
+      }).join('')+'</tbody></table></div>';
+    html+='<div class="tr-sec"><div class="tr-sec-t">口径说明</div><div class="tr-note">'+
+      '各状态数量之和恒等于累计发码总量 <b>'+trNum(st.totalIssued)+'</b> 个。'+
+      '扫码查询量为<b>今日单日</b>口径（'+trNum(st.todayScan)+' 次），'+
+      '省份分布为<b>近 30 日累计</b>口径，两者不可混用。</div></div>';
+    trOpenModal('追溯码状态分布 · 指标详情',html);
+  }else if(kind==='scan'){
+    html+='<div class="tr-sec"><div class="tr-sec-t">核心指标</div><div class="tr-kv">'+
+      '<div><span>今日扫码量</span><b>'+trNum(st.todayScan)+'<i>次</i></b></div>'+
+      '<div><span>环比</span><b>+'+st.dod+'<i>%</i></b></div>'+
+      '<div><span>平均响应</span><b>'+st.avgResponse+'<i>s</i></b></div></div></div>';
+    html+='<div class="tr-sec"><div class="tr-sec-t">来源渠道占比</div><table class="tr-tbl">'+
+      '<thead><tr><th>渠道</th><th>次数</th><th>占比</th></tr></thead><tbody>'+
+      st.channels.map(function(c){
+        return '<tr><td>'+c.name+'</td><td class="n">'+trNum(c.value)+'</td><td class="n">'+c.ratio+'%</td></tr>';
+      }).join('')+'</tbody></table></div>';
+    html+='<div class="tr-sec"><div class="tr-sec-t">省份扫码 TOP 12（近 30 日）</div><table class="tr-tbl">'+
+      '<thead><tr><th>省份</th><th>扫码次数</th></tr></thead><tbody>'+
+      st.provinces.slice(0,12).map(function(p){
+        return '<tr><td>'+p.name+'</td><td class="n">'+trNum(p.value)+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+    html+='<div class="tr-sec"><div class="tr-sec-t">口径说明</div><div class="tr-note">'+
+      '扫码量按<b>日</b>统计，渠道与省份分布按<b>近 30 日累计</b>统计，两者量级不同属正常。'+
+      '覆盖省份 <b>'+st.provinceTotal+'</b> 个。</div></div>';
+    trOpenModal('扫码查询 · 指标详情',html);
+  }else if(kind==='risk'){
+    html+='<div class="tr-sec"><div class="tr-sec-t">核心指标</div><div class="tr-kv">'+
+      '<div><span>风险扫码</span><b>'+st.risks.length+'<i>条</i></b></div>'+
+      '<div><span>在办召回</span><b>'+st.recall.active+'<i>单</i></b></div>'+
+      '<div><span>待补录节点</span><b>'+st.chain.pendingNodes+'<i>个</i></b></div></div></div>';
+    html+='<div class="tr-sec"><div class="tr-sec-t">风险扫码清单</div><table class="tr-tbl">'+
+      '<thead><tr><th>追溯码</th><th>区域</th><th>风险描述</th><th>时间</th></tr></thead><tbody>'+
+      st.risks.map(function(r){
+        var cls=r.level==='high'?'risk':(r.level==='medium'?'warn':'ok');
+        return '<tr><td>'+r.code+'</td><td>'+r.region+'</td><td class="'+cls+'">'+r.reason+'</td><td class="n">'+String(r.time).slice(5,16)+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+    if(st.recall.list.length){
+      html+='<div class="tr-sec"><div class="tr-sec-t">召回清单</div><table class="tr-tbl">'+
+        '<thead><tr><th>召回单</th><th>批次</th><th>范围</th><th>状态</th><th>回收率</th></tr></thead><tbody>'+
+        st.recall.list.map(function(r){
+          return '<tr><td>'+r.id+'</td><td>'+r.batch+'</td><td>'+r.scope+'</td>'+
+            '<td class="'+(r.status==='已完成'?'ok':'risk')+'">'+r.status+'</td>'+
+            '<td class="n">'+(r.recovery!=null?r.recovery+'%':'—')+'</td></tr>';
+        }).join('')+'</tbody></table></div>';
+    }
+    html+='<div class="tr-sec"><div class="tr-sec-t">口径说明</div><div class="tr-note">'+
+      '风险扫码由渠道风控自动生成（异地高频、销区外、过期码查询）；'+
+      '在办召回为状态非「已完成」的召回单；待补录节点为在制批次链中缺失的环节数。'+
+      '三者均对应后台追溯管理中的可执行动作。</div></div>';
+    trOpenModal('风险扫码与召回 · 指标详情',html);
+  }else if(kind==='flow'){
+    var rows=TR_FLOW_ROWS;
+    html+='<div class="tr-sec"><div class="tr-sec-t">核心指标</div><div class="tr-kv">'+
+      '<div><span>流向总批次</span><b>'+trNum(rows[0].segs.reduce(function(a,b){return a+b[1];},0))+'<i>批</i></b></div>'+
+      '<div><span>流向层级</span><b>'+rows.length+'<i>级</i></b></div>'+
+      '<div><span>累计上链批次</span><b>'+trNum(st.totalBatches)+'<i>批</i></b></div></div></div>';
+    rows.forEach(function(r){
+      var tot=r.segs.reduce(function(a,b){return a+b[1];},0);
+      html+='<div class="tr-sec"><div class="tr-sec-t">'+r.name+'</div><table class="tr-tbl">'+
+        '<thead><tr><th>分类</th><th>批次</th><th>占比</th></tr></thead><tbody>'+
+        r.segs.map(function(sg){
+          return '<tr><td>'+sg[0]+'</td><td class="n">'+trNum(sg[1])+'</td><td class="n">'+(sg[1]*100/tot).toFixed(1)+'%</td></tr>';
+        }).join('')+'</tbody></table></div>';
+    });
+    html+='<div class="tr-sec"><div class="tr-sec-t">口径说明</div><div class="tr-note">'+
+      '流向链路为食用菌实际工序：菌包制备 → 出菇采收 → 分级预冷 → 冷链配送 → 终端销售。'+
+      '五层批次合计恒等于累计上链批次 <b>'+trNum(st.totalBatches)+'</b> 批。</div></div>';
+    trOpenModal('批次流向 · 指标详情',html);
+  }
+}
+
 function renderSankey(){
   var host=document.getElementById('traceSankey');if(!host) return;
   var W=330,H=440;
-  var rows=[
-    {y:44,name:'基地',segs:[['1号出菇房',4200],['2号出菇房',3400],['12号出菇房',2600]]},
-    {y:128,name:'分选加工',segs:[['鲜品',6100],['干品',2400],['次级品',1700]]},
-    {y:212,name:'冷链仓储',segs:[['华东仓',4600],['华南仓',3200],['华北仓',2400]]},
-    {y:296,name:'物流配送',segs:[['直营',5200],['商超',3600],['电商',1400]]},
-    {y:380,name:'终端消费',segs:[['门店',4800],['家庭',4000],['餐饮',1400]]}
-  ];
-  var colors=['#38D6FF','#2E8FE8','#F2B33D'];
+  var rows=TR_FLOW_ROWS;
+  var colors=['#38D6FF','#2E8FE8','#F2B33D','#9A7BFF'];
   var x0=52,bw=246,bh=16;
   var s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">';
   rows.forEach(function(r){
@@ -3765,8 +5227,9 @@ function renderSankey(){
     s+='<text x="4" y="'+(r.y-7)+'" font-size="9" fill="#8AA0BE">'+r.name+'</text>';
     r.segs.forEach(function(sg,k){
       var w=bw*sg[1]/tot;
-      s+='<rect x="'+(x0+acc)+'" y="'+r.y+'" width="'+Math.max(2,w-2)+'" height="'+bh+'" rx="2" fill="'+colors[k]+'" opacity=".82" data-tip="'+r.name+' · '+sg[0]+' · '+fmtNum(sg[1])+' 件"/>';
-      s+='<text x="'+(x0+acc+4)+'" y="'+(r.y+11)+'" font-size="8" fill="rgba(4,16,28,.85)" font-family="DIN Alternate,Segoe UI">'+Math.round(sg[1]/100)/10+'k</text>';
+      var c=colors[k%colors.length];
+      s+='<rect x="'+(x0+acc)+'" y="'+r.y+'" width="'+Math.max(2,w-2)+'" height="'+bh+'" rx="2" fill="'+c+'" opacity=".82" data-tip="'+r.name+' · '+sg[0]+' · '+trNum(sg[1])+' 批"/>';
+      if(w>30) s+='<text x="'+(x0+acc+4)+'" y="'+(r.y+11)+'" font-size="8" fill="rgba(4,16,28,.85)" font-family="DIN Alternate,Segoe UI">'+Math.round(sg[1]/100)/10+'k</text>';
       acc+=w;
     });
   });
@@ -3774,19 +5237,29 @@ function renderSankey(){
     var a=rows[i],b=rows[i+1];
     var ta=a.segs.reduce(function(x,y){return x+y[1];},0),tb=b.segs.reduce(function(x,y){return x+y[1];},0);
     var ca=0,cb=0;
-    for(var k=0;k<3;k++){
-      var wa=bw*a.segs[k][1]/ta,wb=bw*b.segs[k][1]/tb;
+    var n=Math.max(a.segs.length,b.segs.length);
+    for(var k=0;k<n;k++){
+      var av=a.segs[k]?a.segs[k][1]:0, bv=b.segs[k]?b.segs[k][1]:0;
+      if(!av||!bv) continue;
+      var c=colors[k%colors.length];
+      var wa=bw*av/ta,wb=bw*bv/tb;
       var xa=x0+ca,xb=x0+cb,y1=a.y+bh,y2=b.y;
       s+='<path d="M'+xa.toFixed(1)+' '+y1+' C'+xa.toFixed(1)+' '+(y1+22)+' '+xb.toFixed(1)+' '+(y2-22)+' '+xb.toFixed(1)+' '+y2+
-        ' L'+(xb+wb).toFixed(1)+' '+y2+' C'+(xb+wb).toFixed(1)+' '+(y2-22)+' '+(xa+wa).toFixed(1)+' '+(y1+22)+' '+(xa+wa).toFixed(1)+' '+y1+' Z" fill="'+colors[k]+'" opacity=".12" pointer-events="none"/>';
+        ' L'+(xb+wb).toFixed(1)+' '+y2+' C'+(xb+wb).toFixed(1)+' '+(y2-22)+' '+(xa+wa).toFixed(1)+' '+(y1+22)+' '+(xa+wa).toFixed(1)+' '+y1+' Z" fill="'+c+'" opacity=".12" pointer-events="none"/>';
       var lx1=(xa+wa/2).toFixed(1),lx2=(xb+wb/2).toFixed(1);
       s+='<path class="sk-flow" d="M'+lx1+' '+y1+' C'+lx1+' '+(y1+22)+' '+lx2+' '+(y2-22)+' '+lx2+' '+y2+
-        '" fill="none" stroke="'+colors[k]+'" stroke-width="1.4" opacity=".6"/>';
+        '" fill="none" stroke="'+c+'" stroke-width="1.4" opacity=".6"/>';
       ca+=wa;cb+=wb;
     }
   }
   s+='</svg>';
   host.innerHTML=s;
+  /* 流向副标题：各层合计一致，避免与总批次量级打架 */
+  var sub=document.getElementById('trFlowSub');
+  if(sub){
+    var tot=rows[0].segs.reduce(function(a,b){return a+b[1];},0);
+    sub.textContent='菌包 → 终端 · '+trNum(tot)+' 批';
+  }
 }
 
 /* 实时心跳：视频时间戳逐秒跳动 + 关键指标刷新高亮 */
@@ -3801,7 +5274,7 @@ function startLiveFeed(){
     }
   },1000);
   setInterval(function(){
-    /* 总览关键指标小幅漂移 + 高亮，模拟实时采集 */
+    /* 关键指标小幅漂移 + 高亮，模拟实时采集 */
     if(state.view==='overview'){
       var co2=Math.round(668+Math.random()*58);
       var tp=(18.1+Math.random()*0.7).toFixed(1);
@@ -3811,6 +5284,22 @@ function startLiveFeed(){
       if(e2) e2.textContent=tp;
       if(e3) e3.textContent=hu;
       if(document.getElementById('gauge')) renderGauge(co2,'正常');
+    }
+    if(state.view==='env'&&state.house){
+      /* 环境页：所选菇房读数轻微漂移，保持在目标区间附近 */
+      var d=envData(state.house);
+      var dCo2=Math.round(d.co2+(Math.random()-0.5)*10);
+      var dTp=(d.temp+(Math.random()-0.5)*0.2).toFixed(1);
+      var dHu=(d.hum+(Math.random()-0.5)*0.2).toFixed(1);
+      var x1=document.getElementById('envCo2'),x2=document.getElementById('envTemp'),x3=document.getElementById('envHum');
+      if(x1) x1.textContent=dCo2;
+      if(x2) x2.textContent=dTp;
+      if(x3) x3.textContent=dHu;
+      var y1=document.getElementById('envPageCo2');
+      if(y1) y1.textContent=dCo2;
+      var z1=document.getElementById('kLux'),z2=document.getElementById('kWind');
+      if(z1) z1.textContent=d.lux;
+      if(z2) z2.textContent=d.wind.toFixed(2);
     }
     var els=document.querySelectorAll('#kCo2,#kTemp,#kHum,.es-row b,.envview .bigkpi b,.energyview .bigkpi b,.traceview .bigkpi b');
     for(var i=0;i<els.length;i++){
@@ -3840,12 +5329,14 @@ startLiveFeed();
   applyView(v,{house:house,code:p.get('code')||''});
   requestAnimationFrame(function(){
     buildCharts();
+    bindOverviewProd();
     lineChart(document.getElementById('miniChart'),{
-      labels:LAB24,
+      labels:PROD.LAB2,
       padL:34,
       hideY:false,
+      yFmt:function(v){return fmt(v);},
       series:[
-        {data:[168,182,196,214,268,342,398,376,352,340,336,328,324],min:120,max:460,color:'#38D6FF',type:'area',width:1.6,dot:true}
+        {data:PROD.HOUR2,min:0,max:440,color:'#38D6FF',type:'area',width:1.6,dot:true}
       ]
     });
   });

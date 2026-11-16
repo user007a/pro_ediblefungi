@@ -8,6 +8,11 @@
     return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
   }
   function at(offset, hm) { return dayKey(offset) + ' ' + hm; }
+  function nowStamp() {
+    var d = new Date(), p = function (n) { return n < 10 ? '0' + n : String(n); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' +
+      p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
   function hash(s) {
     var h = 2166136261;
     for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -280,7 +285,90 @@
       { id: 'RP-261116-02', type: '采收报文', batch: 'MJ-261115-01', count: 5, status: '成功', receipt: '湘监收〔2026〕1116-02', time: at(0, '08:30') },
       { id: 'RP-261115-03', type: '批次报文', batch: 'MJ-261115-03', count: 2, status: '死信', receipt: '—', time: at(-1, '10:20') },
       { id: 'RP-261115-04', type: '冷链报文', batch: 'MJ-261110-08', count: 3, status: '成功', receipt: '湘监收〔2026〕1115-04', time: at(-1, '09:10') }
-    ]
+    ],
+
+    /* ============================================================
+     * 追溯统计口径 —— 全平台单点定义
+     * ------------------------------------------------------------
+     * 大屏（da_index.html 质量追溯视图）、追溯码管理、溯源统计
+     * 等页面一律读取本节，禁止各自硬编码，避免跨页口径打架。
+     *
+     * 口径约束（改动时须同步校验）：
+     *   1) codeStatus 各项之和 === totalIssued（累计发码总量）
+     *   2) totalBatches（累计上链批次）<= totalIssued（每批次至少一个码）
+     *   3) channels 各项之和 === todayScan（今日扫码量）
+     *   4) provinces 为近 30 日累计，与 trend（近 7 日单日）口径不同，
+     *      展示时必须分别标注，不可混用
+     * ============================================================ */
+    traceStats: {
+      /* —— 追溯码 —— */
+      totalIssued: 155300,      // 累计发码总量
+      thisMonth: 18600,         // 本月新增发码
+      activated: 96300,         // 已激活码
+      codeStatus: [
+        { name: '已激活', value: 96300, ratio: 62 },
+        { name: '未激活', value: 32600, ratio: 21 },
+        { name: '已过期', value: 17100, ratio: 11 },
+        { name: '已作废', value: 9300,  ratio: 6 }
+      ],
+      /* —— 批次 —— */
+      totalBatches: 108420,     // 累计上链批次
+      traceCoverage: 97.2,      // 追溯覆盖率（累计批次口径）
+      chainIntegrity: 96.4,     // 链完整率（累计已上链环节占比）
+      chainSuccessRate: 99.6,   // 上链成功率
+      chainNodes: 6,            // 存证节点数
+      chainConsensus: 'Raft 共识 · 6 节点',
+
+      /* —— 扫码（今日口径）—— */
+      todayScan: 12860,
+      dod: 8.2,                 // 环比 %
+      avgResponse: 0.8,         // 平均查询响应（秒）
+      satisfaction: 4.8,        // 消费者满意度
+      channels: [
+        { name: '微信扫码', value: 7973, ratio: 62 },
+        { name: '支付宝',   value: 2315, ratio: 18 },
+        { name: '企业 App', value: 1672, ratio: 13 },
+        { name: '网页查询', value: 900,  ratio: 7 }
+      ],
+      /* —— 扫码地理（近 30 日累计口径）—— */
+      provinceTotal: 18,
+      provinces: [
+        { name: '新疆', value: 58600 }, { name: '广东', value: 31200 },
+        { name: '浙江', value: 26400 }, { name: '江苏', value: 23800 },
+        { name: '上海', value: 19600 }, { name: '北京', value: 17900 },
+        { name: '山东', value: 15200 }, { name: '河南', value: 13100 },
+        { name: '四川', value: 11800 }, { name: '陕西', value: 10600 },
+        { name: '福建', value: 9400 },  { name: '湖北', value: 8200 },
+        { name: '湖南', value: 7500 },  { name: '安徽', value: 6900 },
+        { name: '河北', value: 6100 },  { name: '辽宁', value: 5400 },
+        { name: '天津', value: 4200 },  { name: '甘肃', value: 3300 }
+      ],
+      /* —— 扫码趋势（近 7 日单日口径）—— */
+      trend: [
+        { date: '11-10', value: 10120 }, { date: '11-11', value: 10840 },
+        { date: '11-12', value: 11460 }, { date: '11-13', value: 10920 },
+        { date: '11-14', value: 11880 }, { date: '11-15', value: 12240 },
+        { date: '11-16', value: 12860 }
+      ],
+      /* —— 批次流向（食用菌工序口径，与大屏 TR_FLOW_ROWS 一致）—— */
+      flow: {
+        base:     [ {name:'平菇', value:38200}, {name:'杏鲍菇', value:34600}, {name:'金针菇', value:22100}, {name:'香菇', value:13520} ],
+        harvest:  [ {name:'一级菇', value:62100}, {name:'二级菇', value:32600}, {name:'畸形菇', value:13720} ],
+        package:  [ {name:'预冷库', value:58400}, {name:'冷藏库', value:37200}, {name:'加工级', value:12820} ],
+        channel:  [ {name:'产地直发', value:48600}, {name:'商超配送', value:33900}, {name:'电商专线', value:25920} ],
+        consumer: [ {name:'商超门店', value:42800}, {name:'电商到家', value:35100}, {name:'餐饮直供', value:30520} ],
+        thisWeek: 2860,
+        channelCount: 12,
+        avgDuration: 4.2
+      },
+      /* —— 风险扫码（窜货 / 异地高频 / 过期码查询）—— */
+      risks: [
+        { id: 'RSK-261116-01', code: 'TR-261110-08001', region: '广东省深圳市', reason: '授权区域外高频扫码，疑似窜货', level: 'high', time: at(0, '09:18') },
+        { id: 'RSK-261116-02', code: 'TR-261115-02001', region: '浙江省杭州市', reason: '单码 10 分钟内重复查询 7 次', level: 'medium', time: at(0, '08:47') },
+        { id: 'RSK-261115-03', code: 'TR-261112-07001', region: '四川省成都市', reason: '追溯码已过期仍被扫码查询', level: 'medium', time: at(-1, '21:33') },
+        { id: 'RSK-261115-04', code: 'TR-261115-01001', region: '河南省郑州市', reason: '销区外首次扫码，需复核渠道', level: 'low', time: at(-1, '17:09') }
+      ]
+    }
   };
 
   var ENV_BASE = {
@@ -303,6 +391,8 @@
     if (saved && typeof saved === 'object' && saved.batches) db = saved;
   } catch (e) { /* 回退种子 */ }
   if (!db) db = JSON.parse(JSON.stringify(SEED));
+  /* 旧版本缓存缺少 traceStats 字段时，用种子补齐，保证口径定义始终存在 */
+  if (!db.traceStats) db.traceStats = JSON.parse(JSON.stringify(SEED.traceStats));
   function persist(col) {
     try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) {}
     global.dispatchEvent(new CustomEvent('fungiStoreChange', { detail: { col: col } }));
@@ -375,11 +465,103 @@
       return {
         batches: 36, envRate: 97.6, harvestToday: kg,
         grade1Rate: kg ? +(g1 / kg * 100).toFixed(1) : 0,
-        trace: 12480, traceMonth: 1860,
+        trace: db.traceStats.totalIssued, traceMonth: db.traceStats.thisMonth,
         roomsInProd: db.rooms.filter(function (r) { return r.status === '在产'; }).length,
         roomsTotal: db.rooms.length,
         fullRate: 92.6, precool: +pre.toFixed(1), pollutionGF04: 2.8
       };
+    },
+
+    /* ============================================================
+     * 追溯统计统一出口
+     * ------------------------------------------------------------
+     * 大屏 / 溯源统计 / 追溯码管理一律走这里，保证跨页同口径。
+     * ============================================================ */
+    traceStats: function () {
+      var t = db.traceStats || SEED.traceStats;
+      var chains = db.chain || [];
+      var pending = 0, doneNodes = 0, totalNodes = 0;
+      chains.forEach(function (c) {
+        var nodes = (c && c.nodes) || {};
+        Object.keys(nodes).forEach(function (k) {
+          totalNodes++;
+          if (nodes[k] != null) doneNodes++;
+          else pending++;
+        });
+      });
+      return {
+        /* 追溯码 */
+        totalIssued: t.totalIssued,
+        thisMonth: t.thisMonth,
+        activated: t.activated,
+        activateRate: +(t.activated * 100 / t.totalIssued).toFixed(1),
+        codeStatus: (t.codeStatus || []).map(function (x) { return { name: x.name, value: x.value, ratio: x.ratio }; }),
+        /* 批次 */
+        totalBatches: t.totalBatches,
+        traceCoverage: t.traceCoverage,
+        chainIntegrity: t.chainIntegrity,
+        chainSuccessRate: t.chainSuccessRate,
+        chainNodes: t.chainNodes,
+        chainConsensus: t.chainConsensus,
+        /* 扫码 */
+        todayScan: t.todayScan,
+        dod: t.dod,
+        avgResponse: t.avgResponse,
+        satisfaction: t.satisfaction,
+        channels: (t.channels || []).map(function (x) { return { name: x.name, value: x.value, ratio: x.ratio }; }),
+        provinceTotal: t.provinceTotal,
+        provinces: (t.provinces || []).map(function (x) { return { name: x.name, value: x.value }; }),
+        trend: (t.trend || []).map(function (x) { return { date: x.date, value: x.value }; }),
+        flow: t.flow ? {
+          base: (t.flow.base || []).map(function (x) { return { name: x.name, value: x.value }; }),
+          harvest: (t.flow.harvest || []).map(function (x) { return { name: x.name, value: x.value }; }),
+          package: (t.flow.package || []).map(function (x) { return { name: x.name, value: x.value }; }),
+          channel: (t.flow.channel || []).map(function (x) { return { name: x.name, value: x.value }; }),
+          consumer: (t.flow.consumer || []).map(function (x) { return { name: x.name, value: x.value }; }),
+          thisWeek: t.flow.thisWeek,
+          channelCount: t.flow.channelCount,
+          avgDuration: t.flow.avgDuration
+        } : {},
+        risks: (t.risks || []).map(function (x) {
+          return { id: x.id, code: x.code, region: x.region, reason: x.reason, level: x.level, time: x.time };
+        }),
+        /* 链路完成度（来自在制批次链） */
+        chain: {
+          batches: chains.length,
+          pendingNodes: pending,
+          totalNodes: totalNodes,
+          doneNodes: doneNodes,
+          completion: totalNodes ? +(doneNodes * 100 / totalNodes).toFixed(1) : 0
+        },
+        /* 召回与监管 */
+        recall: {
+          total: (db.recalls || []).length,
+          active: (db.recalls || []).filter(function (r) { return r.status && r.status !== '已完成'; }).length,
+          list: (db.recalls || []).slice()
+        },
+        regulatory: {
+          total: (db.regulatory || []).length,
+          success: (db.regulatory || []).filter(function (r) { return r.status === '成功'; }).length,
+          dead: (db.regulatory || []).filter(function (r) { return r.status === '死信'; }).length,
+          list: (db.regulatory || []).slice()
+        },
+        updatedAt: nowStamp()
+      };
+    },
+
+    /** 口径自检：任一项不满足返回 false 并在控制台提示，用于避免跨页数值打架 */
+    verifyTraceStats: function () {
+      var t = db.traceStats || SEED.traceStats;
+      var errs = [];
+      var codeSum = (t.codeStatus || []).reduce(function (s, x) { return s + x.value; }, 0);
+      if (codeSum !== t.totalIssued) errs.push('codeStatus 之和 ' + codeSum + ' ≠ totalIssued ' + t.totalIssued);
+      if (t.totalBatches > t.totalIssued) errs.push('totalBatches ' + t.totalBatches + ' > totalIssued ' + t.totalIssued);
+      var chSum = (t.channels || []).reduce(function (s, x) { return s + x.value; }, 0);
+      if (chSum !== t.todayScan) errs.push('channels 之和 ' + chSum + ' ≠ todayScan ' + t.todayScan);
+      var ratioSum = (t.codeStatus || []).reduce(function (s, x) { return s + x.ratio; }, 0);
+      if (ratioSum !== 100) errs.push('codeStatus ratio 之和 ' + ratioSum + ' ≠ 100');
+      if (errs.length) console.warn('[FungiStore] 追溯统计口径不自洽：', errs);
+      return errs.length === 0;
     },
     resetAll: function () {
       db = JSON.parse(JSON.stringify(SEED));

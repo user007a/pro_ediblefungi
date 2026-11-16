@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>食用菌工厂化农业数据管理平台 - 系统首页</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2352c41a'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/design-system.css">
 <link rel="stylesheet" href="css/page-content.css">
 <link rel="stylesheet" href="css/unified-theme.css">
@@ -146,7 +147,7 @@
   .panel-camera { display:flex; flex-direction:column; }
   .panel-camera .panel-body { flex:1; display:flex; flex-direction:column; }
 
-  /* ---- 基地实景监控 ---- */
+  /* ---- 厂区实景监控 ---- */
   .camera-grid {
     display:grid;
     grid-template-columns:repeat(4, minmax(0, 1fr));
@@ -645,7 +646,7 @@
                 </svg>
                 生产智能快讯
               </div>
-              <a href="material_io.html" onclick="gotoPage('material_io.html','菌包制备管理');return false;" class="panel-link">工序台账 →</a>
+              <a href="material_io.html" onclick="gotoPage('material_io.html','菌包制备');return false;" class="panel-link">工序台账 →</a>
             </div>
             <div class="panel-body">
               <div class="model-grid">
@@ -768,7 +769,7 @@
               <div class="panel-content">
                 <div class="panel-body">
                   <div class="task-list">
-                  <div class="task-item urgent" onclick="gotoPage('harvest_report.html','高压灭菌管理')">
+                  <div class="task-item urgent" onclick="gotoPage('harvest_report.html','高压灭菌')">
                     <div class="task-content">
                       <div class="task-title">复判灭菌曲线缺口批次</div>
                       <div class="task-desc">MJ-261115-03 灭菌中途断电缺口 12min，需人工复判并归档</div>
@@ -1062,7 +1063,7 @@ setInterval(updateLiveClocks, 1000);  // 每秒刷新摄像头时间戳
   // 生产智能快讯卡片点击跳转对应工序 / 管理页
   (function() {
     const targets = ['harvest_record.html', 'alert_overview.html', 'harvest_plan.html', 'harvest_process.html', 'device_control.html', 'harvest_storage.html'];
-    const labels = ['菌丝培养管理', '预警管理', '出菇培育管理', '采收分拣管理', '设备运行监控', '仓储冷链管理'];
+    const labels = ['菌丝培养', '预警管理', '出菇培育', '采收分拣', '设备运行监控', '仓储冷链'];
     const cards = document.querySelectorAll('.model-grid .model-card');
     cards.forEach((card, i) => {
       card.style.cursor = 'pointer';
