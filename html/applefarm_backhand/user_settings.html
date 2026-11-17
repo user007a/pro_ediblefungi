@@ -57,6 +57,24 @@
   .data-section::-webkit-scrollbar-track { background:#f6ffed; }
   .data-section::-webkit-scrollbar-thumb { background:#b7eb8f; border-radius:4px; }
   .data-section::-webkit-scrollbar-thumb:hover { background:#52c41a; }
+  .rp-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:14px 20px; border-bottom:1px solid var(--border-default); }
+  .rp-head h3 { margin:0; font-size:15px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:8px; }
+  .rp-head h3::before { content:''; width:4px; height:16px; border-radius:2px; background:linear-gradient(180deg,#722ed1,#1890ff); }
+  .rp-body { padding:16px 20px; }
+  .rp-roles { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .rp-role { padding:7px 14px; border:1px solid var(--border-default); border-radius:999px; background:#fff; cursor:pointer; font-size:13px; color:var(--text-secondary); transition:all .2s; }
+  .rp-role:hover { border-color:#722ed1; }
+  .rp-role.active { border-color:#722ed1; background:#f9f0ff; color:#722ed1; font-weight:600; }
+  .rp-group { border:1px solid var(--border-default); border-radius:10px; margin-bottom:10px; overflow:hidden; }
+  .rp-group-head { display:flex; align-items:center; gap:10px; padding:9px 14px; background:linear-gradient(90deg,#f9f0ff,#e6f4ff); font-size:13px; font-weight:600; cursor:pointer; user-select:none; }
+  .rp-group-head input { width:15px; height:15px; accent-color:#722ed1; cursor:pointer; }
+  .rp-group-head .cnt { margin-left:auto; font-size:12px; color:var(--text-tertiary); font-weight:400; }
+  .rp-items { display:grid; grid-template-columns:repeat(4,1fr); gap:2px 12px; padding:8px 14px 10px 36px; }
+  @media (max-width:1300px){ .rp-items { grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:900px){ .rp-items { grid-template-columns:repeat(2,1fr); } }
+  .rp-item { display:flex; align-items:center; gap:7px; font-size:13px; color:var(--text-secondary); padding:4px 2px; cursor:pointer; border-radius:6px; }
+  .rp-item:hover { background:#f5f8ff; color:var(--text-primary); }
+  .rp-item input { width:14px; height:14px; accent-color:#1890ff; cursor:pointer; }
   @media (max-width:1100px){ .stats-section { grid-template-columns:repeat(2,1fr); } }
   .bulk-bar { display:none; align-items:center; gap:12px; padding:8px 14px; margin-bottom:10px; background:#e6f4ff; border:1px solid #91caff; border-radius:8px; font-size:13px; color:#0958d9; }
   .bulk-bar.show { display:flex; }
@@ -165,6 +183,23 @@
             <tbody id="dataTableBody"></tbody>
           </table>
           <div id="pagination-container"></div>
+        </div>
+
+        <div style="background:var(--bg-card);border:1px solid var(--border-default);border-radius:12px;margin-top:16px;overflow:hidden;">
+          <div class="rp-head">
+            <h3>角色菜单权限矩阵</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="jg-btn" onclick="rpCheckAll(true)">全选</button>
+              <button class="jg-btn" onclick="rpCheckAll(false)">全不选</button>
+              <button class="jg-btn" style="border-color:#fa8c16;color:#fa8c16;" onclick="rpReset()">恢复默认</button>
+              <button class="jg-btn jg-btn-primary" onclick="rpSave()">保存权限</button>
+            </div>
+          </div>
+          <div class="rp-body">
+            <p style="font-size:12px;color:var(--text-tertiary);margin:0 0 12px;">与「菜单设置」共用同一白名单（localStorage snzg_permissions，键格式 角色:分组:菜单）。勾选 = 该角色可见；保存后以该角色重新登录生效；超级管理员（admin）始终可见全部菜单。</p>
+            <div class="rp-roles" id="rpRoles"></div>
+            <div id="rpTree"></div>
+          </div>
         </div>
 
       </div>
@@ -637,10 +672,125 @@ function exportCSV(){
   showToast('已导出 '+rows.length+' 个账号（不含密码）','success');
 }
 
+/* ===== 角色菜单权限矩阵（与 menu_settings 共用 snzg_permissions 白名单） ===== */
+var PERM_KEY='snzg_permissions';
+var RP_ROLES=['超级管理员','生产主管','接种操作工','设备运维工程师','质检员'];
+var RP_TREE=[
+  { group:'系统首页', items:[ { name:'系统首页', url:'home.html' } ] },
+  { group:'企业管理', items:[
+    { name:'企业信息', url:'enterprise_info.html' },
+    { name:'厂区档案', url:'enterprise_base.html' },
+    { name:'物料种质', url:'material_info.html' },
+    { name:'人员班组', url:'team_manage.html' },
+    { name:'工艺标准', url:'guide_standard.html' }
+  ]},
+  { group:'生产管理', items:[
+    { name:'菌包制备', url:'material_io.html' },
+    { name:'高压灭菌', url:'harvest_report.html' },
+    { name:'无菌接种', url:'farming_record.html' },
+    { name:'菌丝培养', url:'harvest_record.html' },
+    { name:'出菇培育', url:'harvest_plan.html' },
+    { name:'采收分拣', url:'harvest_process.html' },
+    { name:'仓储冷链', url:'harvest_storage.html' }
+  ]},
+  { group:'设备管理', items:[
+    { name:'设备管理', url:'device_info.html' },
+    { name:'设备环境数据', url:'env_monitor.html' },
+    { name:'设备运行监控', url:'device_control.html' },
+    { name:'设备运维工单', url:'device_maintain.html' },
+    { name:'备品备件', url:'device_spare.html' }
+  ]},
+  { group:'预警管理', items:[
+    { name:'预警管理', url:'alert_overview.html' },
+    { name:'预警设置', url:'alert_settings.html' }
+  ]},
+  { group:'追溯管理', items:[
+    { name:'追溯码管理', url:'trace_code.html' },
+    { name:'全链条录入', url:'trace_batch.html' },
+    { name:'区块链存证', url:'trace_blockchain.html' },
+    { name:'产品召回', url:'trace_query.html' },
+    { name:'监管对接', url:'data_source.html' }
+  ]},
+  { group:'系统管理', items:[
+    { name:'系统设置', url:'system_settings.html' },
+    { name:'菜单设置', url:'menu_settings.html' },
+    { name:'用户设置', url:'user_settings.html' }
+  ]}
+];
+var rpRole=RP_ROLES[0], rpChecked={};
+function rpLoadSaved(){ try{ var s=JSON.parse(localStorage.getItem(PERM_KEY)||'null'); return (s&&typeof s==='object')?s:{}; }catch(e){ return {}; } }
+function rpHasConfig(role){ var s=rpLoadSaved(); return Object.keys(s).some(function(k){ return k.split(':')[0]===role&&s[k]===true; }); }
+function rpLoadChecks(role){
+  var s=rpLoadSaved(), has=rpHasConfig(role), map={};
+  RP_TREE.forEach(function(g){ g.items.forEach(function(it){
+    var k=role+':'+g.group+':'+it.name, gk=role+':'+g.group;
+    map[it.url]=!has?true:((k in s)?!!s[k]:((gk in s)?!!s[k]:false));
+  }); });
+  return map;
+}
+function renderPermPanel(){
+  document.getElementById('rpRoles').innerHTML=RP_ROLES.map(function(r){
+    return '<button class="rp-role '+(r===rpRole?'active':'')+'" onclick="rpSelect(\''+esc(r)+'\')">'+esc(r)+(rpHasConfig(r)?' · 已自定义':'')+'</button>';
+  }).join('');
+  document.getElementById('rpTree').innerHTML=RP_TREE.map(function(g,gi){
+    var on=g.items.filter(function(it){ return rpChecked[it.url]; }).length;
+    var items=g.items.map(function(it){
+      return '<label class="rp-item"><input type="checkbox" data-url="'+esc(it.url)+'" '+(rpChecked[it.url]?'checked':'')+' onchange="rpItem(this)">'+esc(it.name)+'</label>';
+    }).join('');
+    return '<div class="rp-group"><label class="rp-group-head"><input type="checkbox" id="rpg'+gi+'" '+(on===g.items.length?'checked':'')+' onchange="rpGroup('+gi+',this.checked)"><span>'+esc(g.group)+'</span><span class="cnt">'+on+' / '+g.items.length+' 可见</span></label><div class="rp-items">'+items+'</div></div>';
+  }).join('');
+  RP_TREE.forEach(function(g,gi){
+    var on=g.items.filter(function(it){ return rpChecked[it.url]; }).length;
+    document.getElementById('rpg'+gi).indeterminate=on>0&&on<g.items.length;
+  });
+}
+function rpSelect(r){ rpRole=r; rpChecked=rpLoadChecks(r); renderPermPanel(); }
+function rpItem(el){ rpChecked[el.getAttribute('data-url')]=el.checked; renderPermPanel(); }
+function rpGroup(gi,on){ RP_TREE[gi].items.forEach(function(it){ rpChecked[it.url]=on; }); renderPermPanel(); }
+function rpCheckAll(on){
+  RP_TREE.forEach(function(g){ g.items.forEach(function(it){ rpChecked[it.url]=on; }); });
+  renderPermPanel();
+  showToast(on?'已全选全部菜单':'已全不选（保存后该角色将无可见菜单）',on?'info':'warning');
+}
+function rpSave(){
+  var s=rpLoadSaved();
+  var all=RP_TREE.every(function(g){ return g.items.every(function(it){ return rpChecked[it.url]; }); });
+  Object.keys(s).forEach(function(k){ if(k.split(':')[0]===rpRole) delete s[k]; });
+  var visible=0, total=0;
+  if(!all){
+    RP_TREE.forEach(function(g){
+      var gon=false;
+      g.items.forEach(function(it){ total++; var on=!!rpChecked[it.url]; if(on){ visible++; gon=true; } s[rpRole+':'+g.group+':'+it.name]=on; });
+      s[rpRole+':'+g.group]=gon;
+    });
+    localStorage.setItem(PERM_KEY,JSON.stringify(s));
+  }else{
+    visible=total=RP_TREE.reduce(function(n,g){ return n+g.items.length; },0);
+    if(Object.keys(s).length) localStorage.setItem(PERM_KEY,JSON.stringify(s)); else localStorage.removeItem(PERM_KEY);
+  }
+  opLog('保存角色菜单权限',rpRole+' · '+visible+'/'+total+' 可见'+(all?'（默认全可见）':''));
+  renderPermPanel();
+  showToast('已保存：'+rpRole+' 可见 '+visible+'/'+total+' 项，以该角色重新登录生效（与菜单设置同步）','success');
+}
+function rpReset(){
+  if(!rpHasConfig(rpRole)){ showToast(rpRole+' 当前已是默认全可见','info'); return; }
+  askConfirm('恢复默认权限','将删除角色 <strong>'+esc(rpRole)+'</strong> 的全部菜单限制，恢复默认全可见（与菜单设置共用同一白名单）。是否继续？',function(){
+    var s=rpLoadSaved();
+    Object.keys(s).forEach(function(k){ if(k.split(':')[0]===rpRole) delete s[k]; });
+    if(Object.keys(s).length) localStorage.setItem(PERM_KEY,JSON.stringify(s)); else localStorage.removeItem(PERM_KEY);
+    rpChecked=rpLoadChecks(rpRole);
+    opLog('恢复默认菜单权限',rpRole);
+    renderPermPanel();
+    showToast(rpRole+' 已恢复默认全可见','success');
+  });
+}
+
 function refresh(){ renderStats(); applyFilter(false); }
 document.addEventListener('DOMContentLoaded',function(){
   ['roleSelect','statusSelect'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(){ applyFilter(false); }); });
   document.getElementById('kwInput').addEventListener('input',function(){ applyFilter(false); });
+  rpChecked=rpLoadChecks(rpRole);
+  renderPermPanel();
   refresh();
 });
 </script>

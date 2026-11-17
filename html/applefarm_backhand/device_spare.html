@@ -83,7 +83,7 @@
 
   .section-title { font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 10px; display:flex; align-items:center; gap:8px; }
   .section-title .count { font-size:12px; font-weight:500; color:var(--text-tertiary); }
-  .data-table { min-width:1020px; }
+  .data-table { min-width:1320px; }
   .data-table th { white-space:nowrap; }
   .data-table th.sortable { cursor:pointer; user-select:none; }
   .data-table th.sortable:hover { color:var(--primary-500); }
@@ -93,6 +93,15 @@
   .empty-row td { text-align:center; color:var(--text-tertiary); padding:32px 0; }
   .num-cell { font-variant-numeric:tabular-nums; }
   .num-cell.low { color:#cf1322; font-weight:700; }
+  .num-cell.critical { color:#ad6800; font-weight:700; }
+  .cat-badge { display:inline-block; padding:2px 8px; border-radius:var(--radius-sm); font-size:11.5px; font-weight:500;
+    background:#f0f5ff; color:#2f54eb; border:1px solid #d6e4ff; white-space:nowrap; }
+  .circuit-code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:11.5px;
+    background:var(--gray-100); border:1px solid var(--border-default); border-radius:5px; padding:1px 6px; color:var(--text-secondary); }
+  .due-tag { display:inline-flex; align-items:center; padding:3px 10px; font-size:11.5px; font-weight:500; border-radius:20px; white-space:nowrap; }
+  .due-tag.ok { background:#d9f7be; color:#3a8618; border:1px solid #b7eb8f; }
+  .due-tag.warn { background:var(--warning-bg); color:#ad6800; border:1px solid var(--warning-border); }
+  .due-tag.over { background:var(--error-bg); color:#cf1322; border:1px solid #ffccc7; }
   #movePagination { padding:12px 16px; }
   .selected-info { font-size:12.5px; color:var(--text-tertiary); margin-left:auto; }
   .selected-info strong { color:var(--primary-600); }
@@ -134,12 +143,23 @@
 
       <div class="page-section search-section">
         <div class="search-bar">
+          <select class="search-select" id="categorySelect" style="min-width:120px;">
+            <option value="">全部类别</option>
+            <option value="过滤耗材">过滤耗材</option>
+            <option value="密封件">密封件</option>
+            <option value="阀件">阀件</option>
+            <option value="传感器">传感器</option>
+            <option value="传动件">传动件</option>
+            <option value="加湿耗材">加湿耗材</option>
+            <option value="消杀耗材">消杀耗材</option>
+          </select>
           <select class="search-select" id="stockSelect" style="min-width:130px;">
             <option value="">全部库存状态</option>
             <option value="low">低库存（低于安全库存）</option>
+            <option value="critical">临界（等于安全库存）</option>
             <option value="ok">库存充足</option>
           </select>
-          <input type="text" class="search-input" id="searchInput" placeholder="搜索备件名称 / 编号 / 规格 / 库位...">
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索备件名称 / 编号 / 规格 / 库位 / 回路号...">
           <div class="search-actions">
             <button class="jg-btn" onclick="resetFilter()">重置</button>
           </div>
@@ -167,12 +187,15 @@
                 <th style="width:44px;text-align:center;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
                 <th class="sortable" style="width:90px;" onclick="setSort('id')">备件编号<span class="arrow" id="ar-id"></span></th>
                 <th class="sortable" onclick="setSort('name')">备件名称<span class="arrow" id="ar-name"></span></th>
-                <th style="width:150px;">规格型号</th>
+                <th style="width:96px;">类别</th>
+                <th style="width:140px;">规格型号</th>
                 <th class="sortable" style="width:100px;" onclick="setSort('stock')">当前库存<span class="arrow" id="ar-stock"></span></th>
-                <th style="width:100px;">安全库存</th>
-                <th style="width:110px;">库位</th>
-                <th style="width:100px;">单价 (元)</th>
-                <th style="width:100px;">库存状态</th>
+                <th style="width:86px;">安全库存</th>
+                <th style="width:104px;">库位</th>
+                <th style="width:90px;">单价 (元)</th>
+                <th style="width:96px;">库存状态</th>
+                <th style="width:170px;">回路 / 关联设备</th>
+                <th class="sortable" style="width:130px;" onclick="setSort('replaceDue')">更换到期<span class="arrow" id="ar-replaceDue"></span></th>
                 <th style="width:230px;">操作</th>
               </tr>
             </thead>
@@ -237,14 +260,30 @@
       <div class="form-group"><label class="required">备件名称</label><input type="text" id="sName" placeholder="如 HEPA过滤器"></div>
     </div>
     <div class="form-row">
+      <div class="form-group"><label class="required">备件类别</label><select id="sCategory">
+        <option value="过滤耗材">过滤耗材</option><option value="密封件">密封件</option>
+        <option value="阀件">阀件</option><option value="传感器">传感器</option>
+        <option value="传动件">传动件</option><option value="加湿耗材">加湿耗材</option>
+        <option value="消杀耗材">消杀耗材</option>
+      </select></div>
       <div class="form-group"><label>规格型号</label><input type="text" id="sSpec" placeholder="如 H13 610×610"></div>
+    </div>
+    <div class="form-row">
       <div class="form-group"><label>计量单位</label><input type="text" id="sUnit" placeholder="如 只 / 件 / 套"></div>
+      <div class="form-group"><label>库位</label><input type="text" id="sLocation" placeholder="如 备件库 A-01"></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label class="required">当前库存</label><input type="number" id="sStock" min="0" step="1" placeholder="0"></div>
       <div class="form-group"><label class="required">安全库存</label><input type="number" id="sSafety" min="0" step="1" placeholder="0"></div>
     </div>
-    <div class="form-group"><label>库位</label><input type="text" id="sLocation" placeholder="如 备件库 A-01"></div>
+    <div class="form-row">
+      <div class="form-group"><label>关联配电回路</label><input type="text" id="sCircuit" placeholder="如 HL-GF01-01">
+        <div class="form-hint">与设备台账回路号一致时自动关联设备</div>
+      </div>
+      <div class="form-group"><label>更换到期日</label><input type="date" id="sReplaceDue">
+        <div class="form-hint">剩余 ≤15 天进入更换到期预警</div>
+      </div>
+    </div>
   </div>
   <div class="modal-footer">
     <button class="jg-btn" onclick="closeSpareModal()">取消</button>
@@ -318,6 +357,36 @@ function pad2(n){ return n < 10 ? '0' + n : '' + n; }
 function nowStr(){ var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
 function priceOf(s){ return PRICE_MAP[s.id] != null ? PRICE_MAP[s.id] : 50; }
 function isLow(s){ return s.stock < s.safety; }
+function isCritical(s){ return s.stock === s.safety; }
+var REPLACE_WARN_DAYS = 15;
+function daysUntil(dateStr){
+  if (!dateStr) return null;
+  var d = new Date(String(dateStr).slice(0,10) + 'T00:00:00');
+  if (isNaN(d.getTime())) return null;
+  var today = new Date(); today.setHours(0,0,0,0);
+  return Math.round((d.getTime() - today.getTime()) / 86400000);
+}
+function dueInfo(s){
+  var days = daysUntil(s.replaceDue);
+  if (days == null) return { days: null, cls: 'ok', text: '未设置' };
+  if (days < 0) return { days: days, cls: 'over', text: '已逾期 ' + (-days) + ' 天' };
+  if (days <= REPLACE_WARN_DAYS) return { days: days, cls: 'warn', text: '剩余 ' + days + ' 天' };
+  return { days: days, cls: 'ok', text: '剩余 ' + days + ' 天' };
+}
+function dueSoon(s){ var d = daysUntil(s.replaceDue); return d != null && d <= REPLACE_WARN_DAYS; }
+function linkedDevices(s){
+  if (!s.circuit) return [];
+  return FS.list('devices').filter(function(d){ return d.circuit === s.circuit; });
+}
+function openPage(url, title){
+  try { if (window.parent && window.parent !== window && typeof window.parent.openPage === 'function'){ window.parent.openPage(url, title); return; } } catch(e){}
+  location.href = url;
+}
+function stockTag(s){
+  if (isLow(s)) return '<span class="status-tag offline">低库存</span>';
+  if (isCritical(s)) return '<span class="status-tag warning">临界</span>';
+  return '<span class="status-tag online">充足</span>';
+}
 function spareLabel(id){ var s = FS.get('spares', id); return s ? id + ' ' + s.name : id; }
 function undoToast(msg, fn){
   var c = document.querySelector('.toast-container');
@@ -346,16 +415,23 @@ function closeDrawer(){
 function renderStats(){
   var spares = FS.list('spares');
   var low = spares.filter(isLow);
+  var critical = spares.filter(isCritical);
+  var due = spares.filter(dueSoon).sort(function(a,b){ return daysUntil(a.replaceDue) - daysUntil(b.replaceDue); });
   var value = spares.reduce(function(s,x){ return s + x.stock * priceOf(x); }, 0);
   var today = FS.dayKey(0);
   var todayMoves = FS.list('spareMoves').filter(function(m){ return String(m.time).slice(0,10) === today; });
   var inQty = todayMoves.filter(function(m){ return m.type === '入库'; }).reduce(function(s,m){ return s + m.qty; }, 0);
   var outQty = todayMoves.filter(function(m){ return m.type === '出库'; }).reduce(function(s,m){ return s + m.qty; }, 0);
+  var lowSub = [];
+  if (low.length) lowSub.push(esc(low.map(function(x){ return x.id; }).join('、')) + ' 低于安全库存');
+  if (critical.length) lowSub.push(esc(critical.map(function(x){ return x.id; }).join('、')) + ' 等于安全库存（临界）');
   document.getElementById('statCards').innerHTML =
     '<div class="stat-card"><div class="stat-label">备件种类</div><div class="stat-value">' + spares.length + '<span class="unit">种</span></div>' +
-    '<div class="stat-sub">设备维修 / 保养常用件</div></div>' +
+    '<div class="stat-sub">覆盖 7 大备件类别</div></div>' +
     '<div class="stat-card"><div class="stat-label">低库存项</div><div class="stat-value" style="color:' + (low.length ? '#ff4d4f' : '#52c41a') + ';">' + low.length + '<span class="unit">项</span></div>' +
-    '<div class="stat-sub ' + (low.length ? 'err' : '') + '">' + (low.length ? esc(low.map(function(x){ return x.id; }).join('、')) + ' 低于安全库存' : '全部高于安全库存') + '</div></div>' +
+    '<div class="stat-sub ' + (low.length ? 'err' : (critical.length ? 'warn' : '')) + '">' + (lowSub.length ? lowSub.join('；') : '全部高于安全库存') + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">更换到期预警</div><div class="stat-value" style="color:' + (due.length ? '#fa8c16' : '#52c41a') + ';">' + due.length + '<span class="unit">项</span></div>' +
+    '<div class="stat-sub ' + (due.length ? 'warn' : '') + '">' + (due.length ? esc(due.map(function(x){ return x.id + ' ' + dueInfo(x).text; }).join('、')) : '15 天内无到期更换件') + '</div></div>' +
     '<div class="stat-card"><div class="stat-label">库存总值</div><div class="stat-value">¥' + value.toLocaleString('zh-CN') + '</div>' +
     '<div class="stat-sub">按页内估价单价计算</div></div>' +
     '<div class="stat-card"><div class="stat-label">今日出入库</div><div class="stat-value">' + todayMoves.length + '<span class="unit">笔</span></div>' +
@@ -365,12 +441,15 @@ function renderStats(){
 /* ---------- 台账筛选 / 排序 ---------- */
 function spareFiltered(){
   var stock = document.getElementById('stockSelect').value;
+  var cat = document.getElementById('categorySelect').value;
   var kw = document.getElementById('searchInput').value.trim().toLowerCase();
   var list = FS.list('spares').filter(function(x){
+    if (cat && x.category !== cat) return false;
     if (stock === 'low' && !isLow(x)) return false;
-    if (stock === 'ok' && isLow(x)) return false;
+    if (stock === 'critical' && !isCritical(x)) return false;
+    if (stock === 'ok' && (isLow(x) || isCritical(x))) return false;
     if (kw){
-      var hay = [x.id, x.name, x.spec, x.location, x.unit].join(' ').toLowerCase();
+      var hay = [x.id, x.name, x.spec, x.location, x.unit, x.category, x.circuit].join(' ').toLowerCase();
       if (hay.indexOf(kw) < 0) return false;
     }
     return true;
@@ -388,6 +467,7 @@ function setSort(key){
 }
 function resetFilter(){
   document.getElementById('stockSelect').value = '';
+  document.getElementById('categorySelect').value = '';
   document.getElementById('searchInput').value = '';
   renderSpares();
   DeviceUI.toast('已重置筛选条件', 'info');
@@ -396,23 +476,31 @@ function resetFilter(){
 /* ---------- 台账表 ---------- */
 function renderSpares(){
   var list = spareFiltered();
-  document.getElementById('spareCount').textContent = '共 ' + list.length + ' 种 · 低于安全库存标记红色';
+  document.getElementById('spareCount').textContent = '共 ' + list.length + ' 种 · 低于安全库存红色 / 等于安全库存橙色 / 更换剩余≤15天预警';
   var body = document.getElementById('spareBody');
   if (!list.length){
-    body.innerHTML = '<tr class="empty-row"><td colspan="10">暂无符合条件的备件</td></tr>';
+    body.innerHTML = '<tr class="empty-row"><td colspan="13">暂无符合条件的备件</td></tr>';
   } else {
     body.innerHTML = list.map(function(s){
-      var low = isLow(s);
+      var low = isLow(s), crit = isCritical(s);
+      var due = dueInfo(s);
+      var devs = linkedDevices(s);
+      var devText = devs.length ? devs.map(function(d){ return d.id + ' ' + d.name; }).join('、') : '无同回路设备';
       return '<tr class="clickable" onclick="openSpareDrawer(\'' + esc(s.id) + '\')">' +
         '<td style="text-align:center;" onclick="event.stopPropagation();"><input type="checkbox" ' + (selected[s.id] ? 'checked' : '') + ' onclick="toggleOne(\'' + esc(s.id) + '\',this)"></td>' +
         '<td><strong>' + esc(s.id) + '</strong></td>' +
         '<td>' + esc(s.name) + '</td>' +
+        '<td><span class="cat-badge">' + esc(s.category || '未分类') + '</span></td>' +
         '<td>' + esc(s.spec || '—') + '</td>' +
-        '<td class="num-cell' + (low ? ' low' : '') + '">' + s.stock + ' ' + esc(s.unit || '件') + '</td>' +
+        '<td class="num-cell' + (low ? ' low' : (crit ? ' critical' : '')) + '">' + s.stock + ' ' + esc(s.unit || '件') + '</td>' +
         '<td class="num-cell">' + s.safety + '</td>' +
         '<td>' + esc(s.location || '—') + '</td>' +
         '<td class="num-cell">' + priceOf(s).toFixed(2) + '</td>' +
-        '<td>' + (low ? '<span class="status-tag offline">低库存</span>' : '<span class="status-tag online">充足</span>') + '</td>' +
+        '<td>' + stockTag(s) + '</td>' +
+        '<td><span class="circuit-code">' + esc(s.circuit || '—') + '</span>' +
+          '<div style="font-size:11.5px;color:var(--text-tertiary);margin-top:3px;">' + esc(devText) + '</div></td>' +
+        '<td><span class="due-tag ' + due.cls + '">' + esc(due.text) + '</span>' +
+          '<div style="font-size:11.5px;color:var(--text-tertiary);margin-top:3px;">' + esc(s.replaceDue ? String(s.replaceDue).slice(0,10) : '—') + '</div></td>' +
         '<td onclick="event.stopPropagation();"><div class="action-btns">' +
           '<button class="action-btn move" onclick="openMoveModal(\'' + esc(s.id) + '\')">出入库</button>' +
           '<button class="action-btn edit" onclick="openSpareModal(\'' + esc(s.id) + '\')">编辑</button>' +
@@ -420,7 +508,7 @@ function renderSpares(){
         '</div></td></tr>';
     }).join('');
   }
-  ['id','name','stock'].forEach(function(k){
+  ['id','name','stock','replaceDue'].forEach(function(k){
     document.getElementById('ar-' + k).textContent = sortKey === k ? (sortDir > 0 ? '▲' : '▼') : '';
   });
   var all = document.getElementById('checkAll');
@@ -453,11 +541,14 @@ function openSpareModal(id){
   document.getElementById('sId').value = s ? s.id : '';
   document.getElementById('sId').disabled = !!s;
   document.getElementById('sName').value = s ? s.name : '';
+  document.getElementById('sCategory').value = s ? (s.category || '过滤耗材') : '过滤耗材';
   document.getElementById('sSpec').value = s ? (s.spec || '') : '';
   document.getElementById('sUnit').value = s ? (s.unit || '') : '件';
   document.getElementById('sStock').value = s ? s.stock : '';
   document.getElementById('sSafety').value = s ? s.safety : '';
   document.getElementById('sLocation').value = s ? (s.location || '') : '';
+  document.getElementById('sCircuit').value = s ? (s.circuit || '') : '';
+  document.getElementById('sReplaceDue').value = s && s.replaceDue ? String(s.replaceDue).slice(0,10) : '';
   document.getElementById('spareOverlay').classList.add('show');
   document.getElementById('spareModal').classList.add('show');
 }
@@ -475,9 +566,12 @@ function saveSpare(){
   if (document.getElementById('sSafety').value === '' || isNaN(safety) || safety < 0){ DeviceUI.toast('请填写有效安全库存（≥0）', 'error'); return; }
   var id = editingId || document.getElementById('sId').value.trim() || nextSpareId();
   if (!editingId && FS.get('spares', id)){ DeviceUI.toast('备件编号 ' + id + ' 已存在', 'error'); return; }
-  var patch = { name: name, spec: document.getElementById('sSpec').value.trim(),
+  var patch = { name: name, category: document.getElementById('sCategory').value,
+    spec: document.getElementById('sSpec').value.trim(),
     unit: document.getElementById('sUnit').value.trim() || '件',
-    stock: stock, safety: safety, location: document.getElementById('sLocation').value.trim() };
+    stock: stock, safety: safety, location: document.getElementById('sLocation').value.trim(),
+    circuit: document.getElementById('sCircuit').value.trim().toUpperCase(),
+    replaceDue: document.getElementById('sReplaceDue').value ? document.getElementById('sReplaceDue').value + ' 00:00' : '' };
   if (editingId){
     FS.update('spares', editingId, patch);
     DeviceUI.toast('备件信息已更新', 'success');
@@ -564,8 +658,11 @@ function saveMove(){
     ref: document.getElementById('mRef').value.trim() || '—',
     operator: document.getElementById('mOperator').value, time: nowStr() });
   DeviceUI.toast(type + '登记成功：' + s.name + ' ×' + qty + '，库存 ' + s.stock + ' → ' + newStock, 'success');
-  if (isLow(FS.get('spares', s.id))){
+  var after = FS.get('spares', s.id);
+  if (isLow(after)){
     DeviceUI.toast('注意：' + s.name + ' 已低于安全库存 ' + s.safety + '，请及时补货', 'warning');
+  } else if (isCritical(after)){
+    DeviceUI.toast('注意：' + s.name + ' 库存已降至安全库存临界值 ' + s.safety + '，建议补货', 'warning');
   }
   closeMoveModal(); refreshAll();
 }
@@ -633,17 +730,27 @@ function openSpareDrawer(id){
   var s = FS.get('spares', id);
   if (!s) return;
   var moves = FS.list('spareMoves').filter(function(m){ return m.spare === id; });
+  var due = dueInfo(s);
+  var devs = linkedDevices(s);
   var rows = [
-    ['备件编号', s.id], ['备件名称', s.name], ['规格型号', s.spec || '—'],
+    ['备件编号', s.id], ['备件名称', s.name], ['备件类别', s.category || '未分类'], ['规格型号', s.spec || '—'],
     ['当前库存', s.stock + ' ' + (s.unit || '件')], ['安全库存', s.safety + ' ' + (s.unit || '件')],
     ['库位', s.location || '—'], ['单价（估）', '¥' + priceOf(s).toFixed(2)],
     ['库存金额', '¥' + (s.stock * priceOf(s)).toLocaleString('zh-CN')],
-    ['库存状态', isLow(s) ? '<span class="status-tag offline">低库存</span>' : '<span class="status-tag online">充足</span>', 'raw']
+    ['库存状态', stockTag(s), 'raw'],
+    ['配电回路', '<span class="circuit-code">' + esc(s.circuit || '—') + '</span>', 'raw'],
+    ['更换到期', (s.replaceDue ? esc(String(s.replaceDue).slice(0,10)) + ' · ' : '') + '<span class="due-tag ' + due.cls + '">' + esc(due.text) + '</span>', 'raw']
   ];
   var html = '<div class="drawer-section">台账信息</div><div class="detail-info">' +
     rows.map(function(r){
       return '<div class="detail-row"><span class="detail-label">' + r[0] + '</span><span class="detail-value">' + (r[2] === 'raw' ? r[1] : esc(r[1])) + '</span></div>';
     }).join('') + '</div>';
+  html += '<div class="drawer-section">同回路关联设备（' + devs.length + '）</div>';
+  html += devs.length ? devs.map(function(d){
+    return '<div class="mini-item"><div class="mi-main"><strong>' + esc(d.id) + ' · ' + esc(d.name) + '</strong>' +
+      '<div class="mi-sub">' + esc(d.type) + ' · ' + esc(d.location || '—') + ' · ' + esc(d.status) + '</div></div>' +
+      '<button class="action-btn detail" onclick="openPage(\'device_info.html\',\'设备管理\')">查看设备</button></div>';
+  }).join('') : '<div style="font-size:12.5px;color:var(--text-tertiary);">回路 ' + esc(s.circuit || '—') + ' 暂无关联设备</div>';
   html += '<div class="drawer-section">出入库流水（' + moves.length + '）</div>';
   html += moves.length ? moves.map(function(m){
     return '<div class="mini-item"><span class="type-badge ' + (m.type === '入库' ? 'in' : 'out') + '">' + esc(m.type) + '</span>' +
@@ -657,9 +764,13 @@ function openSpareDrawer(id){
 
 /* ---------- 导出 ---------- */
 function exportSpares(){
-  var headers = ['备件编号','备件名称','规格型号','单位','当前库存','安全库存','库位','单价(元)','库存状态'];
+  var headers = ['备件编号','备件名称','类别','规格型号','单位','当前库存','安全库存','库位','单价(元)','库存状态','配电回路','关联设备','更换到期日','更换剩余(天)'];
   var rows = spareFiltered().map(function(s){
-    return [s.id, s.name, s.spec || '', s.unit || '件', s.stock, s.safety, s.location || '', priceOf(s).toFixed(2), isLow(s) ? '低库存' : '充足'];
+    var days = daysUntil(s.replaceDue);
+    return [s.id, s.name, s.category || '', s.spec || '', s.unit || '件', s.stock, s.safety, s.location || '', priceOf(s).toFixed(2),
+      isLow(s) ? '低库存' : (isCritical(s) ? '临界' : '充足'), s.circuit || '',
+      linkedDevices(s).map(function(d){ return d.id; }).join('、'),
+      s.replaceDue ? String(s.replaceDue).slice(0,10) : '', days == null ? '' : days];
   });
   DeviceUI.exportCsv('备件台账', headers, rows);
 }
@@ -679,9 +790,14 @@ document.addEventListener('DOMContentLoaded', function(){
   refreshAll();
   document.getElementById('searchInput').addEventListener('input', renderSpares);
   document.getElementById('stockSelect').addEventListener('change', renderSpares);
+  document.getElementById('categorySelect').addEventListener('change', renderSpares);
   document.getElementById('moveSearch').addEventListener('input', function(){ movePage = 1; renderMoves(); });
   ['moveTypeSelect','moveSpareSelect'].forEach(function(id){
     document.getElementById(id).addEventListener('change', function(){ movePage = 1; renderMoves(); });
+  });
+  window.addEventListener('fungiStoreChange', function(e){
+    var col = e.detail && e.detail.col;
+    if (!col || col === '*' || col === 'spares' || col === 'spareMoves' || col === 'devices') refreshAll();
   });
 });
 </script>

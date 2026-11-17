@@ -78,26 +78,23 @@
 
       <div class="page-head">
         <h1>人员班组</h1>
-        <div class="crumb">企业管理 / 人员班组 · 生产班组、班次与持证台账</div>
+        <div class="crumb">企业管理 / 人员班组 · 岗位定义 · 班组编排 · 人员持证台账 · 关键工序派工校验</div>
       </div>
 
       <div class="stat-grid" id="statGrid"></div>
 
+      <div class="tabs" id="mainTabs" style="margin-bottom:16px;">
+        <div class="tab-item active" data-tab="teams" onclick="switchTab('teams')">班组</div>
+        <div class="tab-item" data-tab="positions" onclick="switchTab('positions')">岗位</div>
+        <div class="tab-item" data-tab="personnel" onclick="switchTab('personnel')">人员</div>
+        <div class="tab-item" data-tab="dispatches" onclick="switchTab('dispatches')">派工</div>
+      </div>
+
       <div class="page-section search-section">
         <div class="search-bar">
-          <select class="search-select" id="filterSelect" onchange="renderTable()">
-            <option value="">全部班次</option>
-            <option value="早班">早班</option>
-            <option value="中班">中班</option>
-            <option value="常白班">常白班 + 值班</option>
-          </select>
-          <select class="search-select" id="certFilter" onchange="renderTable()">
-            <option value="">全部持证状态</option>
-            <option value="已过期">证已过期</option>
-            <option value="30天内">证30天内到期</option>
-            <option value="正常">持证正常</option>
-          </select>
-          <input type="text" class="search-input" id="searchInput" placeholder="搜索班组、班长、成员..." oninput="renderTable()">
+          <select class="search-select" id="filterSelect" onchange="renderTable()"></select>
+          <select class="search-select" id="certFilter" onchange="renderTable()"></select>
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索编号、名称、人员..." oninput="renderTable()">
           <div class="search-actions">
             <button class="jg-btn" onclick="resetFilters()">重置</button>
           </div>
@@ -106,9 +103,9 @@
 
       <div class="page-section action-bar">
         <div class="action-left">
-          <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openTeamForm()">+ 新建班组</button>
-          <button class="jg-btn" id="exportBtn" onclick="exportTeams()">导出CSV</button>
-          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete('teams','班组')">批量删除</button>
+          <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openForm()">+ 新建班组</button>
+          <button class="jg-btn" id="exportBtn" onclick="exportCurrent()">导出CSV</button>
+          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete(currentTab,TAB_LABEL[currentTab])">批量删除</button>
           <span class="selected-info" id="selInfo"></span>
         </div>
       </div>
@@ -116,19 +113,7 @@
       <div class="page-section data-section">
         <div class="data-table-wrapper">
           <table class="data-table">
-            <thead>
-              <tr>
-                <th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
-                <th class="sortable" data-key="name" onclick="sortBy('name')">班组<span class="sort-arrow"></span></th>
-                <th>班次</th>
-                <th>班长</th>
-                <th class="sortable" data-key="memberCount" onclick="sortBy('memberCount')">成员数<span class="sort-arrow"></span></th>
-                <th>持证</th>
-                <th class="sortable" data-key="certExpire" onclick="sortBy('certExpire')">证到期<span class="sort-arrow"></span></th>
-                <th>持证状态</th>
-                <th style="width:130px;">操作</th>
-              </tr>
-            </thead>
+            <thead id="tableHead"></thead>
             <tbody id="tableBody"></tbody>
           </table>
         </div>
@@ -154,9 +139,9 @@
 
 <div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
   <div class="modal-box" style="width:420px;">
-    <div class="modal-header"><h3>删除确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
+    <div class="modal-header"><h3>操作确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
     <div class="modal-body"><p id="confirmText" style="margin:0;font-size:14px;color:var(--text-primary);"></p></div>
-    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="doConfirm()">确认删除</button></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" onclick="doConfirm()">确认</button></div>
   </div>
 </div>
 
@@ -198,9 +183,13 @@ function applySort(rows){if(!sortKey)return rows;return rows.slice().sort(functi
 function paintArrows(){document.querySelectorAll('th.sortable').forEach(function(th){var a=th.querySelector('.sort-arrow');if(a)a.textContent=th.dataset.key===sortKey?(sortDir>0?'▲':'▼'):'';});}
 function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('filterSelect').value='';document.getElementById('certFilter').value='';renderAll();}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeConfirm();closeDrawer();}});
+function pad2(n){return (n<10?'0':'')+n;}
 
-/* ===== 人员班组 ===== */
+/* ===== 人员班组 · 四 tab：班组 / 岗位 / 人员 / 派工 ===== */
+var currentTab='teams';
+var TAB_LABEL={teams:'班组',positions:'岗位',personnel:'人员',dispatches:'派工单'};
 var SHIFTS=['早班 06:00-14:00','早班 02:00-10:00','早班 05:00-13:00','早班 05:30-13:30','中班 08:00-16:00','常白班 + 值班'];
+var PROCESSES=['拌料','灭菌','接种','培养','出菇管理','采收分拣','冷链入库'];
 function membersOf(t){return String(t.members||'').split(/[、,，]/).map(function(s){return s.trim();}).filter(Boolean);}
 function certState(t){
   if(!t.certExpire||t.certExpire==='—')return {text:'无持证要求',cls:'inactive',left:null};
@@ -210,114 +199,415 @@ function certState(t){
   if(left<=30)return {text:'30天内到期',cls:'warning',left:left};
   return {text:'正常',cls:'normal',left:left};
 }
-function teamRows(){
+function syncPersonnel(){
+  var changed=[];
+  FS.list('personnel').forEach(function(p){
+    if(certState(p).text==='已过期'&&p.status!=='禁派'){FS.update('personnel',p.id,{status:'禁派'});changed.push(p.name);}
+  });
+  if(changed.length)showToast('证书已过期，自动禁派：'+changed.join('、'),'warning');
+}
+function switchTab(tab){
+  currentTab=tab;selected={};sortKey='';sortDir=1;
+  document.querySelectorAll('#mainTabs .tab-item').forEach(function(el){el.classList.toggle('active',el.dataset.tab===tab);});
+  var f=document.getElementById('filterSelect'),cf=document.getElementById('certFilter');
+  if(tab==='teams'){
+    f.innerHTML='<option value="">全部班次</option><option value="早班">早班</option><option value="中班">中班</option><option value="常白班">常白班 + 值班</option>';
+    cf.style.display='';cf.innerHTML='<option value="">全部持证状态</option><option value="已过期">证已过期</option><option value="30天内">证30天内到期</option><option value="正常">持证正常</option>';
+  }else if(tab==='positions'){
+    f.innerHTML='<option value="">全部岗位</option><option value="关键">关键工序</option><option value="普通">普通工序</option>';
+    cf.style.display='none';cf.innerHTML='';
+  }else if(tab==='personnel'){
+    f.innerHTML='<option value="">全部状态</option><option value="在岗">在岗</option><option value="禁派">禁派</option>';
+    cf.style.display='';cf.innerHTML='<option value="">全部持证状态</option><option value="已过期">证已过期</option><option value="30天内">证30天内到期</option><option value="正常">持证正常</option>';
+  }else{
+    f.innerHTML='<option value="">全部状态</option><option value="待执行">待执行</option><option value="执行中">执行中</option><option value="已完成">已完成</option><option value="已阻断">已阻断</option>';
+    cf.style.display='';cf.innerHTML='<option value="">全部校验</option><option value="通过">持证校验通过</option><option value="未通过">持证校验未通过</option>';
+  }
+  f.value='';cf.value='';
+  document.getElementById('searchInput').value='';
+  document.getElementById('newBtn').textContent={teams:'+ 新建班组',positions:'+ 新建岗位',personnel:'+ 新增人员',dispatches:'+ 新建派工'}[tab];
+  renderAll();
+}
+function currentRows(){
   var kw=document.getElementById('searchInput').value.trim().toLowerCase();
-  var shift=document.getElementById('filterSelect').value;
+  var fv=document.getElementById('filterSelect').value;
   var cf=document.getElementById('certFilter').value;
-  return FS.list('teams').map(function(t){
-    var cs=certState(t);
-    return Object.assign({},t,{memberCount:membersOf(t).length,csText:cs.text,csCls:cs.cls,csLeft:cs.left});
-  }).filter(function(t){
-    if(shift&&String(t.shift).indexOf(shift)!==0)return false;
-    if(cf){
+  if(currentTab==='teams'){
+    return FS.list('teams').map(function(t){
+      var cs=certState(t);
+      return Object.assign({},t,{memberCount:membersOf(t).length,csText:cs.text,csCls:cs.cls,csLeft:cs.left});
+    }).filter(function(t){
+      if(fv&&String(t.shift).indexOf(fv)!==0)return false;
       if(cf==='正常'&&t.csText!=='正常')return false;
       if(cf==='已过期'&&t.csText!=='已过期')return false;
       if(cf==='30天内'&&t.csText!=='30天内到期')return false;
-    }
-    if(kw&&(t.name+' '+t.leader+' '+t.members+' '+t.certs).toLowerCase().indexOf(kw)===-1)return false;
+      if(kw&&(t.name+' '+t.leader+' '+t.members+' '+t.certs).toLowerCase().indexOf(kw)===-1)return false;
+      return true;
+    });
+  }
+  if(currentTab==='positions'){
+    return FS.list('positions').filter(function(p){
+      if(fv==='关键'&&!p.key)return false;
+      if(fv==='普通'&&p.key)return false;
+      if(kw&&(p.id+' '+p.name+' '+(p.cert||'')+' '+(p.desc||'')).toLowerCase().indexOf(kw)===-1)return false;
+      return true;
+    });
+  }
+  if(currentTab==='personnel'){
+    return FS.list('personnel').map(function(p){
+      var cs=certState(p);
+      return Object.assign({},p,{csText:cs.text,csCls:cs.cls,csLeft:cs.left});
+    }).filter(function(p){
+      if(fv&&p.status!==fv)return false;
+      if(cf==='正常'&&p.csText!=='正常')return false;
+      if(cf==='已过期'&&p.csText!=='已过期')return false;
+      if(cf==='30天内'&&p.csText!=='30天内到期')return false;
+      if(kw&&(p.id+' '+p.name+' '+p.team+' '+p.position+' '+(p.cert||'')+' '+(p.certNo||'')).toLowerCase().indexOf(kw)===-1)return false;
+      return true;
+    });
+  }
+  return FS.list('dispatches').filter(function(d){
+    if(fv&&d.status!==fv)return false;
+    if(cf==='通过'&&!d.certOK)return false;
+    if(cf==='未通过'&&d.certOK)return false;
+    if(kw&&(d.id+' '+d.batch+' '+d.process+' '+d.position+' '+d.person+' '+d.team).toLowerCase().indexOf(kw)===-1)return false;
     return true;
   });
 }
 function renderStats(){
-  var ts=FS.list('teams');
-  var people={};
-  ts.forEach(function(t){membersOf(t).forEach(function(m){people[m]=1;});});
-  var warn=ts.filter(function(t){var s=certState(t).text;return s==='已过期'||s==='30天内到期';}).length;
-  var expired=ts.filter(function(t){return certState(t).text==='已过期';}).length;
+  var ts=FS.list('teams'),ps=FS.list('personnel'),pos=FS.list('positions');
+  var onDuty=ps.filter(function(p){return p.status==='在岗';}).length;
+  var banned=ps.filter(function(p){return p.status==='禁派';}).length;
+  var expired=ps.filter(function(p){return certState(p).text==='已过期';}).length;
+  var warn=ps.filter(function(p){return certState(p).text==='30天内到期';}).length;
   var cards=[
     {label:'班组数',value:ts.length,unit:'个',sub:'覆盖制备到冷链全工序',cls:''},
-    {label:'总人数',value:Object.keys(people).length,unit:'人',sub:'按成员去重统计',cls:'green'},
-    {label:'持证到期预警',value:warn,unit:'个',sub:'已过期 '+expired+' 个，30天内到期 '+(warn-expired)+' 个',cls:'red'},
-    {label:'持证班组',value:ts.filter(function(t){return t.certs&&t.certs!=='—';}).length,unit:'个',sub:'压力容器 / 无菌操作 / 叉车等',cls:'orange'}
+    {label:'人员',value:ps.length,unit:'人',sub:'在岗 '+onDuty+' 人 · 禁派 '+banned+' 人',cls:'green'},
+    {label:'关键工序岗位',value:pos.filter(function(p){return p.key;}).length,unit:'个',sub:'共 '+pos.length+' 岗 · 关键岗须持证上岗',cls:'orange'},
+    {label:'人员持证预警',value:expired+warn,unit:'人',sub:'已过期 '+expired+' 人 · 30天内到期 '+warn+' 人',cls:'red'}
   ];
   document.getElementById('statGrid').innerHTML=cards.map(function(c){
     return '<div class="stat-card '+c.cls+'"><div class="stat-label">'+c.label+'</div><div class="stat-value">'+esc(c.value)+(c.unit?'<small>'+c.unit+'</small>':'')+'</div><div class="stat-sub">'+esc(c.sub)+'</div></div>';
   }).join('');
 }
+function renderHead(){
+  var h=document.getElementById('tableHead');
+  var ck='<th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>';
+  if(currentTab==='teams'){
+    h.innerHTML='<tr>'+ck+
+      '<th class="sortable" data-key="name" onclick="sortBy(\'name\')">班组<span class="sort-arrow"></span></th>'+
+      '<th>班次</th><th>班长</th>'+
+      '<th class="sortable" data-key="memberCount" onclick="sortBy(\'memberCount\')">成员数<span class="sort-arrow"></span></th>'+
+      '<th>持证</th>'+
+      '<th class="sortable" data-key="certExpire" onclick="sortBy(\'certExpire\')">证到期<span class="sort-arrow"></span></th>'+
+      '<th>持证状态</th><th style="width:130px;">操作</th></tr>';
+  }else if(currentTab==='positions'){
+    h.innerHTML='<tr>'+ck+
+      '<th class="sortable" data-key="id" onclick="sortBy(\'id\')">编号<span class="sort-arrow"></span></th>'+
+      '<th>岗位名称</th><th>关键工序</th><th>要求证书</th><th>职责说明</th><th style="width:130px;">操作</th></tr>';
+  }else if(currentTab==='personnel'){
+    h.innerHTML='<tr>'+ck+
+      '<th class="sortable" data-key="id" onclick="sortBy(\'id\')">工号<span class="sort-arrow"></span></th>'+
+      '<th>姓名</th><th>班组</th><th>岗位</th><th>证书</th><th>证号</th>'+
+      '<th class="sortable" data-key="certExpire" onclick="sortBy(\'certExpire\')">证到期<span class="sort-arrow"></span></th>'+
+      '<th>持证状态</th><th>状态</th><th style="width:180px;">操作</th></tr>';
+  }else{
+    h.innerHTML='<tr>'+ck+
+      '<th class="sortable" data-key="id" onclick="sortBy(\'id\')">单号<span class="sort-arrow"></span></th>'+
+      '<th>批次</th><th>工序</th><th>岗位</th><th>人员</th><th>班组</th><th>计划时间</th>'+
+      '<th>持证校验</th><th>状态</th><th style="width:150px;">操作</th></tr>';
+  }
+}
+function dpStatusCls(s){return {'待执行':'base-planning','执行中':'active','已完成':'normal','已阻断':'danger'}[s]||'inactive';}
 function renderTable(){
-  var rows=applySort(teamRows());
+  renderHead();
+  var rows=applySort(currentRows());
   var body=document.getElementById('tableBody');
-  if(!rows.length){body.innerHTML='<tr><td colspan="9" class="empty-cell">暂无符合条件的班组，点击「新建班组」添加</td></tr>';updateSelInfo();paintArrows();return;}
-  body.innerHTML=rows.map(function(t){
-    return '<tr onclick="rowClick(event,\''+t.id+'\')" style="cursor:pointer;">'+
-      '<td><input type="checkbox" class="row-check" data-id="'+t.id+'" '+(selected[t.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
-      '<td><strong>'+esc(t.name)+'</strong></td>'+
-      '<td>'+esc(t.shift)+'</td>'+
-      '<td>'+esc(t.leader)+'</td>'+
-      '<td class="text-right">'+t.memberCount+'</td>'+
-      '<td>'+esc(t.certs)+'</td>'+
-      '<td>'+esc(t.certExpire==='—'?'—':String(t.certExpire).slice(0,10))+'</td>'+
-      '<td><span class="status-tag '+t.csCls+'">'+t.csText+'</span></td>'+
-      '<td><button class="row-btn row-edit" onclick="openTeamForm(\''+t.id+'\')">编辑</button><button class="row-btn danger row-del" onclick="removeRow(\'teams\',\''+t.id+'\',\''+esc(t.name)+'\')">删除</button></td>'+
-    '</tr>';
-  }).join('');
+  var cols={teams:9,positions:7,personnel:11,dispatches:11}[currentTab];
+  if(!rows.length){body.innerHTML='<tr><td colspan="'+cols+'" class="empty-cell">暂无符合条件的记录，点击「新建」添加</td></tr>';updateSelInfo();paintArrows();return;}
+  if(currentTab==='teams'){
+    body.innerHTML=rows.map(function(t){
+      return '<tr onclick="rowClick(event,\''+t.id+'\')" style="cursor:pointer;">'+
+        '<td><input type="checkbox" class="row-check" data-id="'+t.id+'" '+(selected[t.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+        '<td><strong>'+esc(t.name)+'</strong></td><td>'+esc(t.shift)+'</td><td>'+esc(t.leader)+'</td>'+
+        '<td class="text-right">'+t.memberCount+'</td><td>'+esc(t.certs)+'</td>'+
+        '<td>'+esc(t.certExpire==='—'?'—':String(t.certExpire).slice(0,10))+'</td>'+
+        '<td><span class="status-tag '+t.csCls+'">'+t.csText+(t.csLeft!=null&&t.csLeft>=0?'（余'+t.csLeft+'天）':'')+'</span></td>'+
+        '<td><button class="row-btn" onclick="openForm(\''+t.id+'\')">编辑</button><button class="row-btn danger" onclick="removeRow(\'teams\',\''+t.id+'\',\''+esc(t.name)+'\')">删除</button></td></tr>';
+    }).join('');
+  }else if(currentTab==='positions'){
+    body.innerHTML=rows.map(function(p){
+      return '<tr onclick="rowClick(event,\''+p.id+'\')" style="cursor:pointer;">'+
+        '<td><input type="checkbox" class="row-check" data-id="'+p.id+'" '+(selected[p.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+        '<td><strong>'+esc(p.id)+'</strong></td><td>'+esc(p.name)+'</td>'+
+        '<td><span class="status-tag '+(p.key?'danger':'normal')+'">'+(p.key?'关键工序':'普通')+'</span></td>'+
+        '<td>'+esc(p.cert||'—')+'</td><td>'+esc(p.desc||'—')+'</td>'+
+        '<td><button class="row-btn" onclick="openForm(\''+p.id+'\')">编辑</button><button class="row-btn danger" onclick="removeRow(\'positions\',\''+p.id+'\',\''+esc(p.name)+'\')">删除</button></td></tr>';
+    }).join('');
+  }else if(currentTab==='personnel'){
+    body.innerHTML=rows.map(function(p){
+      var actBtn=p.status==='禁派'
+        ?'<button class="row-btn" style="color:#52c41a;border-color:#b7eb8f;" onclick="restorePerson(\''+p.id+'\')">复岗</button>'
+        :'<button class="row-btn danger" onclick="banPerson(\''+p.id+'\')">禁派</button>';
+      return '<tr onclick="rowClick(event,\''+p.id+'\')" style="cursor:pointer;">'+
+        '<td><input type="checkbox" class="row-check" data-id="'+p.id+'" '+(selected[p.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+        '<td><strong>'+esc(p.id)+'</strong></td><td>'+esc(p.name)+'</td><td>'+esc(p.team)+'</td><td>'+esc(p.position)+'</td>'+
+        '<td>'+esc(p.cert||'—')+'</td><td>'+esc(p.certNo||'—')+'</td>'+
+        '<td>'+esc(p.certExpire==='—'?'—':String(p.certExpire).slice(0,10))+'</td>'+
+        '<td><span class="status-tag '+p.csCls+'">'+p.csText+(p.csLeft!=null&&p.csLeft>=0?'（余'+p.csLeft+'天）':'')+'</span></td>'+
+        '<td><span class="status-tag '+(p.status==='在岗'?'normal':'danger')+'">'+esc(p.status)+'</span></td>'+
+        '<td style="white-space:nowrap;"><button class="row-btn" onclick="openForm(\''+p.id+'\')">编辑</button>'+actBtn+'<button class="row-btn danger" onclick="removeRow(\'personnel\',\''+p.id+'\',\''+esc(p.name)+'\')">删除</button></td></tr>';
+    }).join('');
+  }else{
+    body.innerHTML=rows.map(function(d){
+      var flowBtn='';
+      if(d.status==='待执行')flowBtn='<button class="row-btn" style="color:#1890ff;border-color:#91d5ff;" onclick="advanceDispatch(\''+d.id+'\')">开始执行</button>';
+      else if(d.status==='执行中')flowBtn='<button class="row-btn" style="color:#52c41a;border-color:#b7eb8f;" onclick="advanceDispatch(\''+d.id+'\')">完成</button>';
+      return '<tr onclick="rowClick(event,\''+d.id+'\')" style="cursor:pointer;">'+
+        '<td><input type="checkbox" class="row-check" data-id="'+d.id+'" '+(selected[d.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+        '<td><strong>'+esc(d.id)+'</strong></td><td>'+esc(d.batch)+'</td><td>'+esc(d.process)+'</td><td>'+esc(d.position)+'</td>'+
+        '<td>'+esc(d.person)+'</td><td>'+esc(d.team)+'</td><td>'+esc(d.plan)+'</td>'+
+        '<td><span class="status-tag '+(d.certOK?'normal':'danger')+'">'+(d.certOK?'通过':'未通过')+'</span></td>'+
+        '<td><span class="status-tag '+dpStatusCls(d.status)+'">'+esc(d.status)+'</span></td>'+
+        '<td style="white-space:nowrap;">'+flowBtn+'<button class="row-btn danger" onclick="removeRow(\'dispatches\',\''+d.id+'\',\''+esc(d.id)+'\')">删除</button></td></tr>';
+    }).join('');
+  }
   updateSelInfo();paintArrows();
 }
 function renderAll(){renderStats();renderTable();}
 
 var editingId='';
-function openTeamForm(id){
+function openForm(id){
   editingId=id||'';
-  var t=id?FS.get('teams',id):null;
-  openModal(t?'编辑班组':'新建班组',
-    fg('班组名称',inp('f_name',t?t.name:'','text',true),true)+
-    fg('班次',sel('f_shift',SHIFTS,t?t.shift:SHIFTS[0],true),true)+
-    fg('班长',inp('f_leader',t?t.leader:'','text',true),true)+
-    fg('持证类型',inp('f_certs',t?t.certs:'—'),false)+
-    fg('证到期日期',inp('f_expire',t&&t.certExpire!=='—'?String(t.certExpire).slice(0,10):'','date'),false)+
-    fg('成员（用顿号分隔）','<textarea id="f_members" data-req="1">'+esc(t?t.members:'')+'</textarea>',true,true)
-  );
+  if(currentTab==='teams'){
+    var t=id?FS.get('teams',id):null;
+    openModal(t?'编辑班组':'新建班组',
+      fg('班组名称',inp('f_name',t?t.name:'','text',true),true)+
+      fg('班次',sel('f_shift',SHIFTS,t?t.shift:SHIFTS[0],true),true)+
+      fg('班长',inp('f_leader',t?t.leader:'','text',true),true)+
+      fg('持证类型',inp('f_certs',t?t.certs:'—'),false)+
+      fg('证到期日期',inp('f_expire',t&&t.certExpire!=='—'?String(t.certExpire).slice(0,10):'','date'),false)+
+      fg('成员（用顿号分隔）','<textarea id="f_members" data-req="1">'+esc(t?t.members:'')+'</textarea>',true,true)
+    );
+  }else if(currentTab==='positions'){
+    var p=id?FS.get('positions',id):null;
+    var nextId='POS-'+pad2(FS.list('positions').length+1);
+    while(FS.get('positions',nextId))nextId='POS-'+pad2(Number(nextId.slice(4))+1);
+    openModal(p?'编辑岗位':'新建岗位',
+      fg('岗位编号',inp('f_id',p?p.id:nextId,'text',!p),true)+
+      fg('岗位名称',inp('f_name',p?p.name:'','text',true),true)+
+      fg('关键工序',sel('f_key',['是','否'],p?(p.key?'是':'否'):'否',true),true)+
+      fg('要求证书（关键工序必填）',inp('f_cert',p?p.cert:''),false)+
+      fg('职责说明','<textarea id="f_desc">'+esc(p?p.desc||'':'')+'</textarea>',false,true)
+    );
+    if(p)document.getElementById('f_id').disabled=true;
+  }else if(currentTab==='personnel'){
+    var pe=id?FS.get('personnel',id):null;
+    var nextPid='P-'+('00'+(FS.list('personnel').length+1)).slice(-3);
+    while(FS.get('personnel',nextPid))nextPid='P-'+('00'+(Number(nextPid.slice(2))+1)).slice(-3);
+    var teamOpts=FS.list('teams').map(function(t){return t.name;});
+    var posOpts=FS.list('positions').map(function(p){return p.name;});
+    openModal(pe?'编辑人员':'新增人员',
+      fg('工号',inp('f_id',pe?pe.id:nextPid,'text',!pe),true)+
+      fg('姓名',inp('f_name',pe?pe.name:'','text',true),true)+
+      fg('班组',sel('f_team',teamOpts,pe?pe.team:teamOpts[0],true),true)+
+      fg('岗位',sel('f_position',posOpts,pe?pe.position:posOpts[0],true),true)+
+      fg('证书名称',inp('f_cert',pe?pe.cert:''),false)+
+      fg('证号',inp('f_certNo',pe?pe.certNo:''),false)+
+      fg('证到期日期',inp('f_certExpire',pe&&pe.certExpire!=='—'?String(pe.certExpire).slice(0,10):'','date'),false)+
+      fg('状态',sel('f_status',['在岗','禁派'],pe?pe.status:'在岗',true),true)+
+      fg('电话',inp('f_phone',pe?pe.phone:''),false)
+    );
+    if(pe)document.getElementById('f_id').disabled=true;
+  }else{
+    var batchOpts=FS.list('batches').map(function(b){return b.id;});
+    var posList=FS.list('positions');
+    var posSel='<select id="f_position" data-req="1">'+posList.map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.name)+(p.key?'（关键·'+esc(p.cert||'需持证')+'）':'')+'</option>';}).join('')+'</select>';
+    var perSel='<select id="f_person" data-req="1">'+FS.list('personnel').map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.id)+' · '+esc(p.name)+'（'+esc(p.team)+' · '+esc(p.status)+'）</option>';}).join('')+'</select>';
+    openModal('新建派工单',
+      fg('批次',sel('f_batch',batchOpts,batchOpts[0],true),true)+
+      fg('工序',sel('f_process',PROCESSES,'接种',true),true)+
+      fg('岗位',posSel,true)+
+      fg('人员',perSel,true)+
+      fg('计划时间',inp('f_plan',today()+'T08:00','datetime-local',true),true)+
+      '<p style="font-size:12px;color:var(--text-tertiary);margin:0;">关键工序派工将自动校验人员持证：无有效证不得派工，校验未通过的派工单将被阻断并记录原因。</p>'
+    );
+  }
 }
 function saveModal(){
   if(!reqOK())return;
-  var members=val('f_members').replace(/[,，]/g,'、');
-  var leader=val('f_leader');
-  if(membersOf({members:members}).indexOf(leader)===-1)members=leader+'、'+members;
-  var expire=val('f_expire');
-  var patch={name:val('f_name'),shift:val('f_shift'),leader:leader,members:members,certs:val('f_certs')||'—',certExpire:expire?expire+' 00:00':'—'};
-  if(editingId){FS.update('teams',editingId,patch);showToast('班组已更新','success');}
-  else{FS.add('teams',patch);showToast('班组已创建','success');}
+  if(currentTab==='teams'){
+    var members=val('f_members').replace(/[,，]/g,'、');
+    var leader=val('f_leader');
+    if(membersOf({members:members}).indexOf(leader)===-1)members=leader+'、'+members;
+    var expire=val('f_expire');
+    var patch={name:val('f_name'),shift:val('f_shift'),leader:leader,members:members,certs:val('f_certs')||'—',certExpire:expire?expire+' 00:00':'—'};
+    if(editingId){FS.update('teams',editingId,patch);showToast('班组已更新','success');}
+    else{FS.add('teams',patch);showToast('班组已创建','success');}
+  }else if(currentTab==='positions'){
+    var pid=val('f_id');
+    if(!editingId&&FS.get('positions',pid)){showToast('岗位编号 '+pid+' 已存在','error');return;}
+    var isKey=val('f_key')==='是';
+    if(isKey&&!val('f_cert')){showToast('关键工序岗位必须填写要求证书','error');document.getElementById('f_cert').style.borderColor='#ff4d4f';return;}
+    var patch2={name:val('f_name'),key:isKey,cert:val('f_cert')||'—',desc:val('f_desc')||'—'};
+    if(editingId){FS.update('positions',editingId,patch2);showToast('岗位已更新','success');}
+    else{patch2.id=pid;FS.add('positions',patch2);showToast('岗位已创建','success');}
+  }else if(currentTab==='personnel'){
+    var peid=val('f_id');
+    if(!editingId&&FS.get('personnel',peid)){showToast('工号 '+peid+' 已存在','error');return;}
+    var ce=val('f_certExpire');
+    var patch3={name:val('f_name'),team:val('f_team'),position:val('f_position'),cert:val('f_cert')||'—',certNo:val('f_certNo')||'—',certExpire:ce?ce+' 00:00':'—',status:val('f_status'),phone:val('f_phone')||'—'};
+    if(editingId){FS.update('personnel',editingId,patch3);showToast('人员已更新','success');}
+    else{patch3.id=peid;FS.add('personnel',patch3);showToast('人员已创建','success');}
+    syncPersonnel();
+  }else{
+    var pos=FS.get('positions',val('f_position'));
+    var per=FS.get('personnel',val('f_person'));
+    if(!pos||!per){showToast('岗位或人员不存在','error');return;}
+    var certOK=true,blockReason='';
+    if(pos.key){
+      var cs=certState(per);
+      if(!per.cert||per.cert==='—'||cs.left==null){certOK=false;blockReason='无有效证不得派工关键工序（未登记有效证书）';}
+      else if(cs.left<0){certOK=false;blockReason='无有效证不得派工关键工序（'+per.cert+'已过期）';}
+      else if(per.status==='禁派'){certOK=false;blockReason='无有效证不得派工关键工序（人员已禁派）';}
+    }
+    var did='DP-'+today().slice(2).replace(/-/g,'')+'-'+pad2(FS.list('dispatches').length+1);
+    while(FS.get('dispatches',did))did='DP-'+today().slice(2).replace(/-/g,'')+'-'+pad2(Number(did.slice(-2))+1);
+    var obj={id:did,batch:val('f_batch'),process:val('f_process'),position:pos.name,person:per.name,team:per.team,plan:val('f_plan').replace('T',' '),status:certOK?'待执行':'已阻断',certOK:certOK,operator:'admin',time:FS.nowStamp()};
+    if(!certOK)obj.blockReason=blockReason;
+    FS.add('dispatches',obj);
+    if(certOK){
+      var wrote=writeDispatchTrace(obj);
+      showToast(wrote?('派工成功：'+per.name+' → '+obj.process+'，操作已写入追溯链（批次 '+obj.batch+'）'):('派工成功：'+per.name+' → '+obj.process+'（该批次无在制追溯链，派工记录已存档）'),'success');
+    }else{
+      showToast('关键工序持证校验未通过：'+blockReason+'，派工单 '+did+' 已阻断','error');
+    }
+  }
   closeModal();renderAll();
 }
+function writeDispatchTrace(obj){
+  var chain=FS.list('chain').filter(function(c){return c.batch===obj.batch;})[0];
+  if(!chain)return false;
+  chain.dispatchLog=chain.dispatchLog||[];
+  chain.dispatchLog.push({id:obj.id,process:obj.process,position:obj.position,person:obj.person,team:obj.team,plan:obj.plan,operator:obj.operator,time:obj.time});
+  FS.update('dispatches',obj.id,{traceWritten:true});
+  return true;
+}
+function advanceDispatch(id){
+  var d=FS.get('dispatches',id);if(!d)return;
+  var next=d.status==='待执行'?'执行中':'已完成';
+  FS.update('dispatches',id,{status:next});
+  renderAll();
+  showToast('派工单 '+id+' 已更新为「'+next+'」','success');
+}
+function banPerson(id){
+  var p=FS.get('personnel',id);if(!p)return;
+  askConfirm('确认将「'+p.name+'」设为禁派？禁派后不得派工关键工序。',function(){
+    FS.update('personnel',id,{status:'禁派'});renderAll();showToast('「'+p.name+'」已禁派','success');
+  });
+}
+function restorePerson(id){
+  var p=FS.get('personnel',id);if(!p)return;
+  if(certState(p).text==='已过期'){showToast('「'+p.name+'」证书仍过期，无法复岗；请先更新证书有效期','error');return;}
+  FS.update('personnel',id,{status:'在岗'});renderAll();showToast('「'+p.name+'」已复岗','success');
+}
 function openDetail(id){
-  var t=FS.get('teams',id);if(!t)return;
-  var cs=certState(t);
-  var ms=membersOf(t);
-  openDrawer('班组详情 · '+t.name,
-    '<div class="detail-grid">'+
-    '<div class="detail-item"><div class="dl">班组</div><div class="dv">'+esc(t.name)+'</div></div>'+
-    '<div class="detail-item"><div class="dl">班次</div><div class="dv">'+esc(t.shift)+'</div></div>'+
-    '<div class="detail-item"><div class="dl">班长</div><div class="dv">'+esc(t.leader)+'</div></div>'+
-    '<div class="detail-item"><div class="dl">成员数</div><div class="dv">'+ms.length+' 人</div></div>'+
-    '<div class="detail-item"><div class="dl">持证</div><div class="dv">'+esc(t.certs)+'</div></div>'+
-    '<div class="detail-item"><div class="dl">证到期</div><div class="dv">'+esc(t.certExpire==='—'?'—':String(t.certExpire).slice(0,10))+'</div></div>'+
-    '<div class="detail-item"><div class="dl">持证状态</div><div class="dv"><span class="status-tag '+cs.cls+'">'+cs.text+'</span></div></div>'+
-    '</div>'+
-    '<div class="drawer-sec">成员明细</div>'+
-    '<div class="member-list">'+ms.map(function(m){
-      return '<span class="member-chip'+(m===t.leader?' leader':'')+'"><span class="avatar">'+esc(m.charAt(0))+'</span>'+esc(m)+(m===t.leader?' · 班长':'')+'</span>';
-    }).join('')+'</div>'+
-    (cs.cls==='danger'?'<p style="font-size:12px;color:#ff4d4f;margin-top:14px;">持证已过期，请安排复审换证后再上岗。</p>':'')+
-    (cs.cls==='warning'?'<p style="font-size:12px;color:#fa8c16;margin-top:14px;">证书将在 '+cs.left+' 天内到期，请提前安排复审。</p>':'')
-  );
+  if(currentTab==='teams'){
+    var t=FS.get('teams',id);if(!t)return;
+    var cs=certState(t),ms=membersOf(t);
+    openDrawer('班组详情 · '+t.name,
+      '<div class="detail-grid">'+
+      '<div class="detail-item"><div class="dl">班组</div><div class="dv">'+esc(t.name)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">班次</div><div class="dv">'+esc(t.shift)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">班长</div><div class="dv">'+esc(t.leader)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">成员数</div><div class="dv">'+ms.length+' 人</div></div>'+
+      '<div class="detail-item"><div class="dl">持证</div><div class="dv">'+esc(t.certs)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">证到期</div><div class="dv">'+esc(t.certExpire==='—'?'—':String(t.certExpire).slice(0,10))+'</div></div>'+
+      '<div class="detail-item"><div class="dl">持证状态</div><div class="dv"><span class="status-tag '+cs.cls+'">'+cs.text+'</span></div></div>'+
+      '</div>'+
+      '<div class="drawer-sec">成员明细</div>'+
+      '<div class="member-list">'+ms.map(function(m){
+        return '<span class="member-chip'+(m===t.leader?' leader':'')+'"><span class="avatar">'+esc(m.charAt(0))+'</span>'+esc(m)+(m===t.leader?' · 班长':'')+'</span>';
+      }).join('')+'</div>'+
+      (cs.cls==='danger'?'<p style="font-size:12px;color:#ff4d4f;margin-top:14px;">持证已过期，请安排复审换证后再上岗。</p>':'')+
+      (cs.cls==='warning'?'<p style="font-size:12px;color:#fa8c16;margin-top:14px;">证书将在 '+cs.left+' 天内到期，请提前安排复审。</p>':'')
+    );
+  }else if(currentTab==='positions'){
+    var p=FS.get('positions',id);if(!p)return;
+    var holders=FS.list('personnel').filter(function(x){return x.position===p.name;});
+    openDrawer('岗位详情 · '+p.name,
+      '<div class="detail-grid">'+
+      '<div class="detail-item"><div class="dl">编号</div><div class="dv">'+esc(p.id)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">关键工序</div><div class="dv"><span class="status-tag '+(p.key?'danger':'normal')+'">'+(p.key?'是':'否')+'</span></div></div>'+
+      '<div class="detail-item full"><div class="dl">要求证书</div><div class="dv">'+esc(p.cert||'—')+'</div></div>'+
+      '<div class="detail-item full"><div class="dl">职责说明</div><div class="dv">'+esc(p.desc||'—')+'</div></div>'+
+      '</div>'+
+      (p.key?'<p style="font-size:12px;color:#ff4d4f;">关键工序：无有效证不得派工，派工时系统自动持证校验。</p>':'')+
+      '<div class="drawer-sec">在岗人员（'+holders.length+'）</div>'+
+      (holders.length?'<table class="mini-table"><thead><tr><th>工号</th><th>姓名</th><th>班组</th><th>状态</th></tr></thead><tbody>'+holders.map(function(x){return '<tr><td>'+esc(x.id)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.team)+'</td><td>'+esc(x.status)+'</td></tr>';}).join('')+'</tbody></table>':'<p style="font-size:12px;color:var(--text-tertiary);">暂无人员</p>')
+    );
+  }else if(currentTab==='personnel'){
+    var pe=FS.get('personnel',id);if(!pe)return;
+    var cs2=certState(pe);
+    var dps=FS.list('dispatches').filter(function(d){return d.person===pe.name;});
+    openDrawer('人员详情 · '+pe.name,
+      '<div class="detail-grid">'+
+      '<div class="detail-item"><div class="dl">工号</div><div class="dv">'+esc(pe.id)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">姓名</div><div class="dv">'+esc(pe.name)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">班组</div><div class="dv">'+esc(pe.team)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">岗位</div><div class="dv">'+esc(pe.position)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">证书</div><div class="dv">'+esc(pe.cert||'—')+'</div></div>'+
+      '<div class="detail-item"><div class="dl">证号</div><div class="dv">'+esc(pe.certNo||'—')+'</div></div>'+
+      '<div class="detail-item"><div class="dl">证到期</div><div class="dv">'+esc(pe.certExpire==='—'?'—':String(pe.certExpire).slice(0,10))+'</div></div>'+
+      '<div class="detail-item"><div class="dl">持证状态</div><div class="dv"><span class="status-tag '+cs2.cls+'">'+cs2.text+(cs2.left!=null&&cs2.left>=0?'（余'+cs2.left+'天）':'')+'</span></div></div>'+
+      '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+(pe.status==='在岗'?'normal':'danger')+'">'+esc(pe.status)+'</span></div></div>'+
+      '<div class="detail-item"><div class="dl">电话</div><div class="dv">'+esc(pe.phone||'—')+'</div></div>'+
+      '</div>'+
+      (cs2.cls==='danger'?'<p style="font-size:12px;color:#ff4d4f;">证书已过期，系统自动禁派；换证后方可复岗。</p>':'')+
+      (cs2.cls==='warning'?'<p style="font-size:12px;color:#fa8c16;">证书将在 '+cs2.left+' 天内到期，请提前安排复审。</p>':'')+
+      '<div class="drawer-sec">派工记录（'+dps.length+'）</div>'+
+      (dps.length?'<table class="mini-table"><thead><tr><th>单号</th><th>工序</th><th>批次</th><th>状态</th></tr></thead><tbody>'+dps.map(function(d){return '<tr><td>'+esc(d.id)+'</td><td>'+esc(d.process)+'</td><td>'+esc(d.batch)+'</td><td>'+esc(d.status)+'</td></tr>';}).join('')+'</tbody></table>':'<p style="font-size:12px;color:var(--text-tertiary);">暂无派工记录</p>')
+    );
+  }else{
+    var d=FS.get('dispatches',id);if(!d)return;
+    openDrawer('派工单详情 · '+d.id,
+      '<div class="detail-grid">'+
+      '<div class="detail-item"><div class="dl">单号</div><div class="dv">'+esc(d.id)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">批次</div><div class="dv">'+esc(d.batch)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">工序</div><div class="dv">'+esc(d.process)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">岗位</div><div class="dv">'+esc(d.position)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">人员</div><div class="dv">'+esc(d.person)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">班组</div><div class="dv">'+esc(d.team)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">计划时间</div><div class="dv">'+esc(d.plan)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+dpStatusCls(d.status)+'">'+esc(d.status)+'</span></div></div>'+
+      '<div class="detail-item"><div class="dl">持证校验</div><div class="dv"><span class="status-tag '+(d.certOK?'normal':'danger')+'">'+(d.certOK?'通过':'未通过')+'</span></div></div>'+
+      '<div class="detail-item"><div class="dl">操作人 / 时间</div><div class="dv">'+esc(d.operator)+' · '+esc(d.time)+'</div></div>'+
+      '</div>'+
+      (d.blockReason?'<p style="font-size:13px;color:#ff4d4f;background:#fff2f0;border:1px solid #ffccc7;border-radius:8px;padding:10px 12px;">阻断原因：'+esc(d.blockReason)+'</p>':'')+
+      '<div class="drawer-sec">追溯链写入</div>'+
+      (d.traceWritten?'<p style="font-size:12px;color:#52c41a;">派工操作已写入批次 '+esc(d.batch)+' 的追溯链（dispatchLog）。</p>':'<p style="font-size:12px;color:var(--text-tertiary);">'+(d.certOK?'该批次无在制追溯链，派工记录已存档于派工单。':'派工被阻断，未写入追溯链。')+'</p>')
+    );
+  }
 }
-function exportTeams(){
-  var rows=applySort(teamRows());
-  exportCSV('人员班组',['班组','班次','班长','成员','成员数','持证','证到期','持证状态'],rows.map(function(t){
-    return [t.name,t.shift,t.leader,t.members,t.memberCount,t.certs,t.certExpire,t.csText];
-  }));
+function exportCurrent(){
+  var rows=applySort(currentRows());
+  if(currentTab==='teams'){
+    exportCSV('班组',['班组','班次','班长','成员','成员数','持证','证到期','持证状态'],rows.map(function(t){return [t.name,t.shift,t.leader,t.members,t.memberCount,t.certs,t.certExpire,t.csText];}));
+  }else if(currentTab==='positions'){
+    exportCSV('岗位',['编号','岗位','关键工序','要求证书','职责'],rows.map(function(p){return [p.id,p.name,p.key?'是':'否',p.cert||'',p.desc||''];}));
+  }else if(currentTab==='personnel'){
+    exportCSV('人员',['工号','姓名','班组','岗位','证书','证号','证到期','持证状态','状态'],rows.map(function(p){return [p.id,p.name,p.team,p.position,p.cert||'',p.certNo||'',p.certExpire,p.csText,p.status];}));
+  }else{
+    exportCSV('派工',['单号','批次','工序','岗位','人员','班组','计划时间','持证校验','状态','阻断原因'],rows.map(function(d){return [d.id,d.batch,d.process,d.position,d.person,d.team,d.plan,d.certOK?'通过':'未通过',d.status,d.blockReason||''];}));
+  }
 }
-renderAll();
+window.addEventListener('fungiStoreChange',function(e){
+  var c=e.detail&&e.detail.col;
+  if(c==='teams'||c==='positions'||c==='personnel'||c==='dispatches'||c==='*')renderAll();
+});
+syncPersonnel();
+switchTab('teams');
 </script>
+<style>.mini-table{width:100%;border-collapse:collapse;font-size:12px;}.mini-table th{background:#f7f9f7;color:var(--text-tertiary);font-weight:600;padding:7px 8px;text-align:left;border-bottom:1px solid #e8ede8;white-space:nowrap;}.mini-table td{padding:7px 8px;border-bottom:1px solid #f4f6f4;}</style>
 </body>
 </html>

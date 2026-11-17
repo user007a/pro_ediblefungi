@@ -548,6 +548,13 @@
         { name: '已过期', value: 17100, ratio: 11 },
         { name: '已作废', value: 9300,  ratio: 6 }
       ],
+      /* 按菌种拆分的码状态（列之和须等于 codeStatus 各项，总量 = totalIssued） */
+      codeStatusByVariety: [
+        { variety: '平菇',   total: 48000, active: 31400, inactive: 9800, expired: 4600, voided: 2200 },
+        { variety: '杏鲍菇', total: 44100, active: 27600, inactive: 8400, expired: 5200, voided: 2900 },
+        { variety: '金针菇', total: 35800, active: 21400, inactive: 8100, expired: 4300, voided: 2000 },
+        { variety: '香菇',   total: 27400, active: 15900, inactive: 6300, expired: 3000, voided: 2200 }
+      ],
       /* —— 批次 —— */
       totalBatches: 108420,     // 累计上链批次
       traceCoverage: 97.2,      // 追溯覆盖率（累计批次口径）
@@ -630,6 +637,10 @@
   if (!db) db = JSON.parse(JSON.stringify(SEED));
   /* 旧版本缓存缺少 traceStats 字段时，用种子补齐，保证口径定义始终存在 */
   if (!db.traceStats) db.traceStats = JSON.parse(JSON.stringify(SEED.traceStats));
+  /* 旧缓存缺少菌种维度码状态时补齐，避免大屏图表空载 */
+  if (!db.traceStats.codeStatusByVariety) {
+    db.traceStats.codeStatusByVariety = JSON.parse(JSON.stringify(SEED.traceStats.codeStatusByVariety));
+  }
   /* 新增集合迁移：旧缓存缺少的集合用种子补齐，已有集合（含用户改动）保持不动 */
   Object.keys(SEED).forEach(function (col) {
     if (!db[col]) db[col] = JSON.parse(JSON.stringify(SEED[col]));
@@ -743,6 +754,13 @@
         activated: t.activated,
         activateRate: +(t.activated * 100 / t.totalIssued).toFixed(1),
         codeStatus: (t.codeStatus || []).map(function (x) { return { name: x.name, value: x.value, ratio: x.ratio }; }),
+        codeStatusByVariety: (t.codeStatusByVariety || []).map(function (x) {
+          return {
+            variety: x.variety, total: x.total,
+            active: x.active, inactive: x.inactive, expired: x.expired, voided: x.voided,
+            activateRate: x.total ? +(x.active * 100 / x.total).toFixed(1) : 0
+          };
+        }),
         /* 批次 */
         totalBatches: t.totalBatches,
         traceCoverage: t.traceCoverage,
@@ -807,6 +825,23 @@
       if (chSum !== t.todayScan) errs.push('channels 之和 ' + chSum + ' ≠ todayScan ' + t.todayScan);
       var ratioSum = (t.codeStatus || []).reduce(function (s, x) { return s + x.ratio; }, 0);
       if (ratioSum !== 100) errs.push('codeStatus ratio 之和 ' + ratioSum + ' ≠ 100');
+      /* 菌种维度：各状态列之和须等于对应总计，总码量须等于 totalIssued */
+      var cbv = t.codeStatusByVariety || [];
+      if (cbv.length) {
+        var sum = function (k) { return cbv.reduce(function (s, x) { return s + x[k]; }, 0); };
+        var byName = {};
+        (t.codeStatus || []).forEach(function (x) { byName[x.name] = x.value; });
+        if (sum('active') !== byName['已激活']) errs.push('菌种已激活之和 ' + sum('active') + ' ≠ ' + byName['已激活']);
+        if (sum('inactive') !== byName['未激活']) errs.push('菌种未激活之和 ' + sum('inactive') + ' ≠ ' + byName['未激活']);
+        if (sum('expired') !== byName['已过期']) errs.push('菌种已过期之和 ' + sum('expired') + ' ≠ ' + byName['已过期']);
+        if (sum('voided') !== byName['已作废']) errs.push('菌种已作废之和 ' + sum('voided') + ' ≠ ' + byName['已作废']);
+        if (sum('total') !== t.totalIssued) errs.push('菌种码量之和 ' + sum('total') + ' ≠ totalIssued ' + t.totalIssued);
+        cbv.forEach(function (x) {
+          if (x.active + x.inactive + x.expired + x.voided !== x.total) {
+            errs.push('菌种 ' + x.variety + ' 状态之和 ≠ 该菌种码量');
+          }
+        });
+      }
       if (errs.length) console.warn('[FungiStore] 追溯统计口径不自洽：', errs);
       return errs.length === 0;
     },

@@ -73,6 +73,22 @@
   .hash-full { background:#f9f0ff; border:1px solid #d3adf7; border-radius:8px; padding:10px 12px; font-family:Consolas,Menlo,monospace; font-size:12px; word-break:break-all; color:#531dab; line-height:1.7; }
   .verify-ok { color:#52c41a; font-weight:600; }
   .verify-bad { color:#ff4d4f; font-weight:600; }
+  .bc-pill { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; white-space:nowrap; }
+  .bc-pill.pending { background:#fffbe6; color:#ad8b00; border:1px solid #ffe58f; }
+  .bc-pill.chaining { background:#e6f4ff; color:#0958d9; border:1px solid #91caff; animation:bcPulse 1.4s ease-in-out infinite; }
+  .bc-pill.ok { background:#f6ffed; color:#52c41a; border:1px solid #b7eb8f; }
+  .bc-pill.fail { background:#fff1f0; color:#ff4d4f; border:1px solid #ffa39e; }
+  @keyframes bcPulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+  .retry-sub { font-size:11px; color:var(--text-tertiary); margin-top:3px; }
+  .retry-sub.warn { color:#fa8c16; }
+  .ctype-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+  .ctype-card { background:var(--bg-card); border:1px solid var(--border-default); border-radius:12px; padding:14px 16px; box-shadow:0 1px 3px rgba(16,24,40,.06); }
+  .ctype-card .ct-name { font-size:13px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:8px; }
+  .ctype-card .ct-name i { width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .ctype-card .ct-count { font-size:24px; font-weight:700; margin:6px 0 4px; font-variant-numeric:tabular-nums; }
+  .ctype-card .ct-count small { font-size:12px; font-weight:500; color:var(--text-tertiary); margin-left:4px; }
+  .ctype-card .ct-bar { height:6px; border-radius:3px; background:#f0f2f5; overflow:hidden; display:flex; margin:6px 0; }
+  .ctype-card .ct-sub { font-size:11.5px; color:var(--text-tertiary); line-height:1.6; }
 </style>
 <style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
   .main-wrapper{margin-left:0!important;width:100%!important;}
@@ -109,12 +125,12 @@
           <div class="stat-card red">
             <div class="stat-header"><span class="stat-label">失败待重试</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span></div>
             <div class="stat-value" id="stFail">—</div>
-            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">验证失败后可一键重试</span></div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">指数退避自动重试 ≤3 次，超限手动重试</span></div>
           </div>
           <div class="stat-card cyan">
             <div class="stat-header"><span class="stat-label">存证节点类型</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="4" cy="6" r="2"/><circle cx="20" cy="6" r="2"/><circle cx="4" cy="18" r="2"/><circle cx="20" cy="18" r="2"/><path d="M6 6h4M14 6h4M6 18h4M14 18h4"/></svg></span></div>
             <div class="stat-value" id="stNodes">—</div>
-            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">9 类生产节点可上链</span></div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">10 类生产节点可上链</span></div>
           </div>
         </div>
 
@@ -122,10 +138,10 @@
           <div class="search-bar">
             <select class="search-select" id="batchSelect" style="width:210px;"><option value="">全部批次</option></select>
             <select class="search-select" id="nodeSelect" style="width:140px;">
-              <option value="">全部节点</option><option>菌种</option><option>装袋</option><option>灭菌</option><option>接种</option><option>培养</option><option>出菇</option><option>采收</option><option>分级</option><option>冷链</option>
+              <option value="">全部节点</option><option>菌种</option><option>菌包</option><option>装袋</option><option>灭菌</option><option>接种</option><option>培养</option><option>出菇</option><option>采收</option><option>分级</option><option>冷链</option>
             </select>
             <select class="search-select" id="statusSelect" style="width:130px;">
-              <option value="">全部状态</option><option>成功</option><option>失败</option>
+              <option value="">全部状态</option><option>待上链</option><option>上链中</option><option>已确认</option><option>上链失败</option>
             </select>
             <input type="text" class="search-input" placeholder="存证号 / 哈希搜索…" id="kwInput" style="width:200px;">
             <div class="search-actions">
@@ -183,6 +199,9 @@
           <div class="chart-legend" id="chartLegend"></div>
         </div>
 
+        <div class="section-title">存证内容类型聚合（6 类）</div>
+        <div class="ctype-grid" id="ctypeGrid"></div>
+
       </div>
     </main>
   </div>
@@ -206,9 +225,9 @@
     <div class="modal-body">
       <div class="form-group"><label>生产批次 <span class="req">*</span></label><select id="addBatch"><option value="">请选择批次</option></select></div>
       <div class="form-group"><label>存证节点 <span class="req">*</span></label>
-        <select id="addNode"><option value="">请选择节点</option><option>菌种</option><option>装袋</option><option>灭菌</option><option>接种</option><option>培养</option><option>出菇</option><option>采收</option><option>分级</option><option>冷链</option></select>
+        <select id="addNode"><option value="">请选择节点</option><option>菌种</option><option>菌包</option><option>装袋</option><option>灭菌</option><option>接种</option><option>培养</option><option>出菇</option><option>采收</option><option>分级</option><option>冷链</option></select>
       </div>
-      <span class="form-hint">提交后生成 SHA-256 存证哈希并写入联盟链，区块高度自动递增。</span>
+      <span class="form-hint">提交后生成 SHA-256 存证哈希并进入「上链中」，联盟链确认后区块高度自动递增。</span>
     </div>
     <div class="modal-footer">
       <button class="jg-btn" onclick="closeModal('addModal')">取消</button>
@@ -238,8 +257,12 @@
 <script>
 /* ============================================================
  * 区块链存证 —— FungiStore.blockchain 单一真源
- * 验证规则：哈希格式（0x + hex，截断或 64 位全文）且区块高度 > 0
- * 失败行重试：重新生成随机 hex 哈希，高度 = 当前最大高度 + 1
+ * 四状态生命周期：待上链 → 上链中 → 已确认 / 上链失败。
+ * 哈希为 SHA-256（crypto.subtle 真实摘要，不可用时回退随机 hex）。
+ * 验证规则：哈希格式（0x + hex，截断或 64 位全文）且区块高度 > 0。
+ * 指数退避：失败后 nextRetry = now + min(30, 2^retryCount) min，
+ * 自动重试上限 3 次，超限须手动「重试上链」（retryCount 真实累加）。
+ * 上链中记录到达 nextRetry（模拟链上确认回调）后自动转已确认。
  * ============================================================ */
 'use strict';
 var FS = window.FungiStore;
@@ -290,9 +313,19 @@ document.querySelectorAll('.modal-overlay').forEach(function(o){
   o.addEventListener('click',function(e){ if(e.target===o) closeModal(o.id); });
 });
 
-/* ---------- 哈希工具 ---------- */
+/* ---------- 哈希 / 状态工具 ---------- */
 var HEX='0123456789abcdef';
 function randHex(n){ var s=''; for(var i=0;i<n;i++) s+=HEX[Math.floor(Math.random()*16)]; return s; }
+function sha256Hex(text){
+  try {
+    if (window.crypto && crypto.subtle && window.TextEncoder){
+      return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function(buf){
+        return Array.prototype.map.call(new Uint8Array(buf), function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
+      }).catch(function(){ return randHex(64); });
+    }
+  } catch(e){}
+  return Promise.resolve(randHex(64));
+}
 function fullHashOf(r){ return r.fullHash || r.hash; }
 function hashValid(h){
   h=String(h||'');
@@ -306,18 +339,57 @@ function verifyRecord(r){
   var okHeight=(Number(r.height)||0)>0;
   return { ok:okHash&&okHeight, okHash:okHash, okHeight:okHeight };
 }
+function normStatus(s){ return s==='成功' ? '已确认' : (s==='失败' ? '上链失败' : s); }
+var STATUS_CLS = { '待上链':'pending', '上链中':'chaining', '已确认':'ok', '上链失败':'fail' };
+function statusPill(s){
+  s = normStatus(s);
+  return '<span class="bc-pill '+(STATUS_CLS[s]||'pending')+'">'+esc(s)+'</span>';
+}
+function backoffMin(retryCount){ return Math.min(30, Math.pow(2, retryCount||0)); }
+function plusMinStr(min){
+  var d = new Date(Date.now() + min*60000);
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+}
+function plusSecStr(sec){
+  var d = new Date(Date.now() + sec*1000);
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds());
+}
+function timePassed(str){
+  if(!str) return false;
+  var s = String(str).replace(' ','T');
+  if(s.length===16) s += ':00';
+  var t = new Date(s);
+  return !isNaN(t.getTime()) && Date.now() >= t.getTime();
+}
+var CONTENT_TYPES = ['菌包制备','灭菌接种','发菌培养','采收记录','分级预冷','冷链流通'];
+var CT_COLORS = { '菌包制备':'#722ed1','灭菌接种':'#fa8c16','发菌培养':'#52c41a','采收记录':'#1890ff','分级预冷':'#13c2c2','冷链流通':'#2f54eb' };
+var NODE_CONTENT = { '菌种':'菌包制备','菌包':'菌包制备','装袋':'菌包制备','灭菌':'灭菌接种','接种':'灭菌接种','培养':'发菌培养','出菇':'发菌培养','采收':'采收记录','分级':'分级预冷','冷链':'冷链流通' };
+function contentTypeOf(r){ return r.contentType || NODE_CONTENT[r.node] || '采收记录'; }
+function retrySub(r){
+  var s = normStatus(r.status);
+  var rc = Number(r.retryCount)||0;
+  if (s==='上链失败'){
+    if (rc>=3) return '<div class="retry-sub warn">已重试 '+rc+' 次 · 达自动上限，须手动重试</div>';
+    return '<div class="retry-sub warn">已重试 '+rc+' 次 · '+(r.nextRetry ? esc(String(r.nextRetry).slice(11,16))+' 自动重试' : '等待重试')+'</div>';
+  }
+  if (s==='上链中') return '<div class="retry-sub">第 '+(rc+1)+' 次提交 · 等待链上确认</div>';
+  if (rc>0) return '<div class="retry-sub">经 '+rc+' 次重试后确认</div>';
+  return '';
+}
 
 /* ---------- 统计 ---------- */
 function renderStats(){
   var rows=FS.list('blockchain');
-  var ok=rows.filter(function(r){ return r.status==='成功'; }).length;
-  var fail=rows.length-ok;
+  var ok=rows.filter(function(r){ return normStatus(r.status)==='已确认'; }).length;
+  var fail=rows.filter(function(r){ return normStatus(r.status)==='上链失败'; }).length;
+  var chaining=rows.filter(function(r){ return normStatus(r.status)==='上链中'; }).length;
+  var pending=rows.filter(function(r){ return normStatus(r.status)==='待上链'; }).length;
   var nodes={}; rows.forEach(function(r){ nodes[r.node]=true; });
   document.getElementById('stTotal').textContent=rows.length;
   document.getElementById('stRate').textContent=rows.length?(ok/rows.length*100).toFixed(1)+'%':'—';
-  document.getElementById('stOk').textContent='成功 '+ok+' 条';
+  document.getElementById('stOk').textContent='已确认 '+ok+' 条 · 上链中 '+chaining+' · 待上链 '+pending;
   document.getElementById('stFail').textContent=fail;
-  document.getElementById('stNodes').textContent=Object.keys(nodes).length+' / 9';
+  document.getElementById('stNodes').textContent=Object.keys(nodes).length+' / 10';
 }
 
 /* ---------- 列表 ---------- */
@@ -354,8 +426,8 @@ function currentFiltered(){
   var rows=FS.list('blockchain').filter(function(r){
     if(b && r.batch!==b) return false;
     if(nd && r.node!==nd) return false;
-    if(s && r.status!==s) return false;
-    if(kw && r.id.toLowerCase().indexOf(kw)<0 && String(r.hash).toLowerCase().indexOf(kw)<0) return false;
+    if(s && normStatus(r.status)!==s) return false;
+    if(kw && r.id.toLowerCase().indexOf(kw)<0 && String(r.hash).toLowerCase().indexOf(kw)<0 && String(contentTypeOf(r)).toLowerCase().indexOf(kw)<0) return false;
     return true;
   });
   rows.sort(function(a,b2){ var r=String(a.time).localeCompare(String(b2.time)); return sortDesc?-r:r; });
@@ -373,26 +445,24 @@ function resetSearch(){
   applyFilter(false); showToast('已重置筛选条件','info');
 }
 function toggleSort(){ sortDesc=!sortDesc; document.getElementById('sortArrow').textContent=sortDesc?'↓':'↑'; applyFilter(false); }
-function statusPill(s){
-  return s==='成功'
-    ? '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:#f6ffed;color:#52c41a;border:1px solid #b7eb8f;">成功</span>'
-    : '<span style="display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:#fff1f0;color:#ff4d4f;border:1px solid #ffa39e;">失败</span>';
-}
 function renderRow(r,seq){
-  var acts='<button class="action-btn detail" onclick="verifyOne(\''+esc(r.id)+'\')">验证</button>';
-  if(r.status==='失败') acts+='<button class="action-btn" style="color:#fa8c16;" onclick="retryOne(\''+esc(r.id)+'\')">重试</button>';
+  var s=normStatus(r.status);
+  var acts='';
+  if(s==='已确认'||s==='上链失败') acts+='<button class="action-btn detail" onclick="verifyOne(\''+esc(r.id)+'\')">验证</button>';
+  if(s==='上链失败') acts+='<button class="action-btn" style="color:#fa8c16;" onclick="retryOne(\''+esc(r.id)+'\')">重试</button>';
+  if(s==='待上链') acts+='<button class="action-btn" style="color:#0958d9;" onclick="submitOne(\''+esc(r.id)+'\')">提交上链</button>';
   acts+='<button class="action-btn qrcode" onclick="viewDetail(\''+esc(r.id)+'\')">详情</button>';
   acts+='<button class="action-btn" style="color:#ff4d4f;" onclick="deleteOne(\''+esc(r.id)+'\')">删除</button>';
   return '<tr>'+
     '<td><input type="checkbox" '+(selected[r.id]?'checked':'')+' onchange="toggleRow(\''+esc(r.id)+'\',this.checked)" aria-label="勾选"></td>'+
     '<td>'+seq+'</td>'+
-    '<td><strong class="mono">'+esc(r.id)+'</strong></td>'+
+    '<td><strong class="mono">'+esc(r.id)+'</strong><div class="retry-sub">'+esc(contentTypeOf(r))+'</div></td>'+
     '<td class="mono">'+esc(r.batch)+'</td>'+
     '<td>'+esc(r.node)+'</td>'+
     '<td class="mono" style="color:#722ed1;">'+esc(r.hash)+'</td>'+
     '<td class="mono">'+(Number(r.height)>0?Number(r.height).toLocaleString('zh-CN'):'<span style="color:#ff4d4f;">0</span>')+'</td>'+
     '<td>'+esc(r.time)+'</td>'+
-    '<td>'+statusPill(r.status)+'</td>'+
+    '<td>'+statusPill(r.status)+retrySub(r)+'</td>'+
     '<td><div class="action-btns">'+acts+'</div></td></tr>';
 }
 function toggleRow(id,on){ if(on) selected[id]=true; else delete selected[id]; syncBulk(); }
@@ -435,9 +505,11 @@ function deleteOne(id){
   askConfirm('删除存证记录','确定删除存证 <strong class="mono">'+esc(id)+'</strong> 吗？删除后可撤销。',function(){ removeRecords([id]); });
 }
 
-/* ---------- 验证 / 重试 ---------- */
+/* ---------- 验证 / 提交 / 重试（指数退避） ---------- */
 function verifyOne(id){
   var r=FS.get('blockchain',id); if(!r) return;
+  var s=normStatus(r.status);
+  if(s==='待上链'||s==='上链中'){ showToast(id+' 尚未入块（'+s+'），暂无法链上验证','info'); return; }
   var v=verifyRecord(r);
   if(v.ok){
     FS.update('blockchain',id,{ verifiedAt:nowStr() });
@@ -454,30 +526,72 @@ function verifyOne(id){
 }
 function verifyAll(){
   var rows=FS.list('blockchain');
-  var ok=0,bad=[];
-  rows.forEach(function(r){ if(verifyRecord(r).ok) ok++; else bad.push(r.id); });
-  opLog('批量验证存证',ok+' 通过 / '+bad.length+' 失败');
-  if(bad.length) showToast('验证完成：'+ok+' 条通过，'+bad.length+' 条失败（'+bad.join('、')+'），可逐条重试','warning');
-  else showToast('验证完成：全部 '+ok+' 条存证通过','success');
+  var ok=0,bad=[],waiting=0;
+  rows.forEach(function(r){
+    var s=normStatus(r.status);
+    if(s==='待上链'||s==='上链中'){ waiting++; return; }
+    if(verifyRecord(r).ok) ok++; else bad.push(r.id);
+  });
+  opLog('批量验证存证',ok+' 通过 / '+bad.length+' 失败 / '+waiting+' 未入块');
+  var tail=waiting?('，'+waiting+' 条尚未入块跳过'):'';
+  if(bad.length) showToast('验证完成：'+ok+' 条通过，'+bad.length+' 条失败（'+bad.join('、')+'）'+tail+'，可逐条重试','warning');
+  else showToast('验证完成：'+ok+' 条已入块存证全部通过'+tail,'success');
+}
+function submitToChain(id,isRetry){
+  var r=FS.get('blockchain',id); if(!r) return;
+  var rc=Number(r.retryCount)||0;
+  var nextRc=isRetry?rc+1:rc;
+  var payload=[r.id,r.batch,r.node,contentTypeOf(r),r.time,Date.now(),nextRc].join('|');
+  sha256Hex(payload).then(function(hex){
+    var full='0x'+hex;
+    FS.update('blockchain',id,{
+      hash:'0x'+hex.slice(0,4)+'…'+hex.slice(-4),
+      fullHash:full,
+      contentType:contentTypeOf(r),
+      height:0,
+      tx:'—',
+      status:'上链中',
+      retryCount:nextRc,
+      nextRetry:plusSecStr(15),
+      time:nowStr()
+    });
+    opLog(isRetry?'重试上链':'提交上链',id+' · 第 '+(nextRc+1)+' 次提交');
+    refresh();
+    showToast((isRetry?'已重新提交（第 '+(nextRc+1)+' 次）：':'已提交上链：')+id+' · SHA-256 已生成，等待联盟链确认','success');
+  });
+}
+function submitOne(id){
+  var r=FS.get('blockchain',id); if(!r) return;
+  askConfirm('提交上链','存证 <strong class="mono">'+esc(id)+'</strong>（'+esc(contentTypeOf(r))+'）将生成 SHA-256 摘要并提交联盟链，确认后区块高度自动递增。是否提交？',function(){ submitToChain(id,false); });
 }
 function retryOne(id){
   var r=FS.get('blockchain',id); if(!r) return;
-  askConfirm('重试上链','存证 <strong class="mono">'+esc(id)+'</strong> 上次上链失败。重试将重新生成存证哈希并提交联盟链，是否继续？',function(){
-    var full='0x'+randHex(64);
-    var patch={
-      hash:'0x'+full.slice(2,6)+'…'+full.slice(-4),
-      fullHash:full,
-      height:maxHeight()+1,
-      tx:'0x'+randHex(4)+'…'+randHex(4),
-      status:'成功',
-      time:nowStr(),
-      verifiedAt:nowStr()
-    };
-    FS.update('blockchain',id,patch);
-    opLog('重试上链',id+' → 高度 '+patch.height);
-    refresh();
-    showToast('重试成功：'+id+' 已入块，高度 '+patch.height.toLocaleString('zh-CN'),'success');
+  var rc=Number(r.retryCount)||0;
+  askConfirm('重试上链','存证 <strong class="mono">'+esc(id)+'</strong> 已失败重试 '+rc+' 次'+(rc>=3?'（达自动重试上限）':'')+'。本次为第 '+(rc+2)+' 次提交，将重新生成 SHA-256 哈希；自动重试间隔按指数退避 '+backoffMin(rc+1)+' 分钟。是否继续？',function(){ submitToChain(id,true); });
+}
+/* 每 5s：上链中到期→确认入块；失败且未达 3 次上限→按退避自动重试 */
+function chainTick(){
+  var changed=false, confirmed=[];
+  FS.list('blockchain').forEach(function(r){
+    var s=normStatus(r.status);
+    if(s==='上链中' && timePassed(r.nextRetry)){
+      var h=Number(r.height)>0?Number(r.height):maxHeight()+1;
+      var patch={ height:h, tx:'0x'+randHex(4)+'…'+randHex(4), status:'已确认', verifiedAt:nowStr(), nextRetry:null };
+      if(!hashValid(fullHashOf(r))){ var full='0x'+randHex(64); patch.hash='0x'+full.slice(2,6)+'…'+full.slice(-4); patch.fullHash=full; }
+      FS.update('blockchain',r.id,patch);
+      confirmed.push(r.id+'@'+h);
+      changed=true;
+    }else if(s==='上链失败' && (Number(r.retryCount)||0)<3 && timePassed(r.nextRetry)){
+      var rc=(Number(r.retryCount)||0)+1;
+      FS.update('blockchain',r.id,{ status:'上链中', retryCount:rc, nextRetry:plusSecStr(15), time:nowStr() });
+      opLog('自动重试上链',r.id+' · 第 '+(rc+1)+' 次提交 · 退避 '+backoffMin(rc)+'min');
+      changed=true;
+    }
   });
+  if(changed){
+    refresh();
+    if(confirmed.length) showToast('链上确认：'+confirmed.join('、')+' 已入块','success');
+  }
 }
 
 /* ---------- 手动存证 ---------- */
@@ -494,32 +608,41 @@ function confirmAdd(){
   var node=document.getElementById('addNode').value;
   if(!batch){ showToast('请选择生产批次','error'); return; }
   if(!node){ showToast('请选择存证节点','error'); return; }
-  var full='0x'+randHex(64);
-  var rec=FS.add('blockchain',{
-    batch:batch, node:node,
-    hash:'0x'+full.slice(2,6)+'…'+full.slice(-4),
-    fullHash:full,
-    height:maxHeight()+1,
-    tx:'0x'+randHex(4)+'…'+randHex(4),
-    time:nowStr(), status:'成功', verifiedAt:nowStr()
+  var ct=NODE_CONTENT[node]||'采收记录';
+  var payload=[batch,node,ct,Date.now()].join('|');
+  sha256Hex(payload).then(function(hex){
+    var full='0x'+hex;
+    var rec=FS.add('blockchain',{
+      batch:batch, node:node, contentType:ct,
+      hash:'0x'+hex.slice(0,4)+'…'+hex.slice(-4),
+      fullHash:full,
+      height:0, tx:'—',
+      time:nowStr(), status:'上链中', retryCount:0, nextRetry:plusSecStr(15)
+    });
+    closeModal('addModal');
+    opLog('手动上链存证',rec.id+' · '+batch+' · '+node+' · '+ct);
+    refresh();
+    showToast('已提交：'+rec.id+' · '+ct+' · SHA-256 已生成，等待联盟链确认','success');
   });
-  closeModal('addModal');
-  opLog('手动上链存证',rec.id+' · '+batch+' · '+node);
-  refresh();
-  showToast('上链成功：'+rec.id+' · 高度 '+rec.height.toLocaleString('zh-CN'),'success');
 }
 
 /* ---------- 抽屉 ---------- */
 function viewDetail(id){
   var r=FS.get('blockchain',id); if(!r) return;
+  var s=normStatus(r.status);
   var v=verifyRecord(r);
+  var rc=Number(r.retryCount)||0;
   document.getElementById('drawerBody').innerHTML=
     '<div class="detail-grid"><span class="detail-label">存证号</span><span class="detail-value mono">'+esc(r.id)+'</span></div>'+
     '<div class="detail-grid"><span class="detail-label">批次 / 节点</span><span class="detail-value mono">'+esc(r.batch)+' · '+esc(r.node)+'</span></div>'+
-    '<div class="detail-grid"><span class="detail-label">状态</span><span class="detail-value">'+statusPill(r.status)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">内容类型</span><span class="detail-value">'+esc(contentTypeOf(r))+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">状态</span><span class="detail-value">'+statusPill(r.status)+retrySub(r)+'</span></div>'+
     '<div class="detail-grid"><span class="detail-label">区块高度</span><span class="detail-value mono">'+(Number(r.height)>0?Number(r.height).toLocaleString('zh-CN'):'0（未入块）')+'</span></div>'+
     '<div class="detail-grid"><span class="detail-label">交易号</span><span class="detail-value mono">'+esc(r.tx||'—')+'</span></div>'+
     '<div class="detail-grid"><span class="detail-label">上链时间</span><span class="detail-value">'+esc(r.time)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">重试次数</span><span class="detail-value">'+rc+' 次'+(rc>=3&&s==='上链失败'?'（达自动上限）':'')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">'+(s==='上链中'?'预计确认':'下次重试')+'</span><span class="detail-value mono">'+esc(r.nextRetry||'—')+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">退避策略</span><span class="detail-value">指数退避 min(30, 2^n) 分钟 · 下次间隔 '+backoffMin(rc+1)+' min · 自动重试上限 3 次</span></div>'+
     '<div class="detail-grid"><span class="detail-label">最近验证</span><span class="detail-value">'+esc(r.verifiedAt||'尚未验证')+'</span></div>'+
     '<div style="margin:14px 0 6px;font-size:13px;font-weight:600;color:var(--text-primary);">存证哈希全文（SHA-256）</div>'+
     '<div class="hash-full">'+esc(fullHashOf(r))+'</div>'+
@@ -527,10 +650,15 @@ function viewDetail(id){
       '<span class="'+(v.okHash?'verify-ok':'verify-bad')+'">哈希格式 '+(v.okHash?'✓ 通过':'✕ 异常')+'</span> · '+
       '<span class="'+(v.okHeight?'verify-ok':'verify-bad')+'">区块高度 '+(v.okHeight?'✓ 通过':'✕ 为 0')+'</span>'+
     '</div>'+
-    '<div style="margin-top:14px;font-size:12px;color:var(--text-tertiary);line-height:1.7;">存证内容为该批次节点的生产记录摘要，哈希上链后不可篡改；消费者扫码可核验一致性。</div>';
-  var f='<button class="jg-btn" onclick="copyHash(\''+esc(id)+'\')">复制哈希</button>'+
-        '<button class="jg-btn" onclick="verifyOne(\''+esc(id)+'\');viewDetail(\''+esc(id)+'\')">验证</button>';
-  if(r.status==='失败') f+='<button class="jg-btn jg-btn-primary" onclick="closeDrawer();retryOne(\''+esc(id)+'\')">重试上链</button>';
+    '<div style="margin-top:14px;font-size:12px;color:var(--text-tertiary);line-height:1.7;">'+
+      (s==='待上链'?'该记录尚未提交联盟链，点击「提交上链」生成 SHA-256 摘要并入块。':
+       s==='上链中'?'已提交联盟链，等待节点共识确认；确认后区块高度与交易号自动回填。':
+       s==='上链失败'?'上链失败：'+(rc>=3?'已达自动重试上限（3 次），须人工点击「重试上链」。':'将按指数退避在 '+esc(r.nextRetry||'—')+' 自动重试。'):'存证内容为该批次节点的生产记录摘要，哈希上链后不可篡改；消费者扫码可核验一致性。')+
+    '</div>';
+  var f='<button class="jg-btn" onclick="copyHash(\''+esc(id)+'\')">复制哈希</button>';
+  if(s==='已确认'||s==='上链失败') f+='<button class="jg-btn" onclick="verifyOne(\''+esc(id)+'\');viewDetail(\''+esc(id)+'\')">验证</button>';
+  if(s==='上链失败') f+='<button class="jg-btn jg-btn-primary" onclick="closeDrawer();retryOne(\''+esc(id)+'\')">重试上链</button>';
+  if(s==='待上链') f+='<button class="jg-btn jg-btn-primary" onclick="closeDrawer();submitOne(\''+esc(id)+'\')">提交上链</button>';
   document.getElementById('drawerFooter').innerHTML=f;
   openDrawer();
 }
@@ -550,8 +678,8 @@ function copyHash(id){
 }
 
 /* ---------- 节点分布 SVG ---------- */
-var NODE_NAMES=['菌种','装袋','灭菌','接种','培养','出菇','采收','分级','冷链'];
-var PALETTE=['#1890ff','#52c41a','#fa8c16','#ff4d4f','#722ed1','#13c2c2','#1890ff','#52c41a','#fa8c16'];
+var NODE_NAMES=['菌种','菌包','装袋','灭菌','接种','培养','出菇','采收','分级','冷链'];
+var PALETTE=['#1890ff','#eb2f96','#52c41a','#fa8c16','#ff4d4f','#722ed1','#13c2c2','#1890ff','#52c41a','#fa8c16'];
 function renderChart(){
   var rows=FS.list('blockchain');
   var counts=NODE_NAMES.map(function(n){ return rows.filter(function(r){ return r.node===n; }).length; });
@@ -582,13 +710,41 @@ function renderChart(){
   }).join('');
 }
 
+/* ---------- 内容类型聚合（6 类） ---------- */
+function renderContentTypes(){
+  var rows=FS.list('blockchain');
+  var grid=document.getElementById('ctypeGrid');
+  grid.innerHTML=CONTENT_TYPES.map(function(ct){
+    var list=rows.filter(function(r){ return contentTypeOf(r)===ct; });
+    var n={ '已确认':0,'上链中':0,'待上链':0,'上链失败':0 };
+    list.forEach(function(r){ n[normStatus(r.status)]=(n[normStatus(r.status)]||0)+1; });
+    var total=list.length||1;
+    var seg=[['已确认','#52c41a'],['上链中','#1890ff'],['待上链','#f7c948'],['上链失败','#ff4d4f']].map(function(p){
+      var w=n[p[0]]/total*100;
+      return w>0?'<i style="width:'+w+'%;background:'+p[1]+';display:block;height:100%;" title="'+p[0]+' '+n[p[0]]+' 条"></i>':'';
+    }).join('');
+    return '<div class="ctype-card" style="cursor:pointer;" onclick="filterCtype(\''+ct+'\')" title="点击筛选该类型">'+
+      '<div class="ct-name"><i style="background:'+CT_COLORS[ct]+';"></i>'+ct+'</div>'+
+      '<div class="ct-count" style="color:'+CT_COLORS[ct]+';">'+list.length+'<small>条存证</small></div>'+
+      '<div class="ct-bar">'+seg+'</div>'+
+      '<div class="ct-sub">已确认 '+n['已确认']+' · 上链中 '+n['上链中']+' · 待上链 '+n['待上链']+' · 失败 '+n['上链失败']+'</div>'+
+    '</div>';
+  }).join('');
+}
+function filterCtype(ct){
+  document.getElementById('kwInput').value=ct;
+  applyFilter(false);
+  showToast('已筛选内容类型「'+ct+'」','info');
+  document.getElementById('kwInput').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
 /* ---------- 导出 ---------- */
 function exportCSV(){
   var rows=Pagination.filteredData;
   if(!rows.length){ showToast('当前没有可导出的数据','warning'); return; }
-  var head=['存证号','批次号','节点','哈希','区块高度','交易号','上链时间','状态'];
+  var head=['存证号','批次号','节点','内容类型','哈希','区块高度','交易号','上链时间','状态','重试次数','下次重试'];
   var lines=[head.join(',')].concat(rows.map(function(r){
-    return [r.id,r.batch,r.node,fullHashOf(r),r.height,r.tx||'',r.time,r.status].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+    return [r.id,r.batch,r.node,contentTypeOf(r),fullHashOf(r),r.height,r.tx||'',r.time,normStatus(r.status),Number(r.retryCount)||0,r.nextRetry||''].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
   }));
   var blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   var a=document.createElement('a');
@@ -599,7 +755,7 @@ function exportCSV(){
   showToast('已导出 '+rows.length+' 条存证','success');
 }
 
-function refresh(){ renderStats(); applyFilter(false); renderChart(); }
+function refresh(){ renderStats(); applyFilter(false); renderChart(); renderContentTypes(); }
 document.addEventListener('DOMContentLoaded',function(){
   var sel=document.getElementById('batchSelect');
   FS.list('batches').forEach(function(b){
@@ -607,8 +763,10 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   ['batchSelect','nodeSelect','statusSelect'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(){ applyFilter(false); }); });
   document.getElementById('kwInput').addEventListener('input',function(){ applyFilter(false); });
-  window.addEventListener('fungiStoreChange',function(){ renderStats(); renderChart(); });
+  window.addEventListener('fungiStoreChange',function(){ renderStats(); renderChart(); renderContentTypes(); });
   refresh();
+  chainTick();
+  setInterval(chainTick,5000);
 });
 </script>
 <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>

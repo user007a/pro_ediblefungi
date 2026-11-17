@@ -91,7 +91,7 @@
   .stat-sub.warn { color:var(--warning); }
   .stat-sub.err { color:var(--error); }
 
-  .data-table { min-width:1080px; }
+  .data-table { min-width:1240px; }
   .data-table th { white-space:nowrap; }
   .data-table th.sortable { cursor:pointer; user-select:none; }
   .data-table th.sortable:hover { color:var(--primary-500); }
@@ -109,6 +109,17 @@
   .pv-item .pv-main { flex:1; min-width:0; }
   .pv-item .pv-zone { font-weight:600; color:var(--text-primary); }
   .pv-item .pv-sub { color:var(--text-tertiary); font-size:11.5px; margin-top:2px; }
+
+  .section-title { font-size:14px; font-weight:600; color:var(--text-primary); margin:0 0 10px; display:flex; align-items:center; gap:8px; }
+  .section-title .count { font-size:12px; font-weight:500; color:var(--text-tertiary); }
+  .matrix-table { min-width:760px; }
+  .matrix-table td, .matrix-table th { text-align:center; }
+  .matrix-table td:first-child, .matrix-table th:first-child { text-align:left; }
+  .matrix-check { width:16px; height:16px; accent-color:#52c41a; cursor:pointer; }
+  .sla-input { width:74px; padding:6px 8px; border:1px solid var(--border-default); border-radius:6px; font-size:12.5px; text-align:center; }
+  .sla-input:focus { outline:none; border-color:var(--primary-400); }
+  .link-off { opacity:.62; }
+  .cond-sub { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
 </style>
 <style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
   .main-wrapper{margin-left:0!important;width:100%!important;}
@@ -140,12 +151,12 @@
 
       <div class="page-section search-section">
         <div class="search-bar">
-          <select class="search-select" id="levelSelect" style="min-width:120px;">
+          <select class="search-select" id="levelSelect" style="min-width:130px;">
             <option value="">全部级别</option>
-            <option value="urgent">紧急</option>
-            <option value="important">重要</option>
-            <option value="reminder">提醒</option>
-            <option value="notice">通知</option>
+            <option value="urgent">红色·紧急</option>
+            <option value="important">橙色·重要</option>
+            <option value="reminder">黄色·提醒</option>
+            <option value="notice">蓝色·提示</option>
           </select>
           <select class="search-select" id="enabledSelect" style="min-width:120px;">
             <option value="">全部启用状态</option>
@@ -177,17 +188,62 @@
               <tr>
                 <th style="width:44px;text-align:center;"><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
                 <th class="sortable" style="width:90px;" onclick="setSort('id')">规则编号<span class="arrow" id="ar-id"></span></th>
-                <th style="width:160px;">规则名称</th>
-                <th style="width:130px;">监测指标</th>
-                <th style="width:130px;">触发条件</th>
-                <th class="sortable" style="width:80px;" onclick="setSort('level')">级别<span class="arrow" id="ar-level"></span></th>
-                <th style="width:140px;">适用区</th>
-                <th style="width:110px;">通知渠道</th>
-                <th style="width:80px;">启用</th>
+                <th style="width:150px;">规则名称</th>
+                <th style="width:120px;">监测指标</th>
+                <th style="width:140px;">触发条件</th>
+                <th class="sortable" style="width:100px;" onclick="setSort('level')">级别<span class="arrow" id="ar-level"></span></th>
+                <th style="width:120px;">适用区</th>
+                <th style="width:130px;">通知渠道</th>
+                <th style="width:110px;">联动策略</th>
+                <th style="width:70px;">启用</th>
                 <th style="width:190px;">操作</th>
               </tr>
             </thead>
             <tbody id="ruleBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page-section data-section" style="margin-top:16px;">
+        <div class="section-title">四色响应时效 · 通知渠道矩阵
+          <span class="count">时效与渠道修改即时生效（预警管理页倒计时同步）</span>
+          <button class="jg-btn" style="margin-left:auto;padding:5px 14px;font-size:12px;" onclick="resetMatrix()">恢复默认</button>
+        </div>
+        <div class="data-table-wrapper">
+          <table class="data-table matrix-table">
+            <thead>
+              <tr>
+                <th style="width:150px;">预警级别</th>
+                <th style="width:130px;">响应时效 (min)</th>
+                <th>站内</th><th>短信</th><th>电话</th><th>App推送</th><th>大屏</th>
+                <th style="width:220px;">超时升级规则</th>
+              </tr>
+            </thead>
+            <tbody id="matrixBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page-section data-section" style="margin-top:16px;">
+        <div class="section-title">联动策略配置 <span class="count" id="linkCount"></span>
+          <button class="jg-btn jg-btn-primary" style="margin-left:auto;padding:5px 14px;font-size:12px;" onclick="openLinkModal('')">新增联动</button>
+        </div>
+        <div class="data-table-wrapper">
+          <table class="data-table" style="min-width:1100px;">
+            <thead>
+              <tr>
+                <th style="width:80px;">编号</th>
+                <th style="width:200px;">触发条件</th>
+                <th style="width:170px;">目标设备 / 流程</th>
+                <th>执行动作</th>
+                <th style="width:80px;">延时</th>
+                <th style="width:100px;">锁定方式</th>
+                <th style="width:200px;">复位条件</th>
+                <th style="width:70px;">启用</th>
+                <th style="width:130px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="linkBody"></tbody>
           </table>
         </div>
       </div>
@@ -211,9 +267,10 @@
       <div class="form-group"><label class="required">规则名称</label><input type="text" id="rName" placeholder="如 CO₂ 浓度上限"></div>
     </div>
     <div class="form-row">
-      <div class="form-group"><label class="required">监测指标</label><select id="rMetric">
+      <div class="form-group"><label class="required">监测指标</label><select id="rMetric" onchange="onMetricChange()">
         <option>CO₂ 浓度</option><option>温度区间</option><option>相对湿度</option><option>污染率</option>
         <option>设备离线时长</option><option>层间温差</option><option>预冷区温度</option><option>光照强度</option>
+        <option>洁净度等级</option>
       </select></div>
       <div class="form-group"><label class="required">适用区</label><select id="rScope"></select></div>
     </div>
@@ -221,20 +278,30 @@
       <div class="form-group"><label class="required">条件</label><select id="rOp">
         <option value=">">&gt; 大于</option><option value="≥">≥ 大于等于</option>
         <option value="<">&lt; 小于</option><option value="≤">≤ 小于等于</option>
-        <option value="超出">超出区间</option>
+        <option value="超出">超出区间</option><option value="低于">低于（等级）</option>
       </select></div>
-      <div class="form-group"><label class="required">阈值</label><input type="text" id="rThreshold" placeholder="如 800 或 ±2"></div>
+      <div class="form-group"><label class="required">阈值</label><input type="text" id="rThreshold" placeholder="如 800 / ±2 / B">
+        <div class="form-hint" id="rThresholdHint">数值条件填数字；洁净度等级填 A / B / C</div>
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>单位</label><input type="text" id="rUnit" placeholder="如 ppm / °C / %"></div>
       <div class="form-group"><label class="required">级别</label><select id="rLevel">
-        <option value="urgent">紧急</option><option value="important" selected>重要</option>
-        <option value="reminder">提醒</option><option value="notice">通知</option>
+        <option value="urgent">红色·紧急</option><option value="important" selected>橙色·重要</option>
+        <option value="reminder">黄色·提醒</option><option value="notice">蓝色·提示</option>
       </select></div>
     </div>
     <div class="form-row">
+      <div class="form-group"><label>持续时长 (min)</label><input type="number" id="rDuration" min="0" step="1" placeholder="0">
+        <div class="form-hint">越限持续达到该时长才触发；0 表示立即触发</div>
+      </div>
+      <div class="form-group"><label>联动策略</label><select id="rLinkage"></select>
+        <div class="form-hint">触发后自动执行的联动动作（下方联动策略配置维护）</div>
+      </div>
+    </div>
+    <div class="form-row">
       <div class="form-group"><label>通知渠道</label><select id="rChannel">
-        <option>站内</option><option>站内+短信</option><option>站内+声光</option>
+        <option>站内</option><option>站内+短信</option><option>站内+短信+电话</option><option>站内+声光</option>
       </select></div>
       <div class="form-group">
         <label>启用状态</label>
@@ -245,6 +312,37 @@
   <div class="modal-footer">
     <button class="jg-btn" onclick="closeRuleModal()">取消</button>
     <button class="jg-btn jg-btn-primary" onclick="saveRule()">保存</button>
+  </div>
+</div>
+
+<!-- 联动策略 新增/编辑 -->
+<div class="modal-overlay" id="linkOverlay" onclick="closeLinkModal()"></div>
+<div class="modal-box" id="linkModal" style="width:560px;">
+  <div class="modal-header">
+    <h3 id="linkTitle">新增联动策略</h3>
+    <button class="modal-close" onclick="closeLinkModal()">
+      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l8 8M11 3l-8 8"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="form-row">
+      <div class="form-group"><label>策略编号</label><input type="text" id="lId" placeholder="留空自动生成，如 LK-08"></div>
+      <div class="form-group"><label>延时 (秒)</label><input type="number" id="lDelay" min="0" step="1" placeholder="0"></div>
+    </div>
+    <div class="form-group"><label class="required">触发条件</label><input type="text" id="lTrigger" placeholder="如 CO₂ > 800ppm 持续 5min"></div>
+    <div class="form-group"><label class="required">目标设备 / 流程</label><input type="text" id="lTarget" placeholder="如 新风风机（同菇房）"></div>
+    <div class="form-group"><label class="required">执行动作</label><input type="text" id="lAction" placeholder="如 联动启动至 CO₂ < 700ppm"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="required">锁定方式</label><select id="lLock">
+        <option>自动</option><option>手动复位</option><option>人工复核</option>
+      </select></div>
+      <div class="form-group"><label class="required">复位条件</label><input type="text" id="lReset" placeholder="如 CO₂ < 650ppm 自动复位"></div>
+    </div>
+    <label class="form-check"><input type="checkbox" id="lEnabled" checked> 保存后立即启用</label>
+  </div>
+  <div class="modal-footer">
+    <button class="jg-btn" onclick="closeLinkModal()">取消</button>
+    <button class="jg-btn jg-btn-primary" onclick="saveLink()">保存</button>
   </div>
 </div>
 
@@ -267,34 +365,77 @@
 <script src="js/shared/device-ui.js"></script>
 <script>
 /* ============================================================
- * 预警设置（规则台账 + 启用开关 + 越限预览）
- * 数据源：FungiStore.rules；实时值 FungiStore.envCurrent / stats。
+ * 预警设置（规则台账 + 四色时效渠道矩阵 + 联动策略 + 越限预览）
+ * 数据源：FungiStore.rules / linkages / cleanliness；实时值 envCurrent / stats。
  * store 无 name 字段：规则名按指标推导（NAME_MAP），新建/编辑时
  * 作为页内补充字段写入。越限预览按规则指标对适用区逐区计算：
- *   CO₂/湿度/温度 → envCurrent；污染率 → stats().pollutionGF04；
+ *   CO₂/湿度/温度/光照 → envCurrent；污染率 → stats().pollutionGF04；
  *   设备离线时长 → devices 离线台数（时长自对应预警时间推导）；
- *   层间温差 → 预警 FA-261116-05 描述值 0.9°C（store 无层间传感数据）。
- * 今日触发估算 = 启用规则按当前实时值命中的区数合计。
+ *   层间温差 → 预警 FA-261116-05 描述值 0.9°C（store 无层间传感数据）；
+ *   洁净度等级 → cleanliness 最新 JZ-01 记录（pass=false 判 C 级）。
+ * 四色时效/渠道矩阵：契约 FAD.LEVEL_META / CHANNEL_MATRIX 为只读文件，
+ * 页内编辑写入 localStorage 覆盖层（mushroom_alert_matrix_v1）并同步
+ * 到内存对象，预警管理页 SLA 倒计时随之生效。
  * ============================================================ */
 var FS = window.FungiStore;
 var FAD = window.FungiAlertData;
 var esc = DeviceUI.esc;
-var LEVEL_TEXT = { urgent:'紧急', important:'重要', reminder:'提醒', notice:'通知' };
 var LEVEL_ORDER = { urgent:0, important:1, reminder:2, notice:3 };
+var LEVEL_KEYS = ['urgent','important','reminder','notice'];
 var NAME_MAP = {
   'CO₂ 浓度':'CO₂ 浓度上限', '温度区间':'温度区间偏离', '相对湿度':'相对湿度下限',
   '污染率':'污染率上限', '设备离线时长':'设备离线时长', '层间温差':'层间温差上限',
-  '预冷区温度':'预冷区温度上限', '光照强度':'光照强度上限'
+  '预冷区温度':'预冷区温度上限', '光照强度':'光照强度上限', '洁净度等级':'接种洁净度下限'
 };
+var GRADE_RANK = { A:3, B:2, C:1 };
+var MATRIX_KEY = 'mushroom_alert_matrix_v1';
+var MATRIX_CHANNELS = ['站内','短信','电话','App推送','大屏'];
+var DEFAULT_SLA = {};
+LEVEL_KEYS.forEach(function(k){ DEFAULT_SLA[k] = FAD.LEVEL_META[k].slaMin; });
+var DEFAULT_MATRIX = JSON.parse(JSON.stringify(FAD.CHANNEL_MATRIX));
+(function applyMatrixOverlay(){
+  try {
+    var ov = JSON.parse(localStorage.getItem(MATRIX_KEY) || 'null');
+    if (!ov) return;
+    if (ov.sla) LEVEL_KEYS.forEach(function(k){ if (ov.sla[k] != null) FAD.LEVEL_META[k].slaMin = ov.sla[k]; });
+    if (Array.isArray(ov.matrix)){
+      FAD.CHANNEL_MATRIX.forEach(function(row){
+        var saved = ov.matrix.filter(function(x){ return x.level === row.level; })[0];
+        if (saved) MATRIX_CHANNELS.forEach(function(c){ row[c] = !!saved[c]; });
+      });
+    }
+  } catch(e){}
+})();
+function persistMatrix(){
+  var sla = {};
+  LEVEL_KEYS.forEach(function(k){ sla[k] = FAD.LEVEL_META[k].slaMin; });
+  try { localStorage.setItem(MATRIX_KEY, JSON.stringify({ sla: sla, matrix: FAD.CHANNEL_MATRIX })); } catch(e){}
+}
 var TEMP_RANGE = { 'GF-01':[15,20], 'GF-05':[15,20], 'GF-02':[14,18], 'GF-06':[14,18], 'GF-03':[10,14], 'GF-04':[12,18] };
-var editingId = '';
+var editingId = '', editingLinkId = '';
 var sortKey = 'id', sortDir = 1;
 var selected = {};
 
 function pad2(n){ return n < 10 ? '0' + n : '' + n; }
 function ruleName(r){ return r.name || NAME_MAP[r.metric] || (r.metric + ' 预警'); }
-function levelTag(l){ return '<span class="level-tag level-' + l + '">' + (LEVEL_TEXT[l] || l) + '</span>'; }
+function levelTag(l){
+  var m = FAD.LEVEL_META[l] || FAD.LEVEL_META.notice;
+  return '<span class="level-tag" style="background:' + m.hex + '1a;color:' + m.hex + ';border:1px solid ' + m.hex + '55;">' + m.name + '</span>';
+}
 function condText(r){ return '<span class="cond-text">' + esc(r.op) + ' ' + esc(r.threshold) + esc(r.unit || '') + '</span>'; }
+function cleanGradeNow(){
+  var recs = FS.list('cleanliness').filter(function(c){ return c.room === 'JZ-01'; })
+    .sort(function(a,b){ return String(b.time).localeCompare(String(a.time)); });
+  if (!recs.length) return { grade:'B', note:'无洁净度检测记录，按 B 级保守默认' };
+  var c = recs[0];
+  var grade = c.pass ? (c.grade || 'A') : 'C';
+  return { grade: grade, note: '最新检测 ' + c.id + '（' + c.time + '）沉降菌 ' + c.settle + ' cfu/皿 · ' + (c.pass ? '判定合格' : '超限判 C 级') };
+}
+function linkageLabel(id){
+  if (!id || id === '—') return '—';
+  var lk = FS.get('linkages', id);
+  return lk ? id + (lk.enabled ? '' : '（停用）') : id + '（缺失）';
+}
 function gfRooms(){ return FS.envRooms.filter(function(r){ return /^GF-/.test(r); }); }
 function undoToast(msg, fn){
   var c = document.querySelector('.toast-container');
@@ -368,7 +509,7 @@ function previewRule(r){
       out.push({ zone: '全部设备', value: '0 台离线', hit: false, note: '当前无离线设备' });
     } else {
       offline.forEach(function(d){
-        var alert = FAD.list().filter(function(a){ return a.source === 'device' && a.title.indexOf(d.name.replace(/^\d+号/, '')) >= 0 || (a.source === 'device' && a.title.indexOf('加湿器离线') >= 0 && d.type === '加湿器'); })[0];
+        var alert = FAD.list().filter(function(a){ return a.source === 'device' && (a.title.indexOf(d.name.replace(/^\d+号/, '')) >= 0 || (a.title.indexOf('加湿器离线') >= 0 && d.type.indexOf('加湿器') >= 0)); })[0];
         var mins = null;
         if (alert){
           var t = new Date(String(alert.time).replace(' ', 'T') + ':00');
@@ -389,6 +530,12 @@ function previewRule(r){
       var v = FS.envCurrent(room).light;
       out.push({ zone: room, value: v + ' lx', hit: cmp(r.op, v, th), note: '实时光照强度' });
     });
+  } else if (r.metric === '洁净度等级'){
+    var cg = cleanGradeNow();
+    var thGrade = String(r.threshold).toUpperCase();
+    var hit = (GRADE_RANK[cg.grade] || 0) < (GRADE_RANK[thGrade] || 0);
+    out.push({ zone: 'JZ-01 接种车间', value: cg.grade + ' 级', hit: hit,
+      note: cg.note + ' · 放行要求 ≥ ' + thGrade + ' 级' + (hit ? '，联动 LK-07 禁止开工' : '') });
   } else {
     out.push({ zone: r.scope, value: '—', hit: false, note: '该指标暂无实时数据源，无法预览' });
   }
@@ -450,7 +597,7 @@ function renderRules(){
   var list = ruleFiltered();
   var body = document.getElementById('ruleBody');
   if (!list.length){
-    body.innerHTML = '<tr class="empty-row"><td colspan="10">暂无符合条件的预警规则</td></tr>';
+    body.innerHTML = '<tr class="empty-row"><td colspan="11">暂无符合条件的预警规则</td></tr>';
   } else {
     body.innerHTML = list.map(function(r){
       return '<tr class="clickable' + (r.enabled ? '' : ' rule-disabled') + '" onclick="openRuleDrawer(\'' + esc(r.id) + '\')">' +
@@ -458,10 +605,11 @@ function renderRules(){
         '<td><strong>' + esc(r.id) + '</strong></td>' +
         '<td>' + esc(ruleName(r)) + '</td>' +
         '<td>' + esc(r.metric) + '</td>' +
-        '<td>' + condText(r) + '</td>' +
+        '<td>' + condText(r) + '<div class="cond-sub">' + (r.duration > 0 ? '持续 ' + r.duration + 'min' : '立即触发') + '</div></td>' +
         '<td>' + levelTag(r.level) + '</td>' +
         '<td>' + esc(r.scope) + '</td>' +
         '<td>' + esc(r.channel || '站内') + '</td>' +
+        '<td>' + esc(linkageLabel(r.linkage)) + '</td>' +
         '<td onclick="event.stopPropagation();"><label class="switch"><input type="checkbox" ' + (r.enabled ? 'checked' : '') + ' onchange="toggleEnabled(\'' + esc(r.id) + '\',this.checked)"><span class="slider"></span></label></td>' +
         '<td onclick="event.stopPropagation();"><div class="action-btns">' +
           '<button class="action-btn detail" onclick="openRuleDrawer(\'' + esc(r.id) + '\')">预览</button>' +
@@ -501,6 +649,25 @@ function nextRuleId(){
   FS.list('rules').forEach(function(x){ var m = /^AR-(\d+)$/.exec(x.id); if (m) max = Math.max(max, +m[1]); });
   return 'AR-' + pad2(max + 1);
 }
+function fillLinkageSelect(selectedVal){
+  var opts = [{ value:'—', label:'— 不联动' }].concat(FS.list('linkages').map(function(lk){
+    return { value: lk.id, label: lk.id + ' · ' + lk.trigger + (lk.enabled ? '' : '（停用）') };
+  }));
+  DeviceUI.fillSelect('rLinkage', opts, null);
+  document.getElementById('rLinkage').value = selectedVal || '—';
+}
+function onMetricChange(){
+  var metric = document.getElementById('rMetric').value;
+  if (metric === '洁净度等级'){
+    document.getElementById('rOp').value = '低于';
+    document.getElementById('rUnit').value = '级';
+    document.getElementById('rThreshold').value = 'B';
+    document.getElementById('rScope').value = '接种车间';
+    document.getElementById('rThresholdHint').textContent = '洁净度等级阈值填 A / B / C（低于该等级触发，联动禁止开工）';
+  } else {
+    document.getElementById('rThresholdHint').textContent = '数值条件填数字；温度区间填 ±容差（如 ±2）';
+  }
+}
 function openRuleModal(id){
   editingId = id || '';
   var r = id ? FS.get('rules', id) : null;
@@ -514,8 +681,13 @@ function openRuleModal(id){
   document.getElementById('rThreshold').value = r ? r.threshold : '';
   document.getElementById('rUnit').value = r ? (r.unit || '') : 'ppm';
   document.getElementById('rLevel').value = r ? r.level : 'important';
+  document.getElementById('rDuration').value = r && r.duration != null ? r.duration : 0;
+  fillLinkageSelect(r ? r.linkage : '—');
   document.getElementById('rChannel').value = r ? (r.channel || '站内') : '站内';
   document.getElementById('rEnabled').checked = r ? !!r.enabled : true;
+  document.getElementById('rThresholdHint').textContent = (r && r.metric === '洁净度等级')
+    ? '洁净度等级阈值填 A / B / C（低于该等级触发，联动禁止开工）'
+    : '数值条件填数字；温度区间填 ±容差（如 ±2）';
   document.getElementById('ruleOverlay').classList.add('show');
   document.getElementById('ruleModal').classList.add('show');
 }
@@ -527,20 +699,30 @@ function closeRuleModal(){
 function saveRule(){
   var name = document.getElementById('rName').value.trim();
   var threshold = document.getElementById('rThreshold').value.trim();
+  var metric = document.getElementById('rMetric').value;
   if (!name){ DeviceUI.toast('请填写规则名称', 'error'); return; }
   if (!threshold){ DeviceUI.toast('请填写阈值', 'error'); return; }
   var op = document.getElementById('rOp').value;
-  if (op !== '超出' && isNaN(parseFloat(threshold))){ DeviceUI.toast('数值条件的阈值必须为数字', 'error'); return; }
+  if (metric === '洁净度等级'){
+    if (['A','B','C'].indexOf(threshold.toUpperCase()) < 0){ DeviceUI.toast('洁净度等级阈值必须为 A / B / C', 'error'); return; }
+    if (op !== '低于'){ DeviceUI.toast('洁净度等级条件请使用「低于」', 'error'); return; }
+  } else if (op !== '超出' && isNaN(parseFloat(threshold))){
+    DeviceUI.toast('数值条件的阈值必须为数字', 'error'); return;
+  }
+  var duration = Number(document.getElementById('rDuration').value);
+  if (isNaN(duration) || duration < 0){ DeviceUI.toast('持续时长须为 ≥0 的分钟数', 'error'); return; }
   var id = editingId || document.getElementById('rId').value.trim() || nextRuleId();
   if (!editingId && FS.get('rules', id)){ DeviceUI.toast('规则编号 ' + id + ' 已存在', 'error'); return; }
-  var thVal = op === '超出' ? threshold : parseFloat(threshold);
+  var thVal = metric === '洁净度等级' ? threshold.toUpperCase() : (op === '超出' ? threshold : parseFloat(threshold));
   var patch = {
     name: name,
-    metric: document.getElementById('rMetric').value,
+    metric: metric,
     scope: document.getElementById('rScope').value,
     op: op, threshold: thVal,
     unit: document.getElementById('rUnit').value.trim(),
     level: document.getElementById('rLevel').value,
+    duration: Math.round(duration),
+    linkage: document.getElementById('rLinkage').value || '—',
     channel: document.getElementById('rChannel').value,
     enabled: document.getElementById('rEnabled').checked
   };
@@ -592,14 +774,24 @@ function openRuleDrawer(id){
   if (!r) return;
   var rows = [
     ['规则编号', r.id], ['规则名称', ruleName(r)], ['监测指标', r.metric],
-    ['触发条件', condText(r), 'raw'], ['级别', levelTag(r.level), 'raw'],
+    ['触发条件', condText(r), 'raw'],
+    ['持续时长', r.duration > 0 ? '持续 ' + r.duration + 'min 后触发' : '立即触发（0min）'],
+    ['级别', levelTag(r.level) + ' <span style="font-size:11.5px;color:var(--text-tertiary);">SLA ≤' + (FAD.LEVEL_META[r.level] || {}).slaMin + 'min</span>', 'raw'],
     ['适用区', r.scope], ['通知渠道', r.channel || '站内'],
+    ['联动策略', linkageLabel(r.linkage)],
     ['启用状态', r.enabled ? '<span class="status-tag online">已启用</span>' : '<span class="status-tag idle">已停用</span>', 'raw']
   ];
   var html = '<div class="drawer-section">规则配置</div><div class="detail-info">' +
     rows.map(function(x){
       return '<div class="detail-row"><span class="detail-label">' + x[0] + '</span><span class="detail-value">' + (x[2] === 'raw' ? x[1] : esc(x[1])) + '</span></div>';
     }).join('') + '</div>';
+  var lk = r.linkage && r.linkage !== '—' ? FS.get('linkages', r.linkage) : null;
+  if (lk){
+    html += '<div class="drawer-section">关联联动 · ' + esc(lk.id) + (lk.enabled ? '' : '（已停用）') + '</div><div class="detail-info">' +
+      [['触发', lk.trigger], ['目标', lk.target], ['动作', lk.action], ['延时', lk.delay > 0 ? lk.delay + ' 秒' : '即时'], ['锁定', lk.lock], ['复位', lk.reset]].map(function(x){
+        return '<div class="detail-row"><span class="detail-label">' + x[0] + '</span><span class="detail-value">' + esc(x[1]) + '</span></div>';
+      }).join('') + '</div>';
+  }
   var pv = previewRule(r);
   var hits = pv.filter(function(p){ return p.hit; }).length;
   html += '<div class="drawer-section">越限预览（按当前实时值） <span style="font-weight:500;color:' + (hits ? '#cf1322' : '#3a8618') + ';">' +
@@ -615,22 +807,176 @@ function openRuleDrawer(id){
 
 /* ---------- 导出 ---------- */
 function exportRules(){
-  var headers = ['规则编号','规则名称','监测指标','条件','阈值','单位','级别','适用区','通知渠道','启用状态'];
+  var headers = ['规则编号','规则名称','监测指标','条件','阈值','单位','持续时长(min)','级别','响应时效(min)','适用区','通知渠道','联动策略','启用状态'];
   var rows = ruleFiltered().map(function(r){
-    return [r.id, ruleName(r), r.metric, r.op, r.threshold, r.unit || '', LEVEL_TEXT[r.level] || r.level, r.scope, r.channel || '站内', r.enabled ? '启用' : '停用'];
+    var m = FAD.LEVEL_META[r.level] || {};
+    return [r.id, ruleName(r), r.metric, r.op, r.threshold, r.unit || '', r.duration != null ? r.duration : 0,
+      m.name || r.level, m.slaMin != null ? m.slaMin : '', r.scope, r.channel || '站内', r.linkage || '—', r.enabled ? '启用' : '停用'];
   });
   DeviceUI.exportCsv('预警规则', headers, rows);
 }
 
+/* ---------- 四色时效 / 渠道矩阵 ---------- */
+function renderMatrix(){
+  var body = document.getElementById('matrixBody');
+  body.innerHTML = LEVEL_KEYS.map(function(k){
+    var m = FAD.LEVEL_META[k];
+    var row = FAD.CHANNEL_MATRIX.filter(function(x){ return x.level === m.name; })[0] || {};
+    return '<tr>' +
+      '<td>' + levelTag(k) + '</td>' +
+      '<td><input type="number" class="sla-input" min="1" step="1" value="' + m.slaMin + '" onchange="changeSla(\'' + k + '\',this.value)"></td>' +
+      MATRIX_CHANNELS.map(function(c){
+        return '<td><input type="checkbox" class="matrix-check" ' + (row[c] ? 'checked' : '') + ' onchange="toggleMatrix(\'' + esc(m.name) + '\',\'' + c + '\',this.checked)"></td>';
+      }).join('') +
+      '<td style="font-size:12px;color:var(--text-tertiary);text-align:left;">' + esc(m.escalate || '—') + '</td></tr>';
+  }).join('');
+}
+function changeSla(key, val){
+  var n = Number(val);
+  if (!n || isNaN(n) || n < 1){ DeviceUI.toast('响应时效须为 ≥1 的分钟数', 'error'); renderMatrix(); return; }
+  FAD.LEVEL_META[key].slaMin = Math.round(n);
+  persistMatrix();
+  DeviceUI.toast(FAD.LEVEL_META[key].name + ' 响应时效已更新为 ≤' + Math.round(n) + 'min，预警管理页倒计时同步生效', 'success');
+  renderMatrix(); renderStats();
+}
+function toggleMatrix(levelName, channel, on){
+  var row = FAD.CHANNEL_MATRIX.filter(function(x){ return x.level === levelName; })[0];
+  if (!row) return;
+  if (channel === '站内' && !on){
+    DeviceUI.toast('「站内」为基础通知渠道，不允许关闭', 'error');
+    renderMatrix(); return;
+  }
+  row[channel] = on;
+  persistMatrix();
+  DeviceUI.toast(levelName + ' · ' + channel + (on ? ' 渠道已开启' : ' 渠道已关闭'), 'success');
+}
+function resetMatrix(){
+  Modal.confirm('确定恢复四色响应时效与渠道矩阵为默认配置吗？', { title:'恢复默认', confirmText:'恢复' }).then(function(ok){
+    if (!ok) return;
+    LEVEL_KEYS.forEach(function(k){ FAD.LEVEL_META[k].slaMin = DEFAULT_SLA[k]; });
+    DEFAULT_MATRIX.forEach(function(def){
+      var row = FAD.CHANNEL_MATRIX.filter(function(x){ return x.level === def.level; })[0];
+      if (row) MATRIX_CHANNELS.forEach(function(c){ row[c] = def[c]; });
+    });
+    try { localStorage.removeItem(MATRIX_KEY); } catch(e){}
+    renderMatrix(); renderStats();
+    DeviceUI.toast('已恢复默认时效与渠道矩阵', 'success');
+  });
+}
+
+/* ---------- 联动策略 CRUD ---------- */
+function renderLinkages(){
+  var list = FS.list('linkages');
+  document.getElementById('linkCount').textContent = '共 ' + list.length + ' 条 · 启用 ' + list.filter(function(x){ return x.enabled; }).length + ' 条';
+  var body = document.getElementById('linkBody');
+  if (!list.length){
+    body.innerHTML = '<tr class="empty-row"><td colspan="9">暂无联动策略，点击右上角新增</td></tr>';
+    return;
+  }
+  body.innerHTML = list.map(function(lk){
+    return '<tr class="' + (lk.enabled ? '' : 'link-off') + '">' +
+      '<td><strong>' + esc(lk.id) + '</strong></td>' +
+      '<td>' + esc(lk.trigger) + '</td>' +
+      '<td>' + esc(lk.target) + '</td>' +
+      '<td>' + esc(lk.action) + '</td>' +
+      '<td>' + (lk.delay > 0 ? lk.delay + ' 秒' : '即时') + '</td>' +
+      '<td>' + esc(lk.lock) + '</td>' +
+      '<td>' + esc(lk.reset) + '</td>' +
+      '<td><label class="switch"><input type="checkbox" ' + (lk.enabled ? 'checked' : '') + ' onchange="toggleLink(\'' + esc(lk.id) + '\',this.checked)"><span class="slider"></span></label></td>' +
+      '<td><div class="action-btns">' +
+        '<button class="action-btn edit" onclick="openLinkModal(\'' + esc(lk.id) + '\')">编辑</button>' +
+        '<button class="action-btn del" onclick="deleteLink(\'' + esc(lk.id) + '\')">删除</button>' +
+      '</div></td></tr>';
+  }).join('');
+}
+function nextLinkId(){
+  var max = 0;
+  FS.list('linkages').forEach(function(x){ var m = /^LK-(\d+)$/.exec(x.id); if (m) max = Math.max(max, +m[1]); });
+  return 'LK-' + pad2(max + 1);
+}
+function openLinkModal(id){
+  editingLinkId = id || '';
+  var lk = id ? FS.get('linkages', id) : null;
+  document.getElementById('linkTitle').textContent = lk ? '编辑联动 · ' + lk.id : '新增联动策略';
+  document.getElementById('lId').value = lk ? lk.id : '';
+  document.getElementById('lId').disabled = !!lk;
+  document.getElementById('lTrigger').value = lk ? lk.trigger : '';
+  document.getElementById('lTarget').value = lk ? lk.target : '';
+  document.getElementById('lAction').value = lk ? lk.action : '';
+  document.getElementById('lDelay').value = lk ? lk.delay : 0;
+  document.getElementById('lLock').value = lk ? lk.lock : '自动';
+  document.getElementById('lReset').value = lk ? lk.reset : '';
+  document.getElementById('lEnabled').checked = lk ? !!lk.enabled : true;
+  document.getElementById('linkOverlay').classList.add('show');
+  document.getElementById('linkModal').classList.add('show');
+}
+function closeLinkModal(){
+  document.getElementById('linkOverlay').classList.remove('show');
+  document.getElementById('linkModal').classList.remove('show');
+  editingLinkId = '';
+}
+function saveLink(){
+  var trigger = document.getElementById('lTrigger').value.trim();
+  var target = document.getElementById('lTarget').value.trim();
+  var action = document.getElementById('lAction').value.trim();
+  var reset = document.getElementById('lReset').value.trim();
+  if (!trigger || !target || !action || !reset){ DeviceUI.toast('触发条件 / 目标 / 执行动作 / 复位条件均为必填', 'error'); return; }
+  var delay = Number(document.getElementById('lDelay').value);
+  if (isNaN(delay) || delay < 0){ DeviceUI.toast('延时须为 ≥0 的秒数', 'error'); return; }
+  var id = editingLinkId || document.getElementById('lId').value.trim() || nextLinkId();
+  if (!editingLinkId && FS.get('linkages', id)){ DeviceUI.toast('策略编号 ' + id + ' 已存在', 'error'); return; }
+  var patch = { trigger: trigger, target: target, action: action, delay: Math.round(delay),
+    lock: document.getElementById('lLock').value, reset: reset, enabled: document.getElementById('lEnabled').checked };
+  if (editingLinkId){
+    FS.update('linkages', editingLinkId, patch);
+    DeviceUI.toast('联动策略 ' + editingLinkId + ' 已更新', 'success');
+  } else {
+    patch.id = id;
+    FS.add('linkages', patch);
+    DeviceUI.toast('联动策略 ' + id + ' 已创建', 'success');
+  }
+  closeLinkModal(); refreshAll();
+}
+function toggleLink(id, on){
+  FS.update('linkages', id, { enabled: on });
+  DeviceUI.toast('联动 ' + id + (on ? ' 已启用' : ' 已停用，触发后不再执行'), on ? 'success' : 'info');
+  refreshAll();
+}
+function deleteLink(id){
+  var lk = FS.get('linkages', id);
+  if (!lk) return;
+  var usedBy = FS.list('rules').filter(function(r){ return r.linkage === id; });
+  DeviceUI.confirmDelete('确定删除联动策略 ' + id + ' 吗？' +
+    (usedBy.length ? '规则 ' + usedBy.map(function(r){ return r.id; }).join('、') + ' 正在引用，删除后引用置为「—」。' : '') +
+    '删除后可在提示中撤销。').then(function(ok){
+    if (!ok) return;
+    var list = FS.list('linkages');
+    var idx = list.findIndex(function(x){ return x.id === id; });
+    var prevRefs = usedBy.map(function(r){ return r.id; });
+    FS.remove('linkages', id);
+    prevRefs.forEach(function(rid){ FS.update('rules', rid, { linkage: '—' }); });
+    refreshAll();
+    undoToast('联动策略 ' + id + ' 已删除', function(){
+      FS.restore('linkages', lk, idx);
+      prevRefs.forEach(function(rid){ FS.update('rules', rid, { linkage: id }); });
+      refreshAll();
+    });
+  });
+}
+
 /* ---------- 刷新 / 初始化 ---------- */
-function refreshAll(){ renderStats(); renderRules(); }
+function refreshAll(){ renderStats(); renderRules(); renderMatrix(); renderLinkages(); }
 document.addEventListener('DOMContentLoaded', function(){
-  var scopes = ['全部出菇房','分品种配方','培养车间','全部设备','层架菇房'].concat(FS.envRooms);
+  var scopes = ['全部出菇房','分品种配方','培养车间','接种车间','全部设备','层架菇房'].concat(FS.envRooms);
   DeviceUI.fillSelect('rScope', scopes, null);
   refreshAll();
   document.getElementById('searchInput').addEventListener('input', renderRules);
   ['levelSelect','enabledSelect'].forEach(function(id){
     document.getElementById(id).addEventListener('change', renderRules);
+  });
+  window.addEventListener('fungiStoreChange', function(e){
+    var col = e.detail && e.detail.col;
+    if (!col || col === '*' || col === 'rules' || col === 'linkages' || col === 'cleanliness') refreshAll();
   });
 });
 </script>

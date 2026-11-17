@@ -67,6 +67,18 @@
   #modal .modal-body input:focus,#modal .modal-body select:focus,#modal .modal-body textarea:focus{border-color:#1890ff;box-shadow:0 0 0 3px rgba(24,144,255,.1);}
   .modal-footer{display:flex;justify-content:flex-end;gap:12px;padding:14px 24px;border-top:1px solid #eef1ef;flex:none;}
   .toast-undo{display:none;padding:3px 12px;border-radius:6px;border:1px solid currentColor;background:rgba(255,255,255,.6);font-size:12px;font-weight:600;cursor:pointer;color:inherit;}
+  .tabs{margin-bottom:16px;}
+  .range-inputs{display:flex;align-items:center;gap:8px;}
+  .range-inputs input{flex:1;}
+  .range-inputs span{color:var(--text-tertiary);flex:none;}
+  .room-checks{display:flex;flex-wrap:wrap;gap:8px;}
+  .room-checks label{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #e8ede8;border-radius:20px;font-size:13px;cursor:pointer;background:#f7f9f7;margin:0;font-weight:400;}
+  .room-checks label.checked{background:#e6f7ff;border-color:#91d5ff;color:#096dd9;}
+  .room-checks input{width:auto!important;}
+  .hint-bar{background:#f0f5ff;border:1px solid #d6e4ff;border-radius:8px;padding:10px 14px;font-size:12px;color:#2f54eb;line-height:1.7;margin-bottom:14px;}
+  .mini-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .mini-table th{background:#f7f9f7;color:var(--text-tertiary);font-weight:600;padding:7px 8px;text-align:left;border-bottom:1px solid #e8ede8;white-space:nowrap;}
+  .mini-table td{padding:7px 8px;border-bottom:1px solid #f4f6f4;}
 </style>
 <style id="standalone-fix">.main-wrapper{margin-left:0!important;width:100%!important;}</style>
 <link rel="stylesheet" href="css/unified-theme.css">
@@ -81,18 +93,22 @@
 
       <div class="page-head">
         <h1>工艺标准</h1>
-        <div class="crumb">企业管理 / 工艺标准 · 食用菌工厂化生产工艺规程（SOP）</div>
+        <div class="crumb">企业管理 / 工艺标准 · 工艺 SOP · 配方模板 · 接种等级 · 生长曲线 · 参数覆盖（就近生效）</div>
       </div>
 
       <div class="stat-grid" id="statGrid"></div>
 
+      <div class="tabs" id="mainTabs">
+        <div class="tab-item active" data-tab="sops" onclick="switchTab('sops')">工艺SOP</div>
+        <div class="tab-item" data-tab="recipes" onclick="switchTab('recipes')">配方模板</div>
+        <div class="tab-item" data-tab="grades" onclick="switchTab('grades')">接种等级</div>
+        <div class="tab-item" data-tab="curves" onclick="switchTab('curves')">生长曲线</div>
+        <div class="tab-item" data-tab="overrides" onclick="switchTab('overrides')">参数覆盖</div>
+      </div>
+
       <div class="page-section search-section">
         <div class="search-bar">
-          <select class="search-select" id="filterSelect" onchange="renderTable()">
-            <option value="">全部状态</option>
-            <option value="启用">启用</option>
-            <option value="停用">停用</option>
-          </select>
+          <select class="search-select" id="filterSelect" onchange="renderTable()"></select>
           <input type="text" class="search-input" id="searchInput" placeholder="搜索编号、名称、关键参数..." oninput="renderTable()">
           <div class="search-actions">
             <button class="jg-btn" onclick="resetFilters()">重置</button>
@@ -102,9 +118,9 @@
 
       <div class="page-section action-bar">
         <div class="action-left">
-          <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openSopForm()">+ 新建标准</button>
-          <button class="jg-btn" id="exportBtn" onclick="exportSops()">导出CSV</button>
-          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete('sops','标准')">批量删除</button>
+          <button class="jg-btn jg-btn-primary" id="newBtn" onclick="openForm()">+ 新建标准</button>
+          <button class="jg-btn" id="exportBtn" onclick="exportCurrent()">导出CSV</button>
+          <button class="jg-btn" id="batchDelBtn" onclick="batchDelete(FS_COL[currentTab],TAB_LABEL[currentTab])">批量删除</button>
           <span class="selected-info" id="selInfo"></span>
         </div>
       </div>
@@ -112,19 +128,7 @@
       <div class="page-section data-section">
         <div class="data-table-wrapper">
           <table class="data-table">
-            <thead>
-              <tr>
-                <th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
-                <th class="sortable" data-key="id" onclick="sortBy('id')">编号<span class="sort-arrow"></span></th>
-                <th class="sortable" data-key="name" onclick="sortBy('name')">名称<span class="sort-arrow"></span></th>
-                <th>版本</th>
-                <th>适用</th>
-                <th class="sortable" data-key="effective" onclick="sortBy('effective')">生效日期<span class="sort-arrow"></span></th>
-                <th>状态</th>
-                <th>关键参数摘要</th>
-                <th style="width:210px;">操作</th>
-              </tr>
-            </thead>
+            <thead id="tableHead"></thead>
             <tbody id="tableBody"></tbody>
           </table>
         </div>
@@ -150,9 +154,9 @@
 
 <div class="modal-overlay" id="confirmModal" onclick="if(event.target===this)closeConfirm()">
   <div class="modal-box" style="width:420px;">
-    <div class="modal-header"><h3>删除确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
+    <div class="modal-header"><h3>操作确认</h3><button class="modal-close" onclick="closeConfirm()">×</button></div>
     <div class="modal-body"><p id="confirmText" style="margin:0;font-size:14px;color:var(--text-primary);"></p></div>
-    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" style="background:#ff4d4f;border-color:#ff4d4f;" onclick="doConfirm()">确认删除</button></div>
+    <div class="modal-footer"><button class="jg-btn" onclick="closeConfirm()">取消</button><button class="jg-btn jg-btn-primary" id="confirmOk" onclick="doConfirm()">确认</button></div>
   </div>
 </div>
 
@@ -195,58 +199,196 @@ function paintArrows(){document.querySelectorAll('th.sortable').forEach(function
 function resetFilters(){document.getElementById('searchInput').value='';document.getElementById('filterSelect').value='';renderAll();}
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeModal();closeConfirm();closeDrawer();}});
 
-/* ===== 工艺标准 ===== */
-function sopRows(){
+/* ===== 工艺标准 · 五 tab：SOP / 配方模板 / 接种等级 / 生长曲线 / 参数覆盖 ===== */
+var currentTab='sops';
+var TAB_LABEL={sops:'标准',recipes:'配方模板',grades:'接种等级',curves:'生长曲线',overrides:'参数覆盖'};
+var FS_COL={sops:'sops',recipes:'recipeTemplates',grades:'inocGrades',curves:'curveTemplates',overrides:'paramOverrides'};
+var PARAMS=[['temp','温度(°C)'],['hum','湿度(%)'],['co2','CO₂(ppm)'],['light','光照(lx)'],['wind','风速(m/s)'],['negPressure','负压(Pa)']];
+var METRICS={'CO₂ 上限':'ppm','CO₂ 下限':'ppm','温度下限':'°C','温度上限':'°C','RH 下限':'%','RH 上限':'%','光照上限':'lx'};
+var modalMode='form',distributingId='';
+function bumpVer(v){var m=/^v(\d+)\.(\d+)$/.exec(String(v||'v1.0'));if(!m)return 'v1.1';return 'v'+m[1]+'.'+(Number(m[2])+1);}
+function pad2(n){return (n<10?'0':'')+n;}
+function varietyOpts(){var dic=FS.get('dictionaries','DIC-VAR');var items=dic?dic.items.slice():['平菇','杏鲍菇','金针菇','香菇'];if(items.indexOf('全品种')<0)items.unshift('全品种');return items;}
+function roomOpts(){return FS.list('rooms').map(function(r){return r.id;}).concat(['PY-01']);}
+function switchTab(tab){
+  currentTab=tab;selected={};sortKey='';sortDir=1;
+  document.querySelectorAll('#mainTabs .tab-item').forEach(function(el){el.classList.toggle('active',el.dataset.tab===tab);});
+  var f=document.getElementById('filterSelect');
+  if(tab==='sops'||tab==='recipes'){
+    f.style.display='';f.innerHTML='<option value="">全部状态</option><option value="启用">启用</option><option value="停用">停用</option>';
+  }else if(tab==='grades'){
+    f.style.display='none';f.innerHTML='';
+  }else if(tab==='curves'){
+    f.style.display='';f.innerHTML='<option value="">全部品种</option>'+varietyOpts().filter(function(v){return v!=='全品种';}).map(function(v){return '<option value="'+esc(v)+'">'+esc(v)+'</option>';}).join('');
+  }else{
+    f.style.display='';f.innerHTML='<option value="">全部级别</option><option value="全局">全局</option><option value="菇房">菇房</option><option value="批次">批次</option>';
+  }
+  f.value='';
+  document.getElementById('searchInput').value='';
+  document.getElementById('newBtn').textContent={sops:'+ 新建标准',recipes:'+ 新建配方模板',grades:'+ 新建等级',curves:'+ 新建曲线',overrides:'+ 新建覆盖'}[tab];
+  renderAll();
+}
+function currentRows(){
   var kw=document.getElementById('searchInput').value.trim().toLowerCase();
-  var st=document.getElementById('filterSelect').value;
-  return FS.list('sops').filter(function(s){
-    if(st&&s.status!==st)return false;
-    if(kw&&(s.id+' '+s.name+' '+s.key+' '+s.scope).toLowerCase().indexOf(kw)===-1)return false;
+  var fv=document.getElementById('filterSelect').value;
+  if(currentTab==='sops'){
+    return FS.list('sops').filter(function(s){
+      if(fv&&s.status!==fv)return false;
+      if(kw&&(s.id+' '+s.name+' '+s.key+' '+s.scope).toLowerCase().indexOf(kw)===-1)return false;
+      return true;
+    });
+  }
+  if(currentTab==='recipes'){
+    return FS.list('recipeTemplates').filter(function(t){
+      if(fv&&t.status!==fv)return false;
+      if(kw&&(t.id+' '+t.name+' '+t.variety+' '+t.author).toLowerCase().indexOf(kw)===-1)return false;
+      return true;
+    });
+  }
+  if(currentTab==='grades'){
+    return FS.list('inocGrades').filter(function(g){
+      if(kw&&(g.id+' '+g.name+' '+g.clean+' '+g.settle+' '+g.desc).toLowerCase().indexOf(kw)===-1)return false;
+      return true;
+    });
+  }
+  if(currentTab==='curves'){
+    return FS.list('curveTemplates').filter(function(c){
+      if(fv&&c.variety!==fv)return false;
+      if(kw&&(c.id+' '+c.variety+' '+c.condition+' '+c.turnStd+' '+c.author).toLowerCase().indexOf(kw)===-1)return false;
+      return true;
+    });
+  }
+  return FS.list('paramOverrides').filter(function(o){
+    if(fv&&o.level!==fv)return false;
+    if(kw&&(o.id+' '+o.scope+' '+o.metric+' '+o.source+' '+o.operator).toLowerCase().indexOf(kw)===-1)return false;
     return true;
   });
 }
 function renderStats(){
-  var ss=FS.list('sops');
+  var ss=FS.list('sops'),ts=FS.list('recipeTemplates'),cs=FS.list('curveTemplates'),os=FS.list('paramOverrides');
   var on=ss.filter(function(s){return s.status==='启用';}).length;
+  var roomHits=ts.reduce(function(s,t){return s+(t.rooms||[]).length;},0);
+  var lv={全局:0,菇房:0,批次:0};
+  os.forEach(function(o){lv[o.level]=(lv[o.level]||0)+1;});
   var cards=[
-    {label:'工艺标准',value:ss.length,unit:'项',sub:'覆盖菌包到采收全工序',cls:''},
-    {label:'启用中',value:on,unit:'项',sub:'现行有效版本',cls:'green'},
-    {label:'已停用',value:ss.length-on,unit:'项',sub:'停用标准不参与生产校验',cls:'orange'},
-    {label:'全品种适用',value:ss.filter(function(s){return s.scope==='全品种';}).length,unit:'项',sub:'其余为分品种标准',cls:'purple'}
+    {label:'工艺SOP',value:ss.length,unit:'项',sub:'启用 '+on+' 项 · 覆盖全工序',cls:''},
+    {label:'配方模板',value:ts.length,unit:'套',sub:'已下发 '+roomHits+' 间次菇房',cls:'green'},
+    {label:'生长曲线',value:cs.length,unit:'条',sub:'积温 + 天数双条件判定',cls:'purple'},
+    {label:'参数覆盖',value:os.length,unit:'条',sub:'全局 '+lv['全局']+' · 菇房 '+lv['菇房']+' · 批次 '+lv['批次']+'（就近生效）',cls:'orange'}
   ];
   document.getElementById('statGrid').innerHTML=cards.map(function(c){
     return '<div class="stat-card '+c.cls+'"><div class="stat-label">'+c.label+'</div><div class="stat-value">'+esc(c.value)+(c.unit?'<small>'+c.unit+'</small>':'')+'</div><div class="stat-sub">'+esc(c.sub)+'</div></div>';
   }).join('');
 }
+function renderHead(){
+  var h=document.getElementById('tableHead');
+  var ck='<th style="width:36px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>';
+  if(currentTab==='sops'){
+    h.innerHTML='<tr>'+ck+
+      '<th class="sortable" data-key="id" onclick="sortBy(\'id\')">编号<span class="sort-arrow"></span></th>'+
+      '<th class="sortable" data-key="name" onclick="sortBy(\'name\')">名称<span class="sort-arrow"></span></th>'+
+      '<th>版本</th><th>适用</th>'+
+      '<th class="sortable" data-key="effective" onclick="sortBy(\'effective\')">生效日期<span class="sort-arrow"></span></th>'+
+      '<th>状态</th><th>关键参数摘要</th><th style="width:210px;">操作</th></tr>';
+  }else if(currentTab==='recipes'){
+    h.innerHTML='<tr>'+ck+
+      '<th class="sortable" data-key="id" onclick="sortBy(\'id\')">编号<span class="sort-arrow"></span></th>'+
+      '<th>名称</th><th>品种</th><th>版本</th>'+
+      '<th class="sortable" data-key="effective" onclick="sortBy(\'effective\')">生效日期<span class="sort-arrow"></span></th>'+
+      '<th>作者</th><th>参数摘要</th><th>下发菇房</th><th>状态</th><th style="width:240px;">操作</th></tr>';
+  }else if(currentTab==='grades'){
+    h.innerHTML='<tr>'+ck+'<th>等级</th><th>名称</th><th>洁净度</th><th>沉降菌</th><th>污染率</th><th>判定说明</th><th style="width:130px;">操作</th></tr>';
+  }else if(currentTab==='curves'){
+    h.innerHTML='<tr>'+ck+
+      '<th class="sortable" data-key="id" onclick="sortBy(\'id\')">编号<span class="sort-arrow"></span></th>'+
+      '<th>品种</th>'+
+      '<th class="sortable" data-key="accumTemp" onclick="sortBy(\'accumTemp\')">积温阈值(°C·d)<span class="sort-arrow"></span></th>'+
+      '<th class="sortable" data-key="days" onclick="sortBy(\'days\')">天数阈值<span class="sort-arrow"></span></th>'+
+      '<th>双条件</th><th>转潮标准</th><th>作者</th><th style="width:130px;">操作</th></tr>';
+  }else{
+    h.innerHTML='<tr>'+ck+'<th>编号</th><th>级别</th><th>作用域</th><th>指标</th><th>值</th><th>来源</th><th>操作人</th><th>时间</th><th style="width:130px;">操作</th></tr>';
+  }
+}
+function gradeCls(id){return id==='A'?'normal':(id==='B'?'warning':'danger');}
+function levelCls(l){return l==='全局'?'base-planning':(l==='菇房'?'active':'warning');}
+function recipeSummary(t){
+  return '温度 '+t.temp[0]+'~'+t.temp[1]+'°C · RH '+t.hum[0]+'~'+t.hum[1]+'% · CO₂ ≤'+t.co2[1]+'ppm';
+}
 function renderTable(){
-  var rows=applySort(sopRows());
+  renderHead();
+  var rows=applySort(currentRows());
   var body=document.getElementById('tableBody');
-  if(!rows.length){body.innerHTML='<tr><td colspan="9" class="empty-cell">暂无符合条件的工艺标准，点击「新建标准」添加</td></tr>';updateSelInfo();paintArrows();return;}
-  body.innerHTML=rows.map(function(s){
-    var toggle=s.status==='启用'?
-      '<button class="row-btn" onclick="toggleSop(\''+s.id+'\')">停用</button>':
-      '<button class="row-btn primary" onclick="toggleSop(\''+s.id+'\')">启用</button>';
-    return '<tr onclick="rowClick(event,\''+s.id+'\')" style="cursor:pointer;">'+
-      '<td><input type="checkbox" class="row-check" data-id="'+s.id+'" '+(selected[s.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
-      '<td><strong>'+esc(s.id)+'</strong></td>'+
-      '<td>'+esc(s.name)+'</td>'+
-      '<td>'+esc(s.version)+'</td>'+
-      '<td>'+esc(s.scope)+'</td>'+
-      '<td>'+esc(String(s.effective).slice(0,10))+'</td>'+
-      '<td><span class="status-tag '+(s.status==='启用'?'normal':'inactive')+'">'+esc(s.status)+'</span></td>'+
-      '<td style="max-width:260px;">'+esc(s.key)+'</td>'+
-      '<td><button class="row-btn primary" onclick="openDetail(\''+s.id+'\')">查看</button>'+toggle+
-      '<button class="row-btn row-edit" onclick="openSopForm(\''+s.id+'\')">编辑</button><button class="row-btn danger row-del" onclick="removeRow(\'sops\',\''+s.id+'\',\''+esc(s.name)+'\')">删除</button></td>'+
-    '</tr>';
-  }).join('');
+  var cols={sops:9,recipes:11,grades:8,curves:9,overrides:10}[currentTab];
+  if(!rows.length){body.innerHTML='<tr><td colspan="'+cols+'" class="empty-cell">暂无符合条件的记录，点击「新建」添加</td></tr>';updateSelInfo();paintArrows();return;}
+  var col=FS_COL[currentTab];
+  if(currentTab==='sops'){
+    body.innerHTML=rows.map(function(s){
+      var toggle=s.status==='启用'?
+        '<button class="row-btn" onclick="toggleStatus(\'sops\',\''+s.id+'\')">停用</button>':
+        '<button class="row-btn primary" onclick="toggleStatus(\'sops\',\''+s.id+'\')">启用</button>';
+      return '<tr onclick="rowClick(event,\''+s.id+'\')" style="cursor:pointer;">'+
+        '<td><input type="checkbox" class="row-check" data-id="'+s.id+'" '+(selected[s.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+        '<td><strong>'+esc(s.id)+'</strong></td><td>'+esc(s.name)+'</td><td>'+esc(s.version)+'</td><td>'+esc(s.scope)+'</td>'+
+        '<td>'+esc(String(s.effective).slice(0,10))+'</td>'+
+        '<td><span class="status-tag '+(s.status==='启用'?'normal':'inactive')+'">'+esc(s.status)+'</span></td>'+
+        '<td style="max-width:260px;">'+esc(s.key)+'</td>'+
+        '<td style="white-space:nowrap;"><button class="row-btn primary" onclick="openDetail(\''+s.id+'\')">查看</button>'+toggle+
+        '<button class="row-btn" onclick="openForm(\''+s.id+'\')">编辑</button><button class="row-btn danger" onclick="removeRow(\'sops\',\''+s.id+'\',\''+esc(s.name)+'\')">删除</button></td></tr>';
+    }).join('');
+  }else if(currentTab==='recipes'){
+    body.innerHTML=rows.map(function(t){
+      var toggle=t.status==='启用'?
+        '<button class="row-btn" onclick="toggleStatus(\'recipeTemplates\',\''+t.id+'\')">停用</button>':
+        '<button class="row-btn primary" onclick="toggleStatus(\'recipeTemplates\',\''+t.id+'\')">启用</button>';
+      return '<tr onclick="rowClick(event,\''+t.id+'\')" style="cursor:pointer;">'+
+        '<td><input type="checkbox" class="row-check" data-id="'+t.id+'" '+(selected[t.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+        '<td><strong>'+esc(t.id)+'</strong></td><td>'+esc(t.name)+'</td><td>'+esc(t.variety)+'</td><td>'+esc(t.version)+'</td>'+
+        '<td>'+esc(String(t.effective).slice(0,10))+'</td><td>'+esc(t.author)+'</td>'+
+        '<td style="max-width:230px;font-size:12px;">'+esc(recipeSummary(t))+'</td>'+
+        '<td>'+((t.rooms||[]).length?esc(t.rooms.join('、')):'—')+'</td>'+
+        '<td><span class="status-tag '+(t.status==='启用'?'normal':'inactive')+'">'+esc(t.status)+'</span></td>'+
+        '<td style="white-space:nowrap;"><button class="row-btn primary" onclick="distributeTpl(\''+t.id+'\')">下发到菇房</button>'+
+        '<button class="row-btn" onclick="openForm(\''+t.id+'\')">编辑</button>'+toggle+
+        '<button class="row-btn danger" onclick="removeRow(\'recipeTemplates\',\''+t.id+'\',\''+esc(t.name)+'\')">删除</button></td></tr>';
+    }).join('');
+  }else if(currentTab==='grades'){
+    body.innerHTML=rows.map(function(g){
+      return '<tr onclick="rowClick(event,\''+g.id+'\')" style="cursor:pointer;">'+
+        '<td><input type="checkbox" class="row-check" data-id="'+g.id+'" '+(selected[g.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+        '<td><span class="status-tag '+gradeCls(g.id)+'">'+esc(g.id)+'</span></td>'+
+        '<td><strong>'+esc(g.name)+'</strong></td><td>'+esc(g.clean)+'</td><td>'+esc(g.settle)+'</td><td>'+esc(g.infection)+'</td>'+
+        '<td>'+esc(g.desc)+'</td>'+
+        '<td><button class="row-btn" onclick="openForm(\''+g.id+'\')">编辑</button><button class="row-btn danger" onclick="removeRow(\'inocGrades\',\''+g.id+'\',\''+esc(g.name)+'\')">删除</button></td></tr>';
+    }).join('');
+  }else if(currentTab==='curves'){
+    body.innerHTML=rows.map(function(c){
+      return '<tr onclick="rowClick(event,\''+c.id+'\')" style="cursor:pointer;">'+
+        '<td><input type="checkbox" class="row-check" data-id="'+c.id+'" '+(selected[c.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+        '<td><strong>'+esc(c.id)+'</strong></td><td>'+esc(c.variety)+'</td>'+
+        '<td class="text-right">'+Number(c.accumTemp).toLocaleString()+'</td>'+
+        '<td class="text-right">'+c.days+'</td>'+
+        '<td>'+esc(c.condition)+'</td><td>'+esc(c.turnStd)+'</td><td>'+esc(c.author)+'</td>'+
+        '<td><button class="row-btn" onclick="openForm(\''+c.id+'\')">编辑</button><button class="row-btn danger" onclick="removeRow(\'curveTemplates\',\''+c.id+'\',\''+esc(c.variety)+'\')">删除</button></td></tr>';
+    }).join('');
+  }else{
+    body.innerHTML=rows.map(function(o){
+      return '<tr onclick="rowClick(event,\''+o.id+'\')" style="cursor:pointer;">'+
+        '<td><input type="checkbox" class="row-check" data-id="'+o.id+'" '+(selected[o.id]?'checked':'')+' onclick="toggleRow(this)"></td>'+
+        '<td><strong>'+esc(o.id)+'</strong></td>'+
+        '<td><span class="status-tag '+levelCls(o.level)+'">'+esc(o.level)+'</span></td>'+
+        '<td>'+esc(o.scope)+'</td><td>'+esc(o.metric)+'</td>'+
+        '<td><strong>'+esc(o.value)+'</strong> '+esc(o.unit)+'</td>'+
+        '<td>'+esc(o.source)+'</td><td>'+esc(o.operator)+'</td><td>'+esc(o.time)+'</td>'+
+        '<td><button class="row-btn" onclick="openForm(\''+o.id+'\')">编辑</button><button class="row-btn danger" onclick="removeRow(\'paramOverrides\',\''+o.id+'\',\''+esc(o.id)+'\')">删除</button></td></tr>';
+    }).join('');
+  }
   updateSelInfo();paintArrows();
 }
 function renderAll(){renderStats();renderTable();}
-
-function toggleSop(id){
-  var s=FS.get('sops',id);if(!s)return;
+function toggleStatus(col,id){
+  var s=FS.get(col,id);if(!s)return;
   var next=s.status==='启用'?'停用':'启用';
-  FS.update('sops',id,{status:next});
+  FS.update(col,id,{status:next});
   renderAll();
   showToast('「'+s.name+'」已'+next,next==='启用'?'success':'warning');
 }
@@ -269,52 +411,273 @@ function versionHistory(s){
 function fmtDate(t){var d=new Date(t);return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 
 var editingId='';
-function openSopForm(id){
-  editingId=id||'';
-  var s=id?FS.get('sops',id):null;
-  openModal(s?'编辑工艺标准':'新建工艺标准',
-    fg('标准名称',inp('f_name',s?s.name:'','text',true),true,true)+
-    fg('版本号',inp('f_version',s?s.version:'v1.0','text',true),true)+
-    fg('适用范围',sel('f_scope',['全品种','分品种'],s?s.scope:'全品种',true),true)+
-    fg('生效日期',inp('f_effective',s?String(s.effective).slice(0,10):today(),'date',true),true)+
-    fg('状态',sel('f_status',['启用','停用'],s?s.status:'启用',true),true)+
-    fg('关键参数（全文）','<textarea id="f_key" data-req="1">'+esc(s?s.key:'')+'</textarea>',true,true)
-  );
+function rangeInp(key,label,arr){
+  var lo=arr?arr[0]:'',hi=arr?arr[1]:'';
+  return fg(label+'（下限 ~ 上限）','<div class="range-inputs"><input id="f_'+key+'_lo" type="number" step="any" value="'+esc(lo)+'" data-req="1"><span>~</span><input id="f_'+key+'_hi" type="number" step="any" value="'+esc(hi)+'" data-req="1"></div>',true,true);
+}
+function openForm(id){
+  editingId=id||'';modalMode='form';
+  if(currentTab==='sops'){
+    var s=id?FS.get('sops',id):null;
+    openModal(s?'编辑工艺标准':'新建工艺标准',
+      fg('标准名称',inp('f_name',s?s.name:'','text',true),true,true)+
+      fg('版本号',inp('f_version',s?s.version:'v1.0','text',true),true)+
+      fg('适用范围',sel('f_scope',['全品种','分品种'],s?s.scope:'全品种',true),true)+
+      fg('生效日期',inp('f_effective',s?String(s.effective).slice(0,10):today(),'date',true),true)+
+      fg('状态',sel('f_status',['启用','停用'],s?s.status:'启用',true),true)+
+      fg('关键参数（全文）','<textarea id="f_key" data-req="1">'+esc(s?s.key:'')+'</textarea>',true,true)
+    );
+  }else if(currentTab==='recipes'){
+    var t=id?FS.get('recipeTemplates',id):null;
+    var nextId='TPL-'+pad2(FS.list('recipeTemplates').length+1);
+    while(FS.get('recipeTemplates',nextId))nextId='TPL-'+pad2(Number(nextId.slice(4))+1);
+    openModal(t?'编辑配方模板':'新建配方模板',
+      fg('模板编号',inp('f_id',t?t.id:nextId,'text',!t),true)+
+      fg('模板名称',inp('f_name',t?t.name:'','text',true),true)+
+      fg('品种',sel('f_variety',varietyOpts(),t?t.variety:'平菇',true),true)+
+      fg('版本号',inp('f_version',t?t.version:'v1.0','text',true),true)+
+      fg('生效日期',inp('f_effective',t?String(t.effective).slice(0,10):today(),'date',true),true)+
+      fg('作者',inp('f_author',t?t.author:'徐水应','text',true),true)+
+      fg('状态',sel('f_status',['启用','停用'],t?t.status:'启用',true),true)+
+      PARAMS.map(function(p){return rangeInp(p[0],p[1],t?t[p[0]]:null);}).join('')+
+      '<div class="hint-bar">参数以「下限 ~ 上限」结构化存储；保存时校验下限 ≤ 上限。模板是全局环境参数的来源，可通过「参数覆盖」按菇房/批次就近覆盖。</div>'
+    );
+    if(t)document.getElementById('f_id').disabled=true;
+  }else if(currentTab==='grades'){
+    var g=id?FS.get('inocGrades',id):null;
+    openModal(g?'编辑接种等级':'新建接种等级',
+      fg('等级代号（如 A/B/C）',inp('f_id',g?g.id:'','text',!g),true)+
+      fg('等级名称',inp('f_name',g?g.name:'','text',true),true)+
+      fg('洁净度',inp('f_clean',g?g.clean:'100 级','text',true),true)+
+      fg('沉降菌标准',inp('f_settle',g?g.settle:'','text',true),true)+
+      fg('污染率标准',inp('f_infection',g?g.infection:'','text',true),true)+
+      fg('判定说明','<textarea id="f_desc" data-req="1">'+esc(g?g.desc:'')+'</textarea>',true,true)
+    );
+    if(g)document.getElementById('f_id').disabled=true;
+  }else if(currentTab==='curves'){
+    var c=id?FS.get('curveTemplates',id):null;
+    var nextCid='CT-'+pad2(FS.list('curveTemplates').length+1);
+    while(FS.get('curveTemplates',nextCid))nextCid='CT-'+pad2(Number(nextCid.slice(3))+1);
+    openModal(c?'编辑生长曲线':'新建生长曲线',
+      fg('曲线编号',inp('f_id',c?c.id:nextCid,'text',!c),true)+
+      fg('品种',sel('f_variety',varietyOpts().filter(function(v){return v!=='全品种';}),c?c.variety:'平菇',true),true)+
+      fg('积温阈值(°C·d)',inp('f_accumTemp',c?c.accumTemp:'','number',true),true)+
+      fg('天数阈值(天)',inp('f_days',c?c.days:'','number',true),true)+
+      fg('转潮标准',inp('f_turnStd',c?c.turnStd:'','text',true),true)+
+      fg('作者',inp('f_author',c?c.author:'徐水应','text',true),true)+
+      '<div class="hint-bar">转潮/出菇判定采用双条件：积温 ≥ 阈值 且 天数 ≥ 阈值，两者同时满足才触发。</div>'
+    );
+    if(c)document.getElementById('f_id').disabled=true;
+  }else{
+    var o=id?FS.get('paramOverrides',id):null;
+    var nextOid='PO-'+pad2(FS.list('paramOverrides').length+1);
+    while(FS.get('paramOverrides',nextOid))nextOid='PO-'+pad2(Number(nextOid.slice(3))+1);
+    openModal(o?'编辑参数覆盖':'新建参数覆盖',
+      fg('覆盖编号',inp('f_id',o?o.id:nextOid,'text',!o),true)+
+      fg('级别',sel('f_level',['全局','菇房','批次'],o?o.level:'菇房',true),true)+
+      fg('作用域','<select id="f_scope" data-req="1"></select>',true)+
+      fg('指标',sel('f_metric',Object.keys(METRICS),o?o.metric:'CO₂ 上限',true),true)+
+      fg('覆盖值',inp('f_value',o?o.value:'','number',true),true)+
+      fg('操作人',inp('f_operator',o?o.operator:'admin','text',true),true)+
+      '<div class="hint-bar">生效优先级：批次 &gt; 菇房 &gt; 全局。同一指标存在多级覆盖时，就近（最具体作用域）生效。</div>'
+    );
+    if(o)document.getElementById('f_id').disabled=true;
+    document.getElementById('f_level').setAttribute('onchange','fillOverrideScope()');
+    fillOverrideScope(o?o.scope:'');
+  }
+}
+function fillOverrideScope(keep){
+  var lv=val('f_level'),sc=document.getElementById('f_scope');
+  var opts=lv==='全局'?FS.list('recipeTemplates').map(function(t){return t.id;}):(lv==='菇房'?roomOpts():FS.list('batches').map(function(b){return b.id;}));
+  sc.innerHTML=opts.map(function(o){return '<option value="'+esc(o)+'"'+(o===keep?' selected':'')+'>'+esc(o)+'</option>';}).join('');
 }
 function saveModal(){
+  if(modalMode==='distribute'){doDistribute();return;}
   if(!reqOK())return;
-  var patch={name:val('f_name'),version:val('f_version'),scope:val('f_scope'),effective:val('f_effective')+' 00:00',status:val('f_status'),key:val('f_key')};
-  if(editingId){FS.update('sops',editingId,patch);showToast('工艺标准已更新','success');}
-  else{FS.add('sops',patch);showToast('工艺标准已创建','success');}
+  if(currentTab==='sops'){
+    var patch={name:val('f_name'),version:val('f_version'),scope:val('f_scope'),effective:val('f_effective')+' 00:00',status:val('f_status'),key:val('f_key')};
+    if(editingId){FS.update('sops',editingId,patch);showToast('工艺标准已更新','success');}
+    else{FS.add('sops',patch);showToast('工艺标准已创建','success');}
+  }else if(currentTab==='recipes'){
+    var tid=val('f_id');
+    if(!editingId&&FS.get('recipeTemplates',tid)){showToast('模板编号 '+tid+' 已存在','error');return;}
+    if(!/^v\d+\.\d+$/.test(val('f_version'))){showToast('版本号格式应为 v主.次，如 v4.1','error');return;}
+    var patch2={name:val('f_name'),variety:val('f_variety'),version:val('f_version'),effective:val('f_effective')+' 00:00',author:val('f_author'),status:val('f_status')};
+    for(var i=0;i<PARAMS.length;i++){
+      var k=PARAMS[i][0],lo=Number(val('f_'+k+'_lo')),hi=Number(val('f_'+k+'_hi'));
+      if(isNaN(lo)||isNaN(hi)){showToast(PARAMS[i][1]+' 必须为数字','error');return;}
+      if(lo>hi){showToast(PARAMS[i][1]+' 下限不能大于上限','error');document.getElementById('f_'+k+'_lo').style.borderColor='#ff4d4f';document.getElementById('f_'+k+'_hi').style.borderColor='#ff4d4f';return;}
+      patch2[k]=[lo,hi];
+    }
+    if(editingId){
+      var old=FS.get('recipeTemplates',editingId);
+      if(old&&patch2.version===old.version)patch2.version=bumpVer(old.version);
+      patch2.rooms=old?old.rooms:[];
+      FS.update('recipeTemplates',editingId,patch2);
+      showToast('配方模板已更新，版本 '+patch2.version,'success');
+    }else{patch2.id=tid;patch2.rooms=[];FS.add('recipeTemplates',patch2);showToast('配方模板已创建','success');}
+  }else if(currentTab==='grades'){
+    var gid=val('f_id').toUpperCase();
+    if(!editingId&&FS.get('inocGrades',gid)){showToast('等级 '+gid+' 已存在','error');return;}
+    var patch3={name:val('f_name'),clean:val('f_clean'),settle:val('f_settle'),infection:val('f_infection'),desc:val('f_desc')};
+    if(editingId){FS.update('inocGrades',editingId,patch3);showToast('接种等级已更新','success');}
+    else{patch3.id=gid;FS.add('inocGrades',patch3);showToast('接种等级已创建','success');}
+  }else if(currentTab==='curves'){
+    var cid=val('f_id');
+    if(!editingId&&FS.get('curveTemplates',cid)){showToast('曲线编号 '+cid+' 已存在','error');return;}
+    var at2=Number(val('f_accumTemp')),dy=Number(val('f_days'));
+    if(!(at2>0&&dy>0)){showToast('积温阈值与天数阈值必须为正数','error');return;}
+    var patch4={variety:val('f_variety'),accumTemp:at2,days:dy,condition:'积温≥'+at2+'°C·d 且 天数≥'+dy,turnStd:val('f_turnStd'),author:val('f_author')};
+    if(editingId){FS.update('curveTemplates',editingId,patch4);showToast('生长曲线已更新','success');}
+    else{patch4.id=cid;FS.add('curveTemplates',patch4);showToast('生长曲线已创建','success');}
+  }else{
+    var oid=val('f_id');
+    if(!editingId&&FS.get('paramOverrides',oid)){showToast('覆盖编号 '+oid+' 已存在','error');return;}
+    var vv=Number(val('f_value'));
+    if(isNaN(vv)){showToast('覆盖值必须为数字','error');return;}
+    var lv2=val('f_level');
+    var patch5={level:lv2,scope:val('f_scope'),metric:val('f_metric'),value:vv,unit:METRICS[val('f_metric')]||'',source:lv2==='全局'?'配方模板':(lv2==='菇房'?'菇房覆盖':'批次覆盖'),operator:val('f_operator'),time:FS.nowStamp()};
+    if(editingId){FS.update('paramOverrides',editingId,patch5);showToast('参数覆盖已更新（就近生效）','success');}
+    else{patch5.id=oid;FS.add('paramOverrides',patch5);showToast('参数覆盖已创建（就近生效）','success');}
+  }
   closeModal();renderAll();
 }
-function openDetail(id){
-  var s=FS.get('sops',id);if(!s)return;
-  var hist=versionHistory(s);
-  openDrawer('工艺标准 · '+s.name,
-    '<div class="detail-grid">'+
-    '<div class="detail-item"><div class="dl">编号</div><div class="dv">'+esc(s.id)+'</div></div>'+
-    '<div class="detail-item"><div class="dl">版本</div><div class="dv">'+esc(s.version)+'</div></div>'+
-    '<div class="detail-item"><div class="dl">适用范围</div><div class="dv">'+esc(s.scope)+'</div></div>'+
-    '<div class="detail-item"><div class="dl">生效日期</div><div class="dv">'+esc(String(s.effective).slice(0,10))+'</div></div>'+
-    '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+(s.status==='启用'?'normal':'inactive')+'">'+esc(s.status)+'</span></div></div>'+
-    '</div>'+
-    '<div class="drawer-sec">关键参数全文</div>'+
-    '<div class="key-box">'+esc(s.key)+'</div>'+
-    '<div class="drawer-sec">版本历史</div>'+
-    '<ul class="ver-list">'+hist.map(function(h){
-      return '<li><span class="ver-tag">'+esc(h.ver)+'</span><span class="ver-date">'+esc(h.date)+'</span><span>'+esc(h.note)+'</span></li>';
-    }).join('')+'</ul>'+
-    '<p style="font-size:11px;color:var(--text-tertiary);margin-top:10px;">版本历史由当前版本号与生效日期推导，供演示参考。</p>'
+function distributeTpl(id){
+  var t=FS.get('recipeTemplates',id);if(!t)return;
+  distributingId=id;modalMode='distribute';
+  var rooms=roomOpts();
+  var checks=rooms.map(function(r){
+    var on=(t.rooms||[]).indexOf(r)>=0;
+    var info=r==='PY-01'?'培养室':(FS.get('rooms',r)||{}).status||'';
+    return '<label class="'+(on?'checked':'')+'"><input type="checkbox" class="room-check" value="'+esc(r)+'"'+(on?' checked':'')+' onchange="this.parentNode.classList.toggle(\'checked\',this.checked)">'+esc(r)+(info?' · '+esc(info):'')+'</label>';
+  }).join('');
+  openModal('下发到菇房 · '+t.name,
+    '<div class="hint-bar">当前版本 '+esc(t.version)+' · 生效 '+esc(String(t.effective).slice(0,10))+'。下发后版本号自动递增，生效日期更新为今天，所选菇房环境参数以本模板为准（菇房/批次覆盖仍就近优先）。</div>'+
+    '<div class="room-checks">'+checks+'</div>'
   );
 }
-function exportSops(){
-  var rows=applySort(sopRows());
-  exportCSV('工艺标准',['编号','名称','版本','适用','生效日期','状态','关键参数'],rows.map(function(s){
-    return [s.id,s.name,s.version,s.scope,String(s.effective).slice(0,10),s.status,s.key];
-  }));
+function doDistribute(){
+  var t=FS.get('recipeTemplates',distributingId);if(!t){closeModal();return;}
+  var selRooms=[];
+  document.querySelectorAll('#modalBody .room-check').forEach(function(c){if(c.checked)selRooms.push(c.value);});
+  if(!selRooms.length){showToast('请至少选择一间菇房','warning');return;}
+  var nv=bumpVer(t.version);
+  FS.update('recipeTemplates',distributingId,{rooms:selRooms,version:nv,effective:today()+' 00:00'});
+  closeModal();modalMode='form';renderAll();
+  showToast('「'+t.name+'」已下发至 '+selRooms.length+' 间菇房（'+selRooms.join('、')+'），版本升至 '+nv,'success');
 }
-renderAll();
+function openDetail(id){
+  if(currentTab==='sops'){
+    var s=FS.get('sops',id);if(!s)return;
+    var hist=versionHistory(s);
+    openDrawer('工艺标准 · '+s.name,
+      '<div class="detail-grid">'+
+      '<div class="detail-item"><div class="dl">编号</div><div class="dv">'+esc(s.id)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">版本</div><div class="dv">'+esc(s.version)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">适用范围</div><div class="dv">'+esc(s.scope)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">生效日期</div><div class="dv">'+esc(String(s.effective).slice(0,10))+'</div></div>'+
+      '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+(s.status==='启用'?'normal':'inactive')+'">'+esc(s.status)+'</span></div></div>'+
+      '</div>'+
+      '<div class="drawer-sec">关键参数全文</div>'+
+      '<div class="key-box">'+esc(s.key)+'</div>'+
+      '<div class="drawer-sec">版本历史</div>'+
+      '<ul class="ver-list">'+hist.map(function(h){
+        return '<li><span class="ver-tag">'+esc(h.ver)+'</span><span class="ver-date">'+esc(h.date)+'</span><span>'+esc(h.note)+'</span></li>';
+      }).join('')+'</ul>'+
+      '<p style="font-size:11px;color:var(--text-tertiary);margin-top:10px;">版本历史由当前版本号与生效日期推导，供演示参考。</p>'
+    );
+  }else if(currentTab==='recipes'){
+    var t=FS.get('recipeTemplates',id);if(!t)return;
+    var globalOv=FS.list('paramOverrides').filter(function(o){return o.source==='配方模板'&&o.scope===id;});
+    openDrawer('配方模板 · '+t.name,
+      '<div class="detail-grid">'+
+      '<div class="detail-item"><div class="dl">编号</div><div class="dv">'+esc(t.id)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">品种</div><div class="dv">'+esc(t.variety)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">版本</div><div class="dv">'+esc(t.version)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">生效日期</div><div class="dv">'+esc(String(t.effective).slice(0,10))+'</div></div>'+
+      '<div class="detail-item"><div class="dl">作者</div><div class="dv">'+esc(t.author)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">状态</div><div class="dv"><span class="status-tag '+(t.status==='启用'?'normal':'inactive')+'">'+esc(t.status)+'</span></div></div>'+
+      '</div>'+
+      '<div class="drawer-sec">结构化环境参数</div>'+
+      '<table class="mini-table"><thead><tr><th>参数</th><th>下限</th><th>上限</th></tr></thead><tbody>'+
+      PARAMS.map(function(p){return '<tr><td>'+p[1]+'</td><td>'+t[p[0]][0]+'</td><td>'+t[p[0]][1]+'</td></tr>';}).join('')+
+      '</tbody></table>'+
+      '<div class="drawer-sec">已下发菇房（'+(t.rooms||[]).length+'）</div>'+
+      ((t.rooms||[]).length?'<div class="room-checks">'+t.rooms.map(function(r){return '<label class="checked" style="cursor:default;">'+esc(r)+'</label>';}).join('')+'</div>':'<p style="font-size:12px;color:var(--text-tertiary);">尚未下发，点击「下发到菇房」选择目标菇房。</p>')+
+      '<div class="drawer-sec">全局参数来源</div>'+
+      (globalOv.length?'<table class="mini-table"><thead><tr><th>覆盖</th><th>指标</th><th>值</th></tr></thead><tbody>'+globalOv.map(function(o){return '<tr><td>'+esc(o.id)+'</td><td>'+esc(o.metric)+'</td><td>'+esc(o.value)+' '+esc(o.unit)+'</td></tr>';}).join('')+'</tbody></table>':'<p style="font-size:12px;color:var(--text-tertiary);">本模板暂无全局参数覆盖记录。</p>')+
+      '<div style="margin-top:14px;"><button class="jg-btn jg-btn-primary" onclick="closeDrawer();distributeTpl(\''+t.id+'\')">下发到菇房</button></div>'
+    );
+  }else if(currentTab==='grades'){
+    var g=FS.get('inocGrades',id);if(!g)return;
+    openDrawer('接种等级 · '+g.name,
+      '<div class="detail-grid">'+
+      '<div class="detail-item"><div class="dl">等级</div><div class="dv"><span class="status-tag '+gradeCls(g.id)+'">'+esc(g.id)+'</span></div></div>'+
+      '<div class="detail-item"><div class="dl">洁净度</div><div class="dv">'+esc(g.clean)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">沉降菌</div><div class="dv">'+esc(g.settle)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">污染率</div><div class="dv">'+esc(g.infection)+'</div></div>'+
+      '<div class="detail-item full"><div class="dl">判定说明</div><div class="dv">'+esc(g.desc)+'</div></div>'+
+      '</div>'+
+      (g.id==='C'?'<p style="font-size:12px;color:#ff4d4f;">C 级禁止放行：重新灭菌接种并追责。</p>':'')
+    );
+  }else if(currentTab==='curves'){
+    var c=FS.get('curveTemplates',id);if(!c)return;
+    openDrawer('生长曲线 · '+c.variety,
+      '<div class="detail-grid">'+
+      '<div class="detail-item"><div class="dl">编号</div><div class="dv">'+esc(c.id)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">品种</div><div class="dv">'+esc(c.variety)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">积温阈值</div><div class="dv">'+Number(c.accumTemp).toLocaleString()+' °C·d</div></div>'+
+      '<div class="detail-item"><div class="dl">天数阈值</div><div class="dv">'+c.days+' 天</div></div>'+
+      '<div class="detail-item"><div class="dl">作者</div><div class="dv">'+esc(c.author)+'</div></div>'+
+      '</div>'+
+      '<div class="drawer-sec">双条件判定</div>'+
+      '<div class="key-box">'+esc(c.condition)+'</div>'+
+      '<div class="drawer-sec">转潮标准</div>'+
+      '<div class="key-box">'+esc(c.turnStd)+'</div>'
+    );
+  }else{
+    var o=FS.get('paramOverrides',id);if(!o)return;
+    var same=FS.list('paramOverrides').filter(function(x){return x.metric===o.metric;});
+    var rank={'批次':3,'菇房':2,'全局':1};
+    same.sort(function(a,b){return rank[b.level]-rank[a.level];});
+    openDrawer('参数覆盖 · '+o.id,
+      '<div class="detail-grid">'+
+      '<div class="detail-item"><div class="dl">级别</div><div class="dv"><span class="status-tag '+levelCls(o.level)+'">'+esc(o.level)+'</span></div></div>'+
+      '<div class="detail-item"><div class="dl">作用域</div><div class="dv">'+esc(o.scope)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">指标</div><div class="dv">'+esc(o.metric)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">覆盖值</div><div class="dv">'+esc(o.value)+' '+esc(o.unit)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">来源</div><div class="dv">'+esc(o.source)+'</div></div>'+
+      '<div class="detail-item"><div class="dl">操作人 / 时间</div><div class="dv">'+esc(o.operator)+' · '+esc(o.time)+'</div></div>'+
+      '</div>'+
+      '<div class="hint-bar">生效优先级：批次 &gt; 菇房 &gt; 全局。同一指标多级覆盖时，就近（最具体作用域）生效。</div>'+
+      '<div class="drawer-sec">同指标覆盖（按优先级）</div>'+
+      '<table class="mini-table"><thead><tr><th>优先</th><th>级别</th><th>作用域</th><th>值</th></tr></thead><tbody>'+
+      same.map(function(x,i){return '<tr'+(x.id===o.id?' style="background:#f0f5ff;"':'')+'><td>'+(i+1)+'</td><td>'+esc(x.level)+'</td><td>'+esc(x.scope)+'</td><td>'+esc(x.value)+' '+esc(x.unit)+(x.id===o.id?'（本条）':'')+'</td></tr>';}).join('')+
+      '</tbody></table>'
+    );
+  }
+}
+function exportCurrent(){
+  var rows=applySort(currentRows());
+  if(currentTab==='sops'){
+    exportCSV('工艺标准',['编号','名称','版本','适用','生效日期','状态','关键参数'],rows.map(function(s){return [s.id,s.name,s.version,s.scope,String(s.effective).slice(0,10),s.status,s.key];}));
+  }else if(currentTab==='recipes'){
+    exportCSV('配方模板',['编号','名称','品种','版本','生效日期','作者','温度','湿度','CO2','光照','风速','负压','下发菇房','状态'],rows.map(function(t){
+      return [t.id,t.name,t.variety,t.version,String(t.effective).slice(0,10),t.author,t.temp.join('~'),t.hum.join('~'),t.co2.join('~'),t.light.join('~'),t.wind.join('~'),t.negPressure.join('~'),(t.rooms||[]).join('、'),t.status];
+    }));
+  }else if(currentTab==='grades'){
+    exportCSV('接种等级',['等级','名称','洁净度','沉降菌','污染率','判定说明'],rows.map(function(g){return [g.id,g.name,g.clean,g.settle,g.infection,g.desc];}));
+  }else if(currentTab==='curves'){
+    exportCSV('生长曲线',['编号','品种','积温阈值','天数阈值','双条件','转潮标准','作者'],rows.map(function(c){return [c.id,c.variety,c.accumTemp,c.days,c.condition,c.turnStd,c.author];}));
+  }else{
+    exportCSV('参数覆盖',['编号','级别','作用域','指标','值','单位','来源','操作人','时间'],rows.map(function(o){return [o.id,o.level,o.scope,o.metric,o.value,o.unit,o.source,o.operator,o.time];}));
+  }
+}
+window.addEventListener('fungiStoreChange',function(e){
+  var c=e.detail&&e.detail.col;
+  if(c==='sops'||c==='recipeTemplates'||c==='inocGrades'||c==='curveTemplates'||c==='paramOverrides'||c==='*')renderAll();
+});
+switchTab('sops');
 </script>
 </body>
 </html>

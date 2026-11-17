@@ -76,6 +76,19 @@
   .json-key { color:#87e8de; }
   .json-str { color:#b7eb8f; }
   .json-num { color:#ffc069; }
+  .type-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px; }
+  @media (max-width:1100px){ .type-grid { grid-template-columns:repeat(2,1fr); } }
+  .type-chip { background:var(--bg-card); border:1px solid var(--border-default); border-radius:10px; padding:9px 12px; cursor:pointer; transition:all .2s; }
+  .type-chip:hover { border-color:#13c2c2; box-shadow:0 2px 8px rgba(19,194,194,.15); }
+  .type-chip.active { border-color:#13c2c2; background:#e6fffb; }
+  .type-chip .tc-name { font-size:12.5px; font-weight:600; color:var(--text-primary); display:flex; justify-content:space-between; align-items:center; }
+  .type-chip .tc-num { font-size:17px; font-weight:700; color:#08979c; font-variant-numeric:tabular-nums; }
+  .type-chip .tc-sub { font-size:11px; color:var(--text-tertiary); margin-top:2px; }
+  .type-chip .tc-dead { font-size:10.5px; color:#ff4d4f; background:#fff1f0; border:1px solid #ffa39e; border-radius:999px; padding:0 7px; }
+  .diff-badge { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; border:1px solid; }
+  .diff-badge.ok { background:#f6ffed; color:#52c41a; border-color:#b7eb8f; }
+  .diff-badge.bad { background:#fff1f0; color:#ff4d4f; border-color:#ffa39e; }
+  .recon-items { font-size:11.5px; color:var(--text-tertiary); line-height:1.6; max-width:280px; }
 </style>
 <style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
   .main-wrapper{margin-left:0!important;width:100%!important;}
@@ -139,7 +152,7 @@
         <div class="search-section">
           <div class="search-bar">
             <select class="search-select" id="typeSelect" style="width:150px;">
-              <option value="">全部类型</option><option>批次报文</option><option>采收报文</option><option>冷链报文</option><option>灭菌报文</option><option>接种报文</option>
+              <option value="">全部类型</option><option>批次报文</option><option>培养报文</option><option>灭菌报文</option><option>接种报文</option><option>环境报文</option><option>采收报文</option><option>分级报文</option><option>冷链报文</option><option>投入品报文</option><option>召回报文</option>
             </select>
             <select class="search-select" id="statusSelect" style="width:130px;">
               <option value="">全部状态</option><option>成功</option><option>死信</option>
@@ -166,6 +179,9 @@
           </div>
           <div class="action-right"><span style="font-size:13px;color:var(--text-tertiary);" id="filterInfo"></span></div>
         </div>
+
+        <div class="section-title" style="margin-top:4px;">报文类型总览（10 类）</div>
+        <div class="type-grid" id="typeGrid"></div>
 
         <div class="bulk-bar" id="bulkBar">
           <span>已勾选 <strong id="bulkCount">0</strong> 条报文</span>
@@ -194,6 +210,30 @@
           <div id="pagination-container"></div>
         </div>
 
+        <div class="section-title">每日对账（本地 vs 省监管平台）
+          <button class="jg-btn jg-btn-primary" style="margin-left:auto;" onclick="runReconcile()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>生成今日对账
+          </button>
+        </div>
+        <div class="data-section">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>对账单号</th>
+                <th>对账日期</th>
+                <th>本地记录数</th>
+                <th>平台确认数</th>
+                <th>差异</th>
+                <th>对账结论</th>
+                <th>差异清单</th>
+                <th>经办 / 时间</th>
+                <th style="width:90px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="reconBody"></tbody>
+          </table>
+        </div>
+
       </div>
     </main>
   </div>
@@ -217,7 +257,7 @@
     <div class="modal-body">
       <div class="form-group"><label>生产批次 <span class="req">*</span></label><select id="rpBatch"><option value="">请选择批次</option></select></div>
       <div class="form-row">
-        <div class="form-group"><label>报文类型 <span class="req">*</span></label><select id="rpType"><option value="">请选择</option><option>批次报文</option><option>采收报文</option><option>冷链报文</option><option>灭菌报文</option><option>接种报文</option></select></div>
+        <div class="form-group"><label>报文类型 <span class="req">*</span></label><select id="rpType"><option value="">请选择</option><option>批次报文</option><option>培养报文</option><option>灭菌报文</option><option>接种报文</option><option>环境报文</option><option>采收报文</option><option>分级报文</option><option>冷链报文</option><option>投入品报文</option><option>召回报文</option></select></div>
         <div class="form-group"><label>记录数 <span class="req">*</span></label><input type="number" id="rpCount" value="1" min="1" max="500"></div>
       </div>
       <span class="form-hint">报文按省监管平台 v2 接口规范组装，成功后返回「湘监收」回执号。</span>
@@ -363,6 +403,129 @@ function checkDeadLetterClosed(){
   }
 }
 
+/* ---------- 报文类型总览（10 类） ---------- */
+var REG_TYPES=['批次报文','培养报文','灭菌报文','接种报文','环境报文','采收报文','分级报文','冷链报文','投入品报文','召回报文'];
+function renderTypes(){
+  var rows=FS.list('regulatory');
+  var cur=document.getElementById('typeSelect').value;
+  document.getElementById('typeGrid').innerHTML=REG_TYPES.map(function(t){
+    var list=rows.filter(function(r){ return r.type===t; });
+    var dead=list.filter(function(r){ return r.status==='死信'; }).length;
+    var cnt=list.reduce(function(s,r){ return s+(Number(r.count)||0); },0);
+    return '<div class="type-chip'+(cur===t?' active':'')+'" onclick="setTypeFilter(\''+t+'\')" title="点击筛选该类型">'+
+      '<div class="tc-name">'+t+(dead?'<span class="tc-dead">死信 '+dead+'</span>':'')+'</div>'+
+      '<div class="tc-num">'+list.length+'<span style="font-size:11px;font-weight:400;color:var(--text-tertiary);"> 条报文</span></div>'+
+      '<div class="tc-sub">记录 '+cnt+' 条 · 成功 '+(list.length-dead)+'</div>'+
+    '</div>';
+  }).join('');
+}
+function setTypeFilter(t){
+  var sel=document.getElementById('typeSelect');
+  sel.value=sel.value===t?'':t;
+  applyFilter(false); renderTypes();
+  showToast(sel.value?('已筛选「'+t+'」'):'已取消类型筛选','info');
+}
+
+/* ---------- 每日对账 ---------- */
+function reconItemsHtml(items){
+  if(!Array.isArray(items)||!items.length) return '—';
+  return items.map(function(it){
+    var bad=it.local!==it.platform;
+    return '<div'+(bad?' style="color:#ff4d4f;"':'')+'>'+esc(it.type)+'：本地 '+it.local+' / 平台 '+it.platform+' · '+esc(it.reason)+'</div>';
+  }).join('');
+}
+function renderRecons(){
+  var rows=FS.list('reconciliations').slice().sort(function(a,b){ return String(b.date).localeCompare(String(a.date)); });
+  var tb=document.getElementById('reconBody');
+  tb.innerHTML=rows.length?rows.map(function(r){
+    var bad=Number(r.diff)>0;
+    return '<tr>'+
+      '<td><strong class="mono">'+esc(r.id)+'</strong></td>'+
+      '<td class="mono">'+esc(r.date)+'</td>'+
+      '<td>'+r.local+'</td>'+
+      '<td>'+r.platform+'</td>'+
+      '<td style="font-weight:700;color:'+(bad?'#ff4d4f':'#52c41a')+';">'+(bad?'+'+r.diff:'0')+'</td>'+
+      '<td><span class="diff-badge '+(bad?'bad':'ok')+'">'+esc(r.status)+'</span></td>'+
+      '<td><div class="recon-items">'+reconItemsHtml(r.items)+'</div></td>'+
+      '<td>'+esc(r.operator||'—')+'<div style="font-size:11px;color:var(--text-tertiary);">'+esc(r.time)+'</div></td>'+
+      '<td><button class="action-btn detail" onclick="viewRecon(\''+esc(r.id)+'\')">详情</button></td>'+
+    '</tr>';
+  }).join(''):'<tr class="empty-row"><td colspan="9">暂无对账记录，点击「生成今日对账」</td></tr>';
+}
+function viewRecon(id){
+  var r=FS.get('reconciliations',id); if(!r) return;
+  document.getElementById('drawerTitle').textContent='对账详情 · '+r.id;
+  var items=(r.items||[]).map(function(it){
+    var bad=it.local!==it.platform;
+    return '<tr><td style="padding:6px 8px;border-bottom:1px dashed var(--border-light);">'+esc(it.type)+'</td>'+
+      '<td style="padding:6px 8px;border-bottom:1px dashed var(--border-light);">'+it.local+'</td>'+
+      '<td style="padding:6px 8px;border-bottom:1px dashed var(--border-light);">'+it.platform+'</td>'+
+      '<td style="padding:6px 8px;border-bottom:1px dashed var(--border-light);color:'+(bad?'#ff4d4f':'#52c41a')+';">'+esc(it.reason)+'</td></tr>';
+  }).join('');
+  document.getElementById('drawerBody').innerHTML=
+    '<div class="detail-grid"><span class="detail-label">对账单号</span><span class="detail-value mono">'+esc(r.id)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">对账日期</span><span class="detail-value mono">'+esc(r.date)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">本地 / 平台</span><span class="detail-value">'+r.local+' / '+r.platform+' 条</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">差异 / 结论</span><span class="detail-value">'+r.diff+' 条 · <span class="diff-badge '+(Number(r.diff)>0?'bad':'ok')+'">'+esc(r.status)+'</span></span></div>'+
+    '<div class="detail-grid"><span class="detail-label">经办 / 时间</span><span class="detail-value">'+esc(r.operator||'—')+' · '+esc(r.time)+'</span></div>'+
+    '<div style="margin:14px 0 8px;font-size:13px;font-weight:600;color:var(--text-primary);">差异清单（按报文类型）</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12.5px;"><thead><tr>'+
+      '<th style="text-align:left;padding:6px 8px;background:#e6fffb;color:#08979c;">类型</th>'+
+      '<th style="text-align:left;padding:6px 8px;background:#e6fffb;color:#08979c;">本地</th>'+
+      '<th style="text-align:left;padding:6px 8px;background:#e6fffb;color:#08979c;">平台</th>'+
+      '<th style="text-align:left;padding:6px 8px;background:#e6fffb;color:#08979c;">说明</th></tr></thead><tbody>'+items+'</tbody></table>'+
+    '<div style="margin-top:12px;font-size:12px;color:var(--text-tertiary);line-height:1.7;">对账口径：本地 = 当日上报记录数 + 历史死信积压记录数；平台 = 当日回执确认数。差异主要来自死信队列，重发成功后重跑对账即可归零。</div>';
+  document.getElementById('drawerFooter').innerHTML=Number(r.diff)>0?'<button class="jg-btn jg-btn-primary" onclick="closeDrawer();resendAllDead()">重发死信消除差异</button>':'<button class="jg-btn" onclick="closeDrawer()">关闭</button>';
+  openDrawer();
+}
+function computeRecon(){
+  var today=FS.dayKey(0);
+  /* 口径：本地 = 当日上报记录数 + 历史死信积压记录数；平台 = 当日回执确认数 */
+  var rows=FS.list('regulatory').filter(function(r){ return String(r.time).slice(0,10)===today || r.status==='死信'; });
+  var local=0, platform=0, byType={};
+  rows.forEach(function(r){
+    var c=Number(r.count)||0;
+    var isToday=String(r.time).slice(0,10)===today;
+    local+=c;
+    if(isToday && r.status==='成功') platform+=c;
+    if(!byType[r.type]) byType[r.type]={ type:r.type, local:0, platform:0, dead:0 };
+    byType[r.type].local+=c;
+    if(isToday && r.status==='成功') byType[r.type].platform+=c;
+    if(r.status==='死信') byType[r.type].dead++;
+  });
+  var items=Object.keys(byType).map(function(k){
+    var it=byType[k];
+    return { type:it.type, local:it.local, platform:it.platform, reason:it.dead?(it.dead+' 条进入死信队列待重发'):'一致' };
+  });
+  if(!items.length) items=[{ type:'全部报文', local:0, platform:0, reason:'今日暂无上报' }];
+  var diff=local-platform;
+  return { date:today, local:local, platform:platform, diff:diff, status:diff>0?'有差异':'一致', items:items };
+}
+function updateTodayRecon(silent){
+  var today=FS.dayKey(0);
+  var exist=FS.list('reconciliations').filter(function(r){ return r.date===today; })[0];
+  if(!exist) return null;
+  var data=computeRecon();
+  data.operator='系统对账'; data.time=nowStr();
+  FS.update('reconciliations',exist.id,data);
+  renderRecons();
+  if(!silent) showToast('今日对账已更新：'+exist.id,'success');
+  return exist;
+}
+function runReconcile(){
+  var today=FS.dayKey(0);
+  var exist=FS.list('reconciliations').filter(function(r){ return r.date===today; })[0];
+  var data=computeRecon();
+  data.operator=currentUser().realName||'系统对账'; data.time=nowStr();
+  var rec;
+  if(exist){ FS.update('reconciliations',exist.id,data); rec=exist; }
+  else rec=FS.add('reconciliations',data);
+  opLog('生成每日对账',rec.id+' · 本地 '+data.local+' / 平台 '+data.platform+' · '+data.status);
+  refresh();
+  if(data.diff>0) showToast('对账完成：'+rec.id+' 差异 '+data.diff+' 条（死信待重发），详见差异清单','warning');
+  else showToast('对账完成：'+rec.id+' 本地 '+data.local+' = 平台 '+data.platform+'，账实一致','success');
+}
+
 /* ---------- 统计 ---------- */
 function renderStats(){
   var rows=FS.list('regulatory');
@@ -500,6 +663,7 @@ function resendOne(id){
   FS.update('regulatory',id,{ status:'成功', receipt:receipt, time:nowStr() });
   opLog('死信重发',id+' → '+receipt);
   refresh();
+  updateTodayRecon(true);
   showToast('重发成功：'+id+' · 回执 '+receipt,'success');
   checkDeadLetterClosed();
 }
@@ -512,7 +676,8 @@ function resendAllDead(){
     });
     opLog('死信全部重发',dead.length+' 条');
     refresh();
-    showToast('已重发 '+dead.length+' 条死信报文','success');
+    updateTodayRecon(true);
+    showToast('已重发 '+dead.length+' 条死信报文，今日对账差异已同步更新','success');
     checkDeadLetterClosed();
   });
 }
@@ -620,12 +785,12 @@ function exportCSV(){
   showToast('已导出 '+rows.length+' 条报文','success');
 }
 
-function refresh(){ renderStats(); applyFilter(false); }
+function refresh(){ renderStats(); applyFilter(false); renderTypes(); renderRecons(); }
 document.addEventListener('DOMContentLoaded',function(){
   renderConfig();
-  ['typeSelect','statusSelect'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(){ applyFilter(false); }); });
+  ['typeSelect','statusSelect'].forEach(function(id){ document.getElementById(id).addEventListener('change',function(){ applyFilter(false); renderTypes(); }); });
   document.getElementById('kwInput').addEventListener('input',function(){ applyFilter(false); });
-  window.addEventListener('fungiStoreChange',function(){ renderStats(); });
+  window.addEventListener('fungiStoreChange',function(){ renderStats(); renderTypes(); renderRecons(); });
   refresh();
 });
 </script>

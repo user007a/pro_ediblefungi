@@ -454,7 +454,7 @@
             </div>
             <div class="stat-value" id="kpiEnv">97.6<span style="font-size:12px;color:#6b7280;">%</span></div>
             <div class="stat-footer">
-              <span class="stat-trend up">8间菇房</span>
+              <span class="stat-trend up" id="kpiEnvRooms">8间菇房</span>
               <span class="stat-sub">6项指标</span>
             </div>
           </div>
@@ -506,7 +506,7 @@
             </div>
             <div class="stat-value" id="kpiTrace">155,300<span style="font-size:12px;color:#6b7280;">个</span></div>
             <div class="stat-footer">
-              <span class="stat-trend up">本月新增 18,600 个</span>
+              <span class="stat-trend up" id="kpiTraceTrend">本月新增 18,600 个</span>
             </div>
           </div>
           <div class="stat-card blue">
@@ -526,8 +526,8 @@
             </div>
             <div class="stat-value" id="kpiHouse">6<span style="font-size:12px;color:#6b7280;">间</span></div>
             <div class="stat-footer">
-              <span class="stat-trend up">2间空置 · 消杀中</span>
-              <span class="stat-sub">共8间</span>
+              <span class="stat-trend up" id="kpiHouseTrend">2间空置 · 消杀中</span>
+              <span class="stat-sub" id="kpiHouseSub">共8间</span>
             </div>
           </div>
         </div>
@@ -1031,27 +1031,33 @@ function escapeHtml(v) {
 }
 
 function refreshHomeKPI() {
-  // 环境达标率小幅波动；采收量 / 追溯码随时间累计增长
-  const env = HOME_KPI.kpiEnv;
-  const envEl = document.getElementById('kpiEnv');
-  if (envEl) {
-    let v = env.base + (Math.random() - 0.5) * 0.8;
-    v = Math.min(100, Math.max(90, v));
-    envEl.innerHTML = v.toFixed(1) + '<span style="font-size:12px;color:#6b7280;">%</span>';
-  }
-  HOME_KPI.kpiHarvest.base += Math.floor(Math.random() * 7);
-  HOME_KPI.kpiTrace.base += Math.floor(Math.random() * 3);
-  ['kpiHarvest', 'kpiTrace'].forEach(function(id) {
-    const cfg = HOME_KPI[id];
+  // KPI 每次刷新实时读取 FungiStore，与业务页口径一致，不做随机漂移
+  let s = null;
+  try { if (window.FungiStore) s = FungiStore.stats(); } catch (e) {}
+  const unitSpan = u => '<span style="font-size:12px;color:#6b7280;">' + u + '</span>';
+  const setVal = (id, v, u, digits) => {
     const el = document.getElementById(id);
-    if (!el) return;
-    el.innerHTML = Math.round(cfg.base).toLocaleString('zh-CN') + '<span style="font-size:12px;color:#6b7280;">' + cfg.unit + '</span>';
-  });
+    if (el) el.innerHTML = (digits ? Number(v).toFixed(digits) : Math.round(v).toLocaleString('zh-CN')) + unitSpan(u);
+  };
+  const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  setVal('kpiEnv', s ? s.envRate : HOME_KPI.kpiEnv.base, '%', 1);
+  setVal('kpiHarvest', s ? s.harvestToday : HOME_KPI.kpiHarvest.base, 'kg', 0);
+  setVal('kpiTrace', s ? s.trace : HOME_KPI.kpiTrace.base, '个', 0);
+  if (s) {
+    setVal('kpiBatch', s.batches, '批', 0);
+    setVal('kpiHouse', s.roomsInProd, '间', 0);
+    setText('kpiEnvRooms', s.roomsTotal + '间菇房');
+    setText('kpiHarvestTrend', '一级菇' + Number(s.grade1Rate).toFixed(1) + '%');
+    setText('kpiTraceTrend', '本月新增 ' + Number(s.traceMonth).toLocaleString('zh-CN') + ' 个');
+    setText('kpiHouseTrend', (s.roomsTotal - s.roomsInProd) + '间空置 · 消杀中');
+    setText('kpiHouseSub', '共' + s.roomsTotal + '间');
+  }
   refreshAlertKPI();
   renderHomeAlerts();
   updateLastUpdate();
 }
 setInterval(refreshHomeKPI, 30000);   // 30 秒自动刷新 KPI
+window.addEventListener('fungiStoreChange', refreshHomeKPI); // 数据变更即时同步
 setInterval(updateLiveClocks, 1000);  // 每秒刷新摄像头时间戳
 
 // ===== 初始化：当前用户、时钟、更新时间 =====

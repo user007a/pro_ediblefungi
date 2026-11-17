@@ -88,7 +88,7 @@
   .status-tab:hover { border-color:var(--primary-400); color:var(--primary-600); }
   .status-tab.active { background:var(--primary-500); border-color:var(--primary-500); color:#fff; font-weight:500; }
 
-  .data-table { min-width:1080px; }
+  .data-table { min-width:1240px; }
   .data-table th { white-space:nowrap; }
   .data-table th.sortable { cursor:pointer; user-select:none; }
   .data-table th.sortable:hover { color:var(--primary-500); }
@@ -115,6 +115,22 @@
   .tl-item.todo::before { border-color:var(--border-default); }
   .tl-item .tl-title { font-weight:600; color:var(--text-primary); }
   .tl-item .tl-sub { color:var(--text-tertiary); font-size:11.5px; margin-top:2px; }
+  .tl-item .tl-btn { margin-top:6px; }
+
+  .sla-cell { font-variant-numeric:tabular-nums; font-size:12.5px; }
+  .sla-count { font-weight:700; }
+  .sla-count.ok { color:#3a8618; }
+  .sla-count.tight { color:#e5484d; animation:slaBlink 1s ease-in-out infinite; }
+  .sla-over { color:#e5484d; font-weight:700; }
+  .sla-done { color:var(--text-tertiary); }
+  @keyframes slaBlink { 0%,100%{opacity:1} 50%{opacity:.45} }
+  .esc-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600;
+    background:#fff1f0; color:#cf1322; border:1px solid #ffa39e; white-space:nowrap; }
+  .chan-chip { display:inline-block; padding:1px 8px; margin:2px 4px 2px 0; border-radius:20px; font-size:11px;
+    background:var(--info-bg); color:var(--primary-600); border:1px solid var(--info-border); white-space:nowrap; }
+  .step-btn { padding:3px 12px; font-size:11.5px; font-weight:500; border-radius:6px; cursor:pointer;
+    color:var(--primary-600); background:var(--primary-50); border:1px solid var(--primary-100); }
+  .step-btn:hover { background:var(--primary-100); }
 </style>
 <style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
   .main-wrapper{margin-left:0!important;width:100%!important;}
@@ -154,12 +170,12 @@
             <button class="status-tab" data-status="processing" onclick="setStatusTab('processing')">处理中</button>
             <button class="status-tab" data-status="closed" onclick="setStatusTab('closed')">已闭环</button>
           </div>
-          <select class="search-select" id="levelSelect" style="min-width:120px;">
+          <select class="search-select" id="levelSelect" style="min-width:130px;">
             <option value="">全部级别</option>
-            <option value="urgent">紧急</option>
-            <option value="important">重要</option>
-            <option value="reminder">提醒</option>
-            <option value="notice">通知</option>
+            <option value="urgent">红色·紧急</option>
+            <option value="important">橙色·重要</option>
+            <option value="reminder">黄色·提醒</option>
+            <option value="notice">蓝色·提示</option>
           </select>
           <input type="text" class="search-input" id="searchInput" placeholder="搜索编号 / 标题 / 位置 / 描述...">
           <div class="search-actions">
@@ -191,8 +207,9 @@
                 <th style="width:100px;">来源</th>
                 <th style="width:170px;">位置</th>
                 <th class="sortable" style="width:150px;" onclick="setSort('time')">时间<span class="arrow" id="ar-time"></span></th>
+                <th style="width:150px;">响应时效</th>
                 <th style="width:96px;">状态</th>
-                <th style="width:190px;">操作</th>
+                <th style="width:210px;">操作</th>
               </tr>
             </thead>
             <tbody id="dataTableBody"></tbody>
@@ -253,23 +270,23 @@
   </div>
 </div>
 
-<!-- 闭环措施 -->
+<!-- 处置措施 -->
 <div class="modal-overlay" id="closeOverlay" onclick="closeCloseModal()"></div>
 <div class="modal-box" id="closeModal" style="width:520px;">
   <div class="modal-header">
-    <h3 id="closeTitle">闭环确认</h3>
+    <h3 id="closeTitle">填写处置措施</h3>
     <button class="modal-close" onclick="closeCloseModal()">
       <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l8 8M11 3l-8 8"/></svg>
     </button>
   </div>
   <div class="modal-body">
     <div class="form-group"><label class="required">处置措施</label><textarea id="cMeasure" rows="3" placeholder="如：新风联动换气 30min 后 CO₂ 回落至 650ppm，复核正常"></textarea>
-      <div class="form-hint">处置措施为必填项，闭环后写入处理时间线。</div>
+      <div class="form-hint">处置措施为必填项，保存后进入「复核」步骤。</div>
     </div>
   </div>
   <div class="modal-footer">
     <button class="jg-btn" onclick="closeCloseModal()">取消</button>
-    <button class="jg-btn jg-btn-primary" onclick="saveClose()">确认闭环</button>
+    <button class="jg-btn jg-btn-primary" onclick="saveMeasures()">保存措施</button>
   </div>
 </div>
 
@@ -294,14 +311,15 @@
 /* ============================================================
  * 预警管理（环境越限 / 设备故障 / 污染超标 / 系统消息）
  * 数据源：FungiAlertData（list/get/stats/update/add）
- * 流程：待处理 →（分派负责人）处理中 →（必填处置措施）已闭环。
- * 分派/闭环补充字段 owner/measure/startedAt/closedAt 由页内写入
- * （数据源种子无阶段字段，种子预警对应阶段显示「—」）。
- * 批量闭环可撤销：记录各条原状态，撤销时逐条 update 回滚。
+ * 四色分级 + SLA 响应时效（红≤1/橙≤3/黄≤5/蓝≤30min）来自 LEVEL_META；
+ * 待处理预警每秒倒计时，超时未响应自动 escalated=true 并提示升级规则。
+ * 闭环五步（CLOSURE_STEPS）：派工→响应→措施→复核→关闭，
+ * 依次写入 assignee/respondedAt/measures/reviewedAt/closedAt，
+ * 状态流转 pending→processing→closed，前序步骤未完成时阻断并提示。
+ * 页内补充字段 dispatchedAt（派工时间）由 FAD.update 写入。
  * ============================================================ */
 var FAD = window.FungiAlertData;
 var esc = DeviceUI.esc;
-var LEVEL_TEXT = { urgent:'紧急', important:'重要', reminder:'提醒', notice:'通知' };
 var LEVEL_ORDER = { urgent:0, important:1, reminder:2, notice:3 };
 var SRC_META = {
   env: { text:'环境越限', color:'#1890ff', bg:'#e6f4ff' },
@@ -309,18 +327,73 @@ var SRC_META = {
   pollution: { text:'污染超标', color:'#722ed1', bg:'#f9f0ff' },
   system: { text:'系统消息', color:'#13c2c2', bg:'#e6fffb' }
 };
-var filterSource = '', filterStatus = '', filterLevel = '';
+var filterSource = '', filterStatus = '', filterLevel = '', filterEscalated = false;
 var sortKey = 'time', sortDir = -1;
 var curPage = 1, PAGE_SIZE = 8;
 var selected = {};
-var assignId = '', closeId = '';
+var assignId = '', closeId = '', drawerAlertId = '';
 
 function pad2(n){ return n < 10 ? '0' + n : '' + n; }
 function nowStr(){ var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
 function todayStr(){ var d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
 function openPage(url, title){ if (window.parent && window.parent !== window && window.parent.openPage) window.parent.openPage(url, title); else location.href = url; }
-function levelTag(l){ return '<span class="level-tag level-' + l + '">' + (LEVEL_TEXT[l] || l) + '</span>'; }
+function levelTag(l){
+  var m = FAD.LEVEL_META[l] || FAD.LEVEL_META.notice;
+  return '<span class="level-tag" style="background:' + m.hex + '1a;color:' + m.hex + ';border:1px solid ' + m.hex + '55;">' + m.name + '</span>';
+}
 function statusTag(s){ return '<span class="status-tag st-' + s + '">' + (FAD.STATUS_TEXT[s] || s) + '</span>'; }
+function parseTime(str){
+  if (!str) return null;
+  var t = new Date(String(str).replace(' ', 'T') + ':00');
+  return isNaN(t.getTime()) ? null : t;
+}
+function minutesBetween(fromStr, toStr){
+  var f = parseTime(fromStr), t = toStr ? parseTime(toStr) : new Date();
+  if (!f || !t) return null;
+  return Math.max(0, Math.round((t.getTime() - f.getTime()) / 60000));
+}
+function slaDeadline(a){
+  var t = parseTime(a.time);
+  if (!t) return null;
+  return t.getTime() + (a.slaMin || 30) * 60000;
+}
+function fmtCountdown(ms){
+  var sec = Math.max(0, Math.ceil(ms / 1000));
+  var m = Math.floor(sec / 60), s = sec % 60;
+  if (m >= 60) return Math.floor(m / 60) + 'h' + pad2(m % 60) + 'm';
+  return pad2(m) + ':' + pad2(s);
+}
+function slaCellHtml(a){
+  if (a.status === 'closed') return '<span class="sla-done">已闭环归档</span>';
+  if (a.respondedAt){
+    var used = minutesBetween(a.time, a.respondedAt);
+    var over = used != null && used > (a.slaMin || 30);
+    return '<span class="' + (over ? 'sla-over' : 'sla-done') + '">已响应' + (used != null ? ' · 用时 ' + used + 'min' : '') + (over ? '（超时）' : '') + '</span>';
+  }
+  var dl = slaDeadline(a);
+  if (dl == null) return '<span class="sla-done">—</span>';
+  var remain = dl - Date.now();
+  if (remain <= 0){
+    return '<span class="sla-over">已超时</span>' + (a.escalated ? ' <span class="esc-badge">已升级</span>' : '');
+  }
+  return '<span class="sla-count ' + (remain <= 60000 ? 'tight' : 'ok') + '">剩余 ' + fmtCountdown(remain) + '</span>' +
+    '<div style="font-size:11px;color:var(--text-tertiary);margin-top:2px;">SLA ≤' + a.slaMin + 'min</div>';
+}
+function slaCell(a){
+  return '<span class="sla-cell" data-sla-id="' + esc(a.id) + '">' + slaCellHtml(a) + '</span>';
+}
+function channelChips(a){
+  return (a.channels || []).map(function(c){ return '<span class="chan-chip">' + esc(c) + '</span>'; }).join('');
+}
+function isDispatched(a){ return a.assignee && a.assignee !== '—'; }
+function nextAction(a){
+  if (a.status === 'closed') return null;
+  if (!isDispatched(a)) return { key:'assign', label:'派工', cls:'assign', fn:'openAssignModal' };
+  if (!a.respondedAt) return { key:'respond', label:'响应', cls:'flow', fn:'respondAlert' };
+  if (!a.measures) return { key:'measure', label:'填措施', cls:'flow', fn:'openMeasureModal' };
+  if (!a.reviewedAt) return { key:'review', label:'复核', cls:'flow', fn:'reviewAlert' };
+  return { key:'close', label:'关闭', cls:'flow', fn:'closeAlert' };
+}
 function srcBadge(key){
   var m = SRC_META[key] || { text:key, color:'#8c8c8c', bg:'#fafafa' };
   return '<span class="src-badge" style="color:' + m.color + ';background:' + m.bg + ';border:1px solid ' + m.color + '33;">' + m.text + '</span>';
@@ -346,22 +419,31 @@ function openDrawer(title, html){
 function closeDrawer(){
   document.getElementById('drawer').classList.remove('show');
   document.getElementById('drawerMask').classList.remove('show');
+  drawerAlertId = '';
 }
 
 /* ---------- 统计卡 ---------- */
 function renderStats(){
   var s = FAD.stats();
   var today = todayStr();
-  var newToday = FAD.list().filter(function(a){ return String(a.time).slice(0,10) === today; }).length;
+  var list = FAD.list();
+  var newToday = list.filter(function(a){ return String(a.time).slice(0,10) === today; }).length;
+  var escalated = list.filter(function(a){ return a.escalated && a.status !== 'closed'; }).length;
   document.getElementById('statCards').innerHTML =
     '<div class="stat-card" onclick="setStatusTab(\'pending\')"><div class="stat-label">待处理</div><div class="stat-value" style="color:' + (s.pending ? '#fa8c16' : 'inherit') + ';">' + s.pending + '<span class="unit">条</span></div>' +
     '<div class="stat-sub warn">点击筛选待处理预警</div></div>' +
     '<div class="stat-card" onclick="setStatusTab(\'processing\')"><div class="stat-label">处理中</div><div class="stat-value" style="color:#1890ff;">' + s.processing + '<span class="unit">条</span></div>' +
-    '<div class="stat-sub">已分派负责人跟进</div></div>' +
+    '<div class="stat-sub">已派工，按五步闭环推进</div></div>' +
     '<div class="stat-card" onclick="setStatusTab(\'closed\')"><div class="stat-label">已闭环</div><div class="stat-value" style="color:#52c41a;">' + s.closed + '<span class="unit">条</span></div>' +
-    '<div class="stat-sub">处置措施已归档</div></div>' +
+    '<div class="stat-sub">派工→响应→措施→复核→关闭</div></div>' +
+    '<div class="stat-card" onclick="toggleEscalatedFilter()"><div class="stat-label">超时已升级</div><div class="stat-value" style="color:' + (escalated ? '#e5484d' : '#52c41a') + ';">' + escalated + '<span class="unit">条</span></div>' +
+    '<div class="stat-sub ' + (escalated ? 'err' : '') + '">' + (filterEscalated ? '已筛选升级预警 · 点击取消' : '超时未响应自动升级 · 点击筛选') + '</div></div>' +
     '<div class="stat-card" onclick="resetFilter()"><div class="stat-label">今日新增</div><div class="stat-value">' + newToday + '<span class="unit">条</span></div>' +
     '<div class="stat-sub">' + today + ' 触发</div></div>';
+}
+function toggleEscalatedFilter(){
+  filterEscalated = !filterEscalated;
+  curPage = 1; renderStats(); renderTable();
 }
 
 /* ---------- 来源 chips ---------- */
@@ -396,8 +478,9 @@ function filteredList(){
     if (filterSource && a.source !== filterSource) return false;
     if (filterStatus && a.status !== filterStatus) return false;
     if (filterLevel && a.level !== filterLevel) return false;
+    if (filterEscalated && !(a.escalated && a.status !== 'closed')) return false;
     if (kw){
-      var hay = [a.id, a.title, a.desc, a.location].join(' ').toLowerCase();
+      var hay = [a.id, a.title, a.desc, a.location, a.levelName, a.assignee].join(' ').toLowerCase();
       if (hay.indexOf(kw) < 0) return false;
     }
     return true;
@@ -413,11 +496,11 @@ function setSort(key){
   curPage = 1; renderTable();
 }
 function resetFilter(){
-  filterSource = ''; filterLevel = '';
+  filterSource = ''; filterLevel = ''; filterEscalated = false;
   document.getElementById('levelSelect').value = '';
   document.getElementById('searchInput').value = '';
   setStatusTab('');
-  renderChips();
+  renderChips(); renderStats();
   DeviceUI.toast('已重置筛选条件', 'info');
 }
 
@@ -429,20 +512,20 @@ function renderTable(){
   var pageData = list.slice((curPage-1)*PAGE_SIZE, curPage*PAGE_SIZE);
   var body = document.getElementById('dataTableBody');
   if (!pageData.length){
-    body.innerHTML = '<tr class="empty-row"><td colspan="9">暂无符合条件的预警记录</td></tr>';
+    body.innerHTML = '<tr class="empty-row"><td colspan="10">暂无符合条件的预警记录</td></tr>';
   } else {
     body.innerHTML = pageData.map(function(a){
-      var flow = '';
-      if (a.status === 'pending') flow = '<button class="action-btn assign" onclick="openAssignModal(\'' + esc(a.id) + '\')">分派处理</button>';
-      else if (a.status === 'processing') flow = '<button class="action-btn flow" onclick="openCloseModal(\'' + esc(a.id) + '\')">闭环</button>';
+      var act = nextAction(a);
+      var flow = act ? '<button class="action-btn ' + act.cls + '" onclick="' + act.fn + '(\'' + esc(a.id) + '\')">' + act.label + '</button>' : '';
       return '<tr class="clickable" onclick="openDetail(\'' + esc(a.id) + '\')">' +
         '<td style="text-align:center;" onclick="event.stopPropagation();"><input type="checkbox" ' + (selected[a.id] ? 'checked' : '') + ' onclick="toggleOne(\'' + esc(a.id) + '\',this)"></td>' +
-        '<td><strong>' + esc(a.id) + '</strong></td>' +
+        '<td><strong>' + esc(a.id) + '</strong>' + (a.escalated && a.status !== 'closed' ? '<div style="margin-top:3px;"><span class="esc-badge">已升级</span></div>' : '') + '</td>' +
         '<td>' + esc(a.title) + '</td>' +
-        '<td>' + levelTag(a.level) + '</td>' +
+        '<td>' + levelTag(a.level) + '<div style="font-size:11px;color:var(--text-tertiary);margin-top:3px;">SLA ≤' + a.slaMin + 'min</div></td>' +
         '<td>' + srcBadge(a.source) + '</td>' +
         '<td>' + esc(a.location) + '</td>' +
         '<td>' + esc(a.time) + '</td>' +
+        '<td>' + slaCell(a) + '</td>' +
         '<td>' + statusTag(a.status) + '</td>' +
         '<td onclick="event.stopPropagation();"><div class="action-btns">' + flow +
           '<button class="action-btn detail" onclick="openDetail(\'' + esc(a.id) + '\')">详情</button>' +
@@ -488,26 +571,42 @@ function renderSelected(){
 function openDetail(id){
   var a = FAD.get(id);
   if (!a) return;
+  drawerAlertId = id;
+  var m = FAD.LEVEL_META[a.level] || FAD.LEVEL_META.notice;
   var rows = [
     ['预警编号', a.id], ['标题', a.title],
     ['级别', levelTag(a.level), 'raw'], ['来源', srcBadge(a.source), 'raw'],
     ['位置', a.location], ['触发时间', a.time],
+    ['响应时效', '≤' + a.slaMin + 'min（' + m.name + '）'],
+    ['通知渠道', channelChips(a), 'raw'],
+    ['升级规则', a.escalate || '—'],
+    ['超时升级', a.escalated ? '<span class="esc-badge">已升级</span> 超时未响应，按规则自动升级' : '未触发', 'raw'],
     ['状态', statusTag(a.status), 'raw'],
-    ['负责人', a.owner || '—'], ['处置措施', a.measure || '—']
+    ['响应时效实况', slaCell(a), 'raw']
   ];
   var html = '<div class="drawer-section">预警信息</div><div class="detail-info">' +
     rows.map(function(r){
       return '<div class="detail-row"><span class="detail-label">' + r[0] + '</span><span class="detail-value">' + (r[2] === 'raw' ? r[1] : esc(r[1])) + '</span></div>';
     }).join('') + '</div>';
   html += '<div class="drawer-section">预警描述</div><div style="font-size:13px;color:var(--text-primary);padding:10px 12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--border-light);">' + esc(a.desc || '—') + '</div>';
-  html += '<div class="drawer-section">处理时间线</div><div class="timeline">';
+
+  var act = nextAction(a);
+  var steps = [
+    { name:'派工', done: isDispatched(a), sub: isDispatched(a) ? '负责人 ' + a.assignee + (a.dispatchedAt ? ' · ' + a.dispatchedAt : '') : '待选择处理负责人', fn:'openAssignModal', btn:'去派工' },
+    { name:'响应', done: !!a.respondedAt, sub: a.respondedAt ? a.respondedAt + (minutesBetween(a.time, a.respondedAt) != null ? ' · 用时 ' + minutesBetween(a.time, a.respondedAt) + 'min' : '') : '待负责人到场确认响应', fn:'respondAlert', btn:'标记响应' },
+    { name:'措施', done: !!a.measures, sub: a.measures || '待填写处置措施（必填）', fn:'openMeasureModal', btn:'填写措施' },
+    { name:'复核', done: !!a.reviewedAt, sub: a.reviewedAt ? a.reviewedAt + ' · 复核通过' : '待复核处置效果', fn:'reviewAlert', btn:'标记复核' },
+    { name:'关闭', done: a.status === 'closed' && !!a.closedAt, sub: a.closedAt ? a.closedAt + ' · 闭环归档' : '待确认关闭', fn:'closeAlert', btn:'确认关闭' }
+  ];
+  html += '<div class="drawer-section">闭环流程（' + FAD.CLOSURE_STEPS.join(' → ') + '）</div><div class="timeline">';
   html += '<div class="tl-item done"><div class="tl-title">预警触发</div><div class="tl-sub">' + esc(a.time) + ' · ' + esc((SRC_META[a.source] || {}).text || a.source) + '</div></div>';
-  var started = a.status === 'processing' || a.status === 'closed';
-  html += '<div class="tl-item ' + (started ? 'done' : 'todo') + '"><div class="tl-title">分派处理</div><div class="tl-sub">' +
-    (started ? (a.owner ? esc(a.owner) + ' · ' + esc(a.startedAt || '—（种子数据无阶段时间）') : '系统联动自动处理 · ' + esc(a.startedAt || a.time)) : '待分派负责人') + '</div></div>';
-  var closed = a.status === 'closed';
-  html += '<div class="tl-item ' + (closed ? 'done' : 'todo') + '"><div class="tl-title">闭环归档</div><div class="tl-sub">' +
-    (closed ? esc(a.closedAt || '—（种子数据无阶段时间）') + (a.measure ? ' · ' + esc(a.measure) : '') : '待填写处置措施') + '</div></div>';
+  steps.forEach(function(st){
+    var isNext = act && st.fn === act.fn;
+    html += '<div class="tl-item ' + (st.done ? 'done' : 'todo') + '"><div class="tl-title">' + st.name + (st.done ? ' ✓' : '') + '</div>' +
+      '<div class="tl-sub">' + esc(st.sub) + '</div>' +
+      (isNext && !st.done ? '<div class="tl-btn"><button class="step-btn" onclick="' + st.fn + '(\'' + esc(a.id) + '\')">' + st.btn + '</button></div>' : '') +
+      '</div>';
+  });
   html += '</div>';
   if (a.source === 'env'){
     html += '<div style="margin-top:16px;"><button class="jg-btn" onclick="closeDrawer();openPage(\'env_monitor.html\',\'设备环境数据\')">查看环境数据</button></div>';
@@ -556,11 +655,11 @@ function saveNew(){
   closeNewModal(); refreshAll();
 }
 
-/* ---------- 分派处理 ---------- */
+/* ---------- 闭环五步：派工 → 响应 → 措施 → 复核 → 关闭 ---------- */
 function openAssignModal(id){
   assignId = id;
   var a = FAD.get(id);
-  document.getElementById('assignTitle').textContent = '分派处理 · ' + (a ? a.title : id);
+  document.getElementById('assignTitle').textContent = '派工 · ' + (a ? a.title : id);
   document.getElementById('aOwner').value = '张才孙';
   document.getElementById('assignOverlay').classList.add('show');
   document.getElementById('assignModal').classList.add('show');
@@ -572,17 +671,38 @@ function closeAssignModal(){
 }
 function saveAssign(){
   if (!assignId) return;
-  FAD.update(assignId, { status: 'processing', owner: document.getElementById('aOwner').value, startedAt: nowStr() });
-  DeviceUI.toast('预警 ' + assignId + ' 已分派，进入处理中', 'success');
+  var a = FAD.get(assignId);
+  if (!a) return;
+  if (a.status === 'closed'){ DeviceUI.toast('该预警已闭环，无需派工', 'warning'); closeAssignModal(); return; }
+  /* 派工仅指定负责人，保持 pending：契约 enrich 会在 processing 时自动回填 respondedAt，
+     故「响应」步骤才推进到 processing，保证五步各自留痕 */
+  FAD.update(assignId, { assignee: document.getElementById('aOwner').value, dispatchedAt: nowStr() });
+  DeviceUI.toast('预警 ' + assignId + ' 已派工给 ' + document.getElementById('aOwner').value + '，下一步：响应', 'success');
   closeAssignModal(); refreshAll();
 }
-
-/* ---------- 闭环 ---------- */
-function openCloseModal(id){
-  closeId = id;
+function respondAlert(id){
   var a = FAD.get(id);
-  document.getElementById('closeTitle').textContent = '闭环确认 · ' + (a ? a.title : id);
-  document.getElementById('cMeasure').value = '';
+  if (!a) return;
+  if (!isDispatched(a)){ DeviceUI.toast('请先完成「派工」，再标记响应', 'error'); return; }
+  if (a.respondedAt){ DeviceUI.toast('该预警已记录响应时间', 'info'); return; }
+  Modal.confirm('确认负责人已到场响应预警 ' + id + '？将记录响应时间并停止 SLA 倒计时。', {
+    title: '响应确认', confirmText: '确认响应'
+  }).then(function(ok){
+    if (!ok) return;
+    FAD.update(id, { respondedAt: nowStr(), status: 'processing' });
+    var used = minutesBetween(a.time, null);
+    DeviceUI.toast('已记录响应' + (used != null ? '，用时 ' + used + 'min' + (used > a.slaMin ? '（超出 SLA ' + a.slaMin + 'min）' : '') : '') + '，下一步：填写措施', 'success');
+    refreshAll();
+  });
+}
+function openMeasureModal(id){
+  var a = FAD.get(id);
+  if (!a) return;
+  if (!isDispatched(a)){ DeviceUI.toast('请先完成「派工」', 'error'); return; }
+  if (!a.respondedAt){ DeviceUI.toast('请先完成「响应」，再填写处置措施', 'error'); return; }
+  closeId = id;
+  document.getElementById('closeTitle').textContent = '填写处置措施 · ' + a.title;
+  document.getElementById('cMeasure').value = a.measures || '';
   document.getElementById('closeOverlay').classList.add('show');
   document.getElementById('closeModal').classList.add('show');
 }
@@ -591,38 +711,74 @@ function closeCloseModal(){
   document.getElementById('closeModal').classList.remove('show');
   closeId = '';
 }
-function saveClose(){
+function saveMeasures(){
   if (!closeId) return;
   var measure = document.getElementById('cMeasure').value.trim();
   if (!measure){ DeviceUI.toast('请填写处置措施（必填）', 'error'); return; }
-  FAD.update(closeId, { status: 'closed', measure: measure, closedAt: nowStr() });
-  DeviceUI.toast('预警 ' + closeId + ' 已闭环', 'success');
+  FAD.update(closeId, { measures: measure });
+  DeviceUI.toast('处置措施已保存，下一步：复核', 'success');
   closeCloseModal(); refreshAll();
 }
+function reviewAlert(id){
+  var a = FAD.get(id);
+  if (!a) return;
+  if (!a.measures){ DeviceUI.toast('请先填写「处置措施」，再复核', 'error'); return; }
+  if (a.reviewedAt){ DeviceUI.toast('该预警已完成复核', 'info'); return; }
+  Modal.confirm('确认处置措施已复核通过？\n措施：' + a.measures, {
+    title: '复核确认 · ' + id, confirmText: '复核通过'
+  }).then(function(ok){
+    if (!ok) return;
+    FAD.update(id, { reviewedAt: nowStr() });
+    DeviceUI.toast('复核通过，下一步：关闭归档', 'success');
+    refreshAll();
+  });
+}
+function closeAlert(id){
+  var a = FAD.get(id);
+  if (!a) return;
+  if (!a.reviewedAt){ DeviceUI.toast('请先完成「复核」，才能关闭预警', 'error'); return; }
+  if (a.status === 'closed'){ DeviceUI.toast('该预警已闭环', 'info'); return; }
+  Modal.confirm('确认关闭预警 ' + id + ' 并归档？关闭后流程结束。', {
+    title: '关闭确认', confirmText: '确认关闭'
+  }).then(function(ok){
+    if (!ok) return;
+    FAD.update(id, { status: 'closed', closedAt: nowStr() });
+    DeviceUI.toast('预警 ' + id + ' 已闭环归档', 'success');
+    refreshAll();
+  });
+}
 
-/* ---------- 批量闭环（带撤销） ---------- */
+/* ---------- 批量闭环（仅复核通过者可关闭，带撤销） ---------- */
 function bulkClose(){
   var ids = Object.keys(selected).filter(function(id){
     var a = FAD.get(id);
     return a && a.status !== 'closed';
   });
   if (!ids.length){ DeviceUI.toast('所选预警均已闭环', 'info'); return; }
-  Modal.confirm('确定将选中的 ' + ids.length + ' 条未闭环预警批量闭环吗？闭环后可在提示中撤销。', {
-    title: '批量闭环', confirmText: '闭环'
+  var ready = ids.filter(function(id){ return FAD.get(id).reviewedAt; });
+  var blocked = ids.length - ready.length;
+  if (!ready.length){
+    DeviceUI.toast('所选 ' + ids.length + ' 条预警均未完成复核，已阻断关闭：请先完成 派工→响应→措施→复核', 'error');
+    return;
+  }
+  Modal.confirm('选中 ' + ids.length + ' 条未闭环预警，其中 ' + ready.length + ' 条已复核通过可关闭' +
+    (blocked ? '，' + blocked + ' 条未完成复核将被跳过' : '') + '。关闭后可在提示中撤销。', {
+    title: '批量闭环', confirmText: '关闭 ' + ready.length + ' 条'
   }).then(function(ok){
     if (!ok) return;
-    var snapshot = ids.map(function(id){
+    var snapshot = ready.map(function(id){
       var a = FAD.get(id);
-      return { id: id, status: a.status, owner: a.owner, measure: a.measure, startedAt: a.startedAt, closedAt: a.closedAt };
+      return { id: id, status: a.status, closedAt: a.closedAt };
     });
-    ids.forEach(function(id){
-      FAD.update(id, { status: 'closed', measure: '批量闭环（演示操作）', closedAt: nowStr() });
+    ready.forEach(function(id){
+      FAD.update(id, { status: 'closed', closedAt: nowStr() });
     });
     selected = {};
     refreshAll();
-    undoToast('已批量闭环 ' + ids.length + ' 条预警', function(){
+    if (blocked) DeviceUI.toast(blocked + ' 条未完成复核的预警已跳过（阻断规则生效）', 'warning');
+    undoToast('已批量闭环 ' + ready.length + ' 条预警', function(){
       snapshot.forEach(function(s){
-        FAD.update(s.id, { status: s.status, owner: s.owner, measure: s.measure, startedAt: s.startedAt, closedAt: s.closedAt });
+        FAD.update(s.id, { status: s.status, closedAt: s.closedAt });
       });
       refreshAll();
     });
@@ -631,23 +787,65 @@ function bulkClose(){
 
 /* ---------- 导出 ---------- */
 function exportAlerts(){
-  var headers = ['预警编号','标题','级别','来源','位置','时间','状态','负责人','处置措施','描述'];
+  var headers = ['预警编号','标题','级别','响应时效(min)','通知渠道','来源','位置','时间','状态','超时升级','负责人','派工时间','响应时间','处置措施','复核时间','关闭时间','描述'];
   var rows = filteredList().map(function(a){
-    return [a.id, a.title, LEVEL_TEXT[a.level] || a.level, (SRC_META[a.source] || {}).text || a.source,
-      a.location, a.time, FAD.STATUS_TEXT[a.status] || a.status, a.owner || '', a.measure || '', a.desc || ''];
+    return [a.id, a.title, a.levelName || a.level, a.slaMin, (a.channels || []).join('、'),
+      (SRC_META[a.source] || {}).text || a.source, a.location, a.time, FAD.STATUS_TEXT[a.status] || a.status,
+      a.escalated ? '是' : '否', a.assignee || '', a.dispatchedAt || '', a.respondedAt || '', a.measures || '',
+      a.reviewedAt || '', a.closedAt || '', a.desc || ''];
   });
   DeviceUI.exportCsv('预警记录', headers, rows);
 }
 
+/* ---------- SLA 倒计时 / 超时自动升级 ---------- */
+function slaTick(){
+  var nodes = document.querySelectorAll('[data-sla-id]');
+  for (var i = 0; i < nodes.length; i++){
+    var a = FAD.get(nodes[i].getAttribute('data-sla-id'));
+    if (a) nodes[i].innerHTML = slaCellHtml(a);
+  }
+  var overdue = FAD.list().filter(function(a){
+    if (a.status !== 'pending' || a.respondedAt || a.escalated) return false;
+    var dl = slaDeadline(a);
+    return dl != null && Date.now() > dl;
+  });
+  if (overdue.length){
+    overdue.forEach(function(a){ FAD.update(a.id, { escalated: true }); });
+    DeviceUI.toast(overdue.length + ' 条预警超时未响应，已自动升级：' + overdue.map(function(a){ return a.id; }).join('、'), 'warning');
+    refreshAll();
+  }
+}
+
 /* ---------- 刷新 / 初始化 ---------- */
-function refreshAll(){ renderStats(); renderChips(); renderTable(); }
+function refreshAll(){
+  renderStats(); renderChips(); renderTable();
+  if (drawerAlertId && document.getElementById('drawer').classList.contains('show')){
+    var keepId = drawerAlertId;
+    if (FAD.get(keepId)) openDetail(keepId); else closeDrawer();
+  }
+}
 document.addEventListener('DOMContentLoaded', function(){
+  /* 应用预警设置页保存的四色时效覆盖层（契约文件只读，覆盖层存 localStorage） */
+  try {
+    var ov = JSON.parse(localStorage.getItem('mushroom_alert_matrix_v1') || 'null');
+    if (ov && ov.sla){
+      Object.keys(ov.sla).forEach(function(k){
+        if (FAD.LEVEL_META[k] && ov.sla[k] != null) FAD.LEVEL_META[k].slaMin = ov.sla[k];
+      });
+      FAD.list().forEach(function(a){
+        var m = FAD.LEVEL_META[a.level];
+        if (m) a.slaMin = m.slaMin;
+      });
+    }
+  } catch(e){}
   DeviceUI.fillSelect('nSource', FAD.SOURCES.map(function(s){ return { value: s.key, label: s.text }; }), null);
   DeviceUI.fillSelect('aOwner', DeviceUI.operators(), null);
   var params = new URLSearchParams(location.search);
   var src = params.get('source');
   if (src && SRC_META[src]) filterSource = src;
   refreshAll();
+  slaTick();
+  setInterval(slaTick, 1000);
   document.getElementById('searchInput').addEventListener('input', function(){ curPage = 1; renderTable(); });
   document.getElementById('levelSelect').addEventListener('change', function(){ filterLevel = this.value; curPage = 1; renderTable(); });
   window.addEventListener('fungiAlertChange', function(){ renderStats(); renderChips(); renderTable(); });

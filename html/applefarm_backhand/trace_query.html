@@ -32,7 +32,7 @@
   .detail-value { color:var(--text-primary); font-weight:500; word-break:break-all; }
   .drawer-overlay { position:fixed; inset:0; background:rgba(0,21,41,.45); z-index:1100; opacity:0; visibility:hidden; transition:all .25s; }
   .drawer-overlay.active { opacity:1; visibility:visible; }
-  .drawer { position:fixed; top:0; right:0; bottom:0; width:480px; max-width:94vw; background:var(--bg-card); z-index:1101; transform:translateX(102%); transition:transform .3s ease; display:flex; flex-direction:column; box-shadow:-10px 0 34px rgba(0,21,41,.16); }
+  .drawer { position:fixed; top:0; right:0; bottom:0; width:560px; max-width:94vw; background:var(--bg-card); z-index:1101; transform:translateX(102%); transition:transform .3s ease; display:flex; flex-direction:column; box-shadow:-10px 0 34px rgba(0,21,41,.16); }
   .drawer.active { transform:none; }
   .drawer-header { padding:18px 22px; background:linear-gradient(135deg,#ff4d4f 0%,#722ed1 100%); color:#fff; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
   .drawer-header h3 { margin:0; font-size:16px; color:#fff; }
@@ -77,6 +77,26 @@
   .tl-name { font-size:13px; font-weight:600; color:var(--text-primary); }
   .tl-meta { font-size:12px; color:var(--text-secondary); margin-top:4px; line-height:1.6; }
   .drill-tag { display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; background:#f9f0ff; color:#722ed1; border:1px solid #d3adf7; margin-left:6px; }
+  .freeze-tag { display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; background:#fff1f0; color:#ff4d4f; border:1px solid #ffa39e; margin-left:6px; cursor:pointer; white-space:nowrap; }
+  .freeze-tag.off { background:#f6ffed; color:#52c41a; border-color:#b7eb8f; cursor:default; }
+  .ledger-table { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:6px; }
+  .ledger-table th { text-align:left; padding:7px 8px; background:#fff7f0; color:#ad4e00; font-weight:600; border-bottom:1px solid #ffd8bf; white-space:nowrap; }
+  .ledger-table td { padding:7px 8px; border-bottom:1px dashed var(--border-light); vertical-align:top; }
+  .state-pill { display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; white-space:nowrap; border:1px solid; }
+  .ledger-btn { border:1px solid #1890ff; color:#1890ff; background:#e6f4ff; border-radius:6px; padding:2px 9px; font-size:11.5px; cursor:pointer; white-space:nowrap; }
+  .ledger-btn:hover { background:#1890ff; color:#fff; }
+  .ledger-btn.dispose { border-color:#722ed1; color:#722ed1; background:#f9f0ff; }
+  .ledger-btn.dispose:hover { background:#722ed1; color:#fff; }
+  .sec-title { margin:16px 0 8px; font-size:13px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; justify-content:space-between; }
+  .flow-legend { display:flex; flex-wrap:wrap; gap:10px; font-size:11.5px; color:var(--text-secondary); margin-top:6px; }
+  .flow-legend i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; }
+  #printReport { display:none; }
+  @media print {
+    body.print-report > *:not(#printReport) { display:none !important; }
+    body.print-report #printReport { display:block !important; }
+    body.print-report { background:#fff; }
+    @page { margin:16mm 14mm; }
+  }
 </style>
 <style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
   .main-wrapper{margin-left:0!important;width:100%!important;}
@@ -103,7 +123,7 @@
           <div class="stat-card red">
             <div class="stat-header"><span class="stat-label">进行中召回</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg></span></div>
             <div class="stat-value" id="stActive">—</div>
-            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);">发起 → 通知 → 回收 → 处置</span></div>
+            <div class="stat-footer"><span style="font-size:12px;color:var(--text-tertiary);" id="stActiveFoot">发起 → 通知 → 回收 → 处置</span></div>
           </div>
           <div class="stat-card green">
             <div class="stat-header"><span class="stat-label">已完成召回</span><span class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span></div>
@@ -176,7 +196,7 @@
                 <th style="width:150px;">回收率</th>
                 <th>状态</th>
                 <th class="sortable" onclick="toggleSort()" id="thTime">发起时间 <span id="sortArrow">↕</span></th>
-                <th style="width:230px;">操作</th>
+                <th style="width:300px;">操作</th>
               </tr>
             </thead>
             <tbody id="dataTableBody"></tbody>
@@ -269,6 +289,9 @@
   <button class="toast-undo" id="toastUndo" style="display:none;">撤销</button>
 </div>
 
+<!-- 召回报告打印区（仅打印时可见，另存为 PDF） -->
+<div id="printReport"></div>
+
 <script src="js/shared/fungi-store.js"></script>
 <script>
 /* ============================================================
@@ -348,6 +371,168 @@ function historyOf(r){
   return out;
 }
 
+/* ---------- 冻结 / 流向 / 台账 ---------- */
+var LEDGER_STATES=['待召回','召回中','已召回','已销毁','降级','无害化'];
+var LEDGER_COLORS={ '待召回':'#8c9bab','召回中':'#fa8c16','已召回':'#1890ff','已销毁':'#ff4d4f','降级':'#722ed1','无害化':'#52c41a' };
+var FLOW_COLORS={ '已冻结':'#1890ff','在途拦截':'#fa8c16','已通知':'#ad8b00','已召回':'#52c41a','已拦截':'#722ed1' };
+function flowColor(s){ return FLOW_COLORS[s]||'#8c9bab'; }
+function statePill(s){
+  var c=LEDGER_COLORS[s]||'#8c9bab';
+  return '<span class="state-pill" style="color:'+c+';border-color:'+c+'55;background:'+c+'14;">'+esc(s)+'</span>';
+}
+function freezeTag(r){
+  if(r.frozen) return '<span class="freeze-tag" onclick="event.stopPropagation();tryUnfreeze(\''+esc(r.id)+'\')" title="点击尝试解冻（需召回闭环）">出库已冻结</span>';
+  return '<span class="freeze-tag off">出库正常</span>';
+}
+function tryUnfreeze(id){
+  var r=FS.get('recalls',id); if(!r) return;
+  if(!r.frozen){ showToast(id+' 出库未处于冻结状态','info'); return; }
+  if(r.status!=='已完成'){
+    showToast('已阻断解冻：'+id+' 召回未闭环（当前「'+r.status+'」），批次 '+r.batch+' 出库保持冻结','error');
+    opLog('解冻被阻断',id+' · 状态 '+r.status);
+    return;
+  }
+  askConfirm('解冻出库','召回单 <strong class="mono">'+esc(id)+'</strong> 已完成闭环（回收率 '+(Number(r.recovery)||0).toFixed(1)+'%）。确认解冻批次 <strong class="mono">'+esc(r.batch)+'</strong> 的出库限制？',function(){
+    FS.update('recalls',id,{ frozen:false });
+    opLog('解冻出库',id+' · '+r.batch);
+    refresh();
+    showToast('批次 '+r.batch+' 出库已解冻','success');
+    if(document.getElementById('rcDrawer').classList.contains('active')) viewDetail(id);
+  });
+}
+function flowOf(r){ return Array.isArray(r.flow)&&r.flow.length?r.flow:[{ node:'厂区冷库', qty:scopeQty(r), status:r.frozen?'已冻结':'待冻结' }]; }
+function scopeQty(r){ var m=String(r.scope||'').match(/(\d+)\s*箱/); return m?Number(m[1]):60; }
+function flowMapSvg(r){
+  var flow=flowOf(r);
+  var root=flow[0], branches=flow.slice(1);
+  var W=430, rowH=64, H=Math.max(150, 40+Math.max(1,branches.length)*rowH);
+  var rootY=H/2-26;
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="召回流向图谱" style="display:block;">';
+  var rc=flowColor(root.status);
+  svg+='<rect x="4" y="'+rootY+'" width="128" height="52" rx="10" fill="'+rc+'14" stroke="'+rc+'" stroke-width="1.5"/>'+
+    '<text x="68" y="'+(rootY+20)+'" text-anchor="middle" font-size="12" font-weight="600" fill="#1f2d3d">'+esc(root.node)+'</text>'+
+    '<text x="68" y="'+(rootY+38)+'" text-anchor="middle" font-size="11" fill="'+rc+'">'+root.qty+' 箱 · '+esc(root.status)+'</text>';
+  if(!branches.length){
+    svg+='<text x="280" y="'+(H/2)+'" text-anchor="middle" font-size="12" fill="#8c9bab">暂无下游流向，发起通知后生成</text>';
+  }
+  branches.forEach(function(b,i){
+    var y=20+i*rowH+8, c=flowColor(b.status);
+    var sy=rootY+26, ty=y+22;
+    svg+='<path d="M132 '+sy+' C 180 '+sy+', 190 '+ty+', 236 '+ty+'" fill="none" stroke="'+c+'" stroke-width="2" stroke-dasharray="'+(b.status==='已召回'?'0':'5 4')+'" opacity=".7"/>';
+    var w=Math.max(60, Math.min(150, b.qty*2));
+    svg+='<rect x="236" y="'+y+'" width="188" height="44" rx="9" fill="'+c+'12" stroke="'+c+'" stroke-width="1.2"/>'+
+      '<rect x="236" y="'+y+'" width="4" height="44" rx="2" fill="'+c+'"/>'+
+      '<text x="248" y="'+(y+18)+'" font-size="11.5" font-weight="600" fill="#1f2d3d">'+esc(b.node)+'</text>'+
+      '<text x="248" y="'+(y+35)+'" font-size="11" fill="'+c+'">'+b.qty+' 箱 · '+esc(b.status)+'</text>';
+  });
+  svg+='</svg>';
+  var legend=Object.keys(FLOW_COLORS).map(function(k){
+    return '<span><i style="background:'+FLOW_COLORS[k]+';"></i>'+k+'</span>';
+  }).join('');
+  return svg+'<div class="flow-legend">'+legend+'</div>';
+}
+function ledgerOf(r){ return Array.isArray(r.ledger)?r.ledger:[]; }
+function ledgerNext(s){
+  if(s==='待召回') return { label:'开始召回', to:'召回中' };
+  if(s==='召回中') return { label:'确认召回', to:'已召回' };
+  if(s==='已召回') return { label:'处置', to:null };
+  return null;
+}
+function ledgerHtml(r){
+  var led=ledgerOf(r);
+  if(!led.length) return '<div style="font-size:12.5px;color:var(--text-tertiary);padding:8px 0;">暂无逐份台账，发起通知后按追溯码建账。</div>';
+  var rows=led.map(function(it,i){
+    var nx=ledgerNext(it.state);
+    var btn=nx?'<button class="ledger-btn'+(nx.to?'':' dispose')+'" onclick="advanceLedger(\''+esc(r.id)+'\','+i+')">'+nx.label+'</button>':'<span style="font-size:11px;color:var(--text-tertiary);">已闭环</span>';
+    return '<tr><td class="mono">'+esc(it.code)+'</td><td>'+it.qty+'</td><td>'+esc(it.dest||'—')+'</td><td>'+statePill(it.state)+'</td><td>'+esc(it.handler||'—')+(it.time?'<div style="font-size:10.5px;color:var(--text-tertiary);">'+esc(it.time)+'</div>':'')+'</td><td>'+btn+'</td></tr>';
+  }).join('');
+  return '<div style="overflow-x:auto;"><table class="ledger-table"><thead><tr><th>追溯码</th><th>箱数</th><th>去向</th><th>处置状态</th><th>经办 / 时间</th><th>推进</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+    '<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">状态链：待召回 → 召回中 → 已召回 → 已销毁 / 降级 / 无害化（终态）</div>';
+}
+function advanceLedger(id,idx){
+  var r=FS.get('recalls',id); if(!r) return;
+  var led=ledgerOf(r).slice(); var it=led[idx]; if(!it) return;
+  var nx=ledgerNext(it.state); if(!nx) return;
+  if(!nx.to){ openDispose(id,idx); return; }
+  var u=currentUser();
+  askConfirm('台账推进 · '+it.code,'追溯码 <strong class="mono">'+esc(it.code)+'</strong>（'+it.qty+' 箱 · '+esc(it.dest||'—')+'）由「'+it.state+'」推进至「<strong>'+nx.to+'</strong>」，是否确认？',function(){
+    led[idx]=Object.assign({},it,{ state:nx.to, handler:u.realName||'陈小忠', time:nowStr() });
+    FS.update('recalls',id,{ ledger:led });
+    opLog('召回台账推进',id+' · '+it.code+' → '+nx.to);
+    refresh();
+    showToast(it.code+' 已推进至「'+nx.to+'」','success');
+    if(document.getElementById('rcDrawer').classList.contains('active')) viewDetail(id);
+  });
+}
+function openDispose(id,idx){
+  var r=FS.get('recalls',id); if(!r) return;
+  var it=ledgerOf(r)[idx]; if(!it) return;
+  document.getElementById('stepTitle').textContent='不合格品处置 · '+it.code;
+  document.getElementById('stepBody').innerHTML=
+    '<div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">追溯码 <strong class="mono">'+esc(it.code)+'</strong> · '+it.qty+' 箱已召回，请选择终态处置方式：</div>'+
+    '<div class="form-group"><label>处置方式 <span class="req">*</span></label><select id="stepInput"><option value="已销毁">监督销毁</option><option value="降级">降级利用（转饲料/加工级）</option><option value="无害化">无害化处理</option></select></div>'+
+    '<span class="form-hint">处置为终态，确认后不可回退；全程留痕并计入召回报告。</span>';
+  var btn=document.getElementById('stepOk');
+  var nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
+  nb.textContent='确认处置';
+  nb.addEventListener('click',function(){
+    var to=document.getElementById('stepInput').value;
+    var led=ledgerOf(r).slice();
+    led[idx]=Object.assign({},it,{ state:to, handler:currentUser().realName||'陈小忠', time:nowStr() });
+    FS.update('recalls',id,{ ledger:led });
+    closeModal('stepModal');
+    opLog('召回台账处置',id+' · '+it.code+' → '+to);
+    refresh();
+    showToast(it.code+' 处置完成：'+to+'（终态）','success');
+    if(document.getElementById('rcDrawer').classList.contains('active')) viewDetail(id);
+  });
+  openModal('stepModal');
+}
+
+/* ---------- 召回报告（打印 / 另存为 PDF） ---------- */
+function generateReport(id){
+  var r=FS.get('recalls',id); if(!r) return;
+  var flow=flowOf(r), led=ledgerOf(r), hist=historyOf(r);
+  var rec=Number(r.recovery)||0;
+  function tr(cells){ return '<tr>'+cells.map(function(c){ return '<td style="border:1px solid #d9d9d9;padding:6px 9px;font-size:12px;">'+c+'</td>'; }).join('')+'</tr>'; }
+  function th(cells){ return '<tr>'+cells.map(function(c){ return '<th style="border:1px solid #d9d9d9;padding:6px 9px;font-size:12px;background:#fafafa;text-align:left;">'+c+'</th>'; }).join('')+'</tr>'; }
+  var html=
+    '<div style="font-family:\'PingFang SC\',\'Microsoft YaHei\',sans-serif;color:#1f2d3d;max-width:720px;margin:0 auto;">'+
+    '<div style="text-align:center;border-bottom:3px double #ff4d4f;padding-bottom:12px;margin-bottom:16px;">'+
+      '<div style="font-size:20px;font-weight:700;">产品召回处置报告</div>'+
+      '<div style="font-size:12px;color:#666;margin-top:6px;">托克逊县数字农业科技 · 食用菌工厂化生产基地 · 报告编号 '+esc(r.id)+'</div></div>'+
+    '<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">'+
+      tr(['召回单号：'+esc(r.id),'涉及批次：'+esc(r.batch)])+
+      tr(['召回级别：'+esc(r.level)+(r.drill?'（演练单）':''),'当前状态：'+esc(r.status)])+
+      tr(['召回范围：'+esc(r.scope||'—'),'出库冻结：'+(r.frozen?'冻结中':'已解冻')])+
+      tr(['发起人：'+esc(r.operator||'—'),'发起时间：'+esc(r.time)])+
+      '<tr><td colspan="2" style="border:1px solid #d9d9d9;padding:6px 9px;font-size:12px;">召回原因：'+esc(r.reason||'—')+'</td></tr>'+
+      tr(['回收率：'+rec.toFixed(1)+'%（目标 ≥ 95%）','报告生成：'+nowStr()])+
+    '</table>'+
+    '<div style="font-size:14px;font-weight:700;margin:14px 0 6px;">一、产品流向与拦截</div>'+
+    '<table style="width:100%;border-collapse:collapse;">'+th(['流向节点','数量（箱）','拦截 / 召回状态'])+
+      flow.map(function(f){ return tr([esc(f.node),f.qty,esc(f.status)]); }).join('')+'</table>'+
+    '<div style="font-size:14px;font-weight:700;margin:14px 0 6px;">二、逐份处置台账</div>'+
+    (led.length?'<table style="width:100%;border-collapse:collapse;">'+th(['追溯码','箱数','去向','处置状态','经办人','时间'])+
+      led.map(function(it){ return tr([esc(it.code),it.qty,esc(it.dest||'—'),esc(it.state),esc(it.handler||'—'),esc(it.time||'—')]); }).join('')+'</table>'
+      :'<div style="font-size:12px;color:#666;">暂无逐份台账记录。</div>')+
+    '<div style="font-size:14px;font-weight:700;margin:14px 0 6px;">三、流转时间线</div>'+
+    '<table style="width:100%;border-collapse:collapse;">'+th(['阶段','时间','经办人','说明'])+
+      hist.map(function(h){ return tr([esc(h.status),esc(h.time),esc(h.operator),esc(h.note)]); }).join('')+'</table>'+
+    '<div style="display:flex;justify-content:space-between;margin-top:36px;font-size:12px;">'+
+      '<span>质量负责人（签字）：＿＿＿＿＿＿</span><span>厂长（签字）：＿＿＿＿＿＿</span><span>日期：'+FS.dayKey(0)+'</span></div>'+
+    '<div style="margin-top:18px;font-size:10.5px;color:#999;border-top:1px solid #eee;padding-top:8px;">本报告由工厂化农业数据管理系统自动生成，数据来源：召回单 '+esc(r.id)+' 及区块链存证索引；打印对话框中选择「另存为 PDF」即可归档 '+esc(r.id)+'.pdf。</div>'+
+    '</div>';
+  document.getElementById('printReport').innerHTML=html;
+  document.body.classList.add('print-report');
+  FS.update('recalls',id,{ report:id+'.pdf', reportAt:nowStr() });
+  opLog('生成召回报告',id+' · '+id+'.pdf');
+  refresh();
+  showToast('报告已生成：'+id+'.pdf · 请在打印对话框选择「另存为 PDF」','success');
+  setTimeout(function(){ window.print(); },200);
+}
+window.addEventListener('afterprint',function(){ document.body.classList.remove('print-report'); });
+
 /* ---------- 统计 ---------- */
 function renderStats(){
   var rows=FS.list('recalls');
@@ -360,6 +545,8 @@ function renderStats(){
   document.getElementById('stDone').textContent=done;
   document.getElementById('stRecovery').textContent=real.length?avg.toFixed(1)+'%':'—';
   document.getElementById('stDrill').textContent=drills;
+  var frozen=rows.filter(function(r){ return r.frozen && r.status!=='已完成'; }).length;
+  document.getElementById('stActiveFoot').textContent=frozen?('其中 '+frozen+' 单批次出库冻结中'):'发起 → 通知 → 回收 → 处置';
 }
 
 /* ---------- 列表 ---------- */
@@ -423,12 +610,13 @@ function renderRow(r,seq){
   var acts='';
   if(next) acts+='<button class="action-btn detail" onclick="openStep(\''+esc(r.id)+'\')">→ '+next+'</button>';
   acts+='<button class="action-btn" onclick="openRecovery(\''+esc(r.id)+'\')">回收率</button>';
+  acts+='<button class="action-btn" style="color:#722ed1;" onclick="generateReport(\''+esc(r.id)+'\')">报告</button>';
   acts+='<button class="action-btn qrcode" onclick="viewDetail(\''+esc(r.id)+'\')">详情</button>';
   acts+='<button class="action-btn" style="color:#ff4d4f;" onclick="deleteOne(\''+esc(r.id)+'\')">删除</button>';
   return '<tr>'+
     '<td><input type="checkbox" '+(selected[r.id]?'checked':'')+' onchange="toggleRow(\''+esc(r.id)+'\',this.checked)" aria-label="勾选"></td>'+
     '<td>'+seq+'</td>'+
-    '<td><strong class="mono">'+esc(r.id)+'</strong>'+(r.drill?'<span class="drill-tag">演练</span>':'')+'</td>'+
+    '<td><strong class="mono">'+esc(r.id)+'</strong>'+(r.drill?'<span class="drill-tag">演练</span>':'')+freezeTag(r)+'</td>'+
     '<td class="mono">'+esc(r.batch)+'</td>'+
     '<td style="max-width:180px;">'+esc(r.reason||'—')+'</td>'+
     '<td>'+levelPill(r.level)+'</td>'+
@@ -497,15 +685,20 @@ function confirmNewRecall(){
   if(!reason){ showToast('请填写召回原因','error'); return; }
   if(!scope){ showToast('请填写召回范围','error'); return; }
   var u=currentUser();
+  var qty=(scope.match(/(\d+)\s*箱/)||[])[1];
+  qty=qty?Number(qty):60;
+  var codeBase=(scope.match(/[A-Z]{2,6}-[0-9]{6,}/)||[])[0]||('TR-'+batch.replace(/^MJ-/,''));
   var rec=FS.add('recalls',{
     batch:batch, reason:reason, level:level, scope:scope,
-    status:'发起', recovery:0, operator:u.realName||'周明轩', time:nowStr(),
-    history:[{ status:'发起', time:nowStr(), operator:u.realName||'周明轩', note:'召回单创建：'+reason }]
+    status:'发起', recovery:0, frozen:true, operator:u.realName||'周明轩', time:nowStr(),
+    flow:[{ node:'厂区冷库', qty:qty, status:'已冻结' }],
+    ledger:[{ code:codeBase+'-001', qty:qty, dest:'厂区冷库（待通知下游）', state:'待召回', handler:'—', time:null }],
+    history:[{ status:'发起', time:nowStr(), operator:u.realName||'周明轩', note:'召回单创建：'+reason+'；批次出库已冻结' }]
   });
   closeModal('newModal');
-  opLog('发起召回',rec.id+' · '+batch);
+  opLog('发起召回',rec.id+' · '+batch+' · 出库冻结');
   refresh();
-  showToast('召回单 '+rec.id+' 已发起，请推进通知流程','success');
+  showToast('召回单 '+rec.id+' 已发起：批次 '+batch+' 出库已冻结，下游通知前禁止出库','success');
   viewDetail(rec.id);
 }
 
@@ -536,6 +729,7 @@ function openStep(id){
   document.getElementById('stepBody').innerHTML=html;
   var btn=document.getElementById('stepOk');
   var nb=btn.cloneNode(true); btn.parentNode.replaceChild(nb,btn);
+  nb.textContent='确认流转';
   nb.addEventListener('click',function(){ confirmStep(next); });
   openModal('stepModal');
 }
@@ -613,7 +807,7 @@ function runDrill(){
       batch:'MJ-DRILL-'+FS.dayKey(0).slice(2).replace(/-/g,''),
       reason:'季度召回演练（模拟冷链断链场景）',
       level:'三级', scope:'演练批次 120 箱',
-      status:'已完成', recovery:recovery, drill:true,
+      status:'已完成', recovery:recovery, drill:true, frozen:false,
       operator:u.realName||'周明轩', time:t, history:hist
     });
     opLog('召回演练',rec.id+' · 回收率 '+recovery+'%');
@@ -668,14 +862,20 @@ function viewDetail(id){
     '<div class="detail-grid"><span class="detail-label">涉及批次</span><span class="detail-value mono">'+esc(r.batch)+'</span></div>'+
     '<div class="detail-grid"><span class="detail-label">召回原因</span><span class="detail-value">'+esc(r.reason||'—')+'</span></div>'+
     '<div class="detail-grid"><span class="detail-label">级别 / 状态</span><span class="detail-value">'+levelPill(r.level)+' '+stepPill(r.status)+'</span></div>'+
+    '<div class="detail-grid"><span class="detail-label">出库管控</span><span class="detail-value">'+freezeTag(r)+(r.frozen&&r.status!=='已完成'?'<span style="font-size:11px;color:var(--text-tertiary);margin-left:6px;">召回闭环前禁止解冻</span>':'')+'</span></div>'+
     '<div class="detail-grid"><span class="detail-label">召回范围</span><span class="detail-value">'+esc(r.scope||'—')+'</span></div>'+
     '<div class="detail-grid"><span class="detail-label">回收率</span><span class="detail-value"><div style="display:flex;align-items:center;gap:8px;"><div class="pbar" style="flex:1;"><i style="width:'+Math.min(rec,100)+'%;"></i></div><span>'+rec.toFixed(1)+'%</span></div></span></div>'+
     '<div class="detail-grid"><span class="detail-label">发起人 / 时间</span><span class="detail-value">'+esc(r.operator||'—')+' · '+esc(r.time)+'</span></div>'+
-    '<div style="margin:16px 0 8px;font-size:13px;font-weight:600;color:var(--text-primary);">流转时间线</div>'+
+    '<div class="detail-grid"><span class="detail-label">召回报告</span><span class="detail-value mono">'+esc(r.report||'未生成')+(r.reportAt?'<span style="font-size:11px;color:var(--text-tertiary);margin-left:6px;">生成于 '+esc(r.reportAt)+'</span>':'')+'</span></div>'+
+    '<div class="sec-title">流向图谱（拦截 / 召回）</div>'+flowMapSvg(r)+
+    '<div class="sec-title">逐份处置台账 <span style="font-size:11px;font-weight:400;color:var(--text-tertiary);">'+ledgerOf(r).length+' 份 · 6 状态</span></div>'+ledgerHtml(r)+
+    '<div class="sec-title">流转时间线</div>'+
     '<div class="tl">'+tl+'</div>';
   var idx=STEPS.indexOf(r.status);
   var f='<button class="jg-btn" onclick="openEdit(\''+esc(r.id)+'\')">编辑</button>'+
+        '<button class="jg-btn" style="border-color:#722ed1;color:#722ed1;" onclick="generateReport(\''+esc(r.id)+'\')">生成报告</button>'+
         '<button class="jg-btn" onclick="openRecovery(\''+esc(r.id)+'\')">更新回收率</button>';
+  if(r.frozen && r.status==='已完成') f+='<button class="jg-btn" onclick="tryUnfreeze(\''+esc(r.id)+'\')">解冻出库</button>';
   if(idx>=0&&idx<STEPS.length-1) f+='<button class="jg-btn jg-btn-primary" onclick="openStep(\''+esc(r.id)+'\')">流转 → '+STEPS[idx+1]+'</button>';
   document.getElementById('drawerFooter').innerHTML=f;
   openDrawer();
@@ -685,9 +885,9 @@ function viewDetail(id){
 function exportCSV(){
   var rows=Pagination.filteredData;
   if(!rows.length){ showToast('当前没有可导出的数据','warning'); return; }
-  var head=['召回单号','批次号','原因','级别','范围','回收率%','状态','类型','发起人','发起时间'];
+  var head=['召回单号','批次号','原因','级别','范围','回收率%','状态','出库冻结','类型','台账份数','报告','发起人','发起时间'];
   var lines=[head.join(',')].concat(rows.map(function(r){
-    return [r.id,r.batch,r.reason||'',r.level,r.scope||'',Number(r.recovery)||0,r.status,r.drill?'演练':'真实召回',r.operator||'',r.time].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+    return [r.id,r.batch,r.reason||'',r.level,r.scope||'',Number(r.recovery)||0,r.status,r.frozen?'冻结':'正常',r.drill?'演练':'真实召回',ledgerOf(r).length,r.report||'',r.operator||'',r.time].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
   }));
   var blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   var a=document.createElement('a');

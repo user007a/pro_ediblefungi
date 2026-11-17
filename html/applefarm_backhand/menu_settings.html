@@ -53,6 +53,27 @@
   .item-label .item-url { margin-left:auto; font-size:11px; color:#b3bdb3; font-family:Consolas,Menlo,monospace; }
   .hint-bar { display:flex; align-items:flex-start; gap:8px; padding:10px 14px; border-radius:8px; background:#e6f4ff; border:1px solid #91caff; font-size:12px; color:#0958d9; line-height:1.7; margin-bottom:14px; }
   .form-hint { font-size:12px; color:var(--text-tertiary); }
+  .cfg-group { border:1px solid var(--border-default); border-radius:10px; margin-bottom:12px; overflow:hidden; }
+  .cfg-group-head { padding:10px 16px; background:linear-gradient(90deg,#f9f0ff,#e6f4ff); font-size:14px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:8px; }
+  .cfg-group-head .group-count { margin-left:auto; }
+  .cfg-row { display:flex; align-items:center; gap:10px; padding:8px 16px; border-top:1px solid var(--border-default); font-size:13px; }
+  .cfg-row.off { background:#fafafa; }
+  .cfg-row.off .cfg-name { color:var(--text-tertiary); text-decoration:line-through; }
+  .cfg-seq { width:26px; text-align:center; font-size:12px; color:var(--text-tertiary); font-family:Consolas,Menlo,monospace; flex-shrink:0; }
+  .cfg-name { font-weight:500; color:var(--text-primary); min-width:110px; }
+  .cfg-url { font-size:11px; color:#b3bdb3; font-family:Consolas,Menlo,monospace; }
+  .cfg-tag { font-size:11px; padding:2px 9px; border-radius:999px; white-space:nowrap; margin-left:auto; }
+  .cfg-tag.on { background:#f6ffed; color:#52c41a; border:1px solid #b7eb8f; }
+  .cfg-tag.off { background:#fff1f0; color:#ff4d4f; border:1px solid #ffa39e; }
+  .cfg-btns { display:flex; gap:6px; flex-shrink:0; }
+  .cfg-btn { border:1px solid var(--border-default); background:#fff; border-radius:6px; padding:3px 10px; font-size:12px; cursor:pointer; color:var(--text-secondary); transition:all .2s; }
+  .cfg-btn:hover:not(:disabled) { border-color:#1890ff; color:#1890ff; }
+  .cfg-btn:disabled { opacity:.35; cursor:not-allowed; }
+  .cfg-btn.warn { color:#fa8c16; border-color:#ffd591; }
+  .cfg-btn.warn:hover:not(:disabled) { border-color:#fa8c16; }
+  .cfg-btn.ok { color:#52c41a; border-color:#b7eb8f; }
+  .cfg-btn.ok:hover:not(:disabled) { border-color:#52c41a; }
+  .item-off-tag { font-size:10px; padding:1px 7px; border-radius:999px; background:#fff1f0; color:#ff4d4f; border:1px solid #ffa39e; margin-left:6px; }
 </style>
 <style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
   .main-wrapper{margin-left:0!important;width:100%!important;}
@@ -123,6 +144,23 @@
               </div>
             </div>
             <div class="panel-body" id="menuTree"></div>
+          </div>
+        </div>
+
+        <div class="panel-card" style="margin-top:16px;">
+          <div class="panel-head">
+            <h3>菜单启停与排序</h3>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <span class="form-hint" id="cfgSummary">—</span>
+              <button class="jg-btn" style="border-color:#fa8c16;color:#fa8c16;" onclick="askResetMenuCfg()">恢复默认启停与排序</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="hint-bar" style="margin-bottom:12px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;flex-shrink:0;margin-top:2px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <span>启停与排序即时保存到本地（snzg_menu_config），停用菜单在上方权限树中标记「已停用」。注意：当前版本 index.html 侧边栏仅消费<strong>权限白名单</strong>，启停/排序配置供菜单治理演示与后续版本接入。</span>
+            </div>
+            <div id="menuCfgTree"></div>
           </div>
         </div>
 
@@ -262,6 +300,89 @@ function loadRoleChecks(role){
   return map;
 }
 
+/* ---------- 菜单启停与排序（本地 snzg_menu_config，不影响权限白名单键格式） ---------- */
+var CFG_KEY='snzg_menu_config';
+function loadMenuCfg(){
+  try{ var c=JSON.parse(localStorage.getItem(CFG_KEY)||'null'); if(c&&typeof c==='object') return {disabled:c.disabled||{}, order:c.order||{}}; }catch(e){}
+  return {disabled:{}, order:{}};
+}
+function saveMenuCfg(c){ localStorage.setItem(CFG_KEY,JSON.stringify(c)); }
+function cfgItems(g){
+  var ord=loadMenuCfg().order[g.group];
+  var items=g.items.slice();
+  if(Array.isArray(ord)){
+    items.sort(function(a,b){
+      var ia=ord.indexOf(a.url), ib=ord.indexOf(b.url);
+      return (ia<0?999:ia)-(ib<0?999:ib);
+    });
+  }
+  return items;
+}
+function isMenuOff(url){ return !!loadMenuCfg().disabled[url]; }
+function menuName(url){
+  var n=url;
+  MENU_TREE.forEach(function(g){ g.items.forEach(function(it){ if(it.url===url) n=it.name; }); });
+  return n;
+}
+function renderMenuCfg(){
+  var cfg=loadMenuCfg(), offCount=0;
+  document.getElementById('menuCfgTree').innerHTML=MENU_TREE.map(function(g){
+    var items=cfgItems(g);
+    var on=items.filter(function(it){ return !cfg.disabled[it.url]; }).length;
+    offCount+=items.length-on;
+    var rows=items.map(function(it,ii){
+      var off=!!cfg.disabled[it.url];
+      return '<div class="cfg-row '+(off?'off':'')+'">'+
+        '<span class="cfg-seq">'+(ii+1)+'</span>'+
+        '<span class="cfg-name">'+esc(it.name)+'</span>'+
+        '<span class="cfg-url">'+esc(it.url)+'</span>'+
+        '<span class="cfg-tag '+(off?'off':'on')+'">'+(off?'已停用':'启用中')+'</span>'+
+        '<span class="cfg-btns">'+
+          '<button class="cfg-btn" '+(ii===0?'disabled':'')+' onclick="moveMenu(\''+esc(g.group)+'\',\''+esc(it.url)+'\',-1)">↑ 上移</button>'+
+          '<button class="cfg-btn" '+(ii===items.length-1?'disabled':'')+' onclick="moveMenu(\''+esc(g.group)+'\',\''+esc(it.url)+'\',1)">↓ 下移</button>'+
+          (off
+            ? '<button class="cfg-btn ok" onclick="toggleMenu(\''+esc(it.url)+'\')">启用</button>'
+            : '<button class="cfg-btn warn" onclick="toggleMenu(\''+esc(it.url)+'\')">停用</button>')+
+        '</span></div>';
+    }).join('');
+    return '<div class="cfg-group"><div class="cfg-group-head"><span>'+esc(g.group)+'</span><span class="group-count">'+on+' / '+items.length+' 启用</span></div>'+rows+'</div>';
+  }).join('');
+  document.getElementById('cfgSummary').textContent=offCount?('已停用 '+offCount+' 个菜单'):'全部菜单启用中';
+}
+function toggleMenu(url){
+  var cfg=loadMenuCfg();
+  if(cfg.disabled[url]) delete cfg.disabled[url]; else cfg.disabled[url]=true;
+  saveMenuCfg(cfg);
+  var off=!!cfg.disabled[url], name=menuName(url);
+  opLog(off?'停用菜单':'启用菜单', name+'（'+url+'）');
+  renderMenuCfg(); renderTree();
+  showToast(off?('已停用「'+name+'」，权限树中已标记'):('已启用「'+name+'"'), off?'warning':'success');
+}
+function moveMenu(group,url,dir){
+  var g=MENU_TREE.filter(function(x){ return x.group===group; })[0];
+  if(!g) return;
+  var urls=cfgItems(g).map(function(it){ return it.url; });
+  var i=urls.indexOf(url), j=i+dir;
+  if(i<0||j<0||j>=urls.length) return;
+  urls[i]=urls[j]; urls[j]=url;
+  var cfg=loadMenuCfg();
+  cfg.order[group]=urls;
+  saveMenuCfg(cfg);
+  opLog('调整菜单排序', group+' · '+menuName(url)+(dir<0?' 上移':' 下移'));
+  renderMenuCfg(); renderTree();
+  showToast('「'+menuName(url)+'」已'+(dir<0?'上移':'下移')+'，排序已保存','info');
+}
+function askResetMenuCfg(){
+  var cfg=loadMenuCfg();
+  if(!Object.keys(cfg.disabled).length && !Object.keys(cfg.order).length){ showToast('菜单启停与排序已是默认状态','info'); return; }
+  askConfirm('恢复默认启停与排序','将清除全部菜单停用标记与自定义排序（不影响权限白名单）。是否继续？',function(){
+    localStorage.removeItem(CFG_KEY);
+    opLog('恢复默认菜单启停与排序','全部菜单');
+    renderMenuCfg(); renderTree();
+    showToast('已恢复默认启停与排序','success');
+  });
+}
+
 /* ---------- 渲染 ---------- */
 function renderRoles(){
   var saved=loadSaved();
@@ -282,9 +403,10 @@ function renderTree(){
   document.getElementById('menuTree').innerHTML=MENU_TREE.map(function(g,gi){
     var allOn=g.items.every(function(it){ return checked[it.url]; });
     var someOn=g.items.some(function(it){ return checked[it.url]; });
-    var items=g.items.map(function(it){
+    var items=cfgItems(g).map(function(it){
+      var off=isMenuOff(it.url);
       return '<label class="item-label"><input type="checkbox" data-url="'+esc(it.url)+'" '+(checked[it.url]?'checked':'')+' onchange="onItem(this)">'+
-        '<span>'+esc(it.name)+'</span><span class="item-url">'+esc(it.url)+'</span></label>';
+        '<span>'+esc(it.name)+(off?'<span class="item-off-tag">已停用</span>':'')+'</span><span class="item-url">'+esc(it.url)+'</span></label>';
     }).join('');
     var on=g.items.filter(function(it){ return checked[it.url]; }).length;
     return '<div class="group-block">'+
@@ -362,7 +484,7 @@ function askRestoreDefault(){
 
 document.addEventListener('DOMContentLoaded',function(){
   checked=loadRoleChecks(currentRole);
-  renderRoles(); renderTree();
+  renderRoles(); renderTree(); renderMenuCfg();
 });
 </script>
 <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>

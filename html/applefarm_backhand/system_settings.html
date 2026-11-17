@@ -56,6 +56,22 @@
   .empty-row td { text-align:center; color:var(--text-tertiary); padding:36px 0 !important; font-size:13px; }
   .mono { font-family:Consolas,Menlo,monospace; font-size:12.5px; }
   .action-chip { display:inline-block; padding:2px 10px; border-radius:999px; font-size:12px; background:#e6f4ff; color:#1890ff; border:1px solid #91caff; }
+  .form-group select { padding:9px 12px; border:1px solid var(--border-default); border-radius:8px; font-size:14px; background:#fff; color:var(--text-primary); font-family:inherit; }
+  .form-group select:focus { outline:none; border-color:#1890ff; box-shadow:0 0 0 3px rgba(24,144,255,.12); }
+  .dic-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+  @media (max-width:1100px){ .dic-grid { grid-template-columns:1fr; } }
+  .dic-block { border:1px solid var(--border-default); border-radius:10px; padding:12px 14px; background:#fafcfa; }
+  .dic-title { font-size:13px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .dic-title .mono { color:var(--text-tertiary); font-weight:400; }
+  .dic-items { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; min-height:26px; }
+  .dic-chip { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; background:#e6f4ff; border:1px solid #91caff; color:#0958d9; font-size:12px; }
+  .dic-chip button { border:none; background:none; color:#0958d9; cursor:pointer; font-size:14px; line-height:1; padding:0; }
+  .dic-chip button:hover { color:#ff4d4f; }
+  .dic-add { display:flex; gap:8px; }
+  .dic-add input { flex:1; padding:6px 10px; border:1px solid var(--border-default); border-radius:8px; font-size:12px; background:#fff; }
+  .dic-add input:focus { outline:none; border-color:#1890ff; }
+  .dic-add button { padding:6px 14px; font-size:12px; border-radius:8px; border:1px solid #1890ff; background:#1890ff; color:#fff; cursor:pointer; white-space:nowrap; }
+  .dic-add button:hover { background:#40a9ff; }
 </style>
 <style id="standalone-fix">/* 独立打开时内容撑满（导航统一由 index.html 承担） */
   .main-wrapper{margin-left:0!important;width:100%!important;}
@@ -111,6 +127,45 @@
               <div class="sec-item"><span class="sec-label">密码最小长度</span><span class="sec-value">6 位</span></div>
               <div class="sec-item"><span class="sec-label">超级管理员保护</span><span class="sec-value">admin 不可删除 / 禁用</span></div>
               <p class="form-hint" style="margin:12px 0 0;">以上策略为演示版内置常量，与 login.html 实际校验逻辑一致；生产部署由后端统一下发。</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据字典 -->
+        <div class="panel-card" style="margin-bottom:16px;">
+          <div class="panel-head"><h3>数据字典</h3><span class="form-hint">FungiStore dictionaries · 增删即时同步各业务页下拉选项</span></div>
+          <div class="panel-body"><div class="dic-grid" id="dicGrid"></div></div>
+        </div>
+
+        <!-- 系统参数 -->
+        <div class="settings-grid">
+          <div class="panel-card">
+            <div class="panel-head"><h3>系统参数</h3><span class="form-hint">离线判定 / 预警时效 / 备份策略</span></div>
+            <div class="panel-body">
+              <div class="form-row">
+                <div class="form-group"><label>离线判定周期（分钟） <span class="req">*</span></label><input type="number" id="spOffline" min="1" max="1440"><span class="form-hint">传感器超过该时长未上报即判定离线</span></div>
+                <div class="form-group"><label>预警时效（小时） <span class="req">*</span></label><input type="number" id="spAlertTtl" min="1" max="720"><span class="form-hint">预警超过该时长未处理自动升级</span></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>自动备份</label><select id="spBackup"><option value="daily">每日 02:00</option><option value="weekly">每周一 02:00</option><option value="off">关闭</option></select></div>
+                <div class="form-group"><label>备份保留份数</label><input type="number" id="spKeep" min="1" max="60"></div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;gap:10px;">
+                <button class="jg-btn" onclick="restoreParams()">恢复默认</button>
+                <button class="jg-btn jg-btn-primary" onclick="saveParams()">保存参数</button>
+              </div>
+            </div>
+          </div>
+          <div class="panel-card">
+            <div class="panel-head"><h3>字典用途说明</h3><span class="readonly-tag">只读</span></div>
+            <div class="panel-body">
+              <div class="sec-item"><span class="sec-label">食用菌品种 DIC-VAR</span><span class="sec-value">菌株 / 配方模板 / 生长曲线品种选项</span></div>
+              <div class="sec-item"><span class="sec-label">杂菌污染类型 DIC-POLL</span><span class="sec-value">污染记录分类</span></div>
+              <div class="sec-item"><span class="sec-label">畸形菇类型 DIC-DEFORM</span><span class="sec-value">畸形菇记录分类</span></div>
+              <div class="sec-item"><span class="sec-label">不合格品类型 DIC-NC</span><span class="sec-value">质检不合格判定</span></div>
+              <div class="sec-item"><span class="sec-label">不合格处置方式 DIC-DISPOSAL</span><span class="sec-value">不合格品处置流程</span></div>
+              <div class="sec-item"><span class="sec-label">产品分级 DIC-GRADE</span><span class="sec-value">采收分拣等级</span></div>
+              <div class="sec-item"><span class="sec-label">冷链温区 DIC-TEMP</span><span class="sec-value">仓储冷链温区选项</span></div>
             </div>
           </div>
         </div>
@@ -344,8 +399,89 @@ function exportLogs(){
   showToast('已导出 '+rows.length+' 条日志','success');
 }
 
+/* ---------- 数据字典 ---------- */
+function renderDics(){
+  var ds=FS.list('dictionaries');
+  document.getElementById('dicGrid').innerHTML=ds.map(function(d){
+    var chips=d.items.map(function(it){
+      return '<span class="dic-chip">'+esc(it)+'<button title="删除该字典项" data-item="'+esc(it)+'" onclick="removeDicItem(\''+d.id+'\',this)">×</button></span>';
+    }).join('');
+    return '<div class="dic-block">'+
+      '<div class="dic-title"><span>'+esc(d.name)+'</span><span class="mono">'+esc(d.id)+' · '+d.items.length+' 项</span></div>'+
+      '<div class="dic-items">'+(chips||'<span class="form-hint">暂无字典项</span>')+'</div>'+
+      '<div class="dic-add"><input id="dicInput_'+d.id+'" type="text" maxlength="20" placeholder="新增字典项，回车或点添加" onkeydown="if(event.key===\'Enter\')addDicItem(\''+d.id+'\')"><button onclick="addDicItem(\''+d.id+'\')">+ 添加</button></div>'+
+    '</div>';
+  }).join('');
+}
+function addDicItem(id){
+  var inp=document.getElementById('dicInput_'+id);
+  var v=inp.value.trim();
+  if(!v){ showToast('请输入字典项内容','warning'); return; }
+  var d=FS.get('dictionaries',id);if(!d)return;
+  if(d.items.indexOf(v)>=0){ showToast('字典项「'+v+'」已存在','error'); return; }
+  FS.update('dictionaries',id,{items:d.items.concat([v])});
+  opLog('新增字典项',d.name+'：'+v);
+  renderDics();renderLogs(false);
+  showToast('已添加「'+v+'」到 '+d.name,'success');
+}
+function removeDicItem(id,btn){
+  var v=btn.getAttribute('data-item');
+  var d=FS.get('dictionaries',id);if(!d)return;
+  askConfirm('删除字典项','确认从 <strong>'+esc(d.name)+'</strong> 中删除「<strong>'+esc(v)+'</strong>」？<br><br><span style="color:#fa8c16;">已引用该字典项的历史数据不受影响，仅影响后续下拉选项。</span>',function(){
+    FS.update('dictionaries',id,{items:d.items.filter(function(x){return x!==v;})});
+    opLog('删除字典项',d.name+'：'+v);
+    renderDics();renderLogs(false);
+    showToast('已删除字典项「'+v+'」','warning');
+  });
+}
+window.addEventListener('fungiStoreChange',function(e){
+  var c=e.detail&&e.detail.col;
+  if(c==='dictionaries'||c==='*')renderDics();
+});
+
+/* ---------- 系统参数 ---------- */
+var PARAM_KEY='mushroom_sys_params';
+var PARAM_DEFAULTS={offline:30,alertTtl:24,backup:'daily',keep:7};
+function loadParams(){
+  try{
+    var s=JSON.parse(localStorage.getItem(PARAM_KEY)||'null');
+    if(s&&typeof s==='object')return Object.assign({},PARAM_DEFAULTS,s);
+  }catch(e){}
+  return Object.assign({},PARAM_DEFAULTS);
+}
+function renderParams(){
+  var s=loadParams();
+  document.getElementById('spOffline').value=s.offline;
+  document.getElementById('spAlertTtl').value=s.alertTtl;
+  document.getElementById('spBackup').value=s.backup;
+  document.getElementById('spKeep').value=s.keep;
+}
+function saveParams(){
+  var off=Number(document.getElementById('spOffline').value);
+  var ttl=Number(document.getElementById('spAlertTtl').value);
+  var keep=Number(document.getElementById('spKeep').value);
+  if(!(off>=1&&off<=1440)||Math.floor(off)!==off){ showToast('离线判定周期须为 1-1440 的整数（分钟）','error'); return; }
+  if(!(ttl>=1&&ttl<=720)||Math.floor(ttl)!==ttl){ showToast('预警时效须为 1-720 的整数（小时）','error'); return; }
+  if(!(keep>=1&&keep<=60)||Math.floor(keep)!==keep){ showToast('备份保留份数须为 1-60 的整数','error'); return; }
+  var s={offline:off,alertTtl:ttl,backup:document.getElementById('spBackup').value,keep:keep};
+  localStorage.setItem(PARAM_KEY,JSON.stringify(s));
+  var bk={daily:'每日 02:00',weekly:'每周一 02:00',off:'关闭'}[s.backup];
+  opLog('保存系统参数','离线判定 '+off+' 分钟 / 预警时效 '+ttl+' 小时 / 备份 '+bk+' · 保留 '+keep+' 份');
+  renderLogs(false);
+  showToast('系统参数已保存：离线判定 '+off+' 分钟 · 预警时效 '+ttl+' 小时 · 备份 '+bk,'success');
+}
+function restoreParams(){
+  localStorage.removeItem(PARAM_KEY);
+  renderParams();
+  opLog('恢复系统参数默认值','离线 30 分钟 / 预警 24 小时 / 每日备份');
+  renderLogs(false);
+  showToast('已恢复默认系统参数','info');
+}
+
 document.addEventListener('DOMContentLoaded',function(){
   renderPlatform();
+  renderDics();
+  renderParams();
   document.getElementById('logKw').addEventListener('input',function(){ renderLogs(false); });
   renderLogs(false);
 });
