@@ -3,14 +3,13 @@
  * ---------------------------------------------------------------
  * 承载「企业资质证书」与「批次凭证」两类证书的唯一数据，
  * 统一落地 localStorage['smartorchard_cert_v1']，供以下页面共享：
- *   - 证书管理      cert_manage.html
- *   - 农产品合格证  cert_issue.html
  *   - 企业信息      enterprise_info.html（资质证书区块）
- *   - 溯源查询      trace_query.html（批次证书展示）
- *   - 数据大屏      da_overview.html / da_trace.html（资质状态）
+ *   - 溯源召回      trace_query.html（批次证书展示）
+ *   - 溯源统计      trace_statistics.html（证书有效性汇总）
+ *   - 数据大屏      da_index.html（质量追溯视图的认证与质量证书面板）
  * 避免各页各持一份 mock 导致证书数量、状态、发证机构口径互相对不上。
  *
- * 设计约定（与 harvest-store.js / trace-store.js / production-store.js 保持一致）：
+ * 设计约定（与 harvest-store.js / trace-store.js 保持一致）：
  *   - 证书分两类：category = qualification（企业资质）/ batch（批次凭证），
  *     企业资质无「关联批次 / 客户」，批次凭证必须有批次号；
  *   - status 只表达人工状态，真实展示状态由 computeStatus() 按有效期实时派生；

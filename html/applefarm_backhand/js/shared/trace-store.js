@@ -674,7 +674,6 @@
         inspectionRequired: true,
         showInspection: true,
         showVideo: true,
-        showVr: true,
         showEnvironment: true,
         shortLinkBase: 'https://t.snzg.cn',
         baseVideoUrl: '',
@@ -1581,7 +1580,6 @@
       batchNo: b.batchNo || batchNo,
       base: b.base || '',
       plotName: b.plotName || '',
-      vrUrl: 'vr_panorama.html?base=' + encodeURIComponent(b.base || ''),
       videoUrl: (ensure().config.baseVideoUrl || ''),
       videoAvailable: !!ensure().config.baseVideoUrl,
       weather: {
@@ -1601,12 +1599,16 @@
         updatedAt: soilAt,
         source: '土壤墒情仪 SM-' + pad(seed % 5 + 1, 2)
       },
+      /* 环节影像：与 H5 溯源七环节（trace-stages.js）口径一致，
+         图片取自 applefarm_h5/images/ 下的现存菌菇素材 */
       captures: [
-        { key: 'planting', name: '种植管理', file: 'trace_planting.jpg', time: shiftDate(harvest, -35) + ' 09:20:00' },
-        { key: 'pruning', name: '修剪疏果', file: 'trace_pruning.jpg', time: shiftDate(harvest, -18) + ' 10:10:00' },
-        { key: 'bagging', name: '套袋保护', file: 'trace_bagging.jpg', time: shiftDate(harvest, -9) + ' 08:40:00' },
-        { key: 'testing', name: '采前检测', file: 'trace_testing.jpg', time: shiftDate(harvest, -1) + ' 15:30:00' },
-        { key: 'harvest', name: '采摘入库', file: 'trace_harvest.jpg', time: harvest + ' 11:20:00' }
+        { key: 'material', name: '原料进厂', file: 'trace_material.jpg', time: shiftDate(harvest, -45) + ' 09:20:00' },
+        { key: 'substrate', name: '菌包制备', file: 'trace_substrate.jpg', time: shiftDate(harvest, -40) + ' 10:10:00' },
+        { key: 'sterilize', name: '灭菌接种', file: 'trace_sterilize.jpg', time: shiftDate(harvest, -35) + ' 08:40:00' },
+        { key: 'incubate', name: '发菌培养', file: 'trace_incubate.jpg', time: shiftDate(harvest, -32) + ' 15:30:00' },
+        { key: 'fruiting', name: '出菇采收', file: 'trace_fruiting.jpg', time: shiftDate(harvest, -1) + ' 11:20:00' },
+        { key: 'grading', name: '分级预冷', file: 'trace_grading.jpg', time: harvest + ' 11:20:00' },
+        { key: 'coldchain', name: '冷链流通', file: 'trace_coldchain.jpg', time: shiftDate(harvest, 2) + ' 08:30:00' }
       ],
       updatedAt: weatherAt
     };

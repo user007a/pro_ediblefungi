@@ -893,7 +893,7 @@
       if (cat) { cat.total++; if (x.status === 'pending') cat.pending++; if (x.status === 'processing') cat.processing++; if (x.status === 'closed') cat.closed++; }
     });
 
-    // completed 保持为 closed 的别名，兼容既有读取方（da_dashboard 等）
+    // completed 保持为 closed 的别名，兼容既有读取方
     s.completed = s.closed;
     s.closedRate = s.total ? Math.round(s.closed / s.total * 100) : 0;
     s.open = s.pending + s.processing + s.transferred;

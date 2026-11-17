@@ -136,7 +136,6 @@
                 <input type="text" id="cfgVideoUrl" class="search-input" style="width:480px;" placeholder="https://.../orchard.mp4（MP4 / HLS）">
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:20px;font-size:13px;color:var(--text-primary);margin-bottom:12px;">
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cfgVr"> 展示基地 VR 实景</label>
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cfgVideo"> 展示基地视频</label>
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" id="cfgEnv"> 展示气象与土壤墒情</label>
                 <label style="display:flex;align-items:center;gap:6px;color:var(--text-tertiary);"><input type="checkbox" checked disabled> 展示检测报告（强制）</label>
@@ -553,7 +552,6 @@ function renderDisplayConfig() {
   var cfg = TraceStore.config();
   document.getElementById('cfgShortLink').value = cfg.shortLinkBase || '';
   document.getElementById('cfgVideoUrl').value = cfg.baseVideoUrl || '';
-  document.getElementById('cfgVr').checked = cfg.showVr !== false;
   document.getElementById('cfgVideo').checked = cfg.showVideo !== false;
   document.getElementById('cfgEnv').checked = cfg.showEnvironment !== false;
 }
@@ -568,7 +566,6 @@ function saveDisplayConfig() {
   TraceStore.saveConfig({
     shortLinkBase: base || 'https://t.snzg.cn',
     baseVideoUrl: document.getElementById('cfgVideoUrl').value.trim(),
-    showVr: document.getElementById('cfgVr').checked,
     showVideo: document.getElementById('cfgVideo').checked,
     showEnvironment: document.getElementById('cfgEnv').checked,
     showInspection: true
@@ -770,7 +767,7 @@ function editCStage(key) {
   var title = prompt('请输入环节名称', target.title);
   if (title === null) return;
   if (!title.trim()) { showToast('环节名称不能为空', 'error'); return; }
-  var img = prompt('请输入环节图片文件名（相对 applefarm_h5/images/，如 trace_planting.jpg）', target.img);
+  var img = prompt('请输入环节图片文件名（相对 applefarm_h5/images/，如 trace_sterilize.jpg）', target.img);
   if (img === null) return;
   var desc = prompt('请输入环节说明', target.desc);
   if (desc === null) return;

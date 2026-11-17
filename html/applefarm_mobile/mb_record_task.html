@@ -517,13 +517,16 @@
     var RECORD_KEY = 'mushroom_process_records';
     var BATCH_RE = /^JB-\d{8}-\d{2}$/;
 
+    /* 凭证照片素材：均取自 applefarm_h5/images/，6 项互不重复
+       拌料装袋=装袋机作业 · 灭菌=原料备料区 · 接种=洁净车间无菌操作
+       培养=培养房菌包货架 · 出菇=出菇房层架 · 采收=采后分级装箱 */
     var PHOTOS = [
       { src: '../applefarm_h5/images/trace_substrate.jpg', label: '拌料装袋' },
-      { src: '../applefarm_h5/images/trace_sterilize.jpg', label: '灭菌' },
-      { src: '../applefarm_h5/images/trace_planting.jpg', label: '接种' },
+      { src: '../applefarm_h5/images/trace_material.jpg', label: '灭菌' },
+      { src: '../applefarm_h5/images/trace_sterilize.jpg', label: '接种' },
       { src: '../applefarm_h5/images/trace_incubate.jpg', label: '培养' },
       { src: '../applefarm_h5/images/trace_fruiting.jpg', label: '出菇' },
-      { src: '../applefarm_h5/images/trace_harvest.jpg', label: '采收' }
+      { src: '../applefarm_h5/images/trace_grading.jpg', label: '采收' }
     ];
 
     var STAGES = [
@@ -544,7 +547,7 @@
       },
       {
         key: 'sterilize', name: '灭菌', color: 'var(--warning-dark)',
-        photo: '../applefarm_h5/images/trace_sterilize.jpg',
+        photo: '../applefarm_h5/images/trace_material.jpg',
         houses: ['灭菌间 A', '灭菌间 B'],
         fields: [
           { key: 'potNo', label: '灭菌锅号', type: 'text', required: true, placeholder: '如 MJ-02' },
@@ -557,7 +560,7 @@
       },
       {
         key: 'inoculate', name: '接种', color: 'var(--info-dark)',
-        photo: '../applefarm_h5/images/trace_planting.jpg',
+        photo: '../applefarm_h5/images/trace_sterilize.jpg',
         houses: ['接种室 A', '接种室 B'],
         fields: [
           { key: 'strainBatch', label: '菌种批次', type: 'text', required: true, placeholder: '如 菌种-X2' },
@@ -603,7 +606,7 @@
       },
       {
         key: 'harvest', name: '采收', color: 'var(--primary-700)',
-        photo: '../applefarm_h5/images/trace_harvest.jpg',
+        photo: '../applefarm_h5/images/trace_grading.jpg',
         houses: ['菇房 1号', '菇房 2号', '菇房 3号', '采后处理间'],
         fields: [
           { key: 'weight', label: '采收重量（kg）', type: 'number', required: true, min: 0.1, max: 100000, msg: '采收重量需大于 0' },

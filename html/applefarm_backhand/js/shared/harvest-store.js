@@ -5,7 +5,7 @@
  * 统一落地 localStorage['smartorchard_harvest_v1']，供采收管理各页共享，
  * 避免每页各持一份 mock 导致数量对不上、状态互不感知。
  *
- * 设计约定（与 material-store.js / production-store.js 保持一致）：
+ * 设计约定（与 trace-store.js / cert-store.js 保持一致）：
  *   - 数量统一为「数字 + 单位」（qty / unit），展示层再格式化；
  *   - 状态流转只走 advance()，内置流程表 + 守卫，页面不再自行改状态；
  *   - 地块与基地以「地块管理」的 smartorchard_plot_master 为唯一来源，
