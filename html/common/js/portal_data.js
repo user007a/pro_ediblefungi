@@ -12,7 +12,7 @@
       platform: '工厂化农业数据管理平台',
       project: '托克逊县 2026 年科技兴农项目',
       code: 'TXS-2026-KJXN-07',
-      scale: '7 道工序 · 12 间菇房 · 4 类分项能耗',
+      scale: '7 道工序 · 36 个菌房 · 5 类分项能耗',
       scenes: [
         { img: 'applefarm_h5/images/trace_sterilize.jpg', cap: '接种室 · 场景示意', alt: '洁净工作台前的接种作业场景' },
         { img: 'applefarm_h5/images/trace_incubate.jpg', cap: '培养房 · 场景示意', alt: '培养房内多层菌棒架与长满菌丝的菌棒' },
@@ -46,7 +46,7 @@
         state: 'ok',
         role: '值班室统览 · 参观接待',
         method: '免登录 · 建议 1920×1080 全屏',
-        views: ['3D 厂区鸟瞰', '环境与设备', '视频监控', '生产进度', '分项能耗', '质量追溯']
+        views: ['运营总览', '环境设备', '视频监控', '生产管理', '能耗管理', '质量追溯']
       },
       {
         id: 'trace', name: '消费者溯源 H5', group: 'open',
