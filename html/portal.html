@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>托克逊县食用菌工厂 · 统一登录入口</title>
+  <title>食用菌工厂化农业数据管理平台 · 统一入口</title>
   <meta name="description" content="食用菌工厂化农业数据管理平台统一登录入口：管理后台、移动应用端、生产数据大屏与消费者溯源 H5 按角色聚合，认证在各端完成。">
   <meta name="theme-color" content="#F1F0E8">
   <link rel="icon" type="image/svg+xml" href="common/images/logo_mushroom.svg">
@@ -32,11 +32,9 @@
       --amber-bright:#E8A23D;
       --amber-soft:#FBF3E2;
       --amber-line:#EAD9B4;
-      --red:#BF4426;
-      --blue:#2E6E8E;
-      --blue-soft:#E1EBEF;
-      --idle:#98A192;
+      --amber-tag:#F0DFB8;
       --r:6px;
+      --r-lg:12px;
       --disp:'YouSheBiaoTiHei','Microsoft YaHei',sans-serif;
     }
     *{box-sizing:border-box}
@@ -65,30 +63,35 @@
 
     /* ===== 顶栏 ===== */
     .topbar{
-      position:sticky;top:0;z-index:20;height:64px;
+      position:sticky;top:0;z-index:20;height:72px;
       display:flex;align-items:center;justify-content:space-between;gap:20px;
-      background:rgba(241,240,232,.94);backdrop-filter:blur(6px);
+      background:rgba(250,250,244,.94);backdrop-filter:blur(8px);
       border-bottom:1px solid var(--line-2);
     }
-    .brand{display:flex;align-items:center;gap:11px;text-decoration:none;min-width:0}
-    .brand-logo{width:36px;height:36px;flex:none;border-radius:8px;display:block}
+    .brand{display:flex;align-items:center;gap:12px;text-decoration:none;min-width:0}
+    .brand-logo{width:40px;height:40px;flex:none;border-radius:10px;display:block}
     .brand-text{min-width:0;display:block}
-    .brand-text strong{display:block;font-size:15px;line-height:1.3;letter-spacing:.01em;white-space:nowrap}
-    .brand-text em{display:block;font-style:normal;font-size:10.5px;color:var(--faint);letter-spacing:.06em;white-space:nowrap}
+    .brand-text strong{display:block;font-size:17px;line-height:1.3;letter-spacing:.01em;white-space:nowrap;color:var(--ink)}
+    .brand-text em{display:block;font-style:normal;font-size:10.5px;color:var(--muted);letter-spacing:.05em;white-space:nowrap}
     .clock{display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin-left:auto;text-align:right}
-    .clock b{font-family:var(--disp);font-weight:400;font-size:21px;line-height:1;color:var(--pine);font-variant-numeric:tabular-nums}
+    .clock b{font-family:var(--disp);font-weight:400;font-size:22px;line-height:1;color:var(--pine);font-variant-numeric:tabular-nums}
     .clock span{font-size:11.5px;line-height:1;color:var(--muted);white-space:nowrap}
 
-    /* ===== 门厅主区 ===== */
-    .gate{display:grid;grid-template-columns:352px minmax(0,1fr);gap:34px;align-items:start;padding:30px 0 34px;animation:gateIn .45s ease both}
+    /* ===== 门厅 Hero ===== */
+    .hero{
+      display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.88fr);
+      gap:52px;align-items:center;padding:56px 0 46px;
+      animation:gateIn .45s ease both;
+    }
     @keyframes gateIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-
-    .brandcol{position:sticky;top:84px}
+    .hero-copy{min-width:0}
     .kicker{display:inline-flex;align-items:center;gap:9px;font-size:12px;letter-spacing:.14em;color:var(--pine-2);font-weight:600}
     .kicker::before{content:"";width:22px;height:1px;background:var(--pine-2)}
-    h1{margin:12px 0 0;font-family:var(--disp);font-weight:400;font-size:clamp(32px,3.2vw,44px);line-height:1.18;letter-spacing:.02em;color:var(--pine-deep)}
-    .brand-sub{margin:6px 0 0;font-size:14px;font-weight:600;color:var(--ink-2)}
-    .brand-photo{position:relative;margin:18px 0 0;overflow:hidden;border-radius:var(--r);border:1px solid var(--line-2);aspect-ratio:4/3;background:#E7EEE4}
+    h1{margin:16px 0 0;font-family:var(--disp);font-weight:400;font-size:clamp(36px,3.8vw,52px);line-height:1.2;letter-spacing:.02em;color:var(--pine-deep)}
+    .hero-desc{margin:18px 0 0;font-size:15px;color:var(--ink-2);line-height:1.75;max-width:560px}
+
+    /* 场景主图（沿用现有图片与轮播） */
+    .hero-scene{position:relative;margin:0;overflow:hidden;border-radius:10px;border:1px solid var(--line-2);aspect-ratio:4/3;background:#E7EEE3}
     .bp-view{position:absolute;inset:0;overflow:hidden;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
     .bp-view:active{cursor:grabbing}
     .bp-track{display:flex;height:100%;transition:transform .65s cubic-bezier(.22,.61,.21,1);will-change:transform}
@@ -106,8 +109,7 @@
     .bp-arrow svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
     .bp-arrow.prev{left:8px}
     .bp-arrow.next{right:8px}
-    /* 隐藏时同步关闭命中区，避免出现「看不见却能点」的隐形热区 */
-    .brand-photo:hover .bp-arrow,.brand-photo:focus-within .bp-arrow{opacity:1;pointer-events:auto}
+    .hero-scene:hover .bp-arrow,.hero-scene:focus-within .bp-arrow{opacity:1;pointer-events:auto}
     .bp-arrow:hover{background:var(--amber-bright);color:#2A1804;border-color:var(--amber-bright)}
     @media (hover:none){.bp-arrow{opacity:1;pointer-events:auto}}
     .bp-dots{position:absolute;right:8px;bottom:8px;z-index:3;display:flex;gap:4px}
@@ -116,103 +118,87 @@
     .bp-dots button:hover i{background:#fff}
     .bp-dots button[aria-current="true"] i{width:22px;background:var(--amber-bright)}
     .bp-progress{position:absolute;left:0;bottom:0;z-index:3;height:2px;width:100%;background:var(--amber-bright);transform-origin:0 50%;transform:scaleX(0)}
-    .brand-kv{margin:16px 0 0;display:grid;gap:6px}
-    .brand-kv div{display:flex;justify-content:space-between;gap:12px;font-size:12px;border-bottom:1px dashed var(--line);padding-bottom:5px}
-    .brand-kv span{color:var(--faint);flex:none}
-    .brand-kv b{font-weight:600;color:var(--ink-2);text-align:right}
-    .syslist{margin:16px 0 0;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
-    .syslist h2{margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--faint)}
-    .syslist ul{margin:0;padding:0;list-style:none;display:grid;gap:7px}
-    .syslist li{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-2)}
-    .syslist i{width:7px;height:7px;border-radius:50%;background:var(--pine-2);flex:none}
-    .syslist li.warn i{background:var(--amber-bright)}
-    .syslist em{font-style:normal;margin-left:auto;font-size:11px;color:var(--faint)}
-    .syslist b{font-weight:600}
 
     /* ===== 入口矩阵 ===== */
-    .group-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 12px;padding-top:4px;border-top:1px solid var(--line-2)}
-    .group-head .idx{font-family:var(--disp);font-size:19px;color:var(--amber);line-height:1;padding-top:9px}
-    .group-head h2{margin:0;padding-top:7px;font-size:16.5px;font-weight:700}
-    .group + .group{margin-top:26px}
-    /* 免登录组：琥珀色序号 + 分隔线，加重区分度，避免分隔线被读成卡片自身上边框 */
-    .group.open .group-head{border-top-color:var(--amber-line)}
-    .group.open .group-head .idx{color:var(--pine-2)}
-    .group.open .group-head h2::after{
-      content:"";display:inline-block;vertical-align:middle;margin-left:10px;
-      width:5px;height:5px;border-radius:50%;background:var(--amber-bright);
+    .gates{padding:8px 0 56px}
+    .sec-head{margin:0 0 22px}
+    .sec-head h2{margin:10px 0 0;font-family:var(--disp);font-weight:400;font-size:28px;line-height:1.3;color:var(--pine-deep)}
+    .col-head{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:0 0 12px}
+    .col-head span{font-size:12px;font-weight:600;letter-spacing:.04em}
+    .col-head .in{color:var(--pine)}
+    .col-head .out{color:var(--amber)}
+    .gate-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:stretch}
+
+    /* 卡片通用 */
+    .gcard{
+      position:relative;display:flex;flex-direction:column;gap:14px;min-width:0;
+      padding:26px 28px;border-radius:var(--r-lg);
+      background:var(--card);border:1px solid var(--line);
+      transition:transform .18s,box-shadow .18s,border-color .18s;
     }
-    .card-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:stretch}
-    .card{
-      position:relative;display:flex;flex-direction:column;min-width:0;
-      background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-      padding:18px;transition:border-color .18s, box-shadow .18s;
-    }
-    .card:hover{border-color:var(--pine-2);box-shadow:0 10px 26px rgba(31,74,58,.08)}
-    .c-head{display:flex;align-items:flex-start;gap:12px}
-    .c-ico{width:40px;height:40px;flex:none;border-radius:var(--r);background:var(--pine);display:grid;place-items:center}
-    .c-ico svg{width:21px;height:21px;stroke:#fff;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-    .c-titles{min-width:0;flex:1}
-    .c-titles h3{margin:0;font-size:16.5px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .gcard:hover{transform:translateY(-2px);border-color:var(--line-2);box-shadow:0 14px 34px rgba(19,46,34,.10)}
+    .g-head{display:flex;align-items:center;gap:14px;min-width:0}
+    .g-ico{width:48px;height:48px;flex:none;border-radius:12px;background:var(--pine);display:grid;place-items:center}
+    .g-ico svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .g-titles{min-width:0;flex:1}
+    .g-titles h3{margin:0;font-size:22px;font-weight:700;line-height:1.35;color:var(--pine-deep);display:flex;align-items:center;gap:9px;flex-wrap:wrap}
     .c-fav{font-size:10px;font-weight:600;color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-line);border-radius:3px;padding:1px 6px}
     .c-fav[hidden]{display:none}
-    .c-role{margin:2px 0 0;font-size:11.5px;color:var(--muted)}
-    .nb{white-space:nowrap}
-    .c-method{
-      display:flex;align-items:center;gap:8px;margin:13px 0 0;padding:7px 11px;
-      background:var(--pine-soft);border:1px solid #CBDCC6;border-radius:4px;
-      font-size:12px;font-weight:600;color:var(--pine);
+    .g-tagline{margin:0;font-size:14px;line-height:1.65;color:var(--ink-2)}
+    .g-method{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--pine)}
+    .g-method svg{width:14px;height:14px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .g-cta{
+      margin-top:auto;display:flex;align-items:center;justify-content:center;gap:8px;
+      min-height:52px;padding:10px 16px;border-radius:10px;
+      background:var(--pine);color:#fff;text-decoration:none;
+      font-weight:700;font-size:15px;transition:background .18s;
     }
-    .c-method svg{width:14px;height:14px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-    .c-feats{margin:12px 0 16px;padding:0;list-style:none;display:grid;gap:6px;min-height:70px;align-content:start}
-    .c-feats li{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-2);line-height:1.6}
-    .c-feats svg{width:13px;height:13px;flex:none;margin-top:4px;stroke:var(--pine-2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .c-demo{
-      display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 16px;
-      font-size:11.5px;color:var(--faint);
-    }
-    .c-demo code{
-      font-family:Consolas,"Courier New",monospace;font-size:11.5px;color:var(--ink-2);
-      background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:2px 8px;
-    }
+    .g-cta:hover{background:#17392C}
+    .g-cta svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
+    .g-cta:hover svg{transform:translateX(3px)}
+
+    /* 带二维码的卡：内容 + 侧栏 */
+    .g-split{display:flex;gap:20px;align-items:center}
+    .g-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
+    .g-qr{flex:none;width:150px;margin:0;text-align:center;align-self:center}
+    .g-qr .qr-frame{display:block;border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff;line-height:0}
+    .g-qr svg{display:block;width:100%;height:auto}
     .copybtn{
       border:1px solid var(--line-2);background:var(--card);border-radius:4px;cursor:pointer;
-      font-size:11px;font-weight:600;color:var(--pine);padding:2px 10px;transition:background .18s,border-color .18s;
+      font-size:11px;font-weight:600;color:var(--pine);padding:2px 10px;margin-top:7px;
+      transition:background .18s,border-color .18s;
     }
     .copybtn:hover{border-color:var(--pine-2);background:var(--pine-soft)}
     .copybtn.ok{background:var(--pine-2);border-color:var(--pine-2);color:#fff}
     .copybtn.fail{background:var(--amber-soft);border-color:var(--amber-line);color:var(--amber)}
-    .c-cta{
-      display:flex;align-items:center;justify-content:center;gap:8px;
-      margin:auto 0 0;padding:11px 16px;border-radius:var(--r);
-      background:var(--pine);color:#fff;font-weight:700;font-size:14px;text-decoration:none;
-      transition:background .18s;
-    }
-    .c-cta:hover{background:#17392C}
-    .c-cta svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
-    .c-cta:hover svg{transform:translateX(3px)}
 
-    /* 带二维码的卡：内容 + 侧栏 */
-    .c-split{display:flex;gap:16px;align-items:stretch}
-    .c-main{flex:1;min-width:0;display:flex;flex-direction:column}
-    .c-qr{flex:none;width:104px;margin:2px 0 0;text-align:center;align-self:start}
-    .c-qr .qr-frame{display:block;border:1px solid var(--line);border-radius:var(--r);padding:6px;background:#fff;line-height:0}
-    .c-qr svg{display:block;width:100%;height:auto}
-    .c-qr figcaption{margin:6px 0 0;font-size:10px;line-height:1.5;color:var(--faint)}
-    .c-qr .copybtn{margin-top:7px}
+    /* 生产数据大屏：深色「运行中」卡 */
+    .gcard-dark{background:linear-gradient(165deg,#1C4433 0%,var(--pine-deep) 82%);border-color:#0E241B;color:#EDF3EA}
+    .gcard-dark:hover{border-color:var(--pine-lite)}
+    .gcard-dark .g-ico{background:rgba(255,255,255,.12)}
+    .gcard-dark .g-titles h3{color:#fff}
+    .gcard-dark .g-tagline{color:rgba(237,243,234,.85)}
+    .gcard-dark .g-cta{background:var(--amber-bright);color:#2A1804}
+    .gcard-dark .g-cta:hover{background:#F2B350}
+    .live{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#7FC79C}
+    .live i{width:8px;height:8px;border-radius:50%;background:var(--pine-lite);animation:pulse 2.4s ease-in-out infinite}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(85,160,117,.55)}50%{box-shadow:0 0 0 6px rgba(85,160,117,0)}}
+    .views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+    .views span{font-size:11.5px;padding:3px 9px;border-radius:4px;border:1px solid rgba(255,255,255,.24);color:rgba(237,243,234,.82);text-align:center}
 
-    /* 大屏深色卡 */
-    .card-dark{background:linear-gradient(165deg,#1C4433 0%,var(--pine-deep) 80%);border-color:#0E241B;color:#EDF3EA}
-    .card-dark:hover{border-color:var(--pine-lite)}
-    .card-dark .c-ico{background:rgba(255,255,255,.12)}
-    .card-dark .c-titles h3{color:#fff}
-    .card-dark .c-role{color:rgba(237,243,234,.62)}
-    .card-dark .c-method{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);color:#F2D9A8}
-    .card-dark .c-feats li{color:rgba(237,243,234,.85)}
-    .card-dark .c-feats svg{stroke:var(--amber-bright)}
-    .card-dark .c-cta{background:var(--amber-bright);color:#2A1804}
-    .card-dark .c-cta:hover{background:#F2B350}
-    .views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:12px 0 16px;min-height:70px;align-content:start}
-    .views span{font-size:11px;padding:2px 9px;border-radius:4px;border:1px solid rgba(255,255,255,.24);color:rgba(237,243,234,.82);text-align:center}
+    /* 消费者溯源 H5：琥珀信任卡 */
+    .gcard-amber{background:var(--amber-soft);border-color:var(--amber-line)}
+    .gcard-amber:hover{border-color:var(--amber-bright)}
+    .gcard-amber .g-ico{background:var(--amber)}
+    .gcard-amber .g-titles h3{color:#3A2408}
+    .gcard-amber .g-tagline{color:#6B501F}
+    .gcard-amber .g-method{color:var(--amber)}
+    .gcard-amber .g-cta{background:var(--amber);color:#fff}
+    .gcard-amber .g-cta:hover{background:#7E4605}
+    .gcard-amber .g-qr .qr-frame{border-color:var(--amber-line)}
+    .gcard-amber .copybtn{background:#fff;border-color:var(--amber-line);color:var(--amber)}
+    .badges{display:flex;flex-wrap:wrap;gap:8px}
+    .badges span{font-size:11.5px;line-height:1.4;padding:4px 10px;border-radius:6px;background:var(--amber-tag);color:#7A5209;font-weight:600}
 
     /* ===== 页脚 ===== */
     .footer{
@@ -221,47 +207,55 @@
     }
     .footer .sep{margin:0 8px;color:var(--line-2)}
 
-    /* 无 JS 兜底：图标槽留空时不渲染色块 */
-    noscript .c-ico{display:none}
+    noscript .g-ico{display:none}
 
     /* ===== 响应式 ===== */
-    @media (max-width:1080px){
+    @media (max-width:960px){
       .shell{padding:0 24px}
-      .gate{grid-template-columns:minmax(0,1fr);gap:26px}
-      .brandcol{position:static;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"text photo" "kv sys";gap:0 26px;align-items:start}
-      .brandcol .bc-text{grid-area:text}
-      .brand-photo{grid-area:photo;margin:0}
-      .brand-kv{grid-area:kv}
-      .syslist{grid-area:sys;margin:14px 0 0}
-    }
-    @media (max-width:760px){
-      .shell{padding:0 18px}
-      .clock span{display:none}
-      .brand-text em{display:none}
-      /* 单列重排：品牌文案 → 场景轮播 → 入口矩阵 → 项目信息 → 服务状态
-         用 display:contents 解开 .brandcol 包裹，让子元素直接参与 .gate 网格；
-         入口矩阵前移，保证首屏就能看到入口卡片 */
-      .gate{display:grid;grid-template-columns:minmax(0,1fr);gap:0;
-        grid-template-areas:"text" "photo" "entries" "kv" "sys"}
-      .brandcol{display:contents}
-      .bc-text{grid-area:text}
-      .brand-photo{grid-area:photo;margin:16px 0 0;aspect-ratio:16/8}
-      .brand-kv{grid-area:kv;margin:16px 0 0}
-      .syslist{grid-area:sys;margin:14px 0 0}
-      .entries{grid-area:entries;margin-top:26px}
-      .card-grid{grid-template-columns:minmax(0,1fr)}
-      .c-split{display:block}
-      /* 窄屏隐藏二维码图形，但保留「复制链接」按钮，避免移动端完全失去该入口 */
-      .c-qr{display:block;width:auto;margin:12px 0 0;text-align:left}
-      .c-qr .qr-frame,.c-qr figcaption{display:none}
-      .c-qr .copybtn{margin-top:0}
+      .hero{grid-template-columns:minmax(0,1fr);gap:28px;padding:40px 0 32px}
+      .hero-scene{width:100%;max-width:640px}
+      .col-head{display:none}
+      .gate-grid{grid-template-columns:minmax(0,1fr)}
     }
     @media (max-width:560px){
-      .topbar{gap:10px}
+      .shell{padding:0 16px}
+      .topbar{height:60px;gap:10px}
       .brand{gap:8px}
-      .brand-logo{width:30px;height:30px}
-      .brand-text strong{font-size:13.5px}
-      .clock b{font-size:15px}
+      .brand-logo{width:32px;height:32px}
+      .brand-text strong{font-size:14px}
+      .brand-text em{display:none}
+      .clock span{display:none}
+      .clock b{font-size:16px}
+      h1{font-size:32px}
+      .hero-desc{font-size:14px}
+      .gcard{padding:20px}
+      .g-titles h3{font-size:19px}
+      .g-split{flex-direction:column;align-items:stretch}
+      .g-qr{width:150px;align-self:center}
+    }
+    /* ===== 大屏一屏模式：≥1600 且 ≥900 高时整体收紧，避免 1920×1080 出现纵向滚动 ===== */
+    @media (min-width:1600px) and (min-height:900px){
+      .topbar{height:58px}
+      .brand-logo{width:34px;height:34px}
+      .brand-text strong{font-size:15px}
+      .hero{padding:16px 0 0;gap:32px}
+      h1{font-size:40px;margin-top:10px}
+      .hero-desc{margin-top:10px;font-size:13.5px;line-height:1.55}
+      .hero-scene{aspect-ratio:16/9;max-height:210px}
+      .gates{padding:4px 0 10px}
+      .sec-head{margin-bottom:10px}
+      .sec-head h2{font-size:22px;margin-top:4px}
+      .col-head{margin-bottom:8px}
+      .gate-grid{gap:14px}
+      .gcard{padding:14px 20px;gap:8px}
+      .g-ico{width:42px;height:42px;border-radius:10px}
+      .g-ico svg{width:21px;height:21px}
+      .g-titles h3{font-size:19px}
+      .g-qr{width:108px}
+      .g-qr .qr-frame{padding:5px}
+      .views span{font-size:10.5px;padding:2px 8px}
+      .g-cta{min-height:40px;font-size:13.5px}
+      .footer{padding:8px 0 12px}
     }
     @media (prefers-reduced-motion:reduce){
       *{animation:none !important;transition:none !important}
@@ -278,7 +272,7 @@
         <img class="brand-logo" src="common/images/logo_mushroom.svg" alt="平台标识">
         <span class="brand-text">
           <strong>托克逊县食用菌工厂</strong>
-          <em>工厂化农业数据管理平台 · TXS-2026-KJXN-07</em>
+          <em>工厂化农业数据管理平台</em>
         </span>
       </a>
       <div class="clock num" aria-label="当前时间">
@@ -287,15 +281,15 @@
       </div>
     </header>
 
-    <main class="gate">
-      <!-- 品牌区 -->
-      <aside class="brandcol" aria-label="平台信息">
-        <div class="bc-text">
-          <p class="kicker">统一登录入口</p>
-          <h1>托克逊县<br>食用菌工厂</h1>
-          <p class="brand-sub">工厂化农业数据管理平台</p>
+    <main>
+      <!-- 门厅主视觉 -->
+      <section class="hero" aria-label="平台门厅">
+        <div class="hero-copy">
+          <p class="kicker">数字门厅 / DIGITAL GATEWAY</p>
+          <h1>从生产到溯源<br>全链路数字化管理</h1>
+          <p class="hero-desc">生产、环境、追溯汇聚于此。选择你的角色与场景，即刻进入对应系统。</p>
         </div>
-        <figure class="brand-photo" id="brandPhoto" aria-roledescription="轮播" aria-label="工厂场景示意，共 4 张">
+        <figure class="hero-scene" id="brandPhoto" aria-roledescription="轮播" aria-label="工厂场景示意，共 4 张">
           <div class="bp-view" id="bpView"><div class="bp-track" id="bpTrack"></div></div>
           <span class="bp-hud">
             <button type="button" class="bp-toggle" id="bpToggle" aria-label="暂停轮播"></button>
@@ -306,55 +300,28 @@
           <div class="bp-dots" id="bpDots"></div>
           <span class="bp-progress" id="bpProg" aria-hidden="true"></span>
         </figure>
-        <div class="brand-kv" id="brandKv"></div>
-        <div class="syslist">
-          <h2>系统服务状态</h2>
-          <ul id="sysList"></ul>
+      </section>
+
+      <!-- 2×2 入口矩阵 -->
+      <section class="gates" aria-label="系统入口">
+        <div class="sec-head">
+          <p class="kicker">入口矩阵 / FOUR GATEWAYS</p>
+          <h2>四大入口，适用全场景</h2>
         </div>
-      </aside>
-
-      <!-- 入口矩阵 -->
-      <div class="entries">
-        <section class="group" aria-label="需登录入口">
-          <div class="group-head">
-            <span class="idx" aria-hidden="true">壹</span>
-            <h2>需登录 · 厂内员工</h2>
+        <div class="col-head" aria-hidden="true">
+          <span class="in">需登录 · 内部员工</span>
+          <span class="out">免登录 · 对外公开</span>
+        </div>
+        <div class="gate-grid" id="gateGrid"></div>
+        <noscript>
+          <div class="gate-grid" style="margin-top:12px">
+            <article class="gcard"><div class="g-head"><span class="g-ico" aria-hidden="true"></span><span class="g-titles"><h3>管理后台</h3></span></div><p class="g-tagline">生产计划与七道工序台账，菇房环境配方与设备联控。</p><span class="g-method">员工账号登录 · 按角色授权</span><a class="g-cta" href="applefarm_backhand/login.html">员工账号 · 进入登录</a></article>
+            <article class="gcard gcard-dark"><div class="g-head"><span class="g-ico" aria-hidden="true"></span><span class="g-titles"><h3>生产数据大屏</h3></span></div><p class="g-tagline">运营总览、环境设备、视频监控等六类视图统览。</p><span class="g-method">实时运行中 · 建议 1920×1080 全屏</span><a class="g-cta" href="applefarm_dataanlye/da_index.html?view=overview">免登录 · 直接打开</a></article>
+            <article class="gcard"><div class="g-head"><span class="g-ico" aria-hidden="true"></span><span class="g-titles"><h3>移动应用端</h3></span></div><p class="g-tagline">环境曲线与告警处置，扫码报工与离线缓存补传。</p><span class="g-method">账号 / 微信快捷登录 · 手机扫码直达</span><a class="g-cta" href="applefarm_mobile/mb_login.html">员工账号 · 进入登录</a></article>
+            <article class="gcard gcard-amber"><div class="g-head"><span class="g-ico" aria-hidden="true"></span><span class="g-titles"><h3>消费者溯源 H5</h3></span></div><p class="g-tagline">批次履历与产地信息，扫包装追溯码即刻核验。</p><div class="badges"><span>出厂检测报告</span><span>链上存证</span></div><a class="g-cta" href="applefarm_h5/trace_h5.html">免登录 · 扫码即查</a></article>
           </div>
-          <div class="card-grid" id="authGrid"></div>
-          <noscript>
-            <div class="card-grid" style="margin-top:12px">
-              <article class="card"><div class="c-head"><span class="c-ico" aria-hidden="true"></span>
-                <span class="c-titles"><h3>管理后台</h3><p class="c-role">厂部管理 · 生产统计 · 信息员</p></span></div>
-                <p class="c-method">员工账号 · 按角色授权</p>
-                <a class="c-cta" href="applefarm_backhand/login.html">进入登录</a></article>
-              <article class="card"><div class="c-head"><span class="c-ico" aria-hidden="true"></span>
-                <span class="c-titles"><h3>移动应用端</h3><p class="c-role">车间巡检 · 设备处置 · 现场报工</p></span></div>
-                <p class="c-method">作业人员账号 / 微信快捷登录</p>
-                <a class="c-cta" href="applefarm_mobile/mb_login.html">进入登录</a></article>
-            </div>
-          </noscript>
-        </section>
-
-        <section class="group open" aria-label="免登录入口">
-          <div class="group-head">
-            <span class="idx" aria-hidden="true">贰</span>
-            <h2>免登录 · 直开</h2>
-          </div>
-          <div class="card-grid" id="openGrid"></div>
-          <noscript>
-            <div class="card-grid" style="margin-top:12px">
-              <article class="card card-dark"><div class="c-head"><span class="c-ico" aria-hidden="true"></span>
-                <span class="c-titles"><h3>生产数据大屏</h3><p class="c-role">值班室统览 · 参观接待</p></span></div>
-                <p class="c-method">免登录 · 建议 1920×1080 全屏</p>
-                <a class="c-cta" href="applefarm_dataanlye/da_index.html?view=overview">直接打开</a></article>
-              <article class="card"><div class="c-head"><span class="c-ico" aria-hidden="true"></span>
-                <span class="c-titles"><h3>消费者溯源 H5</h3><p class="c-role">消费者核验 · 监管抽查</p></span></div>
-                <p class="c-method">免登录 · 扫包装追溯码即查</p>
-                <a class="c-cta" href="applefarm_h5/trace_h5.html">直接打开</a></article>
-            </div>
-          </noscript>
-        </section>
-      </div>
+        </noscript>
+      </section>
     </main>
 
     <footer class="footer">
@@ -373,6 +340,16 @@
     var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
     var LAST_KEY = 'portal_last_sys';
 
+    /* 设计稿文案：每张卡的一句话定位 / 准入提示 / 主按钮 / 终端 */
+    var LOOK = {
+      admin:  { tagline: '生产计划与七道工序台账，菇房环境配方与设备联控。', method: '员工账号登录 · 按角色授权',        cta: '员工账号 · 进入登录' },
+      screen: { tagline: '',                                            method: '实时运行中 · 建议 1920×1080 全屏', cta: '免登录 · 直接打开' },
+      mobile: { tagline: '环境曲线与告警处置，扫码报工与离线缓存补传。',     method: '账号 / 微信快捷登录 · 手机扫码直达',  cta: '员工账号 · 进入登录' },
+      trace:  { tagline: '批次履历与产地信息，扫包装追溯码即刻核验。',     method: '免登录 · 扫包装追溯码即查',       cta: '免登录 · 扫码即查', badges: ['出厂检测报告', '链上存证'] }
+    };
+    /* 2×2 排布：行=终端（桌面/手机），列=准入（需登录/免登录） */
+    var ORDER = ['admin', 'screen', 'mobile', 'trace'];
+
     /* ---- 时钟 ---- */
     var WEEK = ['日', '一', '二', '三', '四', '五', '六'];
     function pad(n) { return n < 10 ? '0' + n : '' + n; }
@@ -383,17 +360,9 @@
     }
     tick(); setInterval(tick, 1000);
 
-    /* ---- 服务状态 ---- */
-    $('sysList').innerHTML = D.systems.map(function (s) {
-      return '<li class="' + (s.state === 'ok' ? '' : 'warn') + '"><i aria-hidden="true"></i><b>' + esc(s.name) + '</b><em>' +
-        (s.state === 'ok' ? '正常' : '维护') + '</em></li>';
-    }).join('');
-    $('brandKv').innerHTML =
-      '<div><span>项目编号</span><b>' + esc(D.meta.code) + '</b></div>' +
-      '<div><span>覆盖规模</span><b>' + esc(D.meta.scale) + '</b></div>';
     $('footMeta').innerHTML = '建议使用 Chrome / Edge 浏览器';
 
-    /* ---- 二维码（真实可扫） ---- */
+    /* ---- 二维码（沿用现有 qrcode.js，真实可扫） ---- */
     function qrSvg(text) {
       if (typeof window.qrcode !== 'function') return null;
       try {
@@ -412,9 +381,8 @@
       } catch (e) { return null; }
     }
     function absUrl(href) { return new URL(href, location.href).href; }
-    var isFile = location.protocol === 'file:';
 
-    /* ---- 上次进入（仅驱动"常用"徽标） ---- */
+    /* ---- 上次进入（仅驱动「常用」徽标） ---- */
     var last = null;
     try { last = JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); } catch (e) { last = null; }
     if (!last || typeof last !== 'object') last = null;
@@ -437,17 +405,7 @@
           btn.textContent = '已复制 ✓';
           btn.classList.add('ok');
         } else {
-          var code = btn.parentElement.querySelector('code');
-          if (code && window.getSelection) {
-            var range = document.createRange();
-            range.selectNodeContents(code);
-            var sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-            btn.textContent = '已选中 · Ctrl+C';
-          } else {
-            btn.textContent = '复制失败';
-          }
+          btn.textContent = '复制失败';
           btn.classList.add('fail');
         }
         setTimeout(function () {
@@ -486,62 +444,49 @@
       trace: '<svg viewBox="0 0 24 24"><rect x="3.4" y="3.4" width="6.2" height="6.2" rx="1.1"/><rect x="5.4" y="5.4" width="2.2" height="2.2" rx=".4"/><rect x="14.4" y="3.4" width="6.2" height="6.2" rx="1.1"/><rect x="16.4" y="5.4" width="2.2" height="2.2" rx=".4"/><rect x="3.4" y="14.4" width="6.2" height="6.2" rx="1.1"/><rect x="5.4" y="16.4" width="2.2" height="2.2" rx=".4"/><rect x="14.4" y="14.4" width="2.6" height="2.6" rx=".5"/><rect x="18.2" y="18.2" width="2.4" height="2.4" rx=".5"/></svg>'
     };
     var KEY_ICO = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8.5" cy="14.5" r="4"/><path d="M11.3 11.7 19 4"/><path d="M16 7l2.4 2.4"/><path d="M13.4 9.6l2 2"/></svg>';
-    var CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="4 12.5 9.5 18 20 6.5"/></svg>';
     var ARROW = '<svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>';
 
-    function nbSeg(text) {
-      return text.split(' · ').map(function (t, i) {
-        return i === 0 ? '<span class="nb">' + esc(t) + '</span>' : '<span class="nb"> · ' + esc(t) + '</span>';
-      }).join('');
-    }
-
-    function qrBlock(s, caption) {
+    function qrBlock(s) {
       var url = absUrl(s.href);
       var svg = qrSvg(url);
       if (!svg) return '';
-      return '<figure class="c-qr"><span class="qr-frame">' + svg + '</span>' +
-        '<figcaption>' + nbSeg(caption) + '</figcaption>' +
+      return '<figure class="g-qr"><span class="qr-frame">' + svg + '</span>' +
         '<button type="button" class="copybtn" data-copy="' + esc(url) + '">复制链接</button></figure>';
     }
 
     function card(s) {
-      var dark = s.id === 'screen';
+      var lk = LOOK[s.id] || {};
+      var dark = s.id === 'screen', amber = s.id === 'trace';
       var fav = last && last.id === s.id;
       var head =
-        '<div class="c-head"><span class="c-ico" aria-hidden="true">' + ICO[s.id] + '</span>' +
-        '<span class="c-titles"><h3>' + esc(s.name) +
-        '<span class="c-fav"' + (fav ? '' : ' hidden') + '>常用</span></h3>' +
-        '<p class="c-role">' + nbSeg(s.role) + '</p></span></div>';
-      var method = '<p class="c-method">' + KEY_ICO + esc(s.method) + '</p>';
-      var body;
+        '<div class="g-head"><span class="g-ico" aria-hidden="true">' + (ICO[s.id] || '') + '</span>' +
+        '<span class="g-titles"><h3>' + esc(s.name) +
+        '<span class="c-fav"' + (fav ? '' : ' hidden') + '>常用</span></h3></span></div>';
+      var tagline = lk.tagline ? '<p class="g-tagline">' + esc(lk.tagline) + '</p>' : '';
+      var method = dark
+        ? '<span class="live"><i aria-hidden="true"></i>' + esc(lk.method || s.method) + '</span>'
+        : '<span class="g-method">' + KEY_ICO + esc(lk.method || s.method) + '</span>';
+      var extra = '';
       if (s.views) {
-        body = '<div class="views">' + s.views.map(function (v) { return '<span>' + esc(v) + '</span>'; }).join('') + '</div>';
-      } else {
-        body = '<ul class="c-feats">' + s.features.map(function (f) { return '<li>' + CHECK + esc(f) + '</li>'; }).join('') + '</ul>';
+        extra = '<div class="views">' + s.views.map(function (v) { return '<span>' + esc(v) + '</span>'; }).join('') + '</div>';
+      } else if (lk.badges) {
+        extra = '<div class="badges">' + lk.badges.map(function (b) { return '<span>' + esc(b) + '</span>'; }).join('') + '</div>';
       }
-      var demo = s.demo ?
-        '<div class="c-demo"><span>演示账号</span><code>' + esc(s.demo.u + ' / ' + s.demo.p) + '</code>' +
-        '<button type="button" class="copybtn" data-copy="' + esc(s.demo.u + ' / ' + s.demo.p) + '">复制</button></div>' : '';
-      var cta = '<a class="c-cta" data-sys="' + s.id + '" data-name="' + esc(s.name) + '" href="' + s.href + '">' +
-        (s.group === 'auth' ? '进入登录' : '直接打开') + ' ' + ARROW + '</a>';
-      var inner;
-      if (s.qr) {
-        var cap = s.id === 'mobile' ?
-          (isFile ? '本地预览 · 部署后扫码生效' : '手机扫码直达移动登录') :
-          (isFile ? '本地预览 · 部署后扫码生效' : '扫码打开溯源示例');
-        inner = '<div class="c-split"><div class="c-main">' + head + method + body + demo + cta + '</div>' +
-          qrBlock(s, cap) + '</div>';
-      } else {
-        inner = head + method + body + demo + cta;
-      }
-      return '<article class="card' + (dark ? ' card-dark' : '') + '">' + inner + '</article>';
+      var cta = '<a class="g-cta" data-sys="' + s.id + '" data-name="' + esc(s.name) + '" href="' + s.href + '">' +
+        (lk.cta || '直接打开') + ' ' + ARROW + '</a>';
+      var body = head + tagline + method + extra;
+      var inner = s.qr
+        ? '<div class="g-split"><div class="g-main">' + body + '</div>' + qrBlock(s) + '</div>' + cta
+        : body + cta;
+      return '<article class="gcard' + (dark ? ' gcard-dark' : '') + (amber ? ' gcard-amber' : '') + '">' + inner + '</article>';
     }
 
-    $('authGrid').innerHTML = D.systems.filter(function (s) { return s.group === 'auth'; }).map(card).join('');
-    $('openGrid').innerHTML = D.systems.filter(function (s) { return s.group === 'open'; }).map(card).join('');
+    var byId = {};
+    (D.systems || []).forEach(function (s) { byId[s.id] = s; });
+    $('gateGrid').innerHTML = ORDER.map(function (id) { return byId[id] ? card(byId[id]) : ''; }).join('');
   })();
 
-  /* 品牌区场景轮播：接种 → 培养 → 出菇 → 冷库 */
+  /* 场景轮播：接种 → 培养 → 出菇 → 冷库（沿用原图片） */
   (function () {
     var scenes = (window.PortalData && PortalData.meta.scenes) || [];
     var fig = document.getElementById('brandPhoto');
@@ -557,6 +502,8 @@
     var ICO_PAUSE = '<svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1.5" width="3" height="9" rx="1"/><rect x="7" y="1.5" width="3" height="9" rx="1"/></svg>';
     var ICO_PLAY = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.5 L10.5 6 L3 10.5 Z"/></svg>';
 
+    fig.setAttribute('aria-label', '工厂场景示意，共 ' + N + ' 张');
+    count.textContent = '01 / ' + (N < 10 ? '0' + N : N);
     track.innerHTML = scenes.map(function (s, i) {
       return '<div class="bp-slide' + (i === 0 ? ' is-on' : '') + '" role="group" aria-roledescription="幻灯片" aria-label="第 ' + (i + 1) + ' 张，共 ' + N + ' 张：' + esc(s.cap) + '"' + (i === 0 ? '' : ' aria-hidden="true"') + '>' +
         '<img src="' + s.img + '" alt="' + esc(s.alt) + '" decoding="async"' + (i === 0 ? ' fetchpriority="high"' : '') + ' draggable="false">' +
